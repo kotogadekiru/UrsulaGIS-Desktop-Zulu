@@ -47,6 +47,13 @@ jobs:
           java-package: jdk+fx
           cache: 'maven'
       
+      - name: Get Maven version
+        id: maven-version
+        run: |
+          echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
+          echo "artifact=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_OUTPUT
+          echo "name=$(mvn help:evaluate -Dexpression=project.name -q -DforceStdout)" >> $GITHUB_OUTPUT
+      
       - name: Build Windows Installer with Maven
         run: mvn -B clean install --file pom.xml
         env:
@@ -63,7 +70,7 @@ jobs:
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: UrsulaGIS-Desktop_Zulu-${{ github.run_number }}_Win_x64_Installer
+          name: ${{ steps.maven-version.outputs.artifact }}-${{ steps.maven-version.outputs.version }}.${{ github.run_number }}-Win_x64_Installer
           path: target/*.msi
           retention-days: 30
       
@@ -71,12 +78,14 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: UrsulaGIS-Desktop_Zulu_Win_x64_Installer-${{ github.run_number }}
-          name: Windows Installer Build ${{ github.run_number }}
+          tag_name: ${{ steps.maven-version.outputs.artifact }}-Win_x64_Installer-${{ steps.maven-version.outputs.version }}.${{ github.run_number }}
+          name: ${{ steps.maven-version.outputs.name }} Windows Installer v${{ steps.maven-version.outputs.version }}.${{ github.run_number }}
           body: |
             Windows MSI installer built from commit ${{ github.sha }}
             
             **Build Info:**
+            - Version: ${{ steps.maven-version.outputs.version }}.${{ github.run_number }}
+            - Artifact: ${{ steps.maven-version.outputs.artifact }}
             - Commit: ${{ github.sha }}
             - Branch: ${{ github.ref_name }}
             - Run: ${{ github.run_number }}
