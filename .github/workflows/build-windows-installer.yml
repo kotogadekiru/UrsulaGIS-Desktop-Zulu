@@ -50,9 +50,12 @@ jobs:
       - name: Get Maven version
         id: maven-version
         run: |
-          echo "version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
-          echo "artifact=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_OUTPUT
-          echo "name=$(mvn help:evaluate -Dexpression=project.name -q -DforceStdout)" >> $GITHUB_OUTPUT
+          $version = mvn help:evaluate -Dexpression=project.version -q -DforceStdout
+          $artifact = mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout
+          $name = mvn help:evaluate -Dexpression=project.name -q -DforceStdout
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "artifact=$artifact" >> $env:GITHUB_OUTPUT
+          echo "name=$name" >> $env:GITHUB_OUTPUT
       
       - name: Build Windows Installer with Maven
         run: mvn -B clean install --file pom.xml
