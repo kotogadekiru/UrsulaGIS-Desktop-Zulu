@@ -11,7 +11,7 @@ When you download a disk image or app on macOS, it checks to see if the app
 has been digitally signed. If not, macOS adds a quarantine flag to the dmg (and the 
 bundled app). Then, when you go to run the application macOS notices the quarantine
 flag and then refuses to run. You can't work around this quarantine flag with a 
-right-click and open. As far as I know there is no GUI for working around a quarantine
+right-click and open. As far as I know there is no package com.ursulagis.desktop.gui for working around a quarantine
 flag - you have to use the Terminal.
 
 You can verify if the quarantine flag is set with this command:

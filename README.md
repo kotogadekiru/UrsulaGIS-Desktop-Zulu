@@ -173,7 +173,7 @@ If you are reasonably familiar with Maven this shouldn't be very hard to do.
 
 I *highly* recommend the [FlatLaf](https://www.formdev.com/flatlaf/) as a must for working with Swing in 2022. That
 look-and-feel plus designers such as
-the [IntelliJ GUI Designer](https://www.jetbrains.com/help/idea/gui-designer-basics.html)
+the [IntelliJ package com.ursulagis.desktop.gui Designer](https://www.jetbrains.com/help/idea/package com.ursulagis.desktop.gui-designer-basics.html)
 or [JFormDesigner](https://www.formdev.com/jformdesigner/) can work very well, arguably with an easier learning curve
 than JavaFX.
 
