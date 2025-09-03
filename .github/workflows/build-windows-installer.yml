@@ -39,7 +39,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       
-      - name: Set up JDK 17 with JavaFX
+      - name: Set up JDK 24 with JavaFX
         uses: actions/setup-java@v4
         with:
           java-version: 24.0.2
@@ -63,7 +63,7 @@ jobs:
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: windows-installer
+          name: UrsulaGIS-Desktop_Zulu_Win_x64_Installer
           path: target/*.msi
           retention-days: 30
       
@@ -71,7 +71,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: windows-installer-${{ github.run_number }}
+          tag_name: UrsulaGIS-Desktop_Zulu_Win_x64_Installer-${{ github.run_number }}
           name: Windows Installer Build ${{ github.run_number }}
           body: |
             Windows MSI installer built from commit ${{ github.sha }}
