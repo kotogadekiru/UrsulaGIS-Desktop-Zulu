@@ -63,12 +63,20 @@ jobs:
           retention-days: 30
       
       - name: Create Release
-        uses: marvinpinto/action-automatic-releases@latest
+        uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/main'
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN}}"
-          automatic_release_tag: windows-installer
-          prerelease: true
-          title: Windows Installer Build
+          tag_name: windows-installer-${{ github.run_number }}
+          name: Windows Installer Build ${{ github.run_number }}
+          body: |
+            Windows MSI installer built from commit ${{ github.sha }}
+            
+            **Build Info:**
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Run: ${{ github.run_number }}
+            - Date: ${{ github.event.head_commit.timestamp }}
           files: |
-            ./target/*.msi
+            target/*.msi
+          prerelease: true
+          draft: false
