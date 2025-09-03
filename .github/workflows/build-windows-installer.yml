@@ -14,7 +14,7 @@ permissions:
 
 env:
   PRIMARY_BUNDLE_ID: com.ursulagis.desktop.JFXMain
-
+  APP_VERSION: 1.0.${{ github.run_number }}
 jobs:
   build-windows-installer:
     runs-on: windows-latest
@@ -47,16 +47,6 @@ jobs:
           java-package: jdk+fx
           cache: 'maven'
       
-      - name: Get Maven version
-        id: maven-version
-        run: |
-          $version = mvn help:evaluate -Dexpression=project.version -q -DforceStdout
-          $artifact = mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout
-          $name = mvn help:evaluate -Dexpression=project.name -q -DforceStdout
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "artifact=$artifact" >> $env:GITHUB_OUTPUT
-          echo "name=$name" >> $env:GITHUB_OUTPUT
-      
       - name: Build Windows Installer with Maven
         run: mvn -B clean install --file pom.xml
         env:
@@ -73,7 +63,7 @@ jobs:
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.maven-version.outputs.artifact }}-${{ steps.maven-version.outputs.version }}.${{ github.run_number }}-Win_x64_Installer
+          name: UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_Win_x64_Installer
           path: target/*.msi
           retention-days: 30
       
@@ -81,14 +71,12 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: github.ref == 'refs/heads/main'
         with:
-          tag_name: ${{ steps.maven-version.outputs.artifact }}-Win_x64_Installer-${{ steps.maven-version.outputs.version }}.${{ github.run_number }}
-          name: ${{ steps.maven-version.outputs.name }} Windows Installer v${{ steps.maven-version.outputs.version }}.${{ github.run_number }}
+          tag_name: UrsulaGIS-Desktop_Zulu_Win_x64_Installer-${{ env.APP_VERSION }}
+          name: Windows Installer Build -${{ env.APP_VERSION }}
           body: |
             Windows MSI installer built from commit ${{ github.sha }}
             
             **Build Info:**
-            - Version: ${{ steps.maven-version.outputs.version }}.${{ github.run_number }}
-            - Artifact: ${{ steps.maven-version.outputs.artifact }}
             - Commit: ${{ github.sha }}
             - Branch: ${{ github.ref_name }}
             - Run: ${{ github.run_number }}
