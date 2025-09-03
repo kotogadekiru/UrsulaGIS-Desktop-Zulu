@@ -63,7 +63,7 @@ jobs:
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
-          name: UrsulaGIS-Desktop_Zulu_Win_x64_Installer
+          name: UrsulaGIS-Desktop_Zulu-${{ github.run_number }}_Win_x64_Installer
           path: target/*.msi
           retention-days: 30
       
