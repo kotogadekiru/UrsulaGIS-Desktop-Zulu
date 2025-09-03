@@ -1,0 +1,74 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PRIMARY_BUNDLE_ID: com.ursulagis.desktop.JFXMain
+
+jobs:
+  build-windows-installer:
+    runs-on: windows-latest
+    steps:
+      - name: Download Wix
+        uses: i3h/download-release-asset@v1
+        with:
+          owner: wixtoolset
+          repo: wix3
+          tag: wix3112rtm
+          file: wix311-binaries.zip
+      
+      - name: Decompress Wix
+        uses: DuckSoft/extract-7z-action@v1.0
+        with:
+          pathSource: wix311-binaries.zip
+          pathTarget: ./target/wix
+      
+      - name: Add Wix to Path
+        run: echo "$HOME/target/wix" >> $GITHUB_PATH
+      
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Set up JDK 17 with JavaFX
+        uses: actions/setup-java@v2
+        with:
+          java-version: 24.0.2
+          distribution: 'liberica'
+          java-package: jdk+fx
+          cache: 'maven'
+      
+      - name: Build Windows Installer with Maven
+        run: mvn -B clean install --file pom.xml
+        env:
+          # Activate Windows-specific profile
+          MAVEN_OPTS: "-Dos.detected.name=windows"
+      
+      - name: List build artifacts
+        run: |
+          echo "Build artifacts in target directory:"
+          dir target
+          echo "MSI files:"
+          dir target\*.msi
+      
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-installer
+          path: target/*.msi
+          retention-days: 30
+      
+      - name: Create Release
+        uses: marvinpinto/action-automatic-releases@latest
+        if: github.ref == 'refs/heads/main'
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN}}"
+          automatic_release_tag: windows-installer
+          prerelease: true
+          title: Windows Installer Build
+          files: |
+            ./target/*.msi
