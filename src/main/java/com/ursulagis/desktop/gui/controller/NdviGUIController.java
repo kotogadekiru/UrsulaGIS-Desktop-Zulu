@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;
@@ -160,7 +160,7 @@ public class NdviGUIController extends AbstractGUIController{
 			sChart.doShowNDVIChart(true);
 			Stage histoStage = new Stage();
 			histoStage.setTitle(Messages.getString("JFXMain.show_ndvi_acum_title"));
-			histoStage.getIcons().add(new Image(JFXMain.ICON));
+			histoStage.getIcons().addAll(JFXMain.stage.getIcons());
 			VBox.setVgrow(sChart, Priority.ALWAYS);
 			Scene scene = new Scene(sChart, 800,450);
 			histoStage.setScene(scene);
@@ -176,7 +176,7 @@ public class NdviGUIController extends AbstractGUIController{
 			sChart.doShowNDVIChart(false);
 			Stage histoStage = new Stage();
 			histoStage.setTitle(Messages.getString("JFXMain.show_ndvi_title"));
-			histoStage.getIcons().add(new Image(JFXMain.ICON));
+			histoStage.getIcons().addAll(JFXMain.stage.getIcons());
 			VBox.setVgrow(sChart, Priority.ALWAYS);
 			Scene scene = new Scene(sChart, 800,450);
 			histoStage.setScene(scene);
@@ -311,7 +311,7 @@ public class NdviGUIController extends AbstractGUIController{
 		pfMapTask.setOnSucceeded(handler -> {
 			Parent	histoChart = (Parent) handler.getSource().getValue();	
 			Stage histoStage = new Stage();
-			histoStage.getIcons().add(new Image(JFXMain.ICON));
+			histoStage.getIcons().addAll(JFXMain.stage.getIcons());
 			histoStage.setTitle(Messages.getString("NDVIHistoChart.Title"));
 			Scene scene = new Scene(histoChart, 800,450);
 			histoStage.setScene(scene);

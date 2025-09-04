@@ -10,8 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.geotools.geometry.jts.ReferencedEnvelope;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Polygon;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.config.Cultivo;

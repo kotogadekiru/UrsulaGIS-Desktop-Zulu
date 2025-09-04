@@ -5,7 +5,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionItem;

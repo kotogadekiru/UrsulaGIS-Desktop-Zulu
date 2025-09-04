@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 
 import com.ursulagis.desktop.api.OrdenSiembra;
 import com.ursulagis.desktop.dao.Labor;

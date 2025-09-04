@@ -5,12 +5,12 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.config.Cultivo;
 import com.ursulagis.desktop.dao.config.Fertilizante;

@@ -3,154 +3,31 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [
+    "configurations": [ 
         {
             "type": "java",
-            "name": "Current File",
+            "name": "Launch JFXMain",
             "request": "launch",
-            "mainClass": "${file}"
-        },
-        {
-            "type": "java",
-            "name": "BaseApplication",
-            "request": "launch",
-            "mainClass": "com.ursulagis.BaseApplication",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "AbstractBaseEntity",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.dao.AbstractBaseEntity",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "Labor",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.dao.Labor",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "ApplicationTest",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.ApplicationTest",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "JFXMain",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.JFXMain",
-            "projectName": "maven-jpackage-template",
-             "vmArgs": [
+            "mainClass": "com.ursulagis.desktop.gui.JFXMain", 
+            "vmArgs": [
                 "-DmyProperty=myValue",
-                "-Xmx512m",
+                "-Xms2G",
+                "-Xmx20G",
                 "--add-modules=javafx.controls",
                 "--enable-native-access=javafx.graphics",
                 "--enable-native-access=javafx.media",
                 "--enable-native-access=javafx.web",
-                "-Djogamp.gluegen.UseTempJarCache=false"
-            ]        
-        },
-        {
-            "type": "java",
-            "name": "Messages",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.Messages",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "TestAplication",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.TestAplication",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "SnakesTemplate",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.snake.SnakesTemplate",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "WeakBinder",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.utils.WeakBinder",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "GoogleTranslatorHelper",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.tasks.GoogleTranslatorHelper",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "ConvertirNdviAFertilizacionTask",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.tasks.crear.ConvertirNdviAFertilizacionTask",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "SimplificarCaminoTask",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.tasks.procesar.SimplificarCaminoTask",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "SueloTest",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.tests.SueloTest",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "ExcelHelper",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.utils.ExcelHelper",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "GeometryHelper",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.utils.GeometryHelper",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "Logistic",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.utils.Logistic",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "PDFHelper",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.utils.PDFHelper",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "ProyectionConstants",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.utils.ProyectionConstants",
-            "projectName": "maven-jpackage-template"
-        },
-        {
-            "type": "java",
-            "name": "SumBinaryTree",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.utils.SumBinaryTree",
-            "projectName": "maven-jpackage-template"
+                "--enable-native-access=ALL-UNNAMED",
+                "--add-opens=javafx.media/javafx.scene.media=ALL-UNNAMED",
+                "--add-opens=javafx.web/javafx.scene.web=ALL-UNNAMED",
+                "--add-opens=javafx.web/com.sun.webkit=ALL-UNNAMED",
+                "--add-opens=javafx.media/com.sun.media.jfxmedia=ALL-UNNAMED",
+                "--add-opens=javafx.graphics/com.sun.marlin=ALL-UNNAMED",
+                "--add-opens=javafx.graphics/com.sun.marlin.offheap=ALL-UNNAMED",
+                "-Djava.awt.headless=false",
+                //"-Dprism.order=es2",
+                "-Dprism.verbose=false"
+            ]
         }
     ]
 }

@@ -16,6 +16,12 @@
 --copyright "(C) ${windows.vendor}"
 --java-options -Xmx20g
 --java-options -Xms2g
+--java-options --enable-native-access=ALL-UNNAMED
+--java-options --add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED
+--java-options --add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED
+--java-options --add-opens=javafx.base/javafx.collections=ALL-UNNAMED
+--java-options --add-opens=javafx.base/javafx.beans=ALL-UNNAMED
+--java-options --add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED
 --win-shortcut
 --win-shortcut-prompt
 --win-per-user-install

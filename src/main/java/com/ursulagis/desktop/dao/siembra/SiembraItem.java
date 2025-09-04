@@ -3,7 +3,7 @@ import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Entity;
 
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import com.ursulagis.desktop.dao.LaborItem;
 import lombok.AccessLevel;

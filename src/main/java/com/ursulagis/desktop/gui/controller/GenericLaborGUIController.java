@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -297,7 +297,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 
 		Scene scene = new Scene(tabla, 800, 600);
 		Stage tablaStage = new Stage();
-		tablaStage.getIcons().add(new Image(JFXMain.ICON));
+		tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 		tablaStage.setTitle("Parametros");//Messages.getString("Recorrida.asignarValores")); 
 		tablaStage.setScene(scene);
 
@@ -368,7 +368,8 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			CosechaHistoChart histoChart = new CosechaHistoChart(cosechaLabor);
 			Stage histoStage = new Stage();
 			histoStage.setTitle(Messages.getString("CosechaHistoChart.Title"));
-			histoStage.getIcons().add(new Image(JFXMain.ICON));
+			histoStage.getIcons().addAll(JFXMain.stage.getIcons());
+			histoStage.initOwner(JFXMain.stage);
 			Scene scene = new Scene(histoChart, 800,450);
 			histoStage.setScene(scene);
 			histoStage.initOwner(JFXMain.stage);

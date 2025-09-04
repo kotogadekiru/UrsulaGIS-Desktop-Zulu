@@ -1,6 +1,6 @@
 package com.ursulagis.desktop.dao.suelo;
 
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import com.ursulagis.desktop.dao.LaborItem;
 import lombok.Data;

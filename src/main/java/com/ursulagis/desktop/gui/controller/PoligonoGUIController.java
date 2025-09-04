@@ -19,16 +19,16 @@ import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.densify.Densifier;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
+import org.locationtech.jts.densify.Densifier;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;

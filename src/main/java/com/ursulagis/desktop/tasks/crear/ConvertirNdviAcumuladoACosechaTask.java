@@ -8,7 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.cosecha.CosechaItem;

@@ -11,11 +11,11 @@ import java.util.function.Function;
 
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
@@ -189,8 +189,8 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 						poly= GeometryHelper.getIntersection(poly, contornoGeom);//poly.intersection(contornoGeom);
 						if(poly==null || poly.isEmpty())continue;
 						//System.out.println("el contorno no cubre el polygono y la interseccion es: "+poly.toText());
-						}catch(Exception e) {//com.vividsolutions.jts.geom.TopologyException: Found null DirectedEdge
-							e.printStackTrace();//com.vividsolutions.jts.geom.TopologyException: side location conflict [ (-61.920393510481325, -33.66456750394795, NaN) ]
+						}catch(Exception e) {//org.locationtech.jts.geom.TopologyException: Found null DirectedEdge
+							e.printStackTrace();//org.locationtech.jts.geom.TopologyException: side location conflict [ (-61.920393510481325, -33.66456750394795, NaN) ]
 						}
 					}
 					ci.setGeometry(poly);

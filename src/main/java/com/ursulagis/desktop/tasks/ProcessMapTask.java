@@ -13,22 +13,22 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.geotools.data.FeatureReader;
+import org.geotools.api.data.FeatureReader;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.geometry.BoundingBox;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.geometry.BoundingBox;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.CoordinateFilter;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.precision.EnhancedPrecisionOp;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateFilter;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
 
 import com.ursulagis.desktop.dao.Clasificador;
 import com.ursulagis.desktop.dao.Labor;
@@ -84,7 +84,7 @@ import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
-//import org.opengis.filter.FilterFactory2;
+//import org.geotools.api.filter.FilterFactory2;
 //TODO change extend to ProgresibleTask<E>
 public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> extends ProgresibleTask<E>{
 	public static final String LABOR_ITEM_AVKey = "LABOR_ITEM";

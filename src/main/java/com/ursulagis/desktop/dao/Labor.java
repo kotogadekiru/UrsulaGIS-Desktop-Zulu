@@ -25,8 +25,8 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.ServiceInfo;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.ServiceInfo;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.SchemaException;
@@ -34,16 +34,16 @@ import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.NoSuchAuthorityCodeException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.index.quadtree.Quadtree;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.dao.cosecha.CosechaItem;
@@ -371,7 +371,7 @@ public abstract class Labor<E extends LaborItem>  {
 			System.out.println("labor inStore.info = "+info );
 			try {
 				SimpleFeatureType schema = inStore.getSchema();
-				System.out.println("Prescription Type: "+DataUtilities.spec(schema));
+				System.out.println("Prescription Type: "+DataUtilities.encodeType(schema));
 				System.out.println(schema);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -379,7 +379,13 @@ public abstract class Labor<E extends LaborItem>  {
 
 			//	if(nombreProperty.getValue() == null){
 			//nombreProperty.set(inStore.getInfo().getTitle().replaceAll("%20", " "));
-			setNombre(inStore.getInfo().getTitle().replaceAll("%20", " "));
+			String title = inStore.getInfo().getTitle();
+			if (title != null && !title.trim().isEmpty()) {
+				setNombre(title.replaceAll("%20", " "));
+			} else {
+				// Fallback to a default name if title is null or empty
+				setNombre("Labor_" + System.currentTimeMillis());
+			}
 
 			//}
 		}
@@ -714,7 +720,7 @@ public abstract class Labor<E extends LaborItem>  {
 		}
 		/*
 		 * "building descriptor 
-		 * the_geom:MultiPolygon:srid=4326,
+		 * the_geom:MultiPolygon:4326,
 		 * Distancia:Double,
 		 * Curso(deg):Double,
 		 * Ancho:Double,
@@ -740,7 +746,7 @@ public abstract class Labor<E extends LaborItem>  {
 	@Transient
 	public SimpleFeatureType getType() {
 		if(type==null) {
-		String typeDescriptor = "the_geom:MultiPolygon:srid=4326,"//"*geom:Polygon,"the_geom
+		String typeDescriptor = "the_geom:MultiPolygon:4326,"//"*geom:Polygon,"the_geom
 				+ COLUMNA_DISTANCIA + ":Double,"
 				+ COLUMNA_CURSO + ":Double,"
 				+ COLUMNA_ANCHO + ":Double,"
@@ -762,7 +768,7 @@ public abstract class Labor<E extends LaborItem>  {
 	@Transient
 	public SimpleFeatureType getPointType() {
 		SimpleFeatureType type = null;
-		String typeDescriptor = "the_geom:Point:srid=4326,"//"*geom:Polygon,"the_geom
+		String typeDescriptor = "the_geom:Point:4326,"//"*geom:Polygon,"the_geom
 				+ COLUMNA_DISTANCIA + ":Double,"
 				+ COLUMNA_CURSO + ":Double,"
 				+ COLUMNA_ANCHO + ":Double,"

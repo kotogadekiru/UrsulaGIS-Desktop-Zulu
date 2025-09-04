@@ -114,7 +114,7 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
 		stage.setMinWidth(1000);
 		stage.setMinHeight(600);
-		stage.getIcons().add(new Image(JFXMain.ICON));
+		stage.getIcons().addAll(JFXMain.stage.getIcons());
 
 		this.getDialogPane().getButtonTypes().add(ButtonType.OK);
 		this.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);

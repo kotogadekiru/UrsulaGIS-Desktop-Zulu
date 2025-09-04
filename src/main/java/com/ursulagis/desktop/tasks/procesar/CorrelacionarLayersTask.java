@@ -10,16 +10,16 @@ import java.util.stream.Collectors;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.factory.GeoTools;
+import org.geotools.util.factory.GeoTools;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Polygon;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -185,7 +185,7 @@ public class CorrelacionarLayersTask extends ProgresibleTask<XYChart.Series<Numb
 		//TODO tratar de cachear todo lo posible para evitar repetir trabajo en querys consecutivas.
 		//una udea es cachear un sector del out collection y solo hacer la query si el envelope esta fuera de lo cacheado
 		if(labor.outCollection.getBounds().intersects(g.getEnvelopeInternal())){//solo hago la query si el bounds esta dentro del mapa
-			FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+			FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
 			FeatureType schema = labor.outCollection.getSchema();
 
 			// usually "THE_GEOM" for shapefiles

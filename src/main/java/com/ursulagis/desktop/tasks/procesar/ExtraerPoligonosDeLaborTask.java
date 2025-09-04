@@ -6,17 +6,17 @@ import java.util.Optional;
 
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.feature.DefaultFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
-import com.vividsolutions.jts.precision.EnhancedPrecisionOp;
-import com.vividsolutions.jts.simplify.TopologyPreservingSimplifier;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
+import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -133,7 +133,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 				}
 
 			} else {
-				polygons.add((Polygon) mp);//com.vividsolutions.jts.geom.MultiPolygon cannot be cast to com.vividsolutions.jts.geom.Polygon
+				polygons.add((Polygon) mp);//org.locationtech.jts.geom.MultiPolygon cannot be cast to org.locationtech.jts.geom.Polygon
 			}
 		}
 		return polygons;

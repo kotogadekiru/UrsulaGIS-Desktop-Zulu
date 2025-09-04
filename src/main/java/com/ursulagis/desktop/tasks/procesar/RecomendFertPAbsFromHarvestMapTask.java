@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.stream.DoubleStream;
 
-import org.geotools.data.FeatureReader;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.config.Cultivo;
 import com.ursulagis.desktop.dao.config.Fertilizante;

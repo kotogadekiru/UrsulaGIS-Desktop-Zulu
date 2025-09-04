@@ -1,9 +1,9 @@
 package com.ursulagis.desktop.tasks.importar;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.index.quadtree.Quadtree;
 
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionItem;
 import com.ursulagis.desktop.dao.margen.Margen;
@@ -16,14 +16,14 @@ import javafx.scene.Group;
 import javafx.scene.shape.Path;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 
-import org.geotools.data.FeatureReader;
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FeatureReader;
+import org.geotools.api.data.FileDataStore;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.feature.DefaultFeatureCollection;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 import com.ursulagis.desktop.utils.ProyectionConstants;
 

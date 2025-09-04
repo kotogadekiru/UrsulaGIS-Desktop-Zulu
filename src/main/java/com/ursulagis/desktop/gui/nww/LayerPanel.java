@@ -210,6 +210,7 @@ public class LayerPanel extends VBox {
 				Object labor2 = c2.getValue().getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 
 				String l1Name =c1.getValue().getName();//((Ndvi)labor1).get
+				
 				String l2Name =c2.getValue().getName();
 
 				if(labor1 != null && labor1 instanceof Ndvi && 
@@ -231,6 +232,7 @@ public class LayerPanel extends VBox {
 						} 
 					} //else {//ordenar el resto por nombre
 				}
+				if(l1Name==null)l1Name="";
 				return l1Name.compareToIgnoreCase(l2Name);
 				//}
 			});

@@ -8,11 +8,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 
 import com.ursulagis.desktop.dao.Labor;

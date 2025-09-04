@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 
 import com.ursulagis.desktop.api.OrdenCosecha;
 import com.ursulagis.desktop.dao.Labor;
@@ -336,7 +336,8 @@ public class CosechaGUIController extends AbstractGUIController {
 			if(histoChart!=null){
 				Stage histoStage = new Stage();
 				histoStage.setTitle(Messages.getString("JFXMain.heightVsAmountChartTitle")); 
-				histoStage.getIcons().add(new Image(JFXMain.ICON));
+				//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+				histoStage.getIcons().addAll(JFXMain.stage.getIcons());
 
 				Scene scene = new Scene(histoChart, 800,450);
 				histoStage.setScene(scene);

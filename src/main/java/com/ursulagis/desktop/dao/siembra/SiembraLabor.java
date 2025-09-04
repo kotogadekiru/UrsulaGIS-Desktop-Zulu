@@ -7,10 +7,10 @@ import java.util.function.ToDoubleFunction;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 
-import org.geotools.data.FileDataStore;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.Clasificador;
 import com.ursulagis.desktop.dao.Labor;

@@ -7,7 +7,6 @@ import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.avlist.AVList;
 import gov.nasa.worldwind.avlist.AVListImpl;
 //import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
-//import gov.nasa.worldwind.awt.WorldWindowGLJPanel;
 import gov.nasa.worldwind.event.SelectEvent;
 import gov.nasa.worldwind.globes.ElevationModel;
 import gov.nasa.worldwind.layers.CompassLayer;
@@ -46,8 +45,26 @@ public class WWPanel extends JPanel {
 	public WWPanel(Dimension canvasSize, boolean includeStatusBar, JFXMain jfxMain) {
 		super(new BorderLayout());
 		this.main=jfxMain;
-		//this.wwd =new WorldWindowGLJPanel();// this.createWorldWindow();
-
+		//this.wwd =new WorldWindowGLJPanel();// WorldWindowGLJPanel no esta disponible en 2.0.0
+		// Try to create WorldWindow using the available configuration
+		try {
+			this.wwd = (WorldWindow) WorldWind.createConfigurationComponent("gov.nasa.worldwind.awt.WorldWindowGLCanvas");
+		} catch (Exception e) {
+			// Fallback: try to create a basic WorldWindow implementation
+			System.err.println("Warning: Could not create WorldWindowGLCanvas, trying alternative approach");
+			try {
+				this.wwd = (WorldWindow) WorldWind.createConfigurationComponent("gov.nasa.worldwind.WorldWindow");
+			} catch (Exception e2) {
+				System.err.println("Error: Could not create WorldWindow using configuration system");
+				e2.printStackTrace();
+				throw new RuntimeException("Failed to create WorldWindow component. Please check WorldWind configuration.", e2);
+			}
+		}
+		// Check if WorldWindow was created successfully
+		if (this.wwd == null) {
+			throw new RuntimeException("Failed to create WorldWindow component. WorldWind configuration may be incomplete.");
+		}
+		
 		//	((Component) this.wwd).setSize((int)canvasSize.getWidth()/4,(int) canvasSize.getHeight()/4);
 		((Component) this.wwd).setPreferredSize(canvasSize);
 

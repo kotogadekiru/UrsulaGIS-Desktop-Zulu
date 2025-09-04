@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="content" prefHeight="502.0" prefWidth="703.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.SiembraConfigDialogController">
+<VBox fx:id="content" prefHeight="502.0" prefWidth="703.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ursulagis.desktop.gui.SiembraConfigDialogController">
    <children>
 
       <TabPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="458.0" prefWidth="694.0" tabClosingPolicy="UNAVAILABLE">

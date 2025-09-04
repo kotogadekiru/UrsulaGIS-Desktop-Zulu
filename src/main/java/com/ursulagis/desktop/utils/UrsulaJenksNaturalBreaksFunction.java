@@ -33,11 +33,11 @@ import org.geotools.filter.capability.FunctionNameImpl;
 import org.geotools.filter.function.ClassificationFunction;
 import org.geotools.filter.function.RangedClassifier;
 import org.geotools.util.logging.Logging;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.capability.FunctionName;
-import org.opengis.parameter.Parameter;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.capability.FunctionName;
+import org.geotools.api.parameter.Parameter;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 /**
  * Calculate the Jenks' Natural Breaks classification for a featurecollection
  * 
@@ -55,7 +55,7 @@ import com.vividsolutions.jts.geom.Geometry;
  * @source $
  */
 public class UrsulaJenksNaturalBreaksFunction extends ClassificationFunction {
-    org.opengis.util.ProgressListener progress;
+    org.geotools.api.util.ProgressListener progress;
 
     private static final Logger logger = Logging.getLogger("org.geotools.filter.function");
     private String amountCol ="";
@@ -66,7 +66,8 @@ public class UrsulaJenksNaturalBreaksFunction extends ClassificationFunction {
             parameter("value", Double.class),
             parameter("classes", Integer.class));
     private static Parameter<?> parameter(String string, Class<?> class1) {
-            return new org.geotools.data.Parameter<>(string, class1);
+        //return new org.geotools.api.parameter.Parameter<>(string, class1);
+        return new org.geotools.api.data.Parameter<>(string, class1);
     }
     
     public UrsulaJenksNaturalBreaksFunction(String amountColumn, int numClases,double a) {

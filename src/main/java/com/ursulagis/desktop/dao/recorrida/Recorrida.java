@@ -20,15 +20,15 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 
 import org.geotools.data.DataUtilities;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.ServiceInfo;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.ServiceInfo;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 import com.ursulagis.desktop.dao.AbstractBaseEntity;
 import lombok.AccessLevel;
@@ -109,7 +109,7 @@ public class Recorrida extends AbstractBaseEntity{
 			System.out.println("labor inStore.info = "+info );
 			try {
 				SimpleFeatureType schema = store.getSchema();
-				System.out.println("Prescription Type: "+DataUtilities.spec(schema));
+				System.out.println("Prescription Type: "+DataUtilities.encodeType(schema));
 				System.out.println(schema);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -117,7 +117,13 @@ public class Recorrida extends AbstractBaseEntity{
 
 			//	if(nombreProperty.getValue() == null){
 			//nombreProperty.set(inStore.getInfo().getTitle().replaceAll("%20", " "));
-			setNombre(store.getInfo().getTitle().replaceAll("%20", " "));
+			String title = store.getInfo().getTitle();
+			if (title != null && !title.trim().isEmpty()) {
+				setNombre(title.replaceAll("%20", " "));
+			} else {
+				// Fallback to a default name if title is null or empty
+				setNombre("Recorrida_" + System.currentTimeMillis());
+			}
 
 			//}
 		}

@@ -16,39 +16,39 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.factory.GeoTools;
+import org.geotools.util.factory.GeoTools;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.referencing.FactoryException;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.operation.TransformException;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.Polygon;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Polygon;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.dao.cosecha.CosechaConfig;
@@ -94,7 +94,7 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 				Map<String,String> storeAttributeMapping =Collections.synchronizedMap(new HashMap<String,String>());
 				for(AttributeType att:descriptors){
 					String attClassName = att.getBinding().getName();
-					if(attClassName.contains("com.vividsolutions.jts.geom")){
+					if(attClassName.contains("org.locationtech.jts.geom")){
 						//System.out.println("ignorando el atributo "+att);
 						continue;}
 					String nAttName = att.getName().toString();// i+att.getName().toString();
@@ -141,7 +141,7 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 
 
 		// crear un nuevo shapeFile type que contenga todas las features de los shapes ingresados
-		String typeDescriptor = "the_geom:MultiPolygon:srid=4326";
+		String typeDescriptor = "the_geom:MultiPolygon:4326";
 		for(String descriptor : newDescriptors){
 			typeDescriptor+=","+descriptor;
 		}
@@ -343,7 +343,7 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 		List<AttributeType> attributes = f0.getType().getTypes();
 		attributes.forEach(att->{
 			String attClassName = att.getBinding().getName();
-			if(!attClassName.contains("com.vividsolutions.jts.geom")){
+			if(!attClassName.contains("org.locationtech.jts.geom")){
 				if(Number.class.isAssignableFrom(att.getBinding())){
 					Double value=Double.valueOf(0.0);
 					Double pesosTotal=Double.valueOf(0.0);
@@ -372,7 +372,7 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 	private static Collection<? extends SimpleFeature> fileDataStoreQuery(FileDataStore store, Geometry poly) {
 		List<SimpleFeature> objects = new ArrayList<SimpleFeature>();
 
-		FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+		FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
 		FeatureType schema;
 		try {
 			schema = store.getSchema();

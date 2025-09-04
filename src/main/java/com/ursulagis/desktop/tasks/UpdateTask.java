@@ -316,28 +316,31 @@ public class UpdateTask  extends Task<File>{
 	 */
 	private static void showWelcomeMessage(String message) {
 		//System.out.println("mostrando welcome \n"+message);
-		Platform.runLater(()->{		    
-			WebView webView = new WebView();
-			// webView.setPrefSize(600, 400);
-			webView.autosize();
-			WebEngine engine = webView.getEngine();
-			engine.loadContent(message);
+		Platform.runLater(()->{		
+			try{		
+				WebView webView = new WebView();
+				// webView.setPrefSize(600, 400);
+				webView.autosize();
+				WebEngine engine = webView.getEngine();
+				engine.loadContent(message);
 
-			VBox v = new VBox();
-			VBox.setVgrow(webView, Priority.ALWAYS);
-			VBox.setMargin(webView, new Insets(10,10,10,10));
-			v.getChildren().add(webView);
-			Stage welcomeStage = new Stage();
-			
-			double height = webView.getPrefHeight();
-			double width = webView.getPrefWidth();
-			Scene scene = new Scene(v, width-150+60,height-100+90);
-			welcomeStage.setScene(scene);
-			welcomeStage.initOwner(JFXMain.stage);
-			welcomeStage.getIcons().addAll(JFXMain.stage.getIcons());
-			welcomeStage.setTitle(Messages.getString("UpdateTaskWelcome.Title"));//"Bienvenido!");
-			welcomeStage.show();
-			
+				VBox v = new VBox();
+				VBox.setVgrow(webView, Priority.ALWAYS);
+				VBox.setMargin(webView, new Insets(10,10,10,10));
+				v.getChildren().add(webView);
+				Stage welcomeStage = new Stage();
+				
+				double height = webView.getPrefHeight();
+				double width = webView.getPrefWidth();
+				Scene scene = new Scene(v, width-150+60,height-100+90);
+				welcomeStage.setScene(scene);
+				welcomeStage.initOwner(JFXMain.stage);
+				welcomeStage.getIcons().addAll(JFXMain.stage.getIcons());
+				welcomeStage.setTitle(Messages.getString("UpdateTaskWelcome.Title"));//"Bienvenido!");
+				welcomeStage.show();
+			}   catch(Exception e){
+				e.printStackTrace();
+			}	
 //			engine.getLoadWorker().stateProperty().addListener((observableState, oldState, newState)->{
 //				System.out.println("new state "+newState);
 //				if(State.SUCCEEDED.equals(newState)) {

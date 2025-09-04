@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 
 import com.google.gson.Gson;
 
@@ -318,7 +318,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configRecorridaMI")); //
 			tablaStage.setScene(scene);
 
@@ -364,7 +364,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configRecorridaMI")); //
 			tablaStage.setScene(scene);
 
@@ -493,7 +493,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 
 		Scene scene = new Scene(tabla, 800, 600);
 		Stage tablaStage = new Stage();
-		tablaStage.getIcons().add(new Image(JFXMain.ICON));
+		tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 		tablaStage.setTitle(Messages.getString("Recorrida.asignarValores")); //
 		tablaStage.setScene(scene);
 

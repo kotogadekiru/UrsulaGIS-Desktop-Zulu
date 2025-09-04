@@ -22,10 +22,10 @@ import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.filter.function.Classifier;
 import org.geotools.filter.function.JenksNaturalBreaksFunction;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Literal;
-import org.opengis.filter.expression.PropertyName;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Literal;
+import org.geotools.api.filter.expression.PropertyName;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.dao.utils.PropertyHelper;
@@ -250,7 +250,7 @@ public class Clasificador {
 	public  Classifier constructJenksClasifier(SimpleFeatureCollection collection,String amountColumn){
 		//JenksFunctionTest test = new JenksFunctionTest("jenksTest");
 		histograma = null;
-		FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2(null);
+		FilterFactory ff = CommonFactoryFinder.getFilterFactory(null);
 
 		//Literal classes = ff.literal(colors.length);
 		Literal classes = ff.literal(this.getNumClasses());

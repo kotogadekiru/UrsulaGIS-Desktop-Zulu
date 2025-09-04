@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -465,7 +465,8 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.373")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -514,7 +515,7 @@ public class ConfigGUI extends AbstractGUIController{
 					);
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.375")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -563,7 +564,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.377")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -607,7 +608,7 @@ public class ConfigGUI extends AbstractGUIController{
 			table.setOnDoubleClick(()->new Campania(Messages.getString("JFXMain.379"))); //
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.380")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -678,7 +679,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.381")); //
 			tablaStage.setScene(scene);
 
@@ -787,7 +788,8 @@ public class ConfigGUI extends AbstractGUIController{
 		bp.setBottom(accept);
 		Scene scene = new Scene(bp, 400, 300);
 		Stage tablaStage = new Stage();
-		tablaStage.getIcons().add(new Image(JFXMain.ICON));
+		//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());		
+		tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 		tablaStage.setTitle(Messages.getString("Recorrida.asignarValores")); //
 		tablaStage.setScene(scene);
 
@@ -910,7 +912,7 @@ public class ConfigGUI extends AbstractGUIController{
 			v.getChildren().add(h);
 			Scene scene = new Scene(v, 400, 300);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.OrdenCompra")); //
 			tablaStage.setScene(scene);
 			tablaStage.heightProperty().addListener((obj,old,nu)->{
@@ -969,7 +971,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.OrdenCompra")); //
 			tablaStage.setScene(scene);
 
@@ -1005,7 +1007,7 @@ public class ConfigGUI extends AbstractGUIController{
 		//
 		//			Scene scene = new Scene(table, 800, 600);
 		//			Stage tablaStage = new Stage();
-		//			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+		//			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 		//			tablaStage.setTitle(Messages.getString("JFXMain.configRecorridaMI")); //
 		//			tablaStage.setScene(scene);
 		//
@@ -1067,7 +1069,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configSiembraMI")); //
 			tablaStage.setScene(scene);
 
@@ -1156,7 +1158,7 @@ public class ConfigGUI extends AbstractGUIController{
 		bp.setBottom(accept);
 		Scene scene = new Scene(bp, 400, 300);
 		Stage tablaStage = new Stage();
-		tablaStage.getIcons().add(new Image(JFXMain.ICON));
+		tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 		tablaStage.setTitle(Messages.getString("Recorrida.asignarValores")); //
 		tablaStage.setScene(scene);
 
@@ -1220,7 +1222,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configPulverizacionMI")); //
 			tablaStage.setScene(scene);
 
@@ -1281,7 +1283,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configFertilizacionMI")); //
 			tablaStage.setScene(scene);
 
@@ -1321,7 +1323,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.382")); //
 			tablaStage.setScene(scene);
 
@@ -1383,7 +1385,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.387")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -1409,7 +1411,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.389")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -1434,7 +1436,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configAsignacionMI")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -1459,7 +1461,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.392")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -1485,7 +1487,7 @@ public class ConfigGUI extends AbstractGUIController{
 			table.setOnDoubleClick(()->new Semilla(Messages.getString("JFXMain.393"),DAH.getAllCultivos().get(0))); //
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.394"));
 			tablaStage.setScene(scene);
 			tablaStage.show();	 

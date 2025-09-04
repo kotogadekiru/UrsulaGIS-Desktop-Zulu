@@ -3,9 +3,9 @@ package com.ursulagis.desktop.gui;
 import java.text.NumberFormat;
 
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;

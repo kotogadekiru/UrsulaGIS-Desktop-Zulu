@@ -14,7 +14,7 @@
 <?import javafx.scene.text.Font?>
 
 
-<Pane fx:id="content" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="393.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.SiembraDosisObjetivoDialog">
+<Pane fx:id="content" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="393.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ursulagis.desktop.gui.SiembraDosisObjetivoDialog">
    <children>
       <Group layoutX="48.5" layoutY="24.0">
          <children>

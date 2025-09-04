@@ -14,13 +14,13 @@ import org.geotools.factory.CommonFactoryFinder;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.filter.function.Classifier;
 import org.geotools.filter.function.RangedClassifier;
-import org.geotools.styling.FeatureTypeStyle;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.expression.Function;
-import org.opengis.filter.expression.PropertyName;
+import org.geotools.api.style.FeatureTypeStyle;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.expression.Function;
+import org.geotools.api.filter.expression.PropertyName;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 public class NaturalBreaks {
     private String amountCol ="";

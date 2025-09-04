@@ -2,8 +2,8 @@ package com.ursulagis.desktop.utils;
 
 import java.util.Collection;
 
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.operation.polygonize.Polygonizer;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.operation.polygonize.Polygonizer;
 
 public class GeometryValidator {
 	/**

@@ -3,12 +3,17 @@ package com.ursulagis.desktop.gui;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.InputStream;
+
 import java.net.URISyntaxException;
 import java.net.URL;
+
 import java.time.LocalTime;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,57 +31,6 @@ import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import com.ursulagis.desktop.dao.Labor;
-import com.ursulagis.desktop.dao.Ndvi;
-import com.ursulagis.desktop.dao.Poligono;
-import com.ursulagis.desktop.dao.config.Configuracion;
-import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
-import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
-import com.ursulagis.desktop.dao.margen.Margen;
-import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
-import com.ursulagis.desktop.dao.recorrida.Recorrida;
-import com.ursulagis.desktop.dao.siembra.SiembraLabor;
-import com.ursulagis.desktop.dao.suelo.Suelo;
-import com.ursulagis.desktop.dao.utils.PropertyHelper;
-import gov.nasa.worldwind.Configuration;
-import gov.nasa.worldwind.View;
-import gov.nasa.worldwind.WorldWind;
-import gov.nasa.worldwind.WorldWindow;
-import gov.nasa.worldwind.avlist.AVKey;
-import gov.nasa.worldwind.avlist.AVList;
-import gov.nasa.worldwind.data.BufferedImageRaster;
-import gov.nasa.worldwind.data.DataRaster;
-import gov.nasa.worldwind.data.DataRasterReader;
-import gov.nasa.worldwind.data.DataRasterReaderFactory;
-import gov.nasa.worldwind.event.RenderingExceptionListener;
-import gov.nasa.worldwind.event.SelectListener;
-import gov.nasa.worldwind.exception.WWAbsentRequirementException;
-import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.geom.Sector;
-import gov.nasa.worldwind.globes.ElevationModel;
-import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.layers.CompassLayer;
-import gov.nasa.worldwind.layers.Layer;
-import gov.nasa.worldwind.layers.LayerList;
-import gov.nasa.worldwind.layers.SurfaceImageLayer;
-import gov.nasa.worldwind.render.SurfaceImage;
-import gov.nasa.worldwind.terrain.ZeroElevationModel;
-import gov.nasa.worldwind.util.StatusBar;
-import gov.nasa.worldwindx.examples.util.ExampleUtil;
-import com.ursulagis.desktop.gui.controller.ConfigGUI;
-import com.ursulagis.desktop.gui.controller.CosechaGUIController;
-import com.ursulagis.desktop.gui.controller.FertilizacionGUIController;
-import com.ursulagis.desktop.gui.controller.GenericLaborGUIController;
-import com.ursulagis.desktop.gui.controller.MargenGUIController;
-import com.ursulagis.desktop.gui.controller.NdviGUIController;
-import com.ursulagis.desktop.gui.controller.PoligonoGUIController;
-import com.ursulagis.desktop.gui.controller.PulverizacionGUIController;
-import com.ursulagis.desktop.gui.controller.RecorridaGUIController;
-import com.ursulagis.desktop.gui.controller.SiembraGUIController;
-import com.ursulagis.desktop.gui.controller.SueloGUIController;
-import com.ursulagis.desktop.gui.nww.LayerAction;
-import com.ursulagis.desktop.gui.nww.LayerPanel;
-import com.ursulagis.desktop.gui.nww.WWPanel;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.Property;
@@ -107,6 +61,59 @@ import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+
+import gov.nasa.worldwind.Configuration;
+import gov.nasa.worldwind.View;
+import gov.nasa.worldwind.WorldWind;
+import gov.nasa.worldwind.WorldWindow;
+import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.avlist.AVList;
+import gov.nasa.worldwind.data.BufferedImageRaster;
+import gov.nasa.worldwind.data.DataRaster;
+import gov.nasa.worldwind.data.DataRasterReader;
+import gov.nasa.worldwind.data.DataRasterReaderFactory;
+import gov.nasa.worldwind.event.RenderingExceptionListener;
+import gov.nasa.worldwind.event.SelectListener;
+import gov.nasa.worldwind.exception.WWAbsentRequirementException;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Sector;
+import gov.nasa.worldwind.globes.ElevationModel;
+import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.layers.CompassLayer;
+import gov.nasa.worldwind.layers.Layer;
+import gov.nasa.worldwind.layers.LayerList;
+import gov.nasa.worldwind.layers.SurfaceImageLayer;
+import gov.nasa.worldwind.render.SurfaceImage;
+import gov.nasa.worldwind.terrain.ZeroElevationModel;
+import gov.nasa.worldwind.util.StatusBar;
+import gov.nasa.worldwindx.examples.util.ExampleUtil;
+
+import com.ursulagis.desktop.gui.controller.ConfigGUI;
+import com.ursulagis.desktop.gui.controller.CosechaGUIController;
+import com.ursulagis.desktop.gui.controller.FertilizacionGUIController;
+import com.ursulagis.desktop.gui.controller.GenericLaborGUIController;
+import com.ursulagis.desktop.gui.controller.MargenGUIController;
+import com.ursulagis.desktop.gui.controller.NdviGUIController;
+import com.ursulagis.desktop.gui.controller.PoligonoGUIController;
+import com.ursulagis.desktop.gui.controller.PulverizacionGUIController;
+import com.ursulagis.desktop.gui.controller.RecorridaGUIController;
+import com.ursulagis.desktop.gui.controller.SiembraGUIController;
+import com.ursulagis.desktop.gui.controller.SueloGUIController;
+import com.ursulagis.desktop.gui.nww.LayerAction;
+import com.ursulagis.desktop.gui.nww.LayerPanel;
+import com.ursulagis.desktop.gui.nww.WWPanel;
+import com.ursulagis.desktop.dao.Labor;
+import com.ursulagis.desktop.dao.Ndvi;
+import com.ursulagis.desktop.dao.Poligono;
+import com.ursulagis.desktop.dao.config.Configuracion;
+import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
+import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
+import com.ursulagis.desktop.dao.margen.Margen;
+import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
+import com.ursulagis.desktop.dao.recorrida.Recorrida;
+import com.ursulagis.desktop.dao.siembra.SiembraLabor;
+import com.ursulagis.desktop.dao.suelo.Suelo;
+import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
@@ -119,11 +126,12 @@ public class JFXMain extends Application {
 	private static final String GOV_NASA_WORLDWIND_AVKEY_INITIAL_LATITUDE = "gov.nasa.worldwind.avkey.InitialLatitude"; 
 	public static Configuracion config = Configuracion.getInstance();
 
-	public static final String VERSION = "0.2.31"; 
-	public static final String TITLE_VERSION = "Ursula GIS-"+VERSION; 
-	public static final String buildDate = "25/08/2025";
-	public static  final String ICON ="com/ursulagis/desktop/gui/ursula_logo_2020.png";//"gui/32x32-icon-earth.png";// "gui/1-512.png";//UrsulaGIS-Desktop/src/gui/32x32-icon-earth.png 
-	private static final String SOUND_FILENAME = "com/ursulagis/desktop/gui/exito4.mp3";//"gui/Alarm08.wav";//"Alarm08.wav" funciona desde eclipse pero no desde el jar  
+	public static final String VERSION = "1.0.11"; //XXX al cambiar la version cambiar el pom y el yml
+	public static final String TITLE_VERSION = "Ursula GIS Zulu-"+VERSION; 
+	public static final String buildDate = "03/09/2025";
+
+	private static  final String ICON ="ursula_logo_2020.png";//"gui/32x32-icon-earth.png";// "gui/1-512.png";//UrsulaGIS-Desktop/src/gui/32x32-icon-earth.png 
+	private static final String SOUND_FILENAME = "exito4.mp3";//"gui/Alarm08.wav";//"Alarm08.wav" funciona desde eclipse pero no desde el jar  
 
 	public static Stage stage=null;
 	private Scene scene=null;
@@ -156,8 +164,12 @@ public class JFXMain extends Application {
 		try {
 			JFXMain.stage = primaryStage;
 			primaryStage.setTitle(TITLE_VERSION);
-			URL url = JFXMain.class.getClassLoader().getResource(ICON);
-			primaryStage.getIcons().add(new Image(url.toURI().toString()));
+			//URL iconResource = this.getClass().getResource(ICON);
+			InputStream iconIs = this.getClass().getResourceAsStream(ICON);
+			System.out.println("boundle file found at "+iconIs);
+			//URL url = JFXMain.class.getClassLoader().getResource(ICON);
+			
+			primaryStage.getIcons().add(new Image(iconIs));
 			Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 			double ratio = primaryScreenBounds.getHeight()/primaryScreenBounds.getWidth();
 			int canvasWidth = (int) (primaryScreenBounds.getWidth()*0.8);

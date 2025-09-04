@@ -37,10 +37,10 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridFormatFinder;
-import org.geotools.geometry.Envelope2D;
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.Envelope;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.geotools.api.geometry.Position;
+import org.geotools.api.geometry.Bounds;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import com.ursulagis.desktop.dao.Clasificador;
 import com.ursulagis.desktop.dao.Labor;
@@ -65,7 +65,7 @@ import gov.nasa.worldwind.formats.worldfile.WorldFile;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
-import gov.nasa.worldwind.geom.Position;
+//import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.geom.coords.UTMCoord;
 import gov.nasa.worldwind.layers.Layer;
@@ -629,7 +629,8 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 
 
 			LatLon ori = sector.getCentroid();
-			Position pointPosition = Position.fromDegrees(ori.latitude.degrees, ori.longitude.degrees);			
+			 
+			gov.nasa.worldwind.geom.Position pointPosition = gov.nasa.worldwind.geom.Position.fromDegrees(ori.latitude.degrees, ori.longitude.degrees);			
 			PointPlacemark pmStandard = new PointPlacemark(pointPosition);
 			PointPlacemarkAttributes pointAttribute = new PointPlacemarkAttributes();
 			pointAttribute.setImageColor(java.awt.Color.red);

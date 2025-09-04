@@ -23,7 +23,7 @@ import javax.persistence.Transient;
 
 import org.controlsfx.control.table.TableFilter;
 import org.controlsfx.control.table.TableFilter.Builder;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -222,7 +222,8 @@ public class SmartTableView<T> extends TableView<T> {
 						Alert alert = new Alert(AlertType.CONFIRMATION);
 						Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
 
-						stage.getIcons().add(new Image(JFXMain.ICON));
+						//stage.getIcons().addAll(JFXMain.stage.getIcons());
+						stage.getIcons().addAll(JFXMain.stage.getIcons());
 						alert.setTitle(Messages.getString("SmartTableView.BorrarRegistro"));//"Borrar registro"
 						alert.setHeaderText(Messages.getString("SmartTableView.BorrarRegistroWarning"));//"Esta accion borrara permanentemente el registro. Desea Continuar?");
 						Optional<ButtonType> res = alert.showAndWait();
@@ -237,7 +238,7 @@ public class SmartTableView<T> extends TableView<T> {
 							}catch(Exception e){
 								Alert eliminarFailAlert = new Alert(AlertType.ERROR);
 								((Stage) eliminarFailAlert.getDialogPane().getScene().getWindow()).
-								getIcons().add(new Image(JFXMain.ICON));
+								getIcons().addAll(JFXMain.stage.getIcons());
 								eliminarFailAlert.setTitle(Messages.getString("SmartTableView.BorrarRegistro"));//"Borrar registro");
 								eliminarFailAlert.setHeaderText(Messages.getString("SmartTableView.BorrarRegistroError"));//"No se pudo borrar el registro");
 								eliminarFailAlert.setContentText(e.getMessage());
@@ -1396,7 +1397,7 @@ public class SmartTableView<T> extends TableView<T> {
 			VBox vBox = new VBox(table,bottom);
 			Scene scene = new Scene(vBox, 800, 600);
 			Stage tablaStage = new Stage();
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(labor.getNombre());
 			tablaStage.setScene(scene);
 			tablaStage.show();	 

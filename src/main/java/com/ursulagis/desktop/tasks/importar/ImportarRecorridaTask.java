@@ -3,12 +3,12 @@ package com.ursulagis.desktop.tasks.importar;
 import java.io.IOException;
 import java.util.Map;
 
-import org.geotools.data.FileDataStore;
+import org.geotools.api.data.FileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import com.google.gson.Gson;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Point;
 
 import com.ursulagis.desktop.dao.recorrida.Muestra;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
@@ -34,7 +34,7 @@ public class ImportarRecorridaTask extends ProgresibleTask<Recorrida>{
 	}
 
 	public void run(Recorrida recorrida,FileDataStore store) {
-//		sb.append("*the_geom:"+Point.class.getCanonicalName()+":srid=4326");
+//		sb.append("*the_geom:"+Point.class.getCanonicalName()+":4326");
 //		sb.append(",name" + ":"+String.class.getCanonicalName());
 //		sb.append(",obs" + ":"+String.class.getCanonicalName());	
 	

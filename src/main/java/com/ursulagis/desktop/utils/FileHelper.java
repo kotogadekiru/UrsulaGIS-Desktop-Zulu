@@ -17,11 +17,11 @@ import java.util.stream.Stream;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.geotools.data.FileDataStore;
-import org.geotools.data.FileDataStoreFinder;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.config.Configuracion;

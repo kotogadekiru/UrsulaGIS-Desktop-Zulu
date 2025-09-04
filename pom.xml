@@ -25,7 +25,7 @@
          https://docs.oracle.com/en/java/javase/15/docs/api/java.base/java/text/SimpleDateFormat.html
          -->
 
-        
+        <!-- cambiar el yml APP_VERSION si se cambia la version mayor-->
         <app.version.mayor>1.0.</app.version.mayor>
         <app.version>${app.version.mayor}1</app.version>
         <app.version.local>${app.version.mayor}1</app.version.local>
@@ -53,18 +53,19 @@
         <macos.sign></macos.sign>
         <macos.sign.identity></macos.sign.identity>
 
-		<geotools.version>13.6</geotools.version>
+		<geotools.version>33.2</geotools.version>
         <worldwind.version>2.0.0-986</worldwind.version>
         <lombok-version>1.18.38</lombok-version>
+        <jts.version>1.19.0</jts.version>
 
     </properties>
 
     <dependencies>
-        <dependency>
+<!--         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-web</artifactId>
             <version>24.0.2</version>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>com.dooapp.fxform2</groupId>
             <artifactId>core</artifactId>
@@ -76,6 +77,7 @@
             <artifactId>controlsfx</artifactId>
             <version>11.2.2</version>
         </dependency>
+        
         <!-- https://mvnrepository.com/artifact/mil.nga/tiff -->
         <dependency>
             <groupId>mil.nga</groupId>
@@ -146,38 +148,35 @@
             <artifactId>org.eclipse.persistence.jpars</artifactId>
             <version>2.7.16</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.4.197</version>           
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.jpa -->
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.jpa</artifactId>
             <version>2.7.16</version>
+        </dependency>    
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-shapefile</artifactId>
+            <version>${geotools.version}</version>
         </dependency>
-    	<dependency>
-			<groupId>org.geotools</groupId>
-			<artifactId>gt-shapefile</artifactId>
-			<version>${geotools.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.geotools</groupId>
-			<artifactId>gt-referencing</artifactId>
-			<version>${geotools.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.geotools</groupId>
-			<artifactId>gt-epsg-hsql</artifactId>
-			<version>${geotools.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.geotools</groupId>
-			<artifactId>gt-epsg-extension</artifactId>
-			<version>${geotools.version}</version>
-		</dependency>
-        <!-- https://mvnrepository.com/artifact/org.geotools/gt-coverage -->
         <dependency>
             <groupId>org.geotools</groupId>
             <artifactId>gt-coverage</artifactId>
-            <version>13.3</version>
+            <version>${geotools.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+            <version>${jts.version}</version>
+        </dependency>
+
         
     	<!-- https://mvnrepository.com/artifact/gov.nasa/worldwind -->
 		<dependency>
@@ -232,6 +231,13 @@
             <groupId>io.github.mkpaz</groupId>
             <artifactId>atlantafx-base</artifactId>
             <version>1.1.0</version>
+        </dependency>
+        
+        <!-- Override Apache Commons Lang3 to fix Java 24 compatibility issues -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.14.0</version>
         </dependency>
     </dependencies>
 
@@ -331,6 +337,24 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>${main-class}</mainClass>
+                    <options>
+                        <option>--enable-native-access=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.media/javafx.scene.media=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.web/javafx.scene.web=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.web/com.sun.webkit=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.media/com.sun.media.jfxmedia=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.graphics/com.sun.marlin=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.graphics/com.sun.marlin.offheap=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.base/javafx.collections=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.base/javafx.beans=ALL-UNNAMED</option>
+                        <option>--add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED</option>
+                        <option>-Djava.awt.headless=false</option>
+                        <option>-Dprism.order=es2</option>
+                        <option>-Dprism.verbose=false</option>
+                        <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=24</option>
+                    </options>
                 </configuration>
             </plugin>
             <plugin>
@@ -357,7 +381,7 @@
                                 <arg>--no-header-files</arg>
                                 <arg>--strip-debug</arg>
                                 <arg>--no-man-pages</arg>
-                                <arg>--compress=2</arg>
+                                <!-- compress=2-->                                
                             </args>
                         </configuration>
                     </execution>

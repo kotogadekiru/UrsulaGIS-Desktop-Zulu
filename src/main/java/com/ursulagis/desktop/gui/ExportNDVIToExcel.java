@@ -15,7 +15,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Point;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;

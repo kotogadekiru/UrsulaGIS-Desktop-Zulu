@@ -11,7 +11,7 @@ package com.ursulagis.desktop.utils;
  */
 
 
-import org.opengis.util.InternationalString;
+import org.geotools.api.util.InternationalString;
 
 /**
  * General parameter interface. 

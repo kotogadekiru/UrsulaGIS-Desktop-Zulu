@@ -9,23 +9,23 @@ import java.util.stream.Collectors;
 
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
-import com.vividsolutions.jts.precision.EnhancedPrecisionOp;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
 
 import com.ursulagis.desktop.dao.Clasificador;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -190,7 +190,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 	public SimpleFeatureType constructType() {
 		SimpleFeatureType type = null;
 
-		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":srid=4326,"
+		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":4326,"
 				+ SiembraLabor.COLUMNA_DOSIS_LINEA +":java.lang.Long,"
 				+ SiembraLabor.COLUMNA_DOSIS_COSTADO +":java.lang.Long,"
 				+SiembraLabor.COLUMNA_SEM_10METROS+":"+"java.lang.Long";//semilla siempre tiene que ser la 3ra columna
@@ -203,7 +203,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			e.printStackTrace();
 		}
 
-		System.out.println("PrescType: "+DataUtilities.spec(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
+		System.out.println("PrescType: "+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
 		return type;
 	}
 

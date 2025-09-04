@@ -4,8 +4,8 @@ import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.List;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.dao.recorrida.Camino;

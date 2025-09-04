@@ -2,7 +2,7 @@ package com.ursulagis.desktop.tasks.procesar;
 
 import java.io.IOException;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;

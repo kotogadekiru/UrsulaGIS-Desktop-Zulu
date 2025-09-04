@@ -8,23 +8,23 @@ import java.util.Optional;
 
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
-import com.vividsolutions.jts.precision.EnhancedPrecisionOp;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -66,10 +66,10 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 	public void run(PulverizacionLabor laborToExport,File shapeFile) {
 		SimpleFeatureType type = null;
 
-		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":srid=4326,"
+		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":4326,"
 				+ PulverizacionLabor.COLUMNA_DOSIS + ":java.lang.Long";
 		
-		System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ the_geom:Polygon:srid=4326,Fert L:java.lang.Long,Fert C:java.lang.Long,seeding:java.lang.Long
+		System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ the_geom:Polygon:4326,Fert L:java.lang.Long,Fert C:java.lang.Long,seeding:java.lang.Long
 		System.out.println("Long.SIZE="+Long.SIZE);//64bits=16bytes. ok!! //$NON-NLS-1$
 		try {
 			type = DataUtilities.createType("PrescType", typeDescriptor); //$NON-NLS-1$
@@ -77,7 +77,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 			e.printStackTrace();
 		}
 
-		System.out.println("PrescType: "+DataUtilities.spec(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
+		System.out.println("PrescType: "+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
 
 		List<LaborItem> items = new ArrayList<LaborItem>();
 	
@@ -348,7 +348,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 
 //	public void exe(FertilizacionLabor laborToExport,File shapeFile)  {
 //		SimpleFeatureType type = null;
-//		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":srid=4326,"
+//		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":4326,"
 //				+ FertilizacionLabor.COLUMNA_DOSIS + ":java.lang.Long";
 //		
 //		System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ 
@@ -359,7 +359,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 //			e.printStackTrace();
 //		}
 //
-//		System.out.println("PrescType:"+DataUtilities.spec(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
+//		System.out.println("PrescType:"+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
 //
 //		SimpleFeatureIterator it = laborToExport.outCollection.features();
 //		DefaultFeatureCollection exportFeatureCollection =  new DefaultFeatureCollection("PrescType",type); //$NON-NLS-1$

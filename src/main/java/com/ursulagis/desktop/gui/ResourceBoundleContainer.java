@@ -47,23 +47,26 @@ public class ResourceBoundleContainer {
 				//XXX podemos crear una api en ursula? de esa manera cacheamos los ya generados
 				e.printStackTrace();
 			}
-		} else {//locale is not suported by default
-			//TODO try to load a local boundle or translate a base bundle
-			//TODO first look for messages in C:\Users\<user>\AppData\Roaming\UrsulaGIS\messages_fr.properties
-			String fileName = Configuracion.ursulaGISFolder+"\\messages_"+locale.getLanguage()+".properties";
-			File localFile = new File(fileName);
-			if(!localFile.exists()) {
-				ResourceBundle baseBoundle1 = Messages.getBoundle();//verificar que esto no explote
-				GoogleTranslatorHelper t = new GoogleTranslatorHelper(baseBoundle1,locale);
-				t.run();
-				//JFXMain.executorPool.submit(t);
-			}
-			TxtResourceBundle localBoundle =getLocalResourceBundle(fileName);
-			if(localBoundle != null) {
-				RESOURCE_BUNDLE = localBoundle;				
-			} 
-			
+		}else {
+			System.out.println("boundle file not found at "+resourceName);
 		}
+		//  else {//locale is not suported by default
+		// 	//TODO try to load a local boundle or translate a base bundle
+		// 	//TODO first look for messages in C:\Users\<user>\AppData\Roaming\UrsulaGIS\messages_fr.properties
+		// 	String fileName = Configuracion.ursulaGISFolder+"\\messages_"+locale.getLanguage()+".properties";
+		// 	File localFile = new File(fileName);
+		// 	if(!localFile.exists()) {
+		// 		ResourceBundle baseBoundle1 = Messages.getBoundle();//verificar que esto no explote
+		// 		GoogleTranslatorHelper t = new GoogleTranslatorHelper(baseBoundle1,locale);
+		// 		t.run();
+		// 		//JFXMain.executorPool.submit(t);
+		// 	}
+		// 	TxtResourceBundle localBoundle =getLocalResourceBundle(fileName);
+		// 	if(localBoundle != null) {
+		// 		RESOURCE_BUNDLE = localBoundle;				
+		// 	} 
+			
+		// }
 	}
 
 	private static TxtResourceBundle getLocalResourceBundle(String fileName) {

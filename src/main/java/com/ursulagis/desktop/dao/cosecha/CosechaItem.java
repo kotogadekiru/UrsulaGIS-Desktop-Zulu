@@ -5,7 +5,7 @@ import java.math.RoundingMode;
 
 import javax.persistence.Entity;
 
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import com.ursulagis.desktop.dao.LaborItem;
 import lombok.Data;

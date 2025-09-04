@@ -10,10 +10,10 @@ import java.util.stream.Stream;
 
 import org.geotools.geometry.jts.ReferencedEnvelope;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Polygon;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
 
 import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.dao.cosecha.CosechaConfig;
@@ -84,7 +84,7 @@ public class InterpolarRecorridaMapTask extends ProcessMapTask<SueloItem,Suelo> 
 			Map<SueloParametro,Double> sueloProps =new HashMap<SueloParametro,Double>();
 			Double sumaPesos = 0.0;
 			for(Muestra m :this.recorrida.getMuestras()) {
-				com.vividsolutions.jts.geom.Point pm =GeometryHelper.constructPoint(m.getPosition());
+				org.locationtech.jts.geom.Point pm =GeometryHelper.constructPoint(m.getPosition());
 				Double dist = p.distance(pm);//si la muestra esta dentro del poligono? dist==0		
 				
 				if(dist<this.minDist) {

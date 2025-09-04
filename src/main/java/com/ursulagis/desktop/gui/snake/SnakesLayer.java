@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Point;
 
 import gov.nasa.worldwind.View;
 import gov.nasa.worldwind.WorldWindow;

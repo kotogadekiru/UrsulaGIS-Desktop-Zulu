@@ -7,15 +7,15 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.geometry.BoundingBox;
+import org.geotools.api.geometry.BoundingBox;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.Polygon;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Polygon;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -391,7 +391,7 @@ public class ProcessMarginMapTask extends ProcessMapTask<MargenItem,Margen> {
 //			}
 //			intersection = makeGood(intersection);
 //			// .out.println("tarde "+(fin-init)+" milisegundos en insertar");
-//		} catch (Exception te) {//com.vividsolutions.jts.geom.TopologyException: found non-noded intersection between LINESTRING ( -62.008963817544945 -33.872771283412874, -62.0089897286684 -33.87272023486772 ) and LINESTRING ( -62.00902014621838 -33.87282073965304, -62.00893906917324 -33.872626066467696 ) [ (-62.008983444498256, -33.87273261556376, NaN) ]
+//		} catch (Exception te) {//org.locationtech.jts.geom.TopologyException: found non-noded intersection between LINESTRING ( -62.008963817544945 -33.872771283412874, -62.0089897286684 -33.87272023486772 ) and LINESTRING ( -62.00902014621838 -33.87282073965304, -62.00893906917324 -33.872626066467696 ) [ (-62.008983444498256, -33.87273261556376, NaN) ]
 //			try{//
 //				intersection = EnhancedPrecisionOp.difference(g, g2);
 //			}catch(Exception e){

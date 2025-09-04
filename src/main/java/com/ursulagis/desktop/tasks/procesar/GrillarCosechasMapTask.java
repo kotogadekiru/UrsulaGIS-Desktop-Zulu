@@ -12,17 +12,17 @@ import java.util.concurrent.ConcurrentMap;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.geometry.BoundingBox;
-import org.opengis.geometry.DirectPosition;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.geometry.BoundingBox;
+import org.geotools.api.geometry.Position;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.LinearRing;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.precision.EnhancedPrecisionOp;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
 
 import com.ursulagis.desktop.dao.config.Cultivo;
 import com.ursulagis.desktop.dao.cosecha.CosechaConfig;
@@ -368,7 +368,7 @@ public class GrillarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLa
 	public static List<Polygon> construirGrilla(BoundingBox bounds,double ancho) {
 		//System.out.println(Messages.getString("GrillarCosechasMapTask.16")); //$NON-NLS-1$
 		List<Polygon> polygons = new ArrayList<Polygon>();
-		DirectPosition esq = bounds.getUpperCorner();
+		Position esq = bounds.getUpperCorner();
 		//System.out.println("esq.getOrdinate(1) "+esq.getOrdinate(1));//esq.getOrdinate(0) -61.9547387
 		ProyectionConstants.setLatitudCalculo(esq.getOrdinate(1));
 		

@@ -84,7 +84,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
 		stage.setMinWidth(800);
 		stage.setMinHeight(400);
-		stage.getIcons().add(new Image(JFXMain.ICON));
+		stage.getIcons().addAll(JFXMain.stage.getIcons());
 
 		this.getDialogPane().getButtonTypes().add(ButtonType.OK);
 		this.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);

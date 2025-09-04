@@ -7,10 +7,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Transient;
-
-import org.geotools.data.FileDataStore;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.type.AttributeType;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.type.AttributeType;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborConfig;

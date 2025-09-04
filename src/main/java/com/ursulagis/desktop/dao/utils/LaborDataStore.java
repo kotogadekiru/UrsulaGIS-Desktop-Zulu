@@ -9,21 +9,23 @@ import java.util.List;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.factory.CommonFactoryFinder;
-import org.geotools.factory.GeoTools;
+//import org.geotools.api.factory.GeoTools;
+import org.geotools.util.factory.GeoTools;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeType;
-import org.opengis.feature.type.FeatureType;
-import org.opengis.filter.FilterFactory2;
-import org.opengis.filter.spatial.BBOX;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.type.AttributeDescriptor;
+//import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.FeatureType;
+import org.geotools.api.filter.FilterFactory;
+import org.geotools.api.filter.spatial.BBOX;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.index.quadtree.Quadtree;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -47,14 +49,23 @@ public class LaborDataStore<E> {
 				sch = labor.inStore.getSchema();	
 			}
 
-			List<AttributeType> types = sch.getTypes();
-			for (AttributeType at : types) {
-				//at binding para Importe_ha es class java.lang.Double
-				//System.out.println("at binding para "+at.getName() +" es "+at.getBinding());
-				if(Number.class.isAssignableFrom(at.getBinding() )) {
-					availableColumns.add(at.getName().toString());
-				}
-			}
+			List<AttributeDescriptor> attributes = sch.getAttributeDescriptors();
+            //List<String> attributeNames = new ArrayList<>();
+            for (AttributeDescriptor attr : attributes) {
+                availableColumns.add(attr.getLocalName());
+            }
+
+			// List<AttributeType> types = sch.getTypes();
+			// for (AttributeType at : types) {
+			// 	System.out.println("at name "+at);//.getName().toString());
+				
+			// 	//at binding para Importe_ha es class java.lang.Double
+			// 	//System.out.println("at binding para "+at.getName() +" es "+at.getBinding());
+			// 	if(Number.class.isAssignableFrom(at.getBinding() )) {
+			// 		System.out.println(at.getName().getNamespaceURI());
+			// 		availableColumns.add(at.getName().toString());
+			// 	}
+			// }
 
 		} catch (IOException e) {			
 			e.printStackTrace();
@@ -64,7 +75,7 @@ public class LaborDataStore<E> {
 	
 	public static  List<LaborItem> inStoreQuery(Envelope envelope,Labor<? extends LaborItem> labor) throws IOException{
 		List<LaborItem> objects = new ArrayList<>();
-		FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+		FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
 		FeatureType schema = labor.inStore.getSchema();
 
 		// usually "THE_GEOM" for shapefiles
@@ -92,7 +103,7 @@ public class LaborDataStore<E> {
 		//TODO tratar de cachear todo lo posible para evitar repetir trabajo en querys consecutivas.
 		//una udea es cachear un sector del out collection y solo hacer la query si el envelope esta fuera de lo cacheado
 		if(labor.outCollection.getBounds().intersects(envelope)){//solo hago la query si el bounds esta dentro del mapa
-			FilterFactory2 ff = CommonFactoryFinder.getFilterFactory2( GeoTools.getDefaultHints() );
+			FilterFactory ff = CommonFactoryFinder.getFilterFactory( GeoTools.getDefaultHints() );
 			FeatureType schema = labor.outCollection.getSchema();
 
 			// usually "THE_GEOM" for shapefiles

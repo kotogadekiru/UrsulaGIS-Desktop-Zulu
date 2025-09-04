@@ -17,7 +17,7 @@ import com.ursulagis.desktop.dao.config.Configuracion;
 public class Messages {
 	private static final String LOCALE_NOT_SET = "LOCALE_NOT_SET";
 	private static final String LOCALE_KEY = "LOCALE_KEY";
-	private static final String BUNDLE_NAME ="com/ursulagis/desktop/gui/messages";//"gui.MyResources";//"gui.messages";// "gui.messages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME ="messages";//
 	//src/main/java/com/ursulagis/desktop/gui/messages_es.properties
 	private static Configuracion conf = JFXMain.config;
 	

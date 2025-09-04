@@ -14,21 +14,21 @@ import java.util.stream.Collectors;
 
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryCollection;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.index.quadtree.Quadtree;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.index.quadtree.Quadtree;
 
 import com.ursulagis.desktop.dao.LaborItem;
 import com.ursulagis.desktop.dao.Poligono;
@@ -71,7 +71,7 @@ public class ExportarPrescripcionSiembraTask extends ProgresibleTask<File>{
 	public File call() {
 		try {
 			SimpleFeatureType type = null;
-			//*the_geom:    												:srid=4326,
+			//*the_geom:    												:4326,
 			//	String typeDescriptor = Messages.getString("JFXMain.341")+Polygon.class.getCanonicalName()+Messages.getString("JFXMain.342") //$NON-NLS-1$ //$NON-NLS-2$
 			//
 			//		+ SiembraLabor.COLUMNA_DOSIS_LINEA + Messages.getString("JFXMain.343") //$NON-NLS-1$ :java.lang.Long,
@@ -91,12 +91,12 @@ public class ExportarPrescripcionSiembraTask extends ProgresibleTask<File>{
 				dosisClass = "java.lang.Float";
 			}
 
-			String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":srid=4326,"//$NON-NLS-1$
+			String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":4326,"//$NON-NLS-1$
 					+ SiembraLabor.COLUMNA_DOSIS_LINEA +":java.lang.Long,"//java.lang.Long,"//$NON-NLS-1$
 					+ SiembraLabor.COLUMNA_DOSIS_COSTADO +":java.lang.Long,"//$NON-NLS-1$
 					+unidad+":"+dosisClass;//$NON-NLS-1$ semilla siempre tiene que ser la 3ra columna
 
-			System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ the_geom:Polygon:srid=4326,Fert L:java.lang.Long,Fert C:java.lang.Long,seeding:java.lang.Long
+			System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ the_geom:Polygon:4326,Fert L:java.lang.Long,Fert C:java.lang.Long,seeding:java.lang.Long
 			//System.out.println("Long.SIZE="+Long.SIZE);//64bits=16bytes. ok!! //$NON-NLS-1$
 			try {
 				//type = DataUtilities.createType(Messages.getString("JFXMain.349"), typeDescriptor); //$NON-NLS-1$
@@ -104,7 +104,7 @@ public class ExportarPrescripcionSiembraTask extends ProgresibleTask<File>{
 			} catch (SchemaException e) {
 				e.printStackTrace();
 			}
-			System.out.println("PrescType: "+DataUtilities.spec(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
+			System.out.println("PrescType: "+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
 
 
 			List<LaborItem> items = new ArrayList<LaborItem>();

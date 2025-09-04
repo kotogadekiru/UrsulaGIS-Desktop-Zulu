@@ -4,8 +4,8 @@ import java.util.List;
 
 import javax.persistence.Transient;
 
-import org.geotools.data.FileDataStore;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.feature.simple.SimpleFeature;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborConfig;

@@ -31,7 +31,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Point;
 
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
@@ -199,7 +199,8 @@ public class BulkNdviDownloadGUI {
 				processSelectedPoligonsNDVI(selected);
 			});
 			
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.381")); //$NON-NLS-1$
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
@@ -269,7 +270,8 @@ public class BulkNdviDownloadGUI {
 				
 				});
 			Scene scene = new Scene(v, 800, 600);
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("BulkNdviDownloadGUI.stageNDVITitle")); //$NON-NLS-1$
 			tablaStage.setScene(scene);
 			tablaStage.show();	 		

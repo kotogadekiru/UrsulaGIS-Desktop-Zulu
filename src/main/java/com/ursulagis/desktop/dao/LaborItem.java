@@ -15,11 +15,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Inheritance;
 
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
 
 import com.ursulagis.desktop.dao.siembra.SiembraItem;
 import com.ursulagis.desktop.gui.Messages;

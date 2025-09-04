@@ -5,9 +5,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.opengis.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeature;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -192,7 +192,8 @@ public class LaborItemGUIController extends AbstractGUIController{
 			Scene scene = new Scene(vBox, 800, 600);
 			Stage tablaStage = new Stage();
 			
-			tablaStage.getIcons().add(new Image(JFXMain.ICON));
+			//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle("editar item");
 			tablaStage.setScene(scene);
 			tablaStage.showAndWait();

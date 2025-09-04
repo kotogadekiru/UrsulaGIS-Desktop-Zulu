@@ -10,21 +10,21 @@ import java.util.Map;
 
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
 import org.geotools.data.simple.SimpleFeatureIterator;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -69,7 +69,7 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 		ShapefileDataStore newDataStore=null;
 		DefaultFeatureCollection pointFeatureCollection =null;
 		try {
-			String typeDescriptor = "*the_geom:"+Point.class.getCanonicalName()+":srid=4326,"
+			String typeDescriptor = "*the_geom:"+Point.class.getCanonicalName()+":4326,"
 					+ CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO +":java.lang.Double,"
 					+ CosechaLabor.COLUMNA_ANCHO+":java.lang.Double,"
 					+ CosechaLabor.COLUMNA_DISTANCIA+":java.lang.Double,"

@@ -7,20 +7,20 @@ import java.util.Map;
 
 import org.geotools.data.DataUtilities;
 import org.geotools.data.DefaultTransaction;
-import org.geotools.data.Transaction;
+import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
-import org.geotools.data.simple.SimpleFeatureSource;
-import org.geotools.data.simple.SimpleFeatureStore;
+import org.geotools.api.data.SimpleFeatureSource;
+import org.geotools.api.data.SimpleFeatureStore;
 import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.SchemaException;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
-import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.feature.simple.SimpleFeatureType;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
 
 import com.google.gson.Gson;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.LineString;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.dao.recorrida.Muestra;
@@ -55,7 +55,7 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 
 		SimpleFeatureType type = null;	
 
-		//		String typeDescriptor = "the_geom:Point:srid=4326,"//"*geom:Polygon,"the_geom
+		//		String typeDescriptor = "the_geom:Point:4326,"//"*geom:Polygon,"the_geom
 		//				+ COLUMNA_DISTANCIA + ":Double,"
 		//				+ COLUMNA_CURSO + ":Double,"
 		//				+ COLUMNA_ANCHO + ":Double,"
@@ -63,8 +63,8 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 		//				+ COLUMNA_CATEGORIA + ":Integer,";
 
 		StringBuilder sb =  new StringBuilder();
-		sb.append("*the_geom:"+Point.class.getCanonicalName()+":srid=4326");
-		//sb.append("*the_geom:"+LineString.class.getCanonicalName()+":srid=4326");
+		sb.append("*the_geom:"+Point.class.getCanonicalName()+":4326");
+		//sb.append("*the_geom:"+LineString.class.getCanonicalName()+":4326");
 		//recorrida.nombre
 		sb.append(",name" + ":"+String.class.getCanonicalName());
 		sb.append(",subName" + ":"+String.class.getCanonicalName());		
@@ -273,7 +273,7 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 
 	//	public void exe(FertilizacionLabor laborToExport,File shapeFile)  {
 	//		SimpleFeatureType type = null;
-	//		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":srid=4326,"
+	//		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":4326,"
 	//				+ FertilizacionLabor.COLUMNA_DOSIS + ":java.lang.Long";
 	//		
 	//		System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ 
@@ -284,7 +284,7 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 	//			e.printStackTrace();
 	//		}
 	//
-	//		System.out.println("PrescType:"+DataUtilities.spec(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
+	//		System.out.println("PrescType:"+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
 	//
 	//		SimpleFeatureIterator it = laborToExport.outCollection.features();
 	//		DefaultFeatureCollection exportFeatureCollection =  new DefaultFeatureCollection("PrescType",type); //$NON-NLS-1$

@@ -100,7 +100,7 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 
 		this.setTitle(Messages.getString("PulverizacionConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
-		stage.getIcons().add(new Image(JFXMain.ICON));
+		stage.getIcons().addAll(JFXMain.stage.getIcons());
 
 		this.getDialogPane().getButtonTypes().add(ButtonType.OK);
 		this.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
