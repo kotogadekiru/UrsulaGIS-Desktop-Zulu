@@ -127,7 +127,15 @@ public class ProyectionConstants {
 		try {
 			crs = CRS.decode(crsID);
 		} catch (FactoryException e) {			
+			System.err.println("Failed to create CRS for: " + crsID);
 			e.printStackTrace();
+			// Try to create a default WGS84 CRS as fallback
+			try {
+				crs = CRS.decode("EPSG:4326", true); // lenient mode
+			} catch (FactoryException e2) {
+				System.err.println("Failed to create fallback CRS");
+				e2.printStackTrace();
+			}
 		}
 		return crs;
 	}
