@@ -16,7 +16,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
 import org.geotools.api.feature.type.AttributeDescriptor;
-//import org.geotools.api.feature.type.AttributeType;
+
 import org.geotools.api.feature.type.FeatureType;
 import org.geotools.api.filter.FilterFactory;
 import org.geotools.api.filter.spatial.BBOX;
@@ -52,20 +52,14 @@ public class LaborDataStore<E> {
 			List<AttributeDescriptor> attributes = sch.getAttributeDescriptors();
             //List<String> attributeNames = new ArrayList<>();
             for (AttributeDescriptor attr : attributes) {
-                availableColumns.add(attr.getLocalName());
+				if(Number.class.isAssignableFrom(attr.getType().getBinding() )) {
+				//      System.out.println(at.getName().getNamespaceURI());
+					availableColumns.add(attr.getName().toString());
+				}
+                //availableColumns.add(attr.getLocalName());
             }
 
-			// List<AttributeType> types = sch.getTypes();
-			// for (AttributeType at : types) {
-			// 	System.out.println("at name "+at);//.getName().toString());
-				
-			// 	//at binding para Importe_ha es class java.lang.Double
-			// 	//System.out.println("at binding para "+at.getName() +" es "+at.getBinding());
-			// 	if(Number.class.isAssignableFrom(at.getBinding() )) {
-			// 		System.out.println(at.getName().getNamespaceURI());
-			// 		availableColumns.add(at.getName().toString());
-			// 	}
-			// }
+
 
 		} catch (IOException e) {			
 			e.printStackTrace();

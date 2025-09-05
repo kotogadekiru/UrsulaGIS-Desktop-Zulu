@@ -11,7 +11,7 @@ import org.geotools.feature.DefaultFeatureCollection;
 import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
-import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -79,11 +79,11 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 			reader = labor.getInStore().getFeatureReader();
 			featureCount=labor.getInStore().getFeatureSource().getFeatures().size();
 
-			List<AttributeType> descriptors = labor.getInStore().getSchema().getTypes();
-			for(AttributeType att:descriptors){
+			List<AttributeDescriptor> descriptors = labor.getInStore().getSchema().getAttributeDescriptors();
+			for(AttributeDescriptor att:descriptors){
 				String colName = att.getName().toString();
 
-				System.out.println(att.getBinding().getName()+": "+colName);
+				System.out.println(att.getType().getBinding().getName()+": "+colName);
 				if("Mappable".equalsIgnoreCase(colName)){ 
 					mappableColumn=colName;	
 				}

@@ -8,25 +8,12 @@
             "type": "java",
             "name": "Launch JFXMain",
             "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.JFXMain", 
+            "mainClass": "com.ursulagis.desktop.gui.JFXMain",
+            "projectName": "UrsulaGIS-Desktop_Zulu",
             "vmArgs": [
                 "-DmyProperty=myValue",
                 "-Xms2G",
-                "-Xmx20G",
-                "--add-modules=javafx.controls",
-                "--enable-native-access=javafx.graphics",
-                "--enable-native-access=javafx.media",
-                "--enable-native-access=javafx.web",
-                "--enable-native-access=ALL-UNNAMED",
-                "--add-opens=javafx.media/javafx.scene.media=ALL-UNNAMED",
-                "--add-opens=javafx.web/javafx.scene.web=ALL-UNNAMED",
-                "--add-opens=javafx.web/com.sun.webkit=ALL-UNNAMED",
-                "--add-opens=javafx.media/com.sun.media.jfxmedia=ALL-UNNAMED",
-                "--add-opens=javafx.graphics/com.sun.marlin=ALL-UNNAMED",
-                "--add-opens=javafx.graphics/com.sun.marlin.offheap=ALL-UNNAMED",
-                "-Djava.awt.headless=false",
-                //"-Dprism.order=es2",
-                "-Dprism.verbose=false"
+                "-Xmx20G"
             ]
         }
     ]

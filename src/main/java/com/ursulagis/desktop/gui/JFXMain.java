@@ -117,6 +117,8 @@ import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
+import com.ursulagis.desktop.utils.JOGLNativeLoader;
+import com.ursulagis.desktop.utils.SimpleJOGLNativeLoader;
 import com.ursulagis.desktop.utils.TarjetaHelper;
 
 public class JFXMain extends Application {
@@ -130,7 +132,7 @@ public class JFXMain extends Application {
 	public static final String TITLE_VERSION = "Ursula GIS Zulu-"+VERSION; 
 	public static final String buildDate = "03/09/2025";
 
-	private static  final String ICON ="ursula_logo_2020.png";//"gui/32x32-icon-earth.png";// "gui/1-512.png";//UrsulaGIS-Desktop/src/gui/32x32-icon-earth.png 
+	private static  final String ICON ="U_nueva_3_256x256_verde.png";//"gui/32x32-icon-earth.png";// "gui/1-512.png";//UrsulaGIS-Desktop/src/gui/32x32-icon-earth.png 
 	private static final String SOUND_FILENAME = "exito4.mp3";//"gui/Alarm08.wav";//"Alarm08.wav" funciona desde eclipse pero no desde el jar  
 
 	public static Stage stage=null;
@@ -162,11 +164,17 @@ public class JFXMain extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
+	/* 		// Ensure JOGL natives are loaded (fallback in case main method didn't work)
+			if (!SimpleJOGLNativeLoader.isInitialized()) {
+				System.out.println("Loading JOGL natives in start method...");
+				SimpleJOGLNativeLoader.initialize();
+			} */
+			
 			JFXMain.stage = primaryStage;
 			primaryStage.setTitle(TITLE_VERSION);
 			//URL iconResource = this.getClass().getResource(ICON);
 			InputStream iconIs = this.getClass().getResourceAsStream(ICON);
-			System.out.println("boundle file found at "+iconIs);
+			System.out.println("icono file searched at "+ICON);
 			//URL url = JFXMain.class.getClassLoader().getResource(ICON);
 			
 			primaryStage.getIcons().add(new Image(iconIs));
@@ -1174,6 +1182,10 @@ public class JFXMain extends Application {
 
 	public static void main(String[] args) {
 		try	{
+			// Initialize JOGL native libraries before launching the application
+			System.out.println("Initializing JOGL native libraries...");
+			com.ursulagis.desktop.utils.JOGLNativeLoader.loadNatives();
+			
 			//System.setProperty("prism.order", "es2");
 			Application.launch(JFXMain.class, args);
 		}catch (Exception e){

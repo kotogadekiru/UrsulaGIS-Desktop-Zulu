@@ -3,7 +3,7 @@
 --win-menu
 --win-menu-group ${windows.vendor}
 --vendor ${windows.vendor}
---icon "${project.basedir}/${app.icon}"
+--icon "${project.basedir}/U_nueva_3_256x256_verde.ico"
 --dest "${project.build.directory}"
 --main-jar ${project.build.finalName}.jar
 --main-class ${main-class}

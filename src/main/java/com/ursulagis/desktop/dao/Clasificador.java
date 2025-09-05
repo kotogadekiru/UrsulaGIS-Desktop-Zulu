@@ -50,6 +50,12 @@ public class Clasificador {
 
 	public static final  String[] clasficicadores = {CLASIFICADOR_DESVIOSTANDAR,CLASIFICADOR_JENKINS};
 
+	//paleta de colores del logo:
+	//verde oscuro : Color.rgb(59,136,67),
+	//verde claro : Color.rgb(116,182,71),
+	//azul : Color.rgb(19,119,165),
+	//azul oscuro : Color.rgb(35,39,91),
+	
 	public static Color[] colors = {//9 colores del 0 al 8 
 			//Color.rgb(158,1,66),//0
 			//Color.rgb(213,62,79),//1

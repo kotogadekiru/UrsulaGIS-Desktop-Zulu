@@ -24,7 +24,7 @@ public class Messages {
 	private static List<Consumer<Locale>> localeChangeListeners=new ArrayList<>();
 	
 	private static NumberFormat nf =null;
-	private static Locale locale = Locale.of("ES");
+	private static Locale locale = new Locale("ES");
 	//private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME,new Locale("EN"));
 	private static final ResourceBoundleContainer RESOURCE_BUNDLE_CONTAINER = new ResourceBoundleContainer();
 	//	private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
@@ -42,9 +42,9 @@ public class Messages {
 			locale=defaultLoc;
 			
 		} else if(!loc.equals(LOCALE_NOT_SET) ){
-			locale =  Locale.of(loc);
+			locale =  new Locale(loc);
 		} else {
-			locale =  Locale.of("ES");
+			locale =  new Locale("ES");
 		}
 		setLocale(locale);
 		
@@ -100,10 +100,10 @@ public class Messages {
 	
 	public static List<Locale> getLocales(){
 		 List<Locale> locales = new ArrayList<Locale>();
-		 locales.add(Locale.of("ES"));
-		 locales.add(Locale.of("EN"));
-		 locales.add(Locale.of("PT"));
-		 locales.add(Locale.of("FR"));
+		 locales.add(new Locale("ES"));
+		 locales.add(new Locale("EN"));
+		 locales.add(new Locale("PT"));
+		 locales.add(new Locale("FR"));
 		return locales;
 	}
 	

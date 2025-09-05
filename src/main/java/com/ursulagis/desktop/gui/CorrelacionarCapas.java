@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.geotools.api.feature.simple.SimpleFeatureType;
-import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
@@ -48,11 +48,11 @@ public class CorrelacionarCapas {
 //				sch = labor.inStore.getSchema();	
 //			}
 
-			List<AttributeType> types = sch.getTypes();
-			for (AttributeType at : types) {
+			List<AttributeDescriptor> types = sch.getAttributeDescriptors();
+			for (AttributeDescriptor at : types) {
 				//at binding para Importe_ha es class java.lang.Double
-				//System.out.println("at binding para "+at.getName() +" es "+at.getBinding());
-				if(Number.class.isAssignableFrom(at.getBinding() )) {
+				//System.out.println("at binding para "+at.getName() +" es "+at.getType());
+				if(Number.class.isAssignableFrom(at.getType().getBinding())) {
 					availableColumns.add(at.getName().toString());
 				}
 			}

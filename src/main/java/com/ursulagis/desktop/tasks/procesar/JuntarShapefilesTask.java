@@ -34,7 +34,7 @@ import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
-import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 import org.geotools.api.feature.type.FeatureType;
 import org.geotools.api.filter.FilterFactory;
 import org.geotools.api.filter.spatial.BBOX;
@@ -87,13 +87,13 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 		if (stores == null)return;
 		for(int i=0; i < stores.size(); i++){//FileDataStore store : stores){
 			FileDataStore store =stores.get(i);
-			List<AttributeType> descriptors;
+			List<AttributeDescriptor> descriptors;
 			try {
-				descriptors = store.getSchema().getTypes();
+				descriptors = store.getSchema().getAttributeDescriptors();
 
 				Map<String,String> storeAttributeMapping =Collections.synchronizedMap(new HashMap<String,String>());
-				for(AttributeType att:descriptors){
-					String attClassName = att.getBinding().getName();
+				for(AttributeDescriptor att:descriptors){
+					String attClassName = att.getType().getBinding().getName();
 					if(attClassName.contains("org.locationtech.jts.geom")){
 						//System.out.println("ignorando el atributo "+att);
 						continue;}
@@ -340,11 +340,11 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 		SimpleFeature f0 = storeFeatures.get(0);
 		SimpleFeatureBuilder fBuilder = new SimpleFeatureBuilder(f0.getType());
 	//	int size=storeFeatures.size();
-		List<AttributeType> attributes = f0.getType().getTypes();
+		List<AttributeDescriptor> attributes = f0.getType().getAttributeDescriptors();
 		attributes.forEach(att->{
-			String attClassName = att.getBinding().getName();
+			String attClassName = att.getType().getBinding().getName();
 			if(!attClassName.contains("org.locationtech.jts.geom")){
-				if(Number.class.isAssignableFrom(att.getBinding())){
+				if(Number.class.isAssignableFrom(att.getType().getBinding())){
 					Double value=Double.valueOf(0.0);
 					Double pesosTotal=Double.valueOf(0.0);
 					for(SimpleFeature f:storeFeatures){

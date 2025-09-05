@@ -3,12 +3,15 @@ package com.ursulagis.desktop.gui.nww;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.WorldWindow;
+import gov.nasa.worldwind.WorldWindowGLDrawable;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.avlist.AVList;
 import gov.nasa.worldwind.avlist.AVListImpl;
+import gov.nasa.worldwind.awt.WorldWindowGLJPanel;
 //import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.event.SelectEvent;
 import gov.nasa.worldwind.globes.ElevationModel;
+//import gov.nasa.worldwind.awt.WorldWindowGLJPanel;
 import gov.nasa.worldwind.layers.CompassLayer;
 import gov.nasa.worldwind.layers.WorldMapLayer;
 import gov.nasa.worldwind.layers.mercator.BasicMercatorTiledImageLayer;
@@ -45,21 +48,9 @@ public class WWPanel extends JPanel {
 	public WWPanel(Dimension canvasSize, boolean includeStatusBar, JFXMain jfxMain) {
 		super(new BorderLayout());
 		this.main=jfxMain;
-		//this.wwd =new WorldWindowGLJPanel();// WorldWindowGLJPanel no esta disponible en 2.0.0
+		this.wwd =new WorldWindowGLJPanel(); // WorldWindowGLJPanel no esta disponible en 2.0.0
 		// Try to create WorldWindow using the available configuration
-		try {
-			this.wwd = (WorldWindow) WorldWind.createConfigurationComponent("gov.nasa.worldwind.awt.WorldWindowGLCanvas");
-		} catch (Exception e) {
-			// Fallback: try to create a basic WorldWindow implementation
-			System.err.println("Warning: Could not create WorldWindowGLCanvas, trying alternative approach");
-			try {
-				this.wwd = (WorldWindow) WorldWind.createConfigurationComponent("gov.nasa.worldwind.WorldWindow");
-			} catch (Exception e2) {
-				System.err.println("Error: Could not create WorldWindow using configuration system");
-				e2.printStackTrace();
-				throw new RuntimeException("Failed to create WorldWindow component. Please check WorldWind configuration.", e2);
-			}
-		}
+
 		// Check if WorldWindow was created successfully
 		if (this.wwd == null) {
 			throw new RuntimeException("Failed to create WorldWindow component. WorldWind configuration may be incomplete.");

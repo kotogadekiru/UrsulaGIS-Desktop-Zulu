@@ -9,7 +9,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Transient;
 import org.geotools.api.data.FileDataStore;
 import org.geotools.api.feature.simple.SimpleFeature;
-import org.geotools.api.feature.type.AttributeType;
+import org.geotools.api.feature.type.AttributeDescriptor;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborConfig;
@@ -231,19 +231,14 @@ public class CosechaLabor extends Labor<CosechaItem> {
 				rindeDouble = rindeDouble * constantes / (divisor);
 			} 
 			//TODO si existe el campo Moisture_s tomarlo encuenta para secar el grano		
-			List<AttributeType> descriptors = harvestFeature.getType().getTypes();
+			List<AttributeDescriptor> descriptors = harvestFeature.getType().getAttributeDescriptors();
 		//	String moistureColumn =null;
 			String col_moisture =this.config.getConfigProperties().getPropertyOrDefault(CosechaLaborConstants.COLUMNA_HUMEDAD_KEY, "Moisture_s");
 			Optional<String> opt = descriptors.stream()
 					.map(att->att.getName().toString())
 					.filter(att->att.equalsIgnoreCase(col_moisture))
 					.findAny();
-//			for(AttributeType att:descriptors){
-//			String colName = att.getName().toString();			
-//				 if(col_moisture.equalsIgnoreCase(colName)){
-//					moistureColumn =colName;	
-//				}
-//			}
+
 			
 			if(opt.isPresent()){
 				Double moisture =LaborItem.getDoubleFromObj(harvestFeature.getAttribute(opt.get()));

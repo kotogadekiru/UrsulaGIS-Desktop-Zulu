@@ -1,7 +1,8 @@
 package com.ursulagis;
 
-import atlantafx.base.theme.PrimerDark;
-import atlantafx.base.theme.PrimerLight;
+// Temporarily commented out due to Java 11 compatibility issues
+// import atlantafx.base.theme.PrimerDark;
+// import atlantafx.base.theme.PrimerLight;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -56,7 +57,8 @@ public class BaseApplication extends Application implements Log {
     @Override
     public void start(Stage stage) {
 
-        Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
+        // Temporarily commented out due to Java 11 compatibility issues
+        // Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
 
         BorderPane borderPane = new BorderPane();
 
