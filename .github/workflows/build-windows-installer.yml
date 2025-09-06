@@ -2,9 +2,9 @@ name: Build Windows Installer
 
 on:
   push:
-    branches: [ main ]
+    branches: [ java17 ]
   pull_request:
-    branches: [ main ]
+    branches: [ java17 ]
   workflow_dispatch:
 
 # Explicitly request permissions for creating releases
