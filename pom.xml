@@ -32,15 +32,14 @@
         <app.icon>U_nueva_3_256x256_verde.ico</app.icon>
 
         <!-- This property is used to specify the modules included in the (custom) JVM image. -->
-        <!-- Reminder: javafx.web (the embedded browser component) is not included in this project by default due
-        to GitHub template size restrictions. You can download the full SDK from https://openjfx.io -->
-        <jvm.modules>javafx.media,javafx.controls,javafx.fxml,java.logging</jvm.modules>
+        <!-- JavaFX modules are now part of the JDK and don't need to be explicitly included -->
+        <jvm.modules>javafx.base,javafx.controls,javafx.graphics,javafx.swing,javafx.media,javafx.web,java.logging</jvm.modules>
 
         <!-- Set the project to UTF-8, avoiding warnings in the build logs -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
 
         <!-- Replace this UUID with a custom one for your project. This ID is used by the Windows installer system
         to know that an installer is intended to replace/upgrade an earlier version. The easiest thing to do is
@@ -54,23 +53,18 @@
         <macos.sign.identity></macos.sign.identity>
 
 		<geotools.version>33.2</geotools.version>
-        <worldwind.version>2.3.1</worldwind.version>
+        <worldwind.version>2.4.0</worldwind.version>
         <lombok-version>1.18.38</lombok-version>
         <jts.version>1.19.0</jts.version>
 
     </properties>
 
     <dependencies>
-<!--         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>24.0.2</version>
-        </dependency> -->
-        <dependency>
+         <dependency>
             <groupId>com.dooapp.fxform2</groupId>
             <artifactId>core</artifactId>
             <version>11.0.0</version> <!-- Or use a version for Java 8 like 8.2.11 -->
-        </dependency>
+        </dependency>     
         <!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
         <dependency>
             <groupId>org.controlsfx</groupId>
@@ -102,12 +96,7 @@
 			<version>2.8.4</version>
 		</dependency>
 
-        <!--dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>YOUR_POI_VERSION</version>
-        </dependency-->
-
+        
         <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
@@ -185,113 +174,16 @@
             <groupId>org.locationtech.jts</groupId>
             <artifactId>jts-core</artifactId>
             <version>${jts.version}</version>
-        </dependency>
-
-        
-    	<!-- https://mvnrepository.com/artifact/gov.nasa/worldwind -->
-		<dependency>
-			<groupId>com.ursulagis</groupId>
-			<artifactId>worldwind</artifactId>
-			<version>${worldwind.version}</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/gov.nasa/worldwind -->
-		<dependency>
-			<groupId>com.ursulagis</groupId>
-			<artifactId>worldwindx</artifactId>
-			<version>${worldwind.version}</version>
-		</dependency>
-
-
-        <!-- https://mvnrepository.com/artifact/org.jogamp.gluegen/gluegen-rt -->
-        <!-- GlueGen Runtime Dependencies -->
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>gluegen-rt</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <!-- GlueGen Native Libraries -->
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>gluegen-rt-natives-linux-amd64</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>gluegen-rt-natives-linux-i586</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>gluegen-rt-natives-macosx-universal</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>gluegen-rt-natives-windows-amd64</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>gluegen-rt-natives-windows-i586</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <!-- JOGL Dependencies -->
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>jogl-all</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <!-- JOGL Native Libraries -->
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>jogl-all-natives-linux-amd64</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>jogl-all-natives-linux-i586</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>jogl-all-natives-macosx-universal</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>jogl-all-natives-windows-amd64</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.ursulagis</groupId>
-            <artifactId>jogl-all-natives-windows-i586</artifactId>
-            <version>${worldwind.version}</version>
-        </dependency>
+        </dependency>    
 
         <!-- Additional common dependencies for WorldWind projects -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.15.2</version>
+            <version>2.17.0</version>
         </dependency>
         
-        <!--dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<version>1.18.22</version>
-			<scope>provided</scope>
-		</dependency-->
+ 
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -317,26 +209,94 @@
             <version>1.0.0</version>
         </dependency> -->
         
-        <!-- Apache Commons Lang3 for Java 11 compatibility -->
+        <!-- Apache Commons Lang3 for Java 17 compatibility -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.12.0</version>
         </dependency>
         
-        <!-- OpenGLFX for JavaFX OpenGL integration -->
+        
+        <!-- Local JAR dependencies from libs directory -->
         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-graphics</artifactId>
-            <version>11.0.2</version>
+            <groupId>gov.nasa.worldwind</groupId>
+            <artifactId>worldwind</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/worldwind-${worldwind.version}.jar</systemPath>
         </dependency>
         
-        <!-- OpenGLFX -->
-<!--         <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-opengl</artifactId>
-            <version>24.0.2</version>
-        </dependency> -->
+        <dependency>
+            <groupId>gov.nasa.worldwind</groupId>
+            <artifactId>worldwindx</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/worldwindx-${worldwind.version}.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.gluegen</groupId>
+            <artifactId>gluegen-rt</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/gluegen-rt.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.gluegen</groupId>
+            <artifactId>gluegen-rt-natives-linux-amd64</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/gluegen-rt-natives-linux-amd64.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.gluegen</groupId>
+            <artifactId>gluegen-rt-natives-macosx-universal</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/gluegen-rt-natives-macosx-universal.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.gluegen</groupId>
+            <artifactId>gluegen-rt-natives-windows-amd64</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/gluegen-rt-natives-windows-amd64.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.jogl</groupId>
+            <artifactId>jogl-all</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/jogl-all.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.jogl</groupId>
+            <artifactId>jogl-all-natives-linux-amd64</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/jogl-all-natives-linux-amd64.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.jogl</groupId>
+            <artifactId>jogl-all-natives-macosx-universal</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/jogl-all-natives-macosx-universal.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jogamp.jogl</groupId>
+            <artifactId>jogl-all-natives-windows-amd64</artifactId>
+            <version>${worldwind.version}</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/jogl-all-natives-windows-amd64.jar</systemPath>
+        </dependency>
     </dependencies>
 
 	<repositories>
@@ -381,6 +341,36 @@
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>**/*.mp3</exclude>
+                    <exclude>**/*.wav</exclude>
+                    <exclude>**/*.png</exclude>
+                    <exclude>**/*.ico</exclude>
+                    <exclude>**/*.icns</exclude>
+                    <exclude>**/*.jpg</exclude>
+                    <exclude>**/*.jpeg</exclude>
+                    <exclude>**/*.gif</exclude>
+                    <exclude>**/*.bmp</exclude>
+                    <exclude>**/*.tiff</exclude>
+                    <exclude>**/*.tif</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*.mp3</include>
+                    <include>**/*.wav</include>
+                    <include>**/*.png</include>
+                    <include>**/*.ico</include>
+                    <include>**/*.icns</include>
+                    <include>**/*.jpg</include>
+                    <include>**/*.jpeg</include>
+                    <include>**/*.gif</include>
+                    <include>**/*.bmp</include>
+                    <include>**/*.tiff</include>
+                    <include>**/*.tif</include>
+                </includes>
             </resource>
             <resource>
                 <directory>${project.basedir}/src/main/resources/build-info/</directory>
@@ -437,10 +427,12 @@
                     <mainClass>${main-class}</mainClass>
                     <options>
                         <option>-Djava.awt.headless=false</option>
-                        <option>-Dprism.order=es2</option>
+                        <option>-Dprism.order=sw</option>
                         <option>-Dprism.verbose=false</option>
-                        <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=11</option>
+                        <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=17</option>
                         <option>-Djogamp.gluegen.UseTempJarCache=true</option>
+                        <option>-Djavafx.verbose=false</option>
+                        <option>-Dprism.forceGPU=false</option>
                     </options>
                 </configuration>
             </plugin>

@@ -117,8 +117,6 @@ import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
-import com.ursulagis.desktop.utils.JOGLNativeLoader;
-import com.ursulagis.desktop.utils.SimpleJOGLNativeLoader;
 import com.ursulagis.desktop.utils.TarjetaHelper;
 
 public class JFXMain extends Application {
@@ -133,7 +131,8 @@ public class JFXMain extends Application {
 	public static final String buildDate = "03/09/2025";
 
 	private static  final String ICON ="U_nueva_3_256x256_verde.png";//"gui/32x32-icon-earth.png";// "gui/1-512.png";//UrsulaGIS-Desktop/src/gui/32x32-icon-earth.png 
-	private static final String SOUND_FILENAME = "exito4.mp3";//"gui/Alarm08.wav";//"Alarm08.wav" funciona desde eclipse pero no desde el jar  
+	private static final String SOUND_FILENAME = "exito4.mp3";//"gui/Alarm08.wav";//"Alarm08.wav" funciona desde eclipse pero no desde el jar
+	private static final String SOUND_FILENAME_WAV = "gui/Alarm08.wav"; // Fallback WAV file  
 
 	public static Stage stage=null;
 	private Scene scene=null;
@@ -164,12 +163,7 @@ public class JFXMain extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-	/* 		// Ensure JOGL natives are loaded (fallback in case main method didn't work)
-			if (!SimpleJOGLNativeLoader.isInitialized()) {
-				System.out.println("Loading JOGL natives in start method...");
-				SimpleJOGLNativeLoader.initialize();
-			} */
-			
+	
 			JFXMain.stage = primaryStage;
 			primaryStage.setTitle(TITLE_VERSION);
 			//URL iconResource = this.getClass().getResource(ICON);
@@ -1102,25 +1096,122 @@ public class JFXMain extends Application {
 
 	public void playSound() {
 		if(!this.isPlayingSound) {
-			executorPool.execute(()->{
+			Platform.runLater(() -> {
 				URL url = JFXMain.class.getClassLoader().getResource(SOUND_FILENAME);
+				System.out.println("=== SOUND DEBUG ===");
+				System.out.println("Looking for sound file: " + SOUND_FILENAME);
+				System.out.println("URL found: " + url);
+				
+				if (url != null) {
+					try {
+						String uriString = url.toURI().toString();
+						System.out.println("URI string: " + uriString);
+						
+						AudioClip plonkSound = new AudioClip(uriString);
+						System.out.println("AudioClip created successfully");
+						
+						this.isPlayingSound = true;
+						plonkSound.setVolume(0.50);
+						System.out.println("Volume set to 0.50, attempting to play...");
+						
+						plonkSound.play();
+						System.out.println("play() method called");
+						
+						// Reset flag after a short delay to allow sound to finish
+						executorPool.execute(() -> {
+							try {
+								Thread.sleep(2000); // 2 seconds
+								this.isPlayingSound = false;
+								System.out.println("Sound playback flag reset");
+							} catch (InterruptedException e) {
+								Thread.currentThread().interrupt();
+								this.isPlayingSound = false;
+							}
+						});
 
-				try {					
-					AudioClip plonkSound = new AudioClip(url.toURI().toString());
-					this.isPlayingSound=true;
-					plonkSound.setVolume(0.50);
-					plonkSound.play();
-					this.isPlayingSound=false;
-
-				} catch (URISyntaxException e) {
-
-					e.printStackTrace();
+					} catch (URISyntaxException e) {
+						System.out.println("URISyntaxException: " + e.getMessage());
+						e.printStackTrace();
+					} catch (Exception e) {
+						System.out.println("Unexpected error: " + e.getMessage());
+						e.printStackTrace();
+					}
+				} else {
+					System.out.println("ERROR: Sound file not found: " + SOUND_FILENAME);
+					System.out.println("Trying fallback WAV file: " + SOUND_FILENAME_WAV);
+					// Try fallback WAV file
+					URL wavUrl = JFXMain.class.getClassLoader().getResource(SOUND_FILENAME_WAV);
+					if (wavUrl != null) {
+						try {
+							String wavUriString = wavUrl.toURI().toString();
+							System.out.println("WAV URI string: " + wavUriString);
+							
+							AudioClip wavSound = new AudioClip(wavUriString);
+							System.out.println("WAV AudioClip created successfully");
+							
+							this.isPlayingSound = true;
+							wavSound.setVolume(0.50);
+							System.out.println("WAV Volume set to 0.50, attempting to play...");
+							
+							wavSound.play();
+							System.out.println("WAV play() method called");
+							
+							// Reset flag after a short delay
+							executorPool.execute(() -> {
+								try {
+									Thread.sleep(2000);
+									this.isPlayingSound = false;
+									System.out.println("WAV Sound playback flag reset");
+								} catch (InterruptedException e) {
+									Thread.currentThread().interrupt();
+									this.isPlayingSound = false;
+								}
+							});
+						} catch (Exception e) {
+							System.out.println("WAV playback error: " + e.getMessage());
+							e.printStackTrace();
+						}
+					} else {
+						System.out.println("ERROR: WAV fallback file also not found: " + SOUND_FILENAME_WAV);
+						System.out.println("Available resources in classpath:");
+						try {
+							java.util.Enumeration<java.net.URL> resources = 
+								JFXMain.class.getClassLoader().getResources("");
+							while (resources.hasMoreElements()) {
+								System.out.println("  - " + resources.nextElement());
+							}
+						} catch (Exception e) {
+							System.out.println("Could not list resources: " + e.getMessage());
+						}
+					}
 				}
-
+				System.out.println("=== END SOUND DEBUG ===");
 			});
 		}else {
 			System.out.println("no reprodusco el sonido porque ya hay un player andando");
 		}
+	}
+
+	// Test method to debug audio system
+	public void testAudioSystem() {
+		System.out.println("=== AUDIO SYSTEM TEST ===");
+		System.out.println("JavaFX Platform: " + javafx.application.Platform.isFxApplicationThread());
+	//	System.out.println("JavaFX Toolkit: " + javafx.application.Platform.isToolkitInitialized());
+		
+		// Test with a simple beep sound
+		Platform.runLater(() -> {
+			try {
+				// Create a simple test sound using JavaFX built-in sound
+				AudioClip testSound = new AudioClip("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT");
+				testSound.setVolume(0.3);
+				testSound.play();
+				System.out.println("Test beep sound played");
+			} catch (Exception e) {
+				System.out.println("Test sound failed: " + e.getMessage());
+				e.printStackTrace();
+			}
+		});
+		System.out.println("=== END AUDIO SYSTEM TEST ===");
 	}
 
 	public void addDragAndDropSupport(){
@@ -1181,11 +1272,7 @@ public class JFXMain extends Application {
 	}
 
 	public static void main(String[] args) {
-		try	{
-			// Initialize JOGL native libraries before launching the application
-			System.out.println("Initializing JOGL native libraries...");
-			com.ursulagis.desktop.utils.JOGLNativeLoader.loadNatives();
-			
+		try	{			
 			//System.setProperty("prism.order", "es2");
 			Application.launch(JFXMain.class, args);
 		}catch (Exception e){

@@ -9,10 +9,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import java.io.InputStream;
 
 public abstract class ProgresibleTask<E> extends Task<E>{
 	
-	private static final String TASK_CLOSE_ICON = "/gui/event-close.png";
+	private static final String TASK_CLOSE_ICON = "gui/event-close.png";
 	public static final String ZOOM_TO_KEY = "ZOOM_TO";
 	
 	private ProgressBar progressBarTask;
@@ -63,8 +64,22 @@ public abstract class ProgresibleTask<E> extends Task<E>{
 			this.cancel();
 			this.uninstallProgressBar();
 		});
-		Image imageDecline = new Image(getClass().getResourceAsStream(TASK_CLOSE_ICON));
-		cancel.setGraphic(new ImageView(imageDecline));
+		try {
+			System.out.println("Attempting to load image: " + TASK_CLOSE_ICON);
+			InputStream imageStream = getClass().getClassLoader().getResourceAsStream(TASK_CLOSE_ICON);
+			if (imageStream != null) {
+				System.out.println("Successfully found image resource: " + TASK_CLOSE_ICON);
+				Image imageDecline = new Image(imageStream);
+				cancel.setGraphic(new ImageView(imageDecline));
+			} else {
+				System.err.println("Could not find image resource: " + TASK_CLOSE_ICON);
+				cancel.setText("X");
+			}
+		} catch (Exception e) {
+			System.err.println("Error loading image: " + e.getMessage());
+			e.printStackTrace();
+			cancel.setText("X");
+		}
 
 		//progressBarLabel.setStyle("-fx-color: black");
 		progressContainer = new HBox();

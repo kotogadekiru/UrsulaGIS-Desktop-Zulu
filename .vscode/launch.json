@@ -10,10 +10,14 @@
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.gui.JFXMain",
             "projectName": "UrsulaGIS-Desktop_Zulu",
-            "vmArgs": [
-                "-DmyProperty=myValue",
+            "vmArgs": [                    
                 "-Xms2G",
-                "-Xmx20G"
+                "-Xmx20G",
+                "-Djava.awt.headless=false",
+                "-Dprism.order=sw",
+                "-Dprism.verbose=false",
+                "-Dprism.forceGPU=false",
+                "-Djavafx.verbose=false"
             ]
         }
     ]
