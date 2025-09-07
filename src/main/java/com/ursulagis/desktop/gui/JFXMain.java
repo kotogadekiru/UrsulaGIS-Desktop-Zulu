@@ -171,7 +171,26 @@ public class JFXMain extends Application {
 			System.out.println("icono file searched at "+ICON);
 			//URL url = JFXMain.class.getClassLoader().getResource(ICON);
 			
-			primaryStage.getIcons().add(new Image(iconIs));
+			if (iconIs != null) {
+				primaryStage.getIcons().add(new Image(iconIs));
+			} else {
+				System.err.println("Warning: Could not load icon from " + ICON);
+				// Try alternative icon paths as fallback
+				String[] fallbackIcons = {
+					"gui/U_nueva_256x256_verde.png",
+					"gui/U_nueva_256x256.png",
+					"gui/U__fondo-transparente_256x256.png"
+				};
+				
+				for (String fallbackIcon : fallbackIcons) {
+					InputStream fallbackIs = this.getClass().getResourceAsStream(fallbackIcon);
+					if (fallbackIs != null) {
+						System.out.println("Using fallback icon: " + fallbackIcon);
+						primaryStage.getIcons().add(new Image(fallbackIs));
+						break;
+					}
+				}
+			}
 			Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 			double ratio = primaryScreenBounds.getHeight()/primaryScreenBounds.getWidth();
 			int canvasWidth = (int) (primaryScreenBounds.getWidth()*0.8);

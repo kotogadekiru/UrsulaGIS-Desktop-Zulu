@@ -22,6 +22,10 @@
 --java-options --add-opens=javafx.base/javafx.collections=ALL-UNNAMED
 --java-options --add-opens=javafx.base/javafx.beans=ALL-UNNAMED
 --java-options --add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED
+--java-options -Djogamp.gluegen.UseTempJarCache=true
+--java-options -Djava.awt.headless=false
+--java-options -Dprism.order=sw
+--java-options -Dprism.forceGPU=false
 --win-shortcut
 --win-shortcut-prompt
 --win-per-user-install

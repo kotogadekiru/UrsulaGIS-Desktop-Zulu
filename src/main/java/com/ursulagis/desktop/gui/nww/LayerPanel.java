@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.io.InputStream;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;

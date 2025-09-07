@@ -33,7 +33,7 @@
 
         <!-- This property is used to specify the modules included in the (custom) JVM image. -->
         <!-- JavaFX modules are now part of the JDK and don't need to be explicitly included -->
-        <jvm.modules>javafx.base,javafx.controls,javafx.graphics,javafx.swing,javafx.media,javafx.web,java.logging</jvm.modules>
+        <jvm.modules>javafx.base,javafx.controls,javafx.graphics,javafx.swing,javafx.media,javafx.web,java.logging,java.desktop,java.base,java.xml,java.sql,java.naming,java.management,java.instrument,java.security.jgss,java.security.sasl,jdk.unsupported,jdk.unsupported.desktop</jvm.modules>
 
         <!-- Set the project to UTF-8, avoiding warnings in the build logs -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -340,38 +340,55 @@
             <!-- Add the default resource path back in - by overriding above it disables the default -->
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
-                <filtering>true</filtering>
-                <excludes>
-                    <exclude>**/*.mp3</exclude>
-                    <exclude>**/*.wav</exclude>
+                <filtering>false</filtering>
+<!--                 <excludes>
                     <exclude>**/*.png</exclude>
                     <exclude>**/*.ico</exclude>
-                    <exclude>**/*.icns</exclude>
+                    <exclude>**/*.mp3</exclude>
                     <exclude>**/*.jpg</exclude>
                     <exclude>**/*.jpeg</exclude>
                     <exclude>**/*.gif</exclude>
                     <exclude>**/*.bmp</exclude>
-                    <exclude>**/*.tiff</exclude>
-                    <exclude>**/*.tif</exclude>
-                </excludes>
+                    <exclude>**/*.wav</exclude>
+                    <exclude>**/*.mp4</exclude>
+                    <exclude>**/*.avi</exclude>
+                </excludes> -->
             </resource>
+            
+            <!-- Include resources from Java source directory (XML configs, images, etc.) -->
             <resource>
-                <directory>${project.basedir}/src/main/resources</directory>
+                <directory>${project.basedir}/src/main/java</directory>
                 <filtering>false</filtering>
                 <includes>
-                    <include>**/*.mp3</include>
-                    <include>**/*.wav</include>
+                    <include>**/*.xml</include>
                     <include>**/*.png</include>
                     <include>**/*.ico</include>
-                    <include>**/*.icns</include>
                     <include>**/*.jpg</include>
                     <include>**/*.jpeg</include>
                     <include>**/*.gif</include>
                     <include>**/*.bmp</include>
-                    <include>**/*.tiff</include>
-                    <include>**/*.tif</include>
+                    <include>**/*.properties</include>
                 </includes>
             </resource>
+            
+            <!-- Add binary resources without filtering -->
+<!--             <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>**/*.png</include>
+                    <include>**/*.ico</include>
+                    <include>**/*.mp3</include>
+                    <include>**/*.jpg</include>
+                    <include>**/*.jpeg</include>
+                    <include>**/*.gif</include>
+                    <include>**/*.bmp</include>
+                    <include>**/*.wav</include>
+                    <include>**/*.mp4</include>
+                    <include>**/*.avi</include>
+                </includes>
+            </resource> -->
+
             <resource>
                 <directory>${project.basedir}/src/main/resources/build-info/</directory>
                 <filtering>true</filtering>
@@ -407,6 +424,18 @@
                             <excludeGroupIds>org.openjfx</excludeGroupIds>
                         </configuration>
                     </execution>
+                    <execution>
+                        <!-- This copies the system-scoped dependencies (local JARs from libs directory) -->
+                        <id>copy-system-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>system</includeScope>
+                            <outputDirectory>${project.build.directory}/dependency</outputDirectory>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -427,12 +456,10 @@
                     <mainClass>${main-class}</mainClass>
                     <options>
                         <option>-Djava.awt.headless=false</option>
-                        <option>-Dprism.order=sw</option>
+                        <option>-Dprism.order=es2</option>
                         <option>-Dprism.verbose=false</option>
                         <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=17</option>
-                        <option>-Djogamp.gluegen.UseTempJarCache=true</option>
-                        <option>-Djavafx.verbose=false</option>
-                        <option>-Dprism.forceGPU=false</option>
+                        <option>-Djogamp.gluegen.UseTempJarCache=true</option>                        
                     </options>
                 </configuration>
             </plugin>
