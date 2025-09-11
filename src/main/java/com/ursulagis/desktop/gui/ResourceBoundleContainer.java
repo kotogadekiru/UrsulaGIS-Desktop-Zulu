@@ -6,8 +6,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Properties;
@@ -84,7 +86,8 @@ public class ResourceBoundleContainer {
 		public TxtResourceBundle(InputStream stream) throws IOException {
 			props = new Properties();
 			try {
-				props.load(stream);
+				// Use UTF-8 encoding to properly handle accented characters
+				props.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
 				System.out.println("finished loading language bundle");
 				//props.values().stream().forEach((v)->System.out.println(v));
 				

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
@@ -55,7 +56,7 @@ import com.ursulagis.desktop.gui.utils.DateConverter;
 public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 
 
-	private static final String HARVEST_CONFIG_DIALOG_FXML = "HarvestConfigDialog.fxml"; //$NON-NLS-1$
+	private static final String HARVEST_CONFIG_DIALOG_FXML = "HarvestConfigDialog.fxml"; //-NLS-1$
 
 	@FXML
 	private VBox content;
@@ -174,9 +175,9 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 
 	public HarvestConfigDialogController() {
 		super();
-		//System.out.println("construyendo el controller"); //$NON-NLS-1$
+		//System.out.println("construyendo el controller"); //-NLS-1$
 
-		this.setTitle(Messages.getString("HarvestConfigDialogController.title")); //$NON-NLS-1$
+		this.setTitle(Messages.getString("HarvestConfigDialogController.title")); //-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
 		//stage.getIcons().addAll(JFXMain.stage.getIcons());
 		stage.getIcons().addAll(JFXMain.stage.getIcons());
@@ -187,7 +188,7 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				System.out.println("la configuracion es incorrecta"); //-NLS-1$
 				event.consume();
 			}
 		});
@@ -212,23 +213,23 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 		StringBuilder message = new StringBuilder();
 		boolean isValid =true;
 		if(labor.cultivo== null) {
-			message.append(Messages.getString("HarvestConfigDialogController.faltaCultivo")); //$NON-NLS-1$
+			message.append(Messages.getString("HarvestConfigDialogController.faltaCultivo")); //-NLS-1$
 			isValid=false;
 		}
 		if(cols.indexOf(comboRend.getValue())==-1){
-			message.append(Messages.getString("HarvestConfigDialogController.mensaje")); //$NON-NLS-1$
+			message.append(Messages.getString("HarvestConfigDialogController.mensaje")); //-NLS-1$
 			isValid=false;
 		}
 		if(cols.indexOf(comboAnch.getValue())==-1){
-			message.append(Messages.getString("HarvestConfigDialogController.mensaje2")); //$NON-NLS-1$
+			message.append(Messages.getString("HarvestConfigDialogController.mensaje2")); //-NLS-1$
 			isValid=false;
 		}
 		if(cols.indexOf(comboDist.getValue())==-1){
-			message.append(Messages.getString("HarvestConfigDialogController.mensaje3")); //$NON-NLS-1$
+			message.append(Messages.getString("HarvestConfigDialogController.mensaje3")); //-NLS-1$
 			isValid=false;
 		}
 		if(cols.indexOf(comboCurs.getValue())==-1){
-			message.append(Messages.getString("HarvestConfigDialogController.mensaje4")); //$NON-NLS-1$
+			message.append(Messages.getString("HarvestConfigDialogController.mensaje4")); //-NLS-1$
 			isValid=false;
 		}
 		
@@ -246,14 +247,14 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 		//		}
 		
 		if(labor.minRindeProperty.get()>labor.maxRindeProperty.get()){
-			message.append(Messages.getString("HarvestConfigDialogController.mensaje5")); //$NON-NLS-1$
+			message.append(Messages.getString("HarvestConfigDialogController.mensaje5")); //-NLS-1$
 			isValid=false;
 		}
 		
 		if(!isValid){
 			Alert alert = new Alert(AlertType.ERROR, message.toString(), ButtonType.OK);
 			alert.initOwner(this.getDialogPane().getScene().getWindow());
-			alert.setTitle(Messages.getString("HarvestConfigDialogController.title2")); //$NON-NLS-1$
+			alert.setTitle(Messages.getString("HarvestConfigDialogController.title2")); //-NLS-1$
 			alert.showAndWait();
 
 		}
@@ -377,10 +378,10 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 
 		//TODO cambiar cbMetrosPorUnidad a ComboBox para que pueda ser editable
 		Map<String,Double> unidades = new HashMap<String,Double>();
-		unidades.put(Messages.getString("HarvestConfigDialogController.12"),1d); //$NON-NLS-1$
-		unidades.put(Messages.getString("HarvestConfigDialogController.13"),0.0254); //$NON-NLS-1$
-		unidades.put(Messages.getString("HarvestConfigDialogController.14"),0.01d); //$NON-NLS-1$
-		unidades.put(Messages.getString("HarvestConfigDialogController.15"),0.001d); //$NON-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.12"),1d); //-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.13"),0.0254); //-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.14"),0.01d); //-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.15"),0.001d); //-NLS-1$
 
 
 		this.cbMetrosPorUnidad.setItems(FXCollections.observableArrayList(unidades.keySet()));
@@ -444,7 +445,7 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 		chkOutlayers.selectedProperty().bindBidirectional(cosechaConfig.correccionOutlayersProperty());
 		chkAncho.selectedProperty().bindBidirectional(cosechaConfig.correccionAnchoProperty());
 		chkDemora.selectedProperty().bindBidirectional(cosechaConfig.correccionDemoraPesadaProperty());
-		chkDemora.setTooltip(new Tooltip(Messages.getString("HarvestConfigDialogController.16"))); //$NON-NLS-1$
+		chkDemora.setTooltip(new Tooltip(Messages.getString("HarvestConfigDialogController.16"))); //-NLS-1$
 		chkRinde.selectedProperty().bindBidirectional(cosechaConfig.correccionRindeProperty());
 		chkSuperposicion.selectedProperty().bindBidirectional(cosechaConfig.correccionSuperposicionProperty());
 		chkDistancia.selectedProperty().bindBidirectional(cosechaConfig.correccionDistanciaProperty());
@@ -470,9 +471,15 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 	public static Optional<CosechaLabor> config(CosechaLabor labor) {
 		Optional<CosechaLabor> ret = Optional.empty();
 		try{
+			ResourceBundle boundle = Messages.getBoundle();
+			if(boundle==null){
+				Messages.setLocale(Messages.getLocales().get(0));
+				boundle=Messages.getBoundle();
+			}
+			System.out.println("boundle "+boundle);
 			FXMLLoader myLoader = new FXMLLoader(HarvestConfigDialogController.class.getResource(
 					HARVEST_CONFIG_DIALOG_FXML));
-			myLoader.setResources(Messages.getBoundle());
+			myLoader.setResources(boundle);
 			myLoader.load();//aca se crea el constructor
 			HarvestConfigDialogController controller = ((HarvestConfigDialogController) myLoader.getController());
 			controller.setLabor(labor);

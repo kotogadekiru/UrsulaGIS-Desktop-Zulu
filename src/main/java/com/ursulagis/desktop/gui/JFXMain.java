@@ -33,6 +33,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.application.Preloader;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.concurrent.Task;
@@ -118,6 +119,7 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.TarjetaHelper;
+import com.ursulagis.desktop.gui.UrsulaGISPreloader;
 
 public class JFXMain extends Application {
 	private static final String PREFERED_TREE_WIDTH_KEY = "PREFERED_TREE_WIDTH";
@@ -163,9 +165,15 @@ public class JFXMain extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-	
+			// Notify preloader that we're starting
+			notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_START));
+			
 			JFXMain.stage = primaryStage;
 			primaryStage.setTitle(TITLE_VERSION);
+			
+			// Notify preloader of progress
+			notifyPreloader(new Preloader.ProgressNotification(0.1));
+			
 			//URL iconResource = this.getClass().getResource(ICON);
 			InputStream iconIs = this.getClass().getResourceAsStream(ICON);
 			System.out.println("icono file searched at "+ICON);
@@ -200,12 +208,19 @@ public class JFXMain extends Application {
 			StackPane pane = new StackPane();
 			scene = new Scene(pane,canvasSize.getWidth()*1,canvasSize.getHeight()*0.3);//, Color.White);
 			primaryStage.setScene(scene);
+			
+			// Notify preloader of progress
+			notifyPreloader(new Preloader.ProgressNotification(0.2));
 
 			addDragAndDropSupport();
 			// scene.getStylesheets().add("gisUI/style.css");//esto funciona
 
 			MenuBar menuBar = constructMenuBar();
 			setInitialPosition();//pone init Lat y initLong en Configuracion
+			
+			// Notify preloader of progress
+			notifyPreloader(new Preloader.ProgressNotification(0.3));
+			
 			VBox vBox1 = new VBox();
 			vBox1.getChildren().add(menuBar);
 			createSwingNode(vBox1);
@@ -222,10 +237,17 @@ public class JFXMain extends Application {
 				});
 			});
 			configGUIController.startKeyBoardListener();
+			
+			// Notify preloader of progress
+			notifyPreloader(new Preloader.ProgressNotification(0.8));
+			primaryStage.toBack();
 			primaryStage.show();
 
 			//start clearCache cronJob
 			startClearCacheCronJob();
+			
+			// Final progress notification
+			//notifyPreloader(new Preloader.ProgressNotification(1.0));
 		}catch(Exception e) {
 			System.out.println("no se pudo hacer start de JFXMain.start(stage)");
 			e.printStackTrace();
@@ -291,7 +313,10 @@ public class JFXMain extends Application {
 			wwNode = (Node) handler.getSource().getValue();
 			if(wwNode!=null) {
 				vBox1.getChildren().add( wwNode);
-				this.wwjPanel.repaint();	
+				this.wwjPanel.repaint();
+				
+				// Notify preloader of progress
+				notifyPreloader(new Preloader.ProgressNotification(0.6));
 			}else {
 				System.err.println("fallo la iniciacion del worldwind node");
 			}
@@ -415,7 +440,11 @@ public class JFXMain extends Application {
 		stage.setResizable(true);
 
 		// descomentar esto para cargar los poligonos de la base de datos. bloquea la interface
-		executorPool.execute(()->loadActiveLayers());
+		executorPool.execute(()->{
+			// Notify preloader of progress
+			notifyPreloader(new Preloader.ProgressNotification(0.7));
+			loadActiveLayers();
+		});
 		return sp;
 	}
 
@@ -1293,6 +1322,7 @@ public class JFXMain extends Application {
 	public static void main(String[] args) {
 		try	{			
 			//System.setProperty("prism.order", "es2");
+			System.setProperty("javafx.preloader", UrsulaGISPreloader.class.getCanonicalName());
 			Application.launch(JFXMain.class, args);
 		}catch (Exception e){
 			JOptionPane.showMessageDialog(null,"hola: " + e.getMessage());

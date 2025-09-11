@@ -1,10 +1,15 @@
 package com.ursulagis.desktop.dao.config;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import com.ursulagis.desktop.utils.CustomProperties;
@@ -83,10 +88,13 @@ public class Configuracion{
 		
 		boolean success = false;
 		try {
-			FileReader reader = new FileReader(propertiesFileUrl);
+			// Use UTF-8 encoding for reading properties files
+			FileInputStream fis = new FileInputStream(propertiesFileUrl);
+			InputStreamReader reader = new InputStreamReader(fis, StandardCharsets.UTF_8);
 			configProp.load(reader);
 			success = true;
 			reader.close();
+			fis.close();
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
@@ -97,7 +105,8 @@ public class Configuracion{
 		//	propertiesFileUrl=DEFAULT_CONFIG_PROPERTIES;
 			System.out.println("Read all properties from file");
 			try {
-				configProp.load(in);
+				// Use UTF-8 encoding for reading default properties
+				configProp.load(new InputStreamReader(in, StandardCharsets.UTF_8));
 				System.out.println("finished loading defaults");
 			} catch (IOException e) {
 				System.out.println("failed to load default configuration");
@@ -149,9 +158,12 @@ public class Configuracion{
 
 	public void save() {
 		try {
-			FileWriter writer = new FileWriter(propertiesFileUrl);
+			// Use UTF-8 encoding for writing properties files
+			FileOutputStream fos = new FileOutputStream(propertiesFileUrl);
+			OutputStreamWriter writer = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
 			configProp.store(writer,URSULA_GIS_APPDATA_FOLDER);//Calendar.getInstance().getTime().toString());
 			writer.close();
+			fos.close();
 		} catch (IOException e) {
 			System.err.println("fallo el guardar config.properties en "+propertiesFileUrl);
 			e.printStackTrace();

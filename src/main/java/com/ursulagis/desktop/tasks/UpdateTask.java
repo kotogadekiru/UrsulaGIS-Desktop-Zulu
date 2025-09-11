@@ -58,13 +58,14 @@ public class UpdateTask  extends Task<File>{
 	private Label progressBarLabel;
 	private HBox progressContainer;
 
+	
+
 
 	//	private static final Logger logger = LoggerFactory.getLogger(UpdateTask.class);//sl4j
 
 	public static String lastVersionURL=null;
-	//	
-	//	public UpdateTask(){
-	//	}
+	private static boolean isUpdateAvailable=false;
+
 	private static String lastVersionNumber;
 
 	public File call()  {
@@ -236,12 +237,68 @@ public class UpdateTask  extends Task<File>{
 		progressPane.getChildren().remove(progressContainer);
 	}
 
+	public static String checkForUpdate() {		
+		String message =null;
+		//TODO si ya se habia invocado no volver a llamar.
+		if(lastVersionNumber == null) {
+			GenericUrl url = new GenericUrl(UPDATE_URL);//"http://www.ursulagis.com/update");
+			url.put("VERSION", JFXMain.VERSION);
+			
+			String usr = getUserNumber();
+			url.put("USER", usr);
+			
+			System.out.println("calling url=> "+url);
+			//http://localhost:5000/update?VERSION=0.2.26&USER=693,468
+			//http://www.ursulagis.com/update?VERSION=0.2.20
+			HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+			JsonFactory JSON_FACTORY = new JacksonFactory();
+			HttpRequestFactory requestFactory =
+					HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
+						@Override
+						public void initialize(HttpRequest request) {
+							request.setParser(new JsonObjectParser(JSON_FACTORY));
+							//						  request.setConnectTimeout(0);
+							//					      request.setReadTimeout(0);
+						}
+					});
+	
+			try {
+				HttpRequest request = requestFactory.buildGetRequest(url);
+				HttpResponse response = request.execute();		
+				
+				GenericJson content = null;
+			
+				content = response.parseAs(GenericJson.class);//FIXME Unexpected character ('w' (code 119)): was expecting comma to separate OBJECT entries
+				UpdateTask.lastVersionNumber =(String) content.get("lastVersionNumber");
+	
+				 message = (String)content.get("mensaje");
+			
+				
+				if(versionToDouble(lastVersionNumber)>versionToDouble(JFXMain.VERSION)){
+					UpdateTask.lastVersionURL =(String)content.get("lastVersionURL");
+					UpdateTask.isUpdateAvailable = true;				
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				return "";
+			}	
+			}
+			/*
+			 else //lastVersionNumber != null
+			if(versionToDouble(lastVersionNumber)>versionToDouble(JFXMain.VERSION)){			
+				return "";	
+			}*/
+			return message;
+	}
+
 	/**
 	 * hacer un llamado a www.ursulagis.com/update y chequear la ultima version con esta version
 	 * actualiza la variable de lastVersion
 	 * @return si la ultima version es mas grande que esta version devolver true
 	 */
 	public static boolean isUpdateAvailable() {
+		return UpdateTask.isUpdateAvailable;
+		/*
 		//System.out.println("viendo si necesito hacer update");
 		//TODO si ya se habia invocado no volver a llamar.
 		if(lastVersionNumber ==null) {
@@ -294,6 +351,7 @@ public class UpdateTask  extends Task<File>{
 			return true;	
 		}
 		return false;
+		 */
 	}
 
 	public static String getUserNumber() {
@@ -310,45 +368,7 @@ public class UpdateTask  extends Task<File>{
 		return usr;
 	}
 
-	/**
-	 * metodo que muestra el mensaje de bienvenida
-	 * @param message
-	 */
-	private static void showWelcomeMessage(String message) {
-		//System.out.println("mostrando welcome \n"+message);
-		Platform.runLater(()->{		
-			try{		
-				WebView webView = new WebView();
-				// webView.setPrefSize(600, 400);
-				webView.autosize();
-				WebEngine engine = webView.getEngine();
-				engine.loadContent(message);
-
-				VBox v = new VBox();
-				VBox.setVgrow(webView, Priority.ALWAYS);
-				VBox.setMargin(webView, new Insets(10,10,10,10));
-				v.getChildren().add(webView);
-				Stage welcomeStage = new Stage();
-				
-				double height = webView.getPrefHeight();
-				double width = webView.getPrefWidth();
-				Scene scene = new Scene(v, width-150+60,height-100+90);
-				welcomeStage.setScene(scene);
-				welcomeStage.initOwner(JFXMain.stage);
-				welcomeStage.getIcons().addAll(JFXMain.stage.getIcons());
-				welcomeStage.setTitle(Messages.getString("UpdateTaskWelcome.Title"));//"Bienvenido!");
-				welcomeStage.show();
-			}   catch(Exception e){
-				e.printStackTrace();
-			}	
-//			engine.getLoadWorker().stateProperty().addListener((observableState, oldState, newState)->{
-//				System.out.println("new state "+newState);
-//				if(State.SUCCEEDED.equals(newState)) {
-//					welcomeStage.show();
-//				}
-//			});			
-		});
-	}
+	
 
 	public static Double versionToDouble(String ver){
 		ver= ver.replace(" dev", "");

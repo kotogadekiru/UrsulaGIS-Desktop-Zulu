@@ -1,5 +1,8 @@
 package com.ursulagis.desktop.gui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.dao.config.Lote;
 import javafx.collections.FXCollections;
@@ -24,12 +27,13 @@ public class PoligonoDialog extends Dialog<Poligono>{
 	Text nombreLabel = null;
 	Text loteLabel=null;
 	TextField nombreTF=null;
-	
+	ChoiceBox<Lote> cb =null;
 	public PoligonoDialog(Poligono _pol, boolean editar) {
 		super();
 		
 		this.poligono=_pol;
 		this.initOwner(JFXMain.stage);
+		this.getDialogPane().setMinSize(400, 200);
 
 		this.getDialogPane().getButtonTypes().add(ButtonType.OK);
 		this.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
@@ -47,7 +51,7 @@ public class PoligonoDialog extends Dialog<Poligono>{
 	            this.setY(dialogY);
 	        }
 	    });
-		this.setResizable(false);
+		this.setResizable(true);
 		
 		 nombreTF = new TextField(this.poligono.getNombre());
 		if(editar) {
@@ -63,8 +67,14 @@ public class PoligonoDialog extends Dialog<Poligono>{
 			loteLabel = new Text(Messages.getString("JFXMain.configLoteMi"));//"Lote"		
 			nombreTF.setPromptText(Messages.getString("JFXMain.medirSuperficieNombreLabel")); //$NON-NLS-1$
 		}
-		
-		ChoiceBox<Lote> cb = new ChoiceBox<Lote>(FXCollections.observableArrayList(DAH.getAllLotes()));
+		List<Lote> lotes = new ArrayList<Lote>();
+		try {
+			lotes = DAH.getAllLotes();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		cb = new ChoiceBox<Lote>(FXCollections.observableArrayList(lotes));
 		cb.getSelectionModel().select(this.poligono.getLote());
 		cb.setPrefWidth(250);
 		
@@ -89,8 +99,7 @@ public class PoligonoDialog extends Dialog<Poligono>{
 
 		this.getDialogPane().setContent(vb);
 		this.initModality(Modality.NONE);		
-		this.getDialogPane().setPrefWidth(100); // <-- solution
-		this.setWidth(100);		
+
 
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
@@ -114,7 +123,13 @@ public class PoligonoDialog extends Dialog<Poligono>{
 	}
 
 	private boolean validarDialog() {
-		// TODO Auto-generated method stub
-		return true;
+		boolean isValid = true;
+/* 		if(nombreTF.textProperty().get()==null) {
+			isValid = false;
+		}
+		if(cb.getSelectionModel().selectedItemProperty().get()==null) {
+			isValid = false;
+		} */
+		return isValid;
 	}
 }

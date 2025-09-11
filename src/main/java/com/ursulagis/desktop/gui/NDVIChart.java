@@ -148,7 +148,15 @@ public class NDVIChart extends VBox {
 		bottom.setRight(right);//getChildren().addAll(left,right);
 		bottom.setPadding(new Insets(5,5,5,5));
 		vbox.getChildren().add(bottom);
-		this.getStylesheets().add(getClass().getResource("chart.css").toExternalForm());
+		//this.getStylesheets().add(getClass().getResource("chart.css").toExternalForm());
+		//String style= this.getStyle();
+		
+		// this.getStylesheets().add("""
+		// 					.onHover{
+		// 			-fx-background-color: BLACK;
+		// 			-fx-font-size: 20;
+		// 		}
+		// 	""");
 		this.getChildren().add(vbox);
 		
 		/**

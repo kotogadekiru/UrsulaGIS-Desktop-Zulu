@@ -3,14 +3,28 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [ 
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Messages",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.gui.Messages",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
+            "name": "UrsulaGISPreloader",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.gui.UrsulaGISPreloader",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
         {
             "type": "java",
             "name": "Launch JFXMain",
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.gui.JFXMain",
             "projectName": "UrsulaGIS-Desktop_Zulu",
-            "vmArgs": [                    
+            "vmArgs": [
                 "-Xms2G",
                 "-Xmx20G",
                 "-Djava.awt.headless=false",
