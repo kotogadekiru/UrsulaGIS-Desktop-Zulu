@@ -51,6 +51,9 @@ import com.ursulagis.desktop.dao.ordenCompra.Producto;
 import com.ursulagis.desktop.dao.ordenCompra.ProductoLabor;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
 import com.ursulagis.desktop.gui.JFXMain;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 
 public class DAH {
@@ -120,6 +123,9 @@ public class DAH {
   <property name="eclipselink.ddl-generation.output-mode" value="database" />
 			 */
 
+			// DEBUG: Show initial database setup info
+			DatabaseDebugUtil.showDebugAlert("Database Initialization", "Starting database initialization...");
+
 			String db_url = JFXMain.config.getPropertyOrDefault(PROJECT_URL_KEY, "NOT_SET");
 			if("NOT_SET".equals(db_url)) {
 				String currentUsersHomeDir =System.getenv(APPDATA);
@@ -128,10 +134,38 @@ public class DAH {
 				db_url = ursulaGISFolder + File.separator + H2_URSULAGIS_DB;		
 			}
 			db_url+=AUTO_SERVE;
+			
+			// DEBUG: Show database path info
+			String debugInfo = "Database Path Info:\n" +
+				"APPDATA: " + System.getenv(APPDATA) + "\n" +
+				"UrsulaGIS Folder: " + (System.getenv(APPDATA) + File.separator + Configuracion.URSULA_GIS_APPDATA_FOLDER) + "\n" +
+				"Full DB URL: " + db_url;
+			DatabaseDebugUtil.showDebugAlert("Database Path", debugInfo);
+			
 			System.out.println("loading project "+db_url);
 			File sqliteDBFile=new File(db_url);
+			
+			// Ensure the database directory exists
+			File dbDir = sqliteDBFile.getParentFile();
+			if (dbDir != null && !dbDir.exists()) {
+				System.out.println("Creating database directory: " + dbDir.getAbsolutePath());
+				boolean created = dbDir.mkdirs();
+				if (!created) {
+					String errorMsg = "Failed to create database directory: " + dbDir.getAbsolutePath();
+					System.err.println(errorMsg);
+					DatabaseDebugUtil.showDebugAlert("Directory Creation Error", errorMsg);
+				} else {
+					DatabaseDebugUtil.showDebugAlert("Directory Created", "Successfully created database directory: " + dbDir.getAbsolutePath());
+				}
+			} else {
+				DatabaseDebugUtil.showDebugAlert("Directory Check", "Database directory exists: " + (dbDir != null ? dbDir.getAbsolutePath() : "null"));
+			}
+			
 			if(!sqliteDBFile.exists()){
 				System.out.println("need to migrate from ObjectDB");
+				DatabaseDebugUtil.showDebugAlert("Database File", "Database file does not exist, will be created: " + sqliteDBFile.getAbsolutePath());
+			} else {
+				DatabaseDebugUtil.showDebugAlert("Database File", "Database file exists: " + sqliteDBFile.getAbsolutePath());
 			}
 
 			Map<String,String> properties = new HashMap<>();
@@ -159,9 +193,31 @@ public class DAH {
 
 			// Ensure that no server-platform is configured
 			properties.put(TARGET_SERVER, TargetServer.None);
-			EntityManagerFactory factory =  Persistence.createEntityManagerFactory("UrsulaGIS", properties);
-			//step 2
-			emLite = factory.createEntityManager();
+			
+			// DEBUG: Show properties before creating factory
+			StringBuilder propsInfo = new StringBuilder("JPA Properties:\n");
+			properties.forEach((key, value) -> propsInfo.append(key).append(" = ").append(value).append("\n"));
+			DatabaseDebugUtil.showDebugAlert("JPA Properties", propsInfo.toString());
+			
+			try {
+				DatabaseDebugUtil.showDebugAlert("Creating EntityManagerFactory", "Attempting to create EntityManagerFactory with persistence unit 'UrsulaGIS'");
+				EntityManagerFactory factory =  Persistence.createEntityManagerFactory("UrsulaGIS", properties);
+				DatabaseDebugUtil.showDebugAlert("EntityManagerFactory Created", "Successfully created EntityManagerFactory");
+				
+				//step 2
+				DatabaseDebugUtil.showDebugAlert("Creating EntityManager", "Attempting to create EntityManager from factory");
+				emLite = factory.createEntityManager();
+				DatabaseDebugUtil.showDebugAlert("EntityManager Created", "Successfully created EntityManager - Database connection established!");
+				
+			} catch (Exception e) {
+				String errorMsg = "Database connection failed:\n" + e.getClass().getSimpleName() + ": " + e.getMessage();
+				if (e.getCause() != null) {
+					errorMsg += "\nCause: " + e.getCause().getClass().getSimpleName() + ": " + e.getCause().getMessage();
+				}
+				DatabaseDebugUtil.showDebugAlert("Database Connection Error", errorMsg);
+				e.printStackTrace();
+				throw new RuntimeException("Failed to initialize database", e);
+			}
 
 			//			String hUUID = JFXMain.config.getPropertyOrDefault("DAH.HAS_UUIDS", "False");
 			//			if(!"True".equals(hUUID)) {

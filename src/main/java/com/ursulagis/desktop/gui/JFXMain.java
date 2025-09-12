@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.InputStream;
-
+import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -24,6 +24,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,6 +105,7 @@ import com.ursulagis.desktop.gui.controller.SueloGUIController;
 import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.gui.nww.LayerPanel;
 import com.ursulagis.desktop.gui.nww.WWPanel;
+import com.ursulagis.desktop.gui.utils.LoggingOutputStream;
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
@@ -117,6 +120,7 @@ import com.ursulagis.desktop.dao.suelo.Suelo;
 import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.DAH;
+import com.ursulagis.desktop.utils.DatabaseDebugUtil;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.TarjetaHelper;
 import com.ursulagis.desktop.gui.UrsulaGISPreloader;
@@ -140,7 +144,7 @@ public class JFXMain extends Application {
 	private Scene scene=null;
 
 	private Dimension canvasSize = new Dimension(1500, 800);
-
+	private SplitPane sp=null;
 	public WWPanel wwjPanel=null;
 	protected LayerPanel layerPanel=null;
 	public VBox progressBox = new VBox();
@@ -161,6 +165,7 @@ public class JFXMain extends Application {
 	public SueloGUIController sueloGUIController= new SueloGUIController(this);
 	public MargenGUIController margenGUIController = new MargenGUIController(this);
 	public GenericLaborGUIController genericGUIController = new GenericLaborGUIController(this);
+
 
 	@Override
 	public void start(Stage primaryStage) {
@@ -242,6 +247,7 @@ public class JFXMain extends Application {
 			notifyPreloader(new Preloader.ProgressNotification(0.8));
 			primaryStage.toBack();
 			primaryStage.show();
+			setSplitPaneDividerPosition(sp);
 
 			//start clearCache cronJob
 			startClearCacheCronJob();
@@ -296,7 +302,12 @@ public class JFXMain extends Application {
 		Configuration.setValue(GOV_NASA_WORLDWIND_AVKEY_INITIAL_ALTITUDE, initAltitude);
 	}
 
-	public void createSwingNode(VBox vBox1) {
+	public void createSwingNode(VBox vBox1) {		
+		this.sp = (SplitPane) initializeWorldWind();
+		vBox1.getChildren().add(sp);
+		//vBox1.getChildren().add( initializeWorldWind());
+		//this.wwjPanel.repaint();
+/* 
 		Task<Node> pfMapTask = new Task<Node>(){
 			@Override
 			protected Node call() {
@@ -321,9 +332,13 @@ public class JFXMain extends Application {
 				System.err.println("fallo la iniciacion del worldwind node");
 			}
 		});
-		executorPool.execute(pfMapTask);		
+		executorPool.execute(pfMapTask);		 */
 	}
 
+	/**
+	 * devuelve un splitpane con el layerPanel y el wwjPanel
+	 * @return
+	 */
 	protected Node initializeWorldWind() {
 //		try {//com.sun.java.swing.plaf.windows.WindowsLookAndFeel
 //			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");//UIManager.getSystemLookAndFeelClassName()); 
@@ -366,7 +381,7 @@ public class JFXMain extends Application {
 		this.layerPanel = new LayerPanel(this.wwjPanel.getWwd(),stage.widthProperty(),stage.heightProperty());
 		this.layerPanel.addToScrollPaneBottom(progressBox);
 
-		setAccionesTreePanel();
+		setAccionesTreePanel();//inicializa los acciones del arbol de capas
 
 		JFXMain.stage.heightProperty().addListener((o,old,nu)->{
 			this.wwjPanel.setPreferredSize(new Dimension((int)stage.getHeight(),nu.intValue()));
@@ -378,31 +393,10 @@ public class JFXMain extends Application {
 			this.wwjPanel.repaint();	
 		});
 
-		SplitPane sp = new SplitPane();
-		sp.getItems().addAll(layerPanel, wwSwingNode);
+		SplitPane sp = new SplitPane(layerPanel, wwSwingNode);
+		//sp.getItems().addAll();
 
-		//PREFERED_TREE_WIDTH=219,546		
-		double initSplitPaneWidth = PropertyHelper.parseDouble(
-				config.getPropertyOrDefault(PREFERED_TREE_WIDTH_KEY,
-						PropertyHelper.formatDouble(stage.getWidth()*0.15f))).doubleValue();
-
-		//me permite agrandar la pantalla sin que se agrande el arbol
-		sp.setDividerPositions(initSplitPaneWidth/stage.getWidth());//15% de la pantalla de 1245 es 186px ; 1552.0 es fullscreen
-		sp.getDividers().get(0).positionProperty().addListener((o,ov,nu)->{
-			double newPreferredSplitPaneWidth = stage.getWidth()*nu.doubleValue();
-			config.loadProperties();
-			JFXMain.config.setProperty(PREFERED_TREE_WIDTH_KEY, PropertyHelper.formatDouble(newPreferredSplitPaneWidth));
-			config.save();
-		});
-
-		JFXMain.stage.widthProperty().addListener((o,old,nu)->{
-			double splitPaneWidth = PropertyHelper.parseDouble(
-					config.getPropertyOrDefault(PREFERED_TREE_WIDTH_KEY,
-							PropertyHelper.formatDouble(initSplitPaneWidth))).doubleValue();
-			sp.setDividerPositions(splitPaneWidth/nu.doubleValue());
-			this.wwjPanel.setPreferredSize(new Dimension(nu.intValue(),(int)stage.getWidth()));
-			this.wwjPanel.repaint();
-		});
+		
 
 		// Register a rendering exception listener that's notified when
 		// exceptions occur during rendering.
@@ -440,12 +434,56 @@ public class JFXMain extends Application {
 		stage.setResizable(true);
 
 		// descomentar esto para cargar los poligonos de la base de datos. bloquea la interface
-		executorPool.execute(()->{
+		//executorPool.execute(()->{
 			// Notify preloader of progress
 			notifyPreloader(new Preloader.ProgressNotification(0.7));
+			
 			loadActiveLayers();
-		});
+		//});
 		return sp;
+	}
+
+
+
+	private void setSplitPaneDividerPosition(SplitPane sp) {
+		//PREFERED_TREE_WIDTH=219,546		
+		String defaultSplitPaneWidth = "200";//PropertyHelper.formatDouble(stage.getWidth()*0.15f);//Nan
+		System.out.println("defaultSplitPaneWidth: " + defaultSplitPaneWidth);
+		String configSplitPaneWidth = config.getPropertyOrDefault(PREFERED_TREE_WIDTH_KEY, defaultSplitPaneWidth);
+		System.out.println("configSplitPaneWidth: " + configSplitPaneWidth);
+		double initSplitPaneWidth = PropertyHelper.parseDouble(	configSplitPaneWidth)
+						.doubleValue();
+
+		//me permite agrandar la pantalla sin que se agrande el arbol
+		double dividerPosition = 0.85;
+		if(stage!=null && stage.getWidth()>200 && !Double.isNaN(stage.getWidth())) {
+			dividerPosition = initSplitPaneWidth/stage.getWidth();
+			System.out.println("dividerPosition: " + dividerPosition);
+		}
+		sp.getDividers().get(0).positionProperty().setValue(0.15);
+		//sp.setDividerPositions(0.15);//15% de la pantalla de 1245 es 186px ; 1552.0 es fullscreen
+		// sp.getDividers().get(0).positionProperty().addListener((o,ov,nu)->{
+		// 	System.out.println("divider position chaged from "+ov+" to "+nu);
+		// 	double newPreferredSplitPaneWidth = stage.getWidth()*nu.doubleValue();
+		// 	config.loadProperties();
+		// 	config.setProperty(PREFERED_TREE_WIDTH_KEY, PropertyHelper.formatDouble(newPreferredSplitPaneWidth));
+		// 	//config.save();//no guardes cada vez es muy lento
+		// });
+
+		/* si se actualiza el tamaño */
+		stage.widthProperty().addListener((o,old,nu)->{
+			if(old!=null && old.doubleValue()>1 && !Double.isNaN(old.doubleValue())) {
+				System.out.println("stage with chaged for the second time from "+old+" to "+nu);
+			double splitPaneWidth = PropertyHelper.parseDouble(
+					config.getPropertyOrDefault(PREFERED_TREE_WIDTH_KEY,
+							PropertyHelper.formatDouble(initSplitPaneWidth))).doubleValue();
+			//sp.setDividerPositions(splitPaneWidth/nu.doubleValue());
+			this.wwjPanel.setPreferredSize(new Dimension(nu.intValue(),(int)stage.getWidth()));
+			this.wwjPanel.repaint();
+			}else{
+				System.out.println("stage with chaged for the first time from "+old+" to "+nu);
+			}
+		});
 	}
 
 	//	public static void setDefaultSize(int size) {
@@ -919,6 +957,7 @@ public class JFXMain extends Application {
 	}
 
 	private void loadActiveLayers(){
+		DatabaseDebugUtil.showDebugAlert("loadActiveLayers", "loadActiveLayers");
 		//		long now = System.currentTimeMillis();
 		//		DAH.getAllAgroquimicos();
 		//		DAH.getAllCultivos();
@@ -927,9 +966,11 @@ public class JFXMain extends Application {
 		//		System.out.println("tarde "+(System.currentTimeMillis()-now)+" en inicializar los defaults");
 		//tarde 11148 en inicializar los defaults
 		TarjetaHelper.initTarjeta();
+		DatabaseDebugUtil.showDebugAlert("TarjetaHelper.initTarjeta", "TarjetaHelper.initTarjeta");
 		this.poligonoGUIController.showPoligonosActivos();
-
+		DatabaseDebugUtil.showDebugAlert("poligonoGUIController.showPoligonosActivos", "poligonoGUIController.showPoligonosActivos");	
 		this.ndviGUIController.showNdviActivos();
+		DatabaseDebugUtil.showDebugAlert("ndviGUIController.showNdviActivos", "ndviGUIController.showNdviActivos");
 	}	
 
 	public void viewGoTo(Labor<?> labor) {
@@ -1320,6 +1361,8 @@ public class JFXMain extends Application {
 	}
 
 	public static void main(String[] args) {
+		//LoggingOutputStream.installLogger();//redirige los System.out y System.err a los loggers
+		
 		try	{			
 			//System.setProperty("prism.order", "es2");
 			System.setProperty("javafx.preloader", UrsulaGISPreloader.class.getCanonicalName());
