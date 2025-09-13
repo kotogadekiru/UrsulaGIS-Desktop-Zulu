@@ -365,6 +365,7 @@
                 <filtering>false</filtering>
                 <includes>
                     <include>**/*.xml</include>
+                    <include>**/*.fxml</include>
                     <include>**/*.png</include>
                     <include>**/*.ico</include>
                     <include>**/*.jpg</include>
@@ -536,6 +537,29 @@
                     <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>${main-class}</mainClass>
+                    <options>
+                        <option>-Djava.awt.headless=false</option>
+                        <option>-Dprism.order=sw</option>
+                        <option>-Dprism.verbose=false</option>
+                        <option>-Dprism.forceGPU=false</option>
+                        <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=17</option>
+                        <option>-Djogamp.gluegen.UseTempJarCache=true</option>
+                        <option>-Djava.net.useSystemProxies=true</option>
+                    </options>
+                    <systemProperties>
+                        <systemProperty>
+                            <key>javafx.preloader</key>
+                            <value>${preloader-class}</value>
+                        </systemProperty>
+                    </systemProperties>
+                </configuration>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -702,6 +726,98 @@
                                 <argument>${project.build.directory}/packaging/add-launch-to-msi.js</argument>
                             </arguments>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Development run profile -->
+        <profile>
+            <id>dev-run</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>dev-run</id>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>${main-class}</mainClass>
+                                    <options>
+                                        <option>-Djava.awt.headless=false</option>
+                                        <option>-Dprism.order=sw</option>
+                                        <option>-Dprism.verbose=true</option>
+                                        <option>-Dprism.forceGPU=false</option>
+                                        <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=17</option>
+                                        <option>-Djogamp.gluegen.UseTempJarCache=true</option>
+                                        <option>-Djava.net.useSystemProxies=true</option>
+                                        <option>-Xmx2g</option>
+                                        <option>-XX:+UseG1GC</option>
+                                    </options>
+                                    <systemProperties>
+                                        <systemProperty>
+                                            <key>javafx.preloader</key>
+                                            <value>${preloader-class}</value>
+                                        </systemProperty>
+                                    </systemProperties>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Debug run profile -->
+        <profile>
+            <id>debug-run</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>debug-run</id>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>${main-class}</mainClass>
+                                    <options>
+                                        <option>-Djava.awt.headless=false</option>
+                                        <option>-Dprism.order=sw</option>
+                                        <option>-Dprism.verbose=true</option>
+                                        <option>-Dprism.forceGPU=false</option>
+                                        <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=17</option>
+                                        <option>-Djogamp.gluegen.UseTempJarCache=true</option>
+                                        <option>-Djava.net.useSystemProxies=true</option>
+                                        <option>-Xmx2g</option>
+                                        <option>-XX:+UseG1GC</option>
+                                        <option>-Xdebug</option>
+                                        <option>-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005</option>
+                                    </options>
+                                    <systemProperties>
+                                        <systemProperty>
+                                            <key>javafx.preloader</key>
+                                            <value>${preloader-class}</value>
+                                        </systemProperty>
+                                    </systemProperties>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
