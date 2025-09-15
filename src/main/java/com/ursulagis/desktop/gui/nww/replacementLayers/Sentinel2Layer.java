@@ -19,9 +19,9 @@ public class Sentinel2Layer extends WMSTiledImageLayer
     crs = new AVListImpl();
     crs.setValue(AVKey.COORDINATE_SYSTEM, "EPSG:4326");
   }
-  public Sentinel2Layer()
-  {
+  public Sentinel2Layer() {
       super(getConfigurationDocument(), crs);
+      this.setName("Sentinel-2 2016");
   }
   
   protected static Document getConfigurationDocument()

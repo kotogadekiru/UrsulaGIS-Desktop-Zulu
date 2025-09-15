@@ -65,6 +65,115 @@ UrsulaGIS Desktop is a powerful GIS application that combines traditional mappin
    mvn javafx:run
    ```
 
+## 🚀 Running the Application
+
+### Quick Start Scripts
+
+For convenience, we provide several run scripts for different scenarios:
+
+#### Windows
+- **`run-app.bat`** - Standard application run
+- **`run-app-dev.bat`** - Development mode with verbose logging
+- **`run-app-debug.bat`** - Debug mode with remote debugging enabled
+
+#### Unix/Linux/macOS
+- **`run-app.sh`** - Standard application run (make executable with `chmod +x run-app.sh`)
+
+### Maven Run Commands
+
+#### Standard Run
+```bash
+# Clean, compile, and run the application
+mvn clean compile javafx:run
+
+# Or use the JavaFX plugin directly
+mvn javafx:run
+```
+
+#### Development Mode
+```bash
+# Run with verbose logging and optimized JVM settings
+mvn javafx:run -Djavafx.options="-Dprism.verbose=true -Xmx2g -XX:+UseG1GC"
+```
+
+#### Debug Mode
+```bash
+# Run with remote debugging on port 5005
+mvn javafx:run -Djavafx.options="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -Xmx2g -XX:+UseG1GC"
+```
+
+#### Custom JVM Options
+```bash
+# Run with custom memory settings
+mvn javafx:run -Djavafx.options="-Xmx4g -XX:+UseG1GC"
+```
+
+### Available Maven Profiles
+
+| Profile | Description | Use Case |
+|---------|-------------|----------|
+| `dev-run` | Development mode with verbose logging | Development and testing |
+| `debug-run` | Debug mode with remote debugging | Debugging with IDE |
+| `windows-active` | Windows-specific configurations | Windows builds |
+| `macos-sign` | macOS code signing | macOS distribution |
+
+### IDE Integration
+
+#### IntelliJ IDEA
+1. Open the project in IntelliJ IDEA
+2. Go to **Run** → **Edit Configurations**
+3. Add a new **Maven** configuration
+4. Set **Command line** to: `javafx:run`
+5. Set **Working directory** to the project root
+
+#### Eclipse
+1. Right-click on the project
+2. Select **Run As** → **Maven Build...**
+3. Set **Goals** to: `javafx:run`
+4. Click **Run**
+
+#### Visual Studio Code
+1. Install the **Extension Pack for Java**
+2. Open the project folder
+3. Use **Ctrl+Shift+P** → **Java: Run Maven Goal**
+4. Select `javafx:run`
+
+### Troubleshooting
+
+#### Common Issues
+
+**Application won't start:**
+```bash
+# Check Java version (should be 17+)
+java -version
+
+# Verify Maven can resolve dependencies
+mvn dependency:resolve
+
+# Clean and rebuild
+mvn clean compile
+```
+
+**Graphics/OpenGL issues:**
+```bash
+# Try software rendering
+mvn javafx:run -Djavafx.options="-Dprism.order=sw"
+
+# Force GPU rendering
+mvn javafx:run -Djavafx.options="-Dprism.order=es2"
+```
+
+**Memory issues:**
+```bash
+# Increase heap size
+mvn javafx:run -Djavafx.options="-Xmx4g -XX:+UseG1GC"
+```
+
+**Debug connection issues:**
+- Ensure port 5005 is not blocked by firewall
+- Check that your IDE is configured to connect to `localhost:5005`
+- Use the debug command: `mvn javafx:run -Djavafx.options="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"`
+
 ### Building Installers
 
 Generate native installers for your platform:

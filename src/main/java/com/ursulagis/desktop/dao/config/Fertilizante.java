@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.Transient;
 
 import com.ursulagis.desktop.dao.ordenCompra.Producto;
 import com.ursulagis.desktop.dao.suelo.Suelo.SueloParametro;
@@ -70,6 +71,7 @@ public class Fertilizante extends Producto implements Comparable<Fertilizante>{
 	double porcS= 0.0;
 	double porcCa, porcMg, porcB, porcCl, porcCo, porcCu, porcFe, porcMn, porcMo, porcZn;
 	
+	@Transient
 	private Map<SueloParametro,Double> cNutrientes = null;
 	
 	

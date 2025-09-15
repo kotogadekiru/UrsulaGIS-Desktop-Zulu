@@ -9,8 +9,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Properties;
 
 import java.time.LocalTime;
 
@@ -31,18 +33,24 @@ import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.application.Preloader;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.Property;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.embed.swing.SwingNode;
 import javafx.event.EventHandler;
+import javafx.event.Event;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.layout.Priority;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
@@ -51,6 +59,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.SplitPane.Divider;
 import javafx.scene.image.Image;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.DragEvent;
@@ -120,7 +129,6 @@ import com.ursulagis.desktop.dao.suelo.Suelo;
 import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.DAH;
-import com.ursulagis.desktop.utils.DatabaseDebugUtil;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.TarjetaHelper;
 import com.ursulagis.desktop.gui.UrsulaGISPreloader;
@@ -132,25 +140,57 @@ public class JFXMain extends Application {
 	private static final String GOV_NASA_WORLDWIND_AVKEY_INITIAL_LATITUDE = "gov.nasa.worldwind.avkey.InitialLatitude"; 
 	public static Configuracion config = Configuracion.getInstance();
 
-	public static final String VERSION = "1.0.11"; //XXX al cambiar la version cambiar el pom y el yml
-	public static final String TITLE_VERSION = "Ursula GIS Zulu-"+VERSION; 
-	public static final String buildDate = "03/09/2025";
 
+	public static String buildDate = "12/09/2025";
+	public static String VERSION = "1.0.1"; //XXX al cambiar la version cambiar el pom y el yml
+	static {//init build date and version
+		try {
+			Properties props = new Properties();
+			InputStream is = JFXMain.class.getClassLoader().getResourceAsStream("build-info.properties");
+			if (is != null) {
+				props.load(new InputStreamReader(is));
+				String buildDate = props.getProperty("build.date");
+				if (buildDate != null && !buildDate.startsWith("${")) {//not
+					JFXMain.buildDate = buildDate;
+				} else {
+					// Try alternative property
+					String buildTime = props.getProperty("build.time");
+					if (buildTime != null && !buildTime.startsWith("${")) {//not
+						JFXMain.buildDate = buildTime;
+					} else {// entra por aca :(
+						// Use current date as fallback
+						JFXMain.buildDate = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+					}
+				}
+				String appVersion = props.getProperty("app.version");
+				if (appVersion != null && !appVersion.startsWith("${")) {
+					JFXMain.VERSION = appVersion;
+				}
+			}
+		} catch (Exception e) {
+			System.err.println("Could not load build date from properties: " + e.getMessage());
+			// Use current date as fallback
+			JFXMain.buildDate = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+		}
+	}
+
+	
+	public static final String TITLE_VERSION = "Ursula GIS Zulu-"+VERSION; 
 	private static  final String ICON ="U_nueva_3_256x256_verde.png";//"gui/32x32-icon-earth.png";// "gui/1-512.png";//UrsulaGIS-Desktop/src/gui/32x32-icon-earth.png 
 	private static final String SOUND_FILENAME = "exito4.mp3";//"gui/Alarm08.wav";//"Alarm08.wav" funciona desde eclipse pero no desde el jar
 	private static final String SOUND_FILENAME_WAV = "gui/Alarm08.wav"; // Fallback WAV file  
 
 	public static Stage stage=null;
-	private Scene scene=null;
+	private Scene scene=null;// usado en addDragAndDropSupport
 
-	private Dimension canvasSize = new Dimension(1500, 800);
+	//private Dimension canvasSize = new Dimension(1500, 800);
 	private SplitPane sp=null;
 	public WWPanel wwjPanel=null;
+	private Node wwNode=null;//contiene el arbol con los layers y el swingnode con el world wind
 	protected LayerPanel layerPanel=null;
 	public VBox progressBox = new VBox();
 
 	public static ExecutorService executorPool = Executors.newCachedThreadPool();
-	private Node wwNode=null;//contiene el arbol con los layers y el swingnode con el world wind
 	private boolean isPlayingSound=false;
 
 	//GUI Controllers
@@ -177,59 +217,29 @@ public class JFXMain extends Application {
 			primaryStage.setTitle(TITLE_VERSION);
 			
 			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.1));
+			notifyPreloader(new Preloader.ProgressNotification(0.1));			
 			
-			//URL iconResource = this.getClass().getResource(ICON);
-			InputStream iconIs = this.getClass().getResourceAsStream(ICON);
-			System.out.println("icono file searched at "+ICON);
-			//URL url = JFXMain.class.getClassLoader().getResource(ICON);
-			
-			if (iconIs != null) {
-				primaryStage.getIcons().add(new Image(iconIs));
-			} else {
-				System.err.println("Warning: Could not load icon from " + ICON);
-				// Try alternative icon paths as fallback
-				String[] fallbackIcons = {
-					"gui/U_nueva_256x256_verde.png",
-					"gui/U_nueva_256x256.png",
-					"gui/U__fondo-transparente_256x256.png"
-				};
-				
-				for (String fallbackIcon : fallbackIcons) {
-					InputStream fallbackIs = this.getClass().getResourceAsStream(fallbackIcon);
-					if (fallbackIs != null) {
-						System.out.println("Using fallback icon: " + fallbackIcon);
-						primaryStage.getIcons().add(new Image(fallbackIs));
-						break;
-					}
-				}
-			}
+			loadMainIcon(primaryStage); 
+
 			Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-			double ratio = primaryScreenBounds.getHeight()/primaryScreenBounds.getWidth();
+			//double ratio = primaryScreenBounds.getHeight()/primaryScreenBounds.getWidth();//screen ratio
 			int canvasWidth = (int) (primaryScreenBounds.getWidth()*0.8);
-			int canvasHeight = (int) (canvasWidth/ratio);
-
-			canvasSize=new Dimension(canvasWidth,canvasHeight);
-			StackPane pane = new StackPane();
-			scene = new Scene(pane,canvasSize.getWidth()*1,canvasSize.getHeight()*0.3);//, Color.White);
-			primaryStage.setScene(scene);
+			int canvasHeight = (int) (primaryScreenBounds.getHeight()*0.8);			
 			
-			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.2));
-
-			addDragAndDropSupport();
-			// scene.getStylesheets().add("gisUI/style.css");//esto funciona
-
 			MenuBar menuBar = constructMenuBar();
 			setInitialPosition();//pone init Lat y initLong en Configuracion
 			
 			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.3));
+			notifyPreloader(new Preloader.ProgressNotification(0.3));			
 			
-			VBox vBox1 = new VBox();
-			vBox1.getChildren().add(menuBar);
-			createSwingNode(vBox1);
-			pane.getChildren().add(vBox1);			
+			Node layerTreeAndWWswingNodeSplitPane = createLayerTreeAndWWswingNodeSplitPane();			
+			VBox.setVgrow(layerTreeAndWWswingNodeSplitPane, Priority.ALWAYS);
+			VBox menuAndMainVBox = new VBox(menuBar,layerTreeAndWWswingNodeSplitPane);			
+			scene = new Scene(menuAndMainVBox,canvasWidth,canvasHeight);//, Color.White);
+			primaryStage.setScene(scene);
+			
+			// Notify preloader of progress
+			notifyPreloader(new Preloader.ProgressNotification(0.2));			
 
 			primaryStage.setOnHiding((e)-> {				
 				//close swing node
@@ -241,14 +251,22 @@ public class JFXMain extends Application {
 					System.exit(0); 
 				});
 			});
+		
 			configGUIController.startKeyBoardListener();
 			
 			// Notify preloader of progress
 			notifyPreloader(new Preloader.ProgressNotification(0.8));
-			primaryStage.toBack();
-			primaryStage.show();
-			setSplitPaneDividerPosition(sp);
+			primaryStage.setOnShowing((e)->{
+				System.out.println("primaryStage onShowing");
+				
+			});
+			primaryStage.setOnShown((e)->{
+				System.out.println("primaryStage onShown");				
+			});
 
+			//primaryStage.show();//aca se pasa divider position de 0.15 a 0.85
+		
+			addDragAndDropSupport();
 			//start clearCache cronJob
 			startClearCacheCronJob();
 			
@@ -257,6 +275,15 @@ public class JFXMain extends Application {
 		}catch(Exception e) {
 			System.out.println("no se pudo hacer start de JFXMain.start(stage)");
 			e.printStackTrace();
+		}
+	}
+
+
+
+	private void loadMainIcon(Stage primaryStage) {
+		InputStream iconIs = this.getClass().getResourceAsStream(ICON);			
+		if (iconIs != null) {
+			primaryStage.getIcons().add(new Image(iconIs));
 		}
 	}
 	
@@ -303,7 +330,7 @@ public class JFXMain extends Application {
 	}
 
 	public void createSwingNode(VBox vBox1) {		
-		this.sp = (SplitPane) initializeWorldWind();
+		this.sp = (SplitPane) createLayerTreeAndWWswingNodeSplitPane();
 		vBox1.getChildren().add(sp);
 		//vBox1.getChildren().add( initializeWorldWind());
 		//this.wwjPanel.repaint();
@@ -339,62 +366,41 @@ public class JFXMain extends Application {
 	 * devuelve un splitpane con el layerPanel y el wwjPanel
 	 * @return
 	 */
-	protected Node initializeWorldWind() {
-//		try {//com.sun.java.swing.plaf.windows.WindowsLookAndFeel
-//			UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");//UIManager.getSystemLookAndFeelClassName()); 
-//		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-//			ex.printStackTrace();
-//		}
-
-		//setDefaultSize(50);//esto funciona para la barra de abajo pero no para los placemarks
-		//		try {
-		//			// Create the WorldWindow.
-		//			this.wwjPanel =	new WWPanel(canvasSize, true);
-		//		}catch(Exception e) {
-		//			Platform.runLater(()->{
-		//				Alert a = new Alert(Alert.AlertType.ERROR);
-		//				a.setHeaderText("No se pudo crear WorldWindow");
-		//				String stackTrace = Arrays.toString(e.getStackTrace());
-		//				a.setContentText(stackTrace);
-		//				a.show();
-		//			});
-		//		}
-		//una vez que se establecio el tamaño inicial ese es el tamaño maximo
-		//this.wwjPanel.setPreferredSize(canvasSize);
+	protected Node createLayerTreeAndWWswingNodeSplitPane() {
 		final SwingNode wwSwingNode = new SwingNode();
-		// SwingUtilities.invokeLater(()-> {			                	 
-		try {
-			// Create the WorldWindow.
-			wwjPanel =	new WWPanel(canvasSize, true,this);
-			wwSwingNode.setContent(wwjPanel);
-		}catch(Exception e) {
-			Platform.runLater(()->{
-				Alert a = new Alert(Alert.AlertType.ERROR);
-				a.setHeaderText("No se pudo crear WorldWindow");
-				String stackTrace = Arrays.toString(e.getStackTrace());
-				a.setContentText(stackTrace);
-				a.show();
-			});
-		}
-		//});
+		JFXMain jfxMain = this;//referencia a this para que se pueda usar en el WWPanel
+				try {
+					// Create the WorldWindow.
+					wwjPanel =	new WWPanel(true,jfxMain);					
+					wwSwingNode.setContent(wwjPanel);
+					
+				}catch(Exception e) {
+					Platform.runLater(()->{
+						Alert a = new Alert(Alert.AlertType.ERROR);
+						a.setHeaderText("No se pudo crear WorldWindow");
+						String stackTrace = Arrays.toString(e.getStackTrace());
+						a.setContentText(stackTrace);
+						a.show();
+					});
+				}             	 
 
-		this.layerPanel = new LayerPanel(this.wwjPanel.getWwd(),stage.widthProperty(),stage.heightProperty());
+		//DoubleProperty layerPanelWidthProperty = new SimpleDoubleProperty(stage.widthProperty().get()*0.15);
+		
+		this.layerPanel = new LayerPanel(this.wwjPanel.getWwd(),
+							stage.widthProperty(),
+							stage.heightProperty());
+		//this.layerPanel.setPrefWidth(layerPanelWidthProperty.get());
 		this.layerPanel.addToScrollPaneBottom(progressBox);
-
 		setAccionesTreePanel();//inicializa los acciones del arbol de capas
-
-		JFXMain.stage.heightProperty().addListener((o,old,nu)->{
-			this.wwjPanel.setPreferredSize(new Dimension((int)stage.getHeight(),nu.intValue()));
-			this.wwjPanel.repaint();
-		});
 
 		//ok
 		JFXMain.stage.maximizedProperty().addListener((o,ov,nu)->{
 			this.wwjPanel.repaint();	
 		});
 
-		SplitPane sp = new SplitPane(layerPanel, wwSwingNode);
-		//sp.getItems().addAll();
+		sp = new SplitPane(layerPanel, wwSwingNode);
+	
+		
 
 		
 
@@ -427,63 +433,47 @@ public class JFXMain extends Application {
 				this.getWwd().addSelectListener((SelectListener) layer);
 			}
 		}
-
-		importElevations();
-		// Center the application on the screen.
-		// WWUtil.alignComponent(null, this, AVKey.CENTER);
-		stage.setResizable(true);
-
-		// descomentar esto para cargar los poligonos de la base de datos. bloquea la interface
-		//executorPool.execute(()->{
-			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.7));
+		notifyPreloader(new Preloader.ProgressNotification(0.7));
 			
-			loadActiveLayers();
-		//});
+		loadActiveLayers();
+	
+		notifyPreloader(new Preloader.ProgressNotification(0.9));
 		return sp;
 	}
 
-
-
-	private void setSplitPaneDividerPosition(SplitPane sp) {
+	private void setSplitPaneDividerPosition() {
 		//PREFERED_TREE_WIDTH=219,546		
 		String defaultSplitPaneWidth = "200";//PropertyHelper.formatDouble(stage.getWidth()*0.15f);//Nan
-		System.out.println("defaultSplitPaneWidth: " + defaultSplitPaneWidth);
+		//System.out.println("defaultSplitPaneWidth: " + defaultSplitPaneWidth);
 		String configSplitPaneWidth = config.getPropertyOrDefault(PREFERED_TREE_WIDTH_KEY, defaultSplitPaneWidth);
-		System.out.println("configSplitPaneWidth: " + configSplitPaneWidth);
-		double initSplitPaneWidth = PropertyHelper.parseDouble(	configSplitPaneWidth)
-						.doubleValue();
-
-		//me permite agrandar la pantalla sin que se agrande el arbol
-		double dividerPosition = 0.85;
+		//System.out.println("configSplitPaneWidth: " + configSplitPaneWidth);
+		double initSplitPaneWidth = PropertyHelper.parseDouble(	configSplitPaneWidth).doubleValue();
+		
 		if(stage!=null && stage.getWidth()>200 && !Double.isNaN(stage.getWidth())) {
-			dividerPosition = initSplitPaneWidth/stage.getWidth();
-			System.out.println("dividerPosition: " + dividerPosition);
-		}
-		sp.getDividers().get(0).positionProperty().setValue(0.15);
-		//sp.setDividerPositions(0.15);//15% de la pantalla de 1245 es 186px ; 1552.0 es fullscreen
-		// sp.getDividers().get(0).positionProperty().addListener((o,ov,nu)->{
-		// 	System.out.println("divider position chaged from "+ov+" to "+nu);
-		// 	double newPreferredSplitPaneWidth = stage.getWidth()*nu.doubleValue();
-		// 	config.loadProperties();
-		// 	config.setProperty(PREFERED_TREE_WIDTH_KEY, PropertyHelper.formatDouble(newPreferredSplitPaneWidth));
-		// 	//config.save();//no guardes cada vez es muy lento
-		// });
+			double dividerPosition = initSplitPaneWidth/stage.getWidth();
+			sp.getDividers().get(0).positionProperty().setValue(dividerPosition);
+			//System.out.println("dividerPosition: " + dividerPosition);
+		}		
+		
+		sp.getDividers().get(0).positionProperty().addListener((o,ov,nu)->{
+			//System.out.println("divider position chaged from "+ov+" to "+nu);
+			double newPreferredSplitPaneWidth = stage.getWidth()*nu.doubleValue();
+			config.loadProperties();
+			config.setProperty(PREFERED_TREE_WIDTH_KEY, PropertyHelper.formatDouble(newPreferredSplitPaneWidth));			
+		});
 
 		/* si se actualiza el tamaño */
-		stage.widthProperty().addListener((o,old,nu)->{
-			if(old!=null && old.doubleValue()>1 && !Double.isNaN(old.doubleValue())) {
-				System.out.println("stage with chaged for the second time from "+old+" to "+nu);
-			double splitPaneWidth = PropertyHelper.parseDouble(
-					config.getPropertyOrDefault(PREFERED_TREE_WIDTH_KEY,
-							PropertyHelper.formatDouble(initSplitPaneWidth))).doubleValue();
-			//sp.setDividerPositions(splitPaneWidth/nu.doubleValue());
-			this.wwjPanel.setPreferredSize(new Dimension(nu.intValue(),(int)stage.getWidth()));
-			this.wwjPanel.repaint();
+		stage.widthProperty().addListener((o,old,nu)->{			
+			if(nu!=null && nu.doubleValue()>0 && !Double.isNaN(nu.doubleValue())) {				
+				String confSplitPaneWidth = config.getPropertyOrDefault(PREFERED_TREE_WIDTH_KEY,defaultSplitPaneWidth);
+				double splitPaneWidth = PropertyHelper.parseDouble(	confSplitPaneWidth).doubleValue();
+				sp.getDividers().get(0).positionProperty().setValue(splitPaneWidth/nu.doubleValue());
+			//this.wwjPanel.setPreferredSize(new Dimension(nu.intValue(),(int)stage.getWidth()));
+			//this.wwjPanel.repaint();
 			}else{
 				System.out.println("stage with chaged for the first time from "+old+" to "+nu);
 			}
-		});
+		});	
 	}
 
 	//	public static void setDefaultSize(int size) {
@@ -503,7 +493,7 @@ public class JFXMain extends Application {
 	private MenuBar constructMenuBar() {	
 		MenuBar menuBar = new MenuBar();
 		configGUIController.addMenuesToMenuBar(menuBar);
-		menuBar.setPrefWidth(scene.getWidth());
+		//menuBar.setPrefWidth(scene.getWidth());
 
 		Messages.registerLocaleChangeListener(loc->{
 			menuBar.getMenus().clear();
@@ -739,44 +729,6 @@ public class JFXMain extends Application {
 		enDesarrollo.showAndWait();
 	}
 
-	//TODO permitir actualizar el modelo de elevaciones con informacion de las labores
-	private void importElevations(){
-		executorPool.execute(()->{
-			//try{
-			// Download the data and save it in a temp file.
-			//  File sourceFile = ExampleUtil.saveResourceToTempFile(ELEVATIONS_PATH, ".tif");
-
-			// Create a local elevation model from the data.
-			final ElevationModel elevationModel = new ZeroElevationModel(){
-				//            	 @Override
-				//            	    public double getElevation(Angle latitude, Angle longitude){
-				//            		 return 0;
-				//            	    	
-				//            	    }
-			};
-			//  elevationModel.addElevations(sourceFile);
-
-			//				}catch (Exception e){
-			//					e.printStackTrace();
-			//				}
-			// Get the WorldWindow's current elevation model.
-			Globe globe = getWwd().getModel().getGlobe();
-			//ElevationModel currentElevationModel = globe.getElevationModel();
-
-			// Add the new elevation model to the globe.
-			//				if (currentElevationModel instanceof CompoundElevationModel)
-			//					((CompoundElevationModel) currentElevationModel).addElevationModel(elevationModel);
-			//				else
-			globe.setElevationModel(elevationModel);
-
-			// Set the view to look at the imported elevations, although they might be hard to detect. To
-			// make them easier to detect, replace the globe's CompoundElevationModel with the new elevation
-			// model rather than adding it.
-			//     Sector modelSector = elevationModel.getSector();
-			//   ExampleUtil.goTo(getWwd(), modelSector);
-		});
-
-	}
 
 	public WorldWindow getWwd() {
 		return this.wwjPanel.getWwd();
@@ -957,7 +909,7 @@ public class JFXMain extends Application {
 	}
 
 	private void loadActiveLayers(){
-		DatabaseDebugUtil.showDebugAlert("loadActiveLayers", "loadActiveLayers");
+		Platform.runLater(() -> {
 		//		long now = System.currentTimeMillis();
 		//		DAH.getAllAgroquimicos();
 		//		DAH.getAllCultivos();
@@ -966,11 +918,16 @@ public class JFXMain extends Application {
 		//		System.out.println("tarde "+(System.currentTimeMillis()-now)+" en inicializar los defaults");
 		//tarde 11148 en inicializar los defaults
 		TarjetaHelper.initTarjeta();
-		DatabaseDebugUtil.showDebugAlert("TarjetaHelper.initTarjeta", "TarjetaHelper.initTarjeta");
 		this.poligonoGUIController.showPoligonosActivos();
-		DatabaseDebugUtil.showDebugAlert("poligonoGUIController.showPoligonosActivos", "poligonoGUIController.showPoligonosActivos");	
 		this.ndviGUIController.showNdviActivos();
-		DatabaseDebugUtil.showDebugAlert("ndviGUIController.showNdviActivos", "ndviGUIController.showNdviActivos");
+		//Al agregar los poligonos y ndvi se resetea el divider position
+	
+		//todo enviar mensage al loader de que se termino de cargar la app
+		setSplitPaneDividerPosition();
+		
+		stage.show();	
+		notifyPreloader(new Preloader.ProgressNotification(1));		
+		});
 	}	
 
 	public void viewGoTo(Labor<?> labor) {

@@ -52,20 +52,11 @@ public class LayerPanel extends VBox {
 
 	private static final int TREE_ITEM_ICON_WIDTH = 50;
 
-	protected ScrollPane scrollPane;
-
-	private VBox layersPanel = new VBox();
+	protected ScrollPane scrollPane=null;	 
 
 	private TreeView<Layer> tree=null;
-
 	private CheckBoxTreeItem<Layer> rootItem=null;
-	//private Map<LayerAction,MenuItem> menuesAction = new HashMap<LayerAction,  MenuItem>();
-
 	private Map<Class<?>,  CheckBoxTreeItem<Layer>> rootItems= new HashMap<Class<?>,  CheckBoxTreeItem<Layer>>();
-	//	private CheckBoxTreeItem<Layer> pulverizacionesItem;
-	//	private CheckBoxTreeItem<Layer> fertilizacionestItem;
-	//	private CheckBoxTreeItem<Layer> siembrasItem;
-	//	private CheckBoxTreeItem<Layer> cosechasItem;
 
 	private Map<Class<?>, List<LayerAction>> actions;
 	private Map<Class<?>, List<LayerAction>> layerActions= new HashMap<Class<?>, List<LayerAction>>();
@@ -84,27 +75,36 @@ public class LayerPanel extends VBox {
 	 *            Size of the panel.
 	 */
 	public LayerPanel(WorldWindow wwd, ReadOnlyDoubleProperty width, ReadOnlyDoubleProperty height) {
+		super();
+		this.setPrefWidth(200.0);
 		// Make a panel at a specified size.
 		//super(new BorderPane());
 		this.makePanel(wwd, width,height);
 	}
 
+	/**
+	 * crea el un scrollPane con el treeView y lo agrega a este VBox
+	 * @param wwd
+	 * @param width
+	 * @param height
+	 */
 	protected void makePanel(WorldWindow wwd, ReadOnlyDoubleProperty width,ReadOnlyDoubleProperty height){//, Dimension size)
-		this.fill(wwd);
+		this.fill(wwd);//crea treeView
 
 		// Must put the layer grid in a container to prevent scroll panel from stretching their vertical spacing.
 		//		borderPane.setTop(this.layersPanel);
 		//	borderPane.setMinHeight(height.doubleValue()*0.9);;
-
-		this.layersPanel.prefHeightProperty().bind(height);
-		this.layersPanel.prefWidthProperty().bind(width);
-		this.layersPanel.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
+		//VBox layersPanel = new VBox();
+		
+		//layersPanel.prefHeightProperty().bind(height);
+		//this.layersPanel.prefWidthProperty().bind(width);
+		
 
 		// Put the name panel in a scroll bar.
-		this.scrollPane = new ScrollPane(this.layersPanel);
+		this.scrollPane = new ScrollPane(tree);
 		scrollPane.setFitToHeight(true);
-		scrollPane.setFitToWidth(true);
-
+		scrollPane.setFitToWidth(true);//sin esto no se ajusta al ancho del splitpane
+		VBox.setVgrow(scrollPane, Priority.ALWAYS);
 		this.getChildren().add(scrollPane);
 
 		Messages.registerLocaleChangeListener(getLocaleChangeHandler(wwd));
@@ -218,7 +218,7 @@ public class LayerPanel extends VBox {
 						labor2 != null && labor2 instanceof Ndvi) {
 					l1Name =((Ndvi)labor1).getNombre();
 					l2Name =((Ndvi)labor2).getNombre();
-					//si empi1=null ezan con el mismo nombre los ordeno por fecha
+					//si empiezan con el mismo nombre los ordeno por fecha
 					if(l2Name!=null && l2Name.length()>"02-01-2018".length()) {
 						String nombreLote = l2Name.substring(0, l2Name.length()-"02-01-2018".length());
 						if(	l1Name!=null && nombreLote!=null && l1Name.startsWith(nombreLote)){ 
@@ -244,7 +244,7 @@ public class LayerPanel extends VBox {
 		}
 		if(tree==null){
 			tree = constructTreeView( rootItem);
-			this.layersPanel.getChildren().add(0,tree);
+			//this.layersPanel.getChildren().add(0,tree);
 			VBox.setVgrow(tree, Priority.ALWAYS);
 			//	tree.prefHeightProperty().bind(layersPanel.heightProperty());
 		} else{
@@ -323,11 +323,10 @@ public class LayerPanel extends VBox {
 		//tendria que poner acciones en los nodos y buscar los subitems seleccionados y ahi aplicar
 
 		tree.setEditable(false);
+		tree.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
 		tree.setStyle("-fx-background-color:transparent;");//-fx-focus-color: -fx-control-inner-background ; -fx-faint-focus-color: -fx-control-inner-background ; 
 		//tree.setShowRoot(false);
 		//tree.setCellFactory(CheckBoxTreeCell.<String>forTreeView());   
-
-
 		
 		tree.setCellFactory((treeView) ->{
 			CheckBoxTreeCell<Layer> cell = (CheckBoxTreeCell<Layer>) CheckBoxTreeCell.<Layer>forTreeView().call(treeView);
@@ -378,11 +377,11 @@ public class LayerPanel extends VBox {
 				Object layerObjectClass = nuLayer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
 
 				if(layerObject==null && layerObjectClass==null) {
-					System.out.println(nuLayer.getName()+" no es de ursula");
+					System.out.println(nuLayer.getName()+" no es de ursula "+nuLayer.getClass().getName());
 					return;//no es un layer de ursula. es de world wind
 				}
 
-				if(layerObject == null ){//es un root node
+				if(layerObject == null && layerObjectClass!=null){//es un root node
 					if(layerObjectClass instanceof Class) {//estoy cargando las acciones genericas
 						Class<? extends Object> valueClass = (Class<?>) layerObjectClass;
 						List<LayerAction> layersP = new ArrayList<LayerAction>();
@@ -407,7 +406,7 @@ public class LayerPanel extends VBox {
 
 						constructMenuItem(nuLayer, cell, layersP);
 					}
-				} else { //es un cell hoja
+				} else if(layerObject != null) { //es un cell hoja
 					Class<? extends Object> valueClass = layerObject.getClass();
 					List<LayerAction> layersP = new ArrayList<LayerAction>();
 					for(Class<?> key : actions.keySet()){
@@ -600,7 +599,7 @@ public class LayerPanel extends VBox {
 
 
 	public void addToScrollPaneBottom(Node node){
-		this.layersPanel.getChildren().add(node);
+		this.getChildren().add(node);
 	}
 
 

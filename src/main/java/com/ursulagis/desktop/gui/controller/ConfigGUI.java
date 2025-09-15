@@ -3,6 +3,8 @@ package com.ursulagis.desktop.gui.controller;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -17,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.geotools.api.data.FileDataStore;
@@ -58,6 +61,7 @@ import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.snake.SnakesLayer;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
+import com.ursulagis.desktop.gui.utils.LoggingOutputStream;
 import com.ursulagis.desktop.gui.utils.SmartTableView;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -82,6 +86,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.TextFieldTableCell;
@@ -93,6 +98,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import com.ursulagis.desktop.tasks.CotizarOdenDeCompraOnlineTask;
 import com.ursulagis.desktop.tasks.GoogleGeocodingHelper;
@@ -116,9 +122,16 @@ public class ConfigGUI extends AbstractGUIController{
 	public static String getBuildInfo() {
 		//Esta aplicacion fue compilada el 11 de Febrero de 2020.
 
-
-		DateTimeFormatter inDTFormater = DateTimeFormatter.ofPattern(DD_MM_YYYY);
-		LocalDate compileDate =  LocalDate.parse(JFXMain.buildDate, inDTFormater);	
+		LocalDate compileDate;
+		try {
+			// Try to parse Maven timestamp format first (ISO format)
+			DateTimeFormatter mavenFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+			compileDate = LocalDate.parse(JFXMain.buildDate, mavenFormatter);
+		} catch (Exception e) {
+			// Fallback to old format (dd/MM/yyyy)
+			DateTimeFormatter inDTFormater = DateTimeFormatter.ofPattern(DD_MM_YYYY);
+			compileDate = LocalDate.parse(JFXMain.buildDate, inDTFormater);
+		}	
 		//DateFormat outDTFormater = DateFormat.getDateInstance(DateFormat.FULL, Messages.getLocale());
 
 		DateTimeFormatter dft= DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL);
@@ -191,22 +204,25 @@ public class ConfigGUI extends AbstractGUIController{
 
 		addMenuItem(Messages.getString("JFXMain.configIdiomaMI"),(a)->doChangeLocale(),menuConfiguracion); 
 		addMenuItem(Messages.getString("JFXMain.configHelpMI"),(a)->doShowAcercaDe(),menuConfiguracion);
+		addMenuItem(Messages.getString("JFXMain.configLogMI"),(a)->doShowLog(),menuConfiguracion);
 
 		addMenuItem(Messages.getString("ConfigGUI.changeProject"),(a)->doSelectDB(),menuConfiguracion);	
 
-		MenuItem actualizarMI=addMenuItem(Messages.getString("JFXMain.configUpdate"),null,menuConfiguracion); 
-		actualizarMI.setOnAction((a)->doUpdate());
-		actualizarMI.setVisible(false);
-		checkIfactualizarMIEnabled(menuConfiguracion, actualizarMI);
+		
+		checkIfactualizarMIEnabled(menuConfiguracion);
 
 		return menuConfiguracion;
 	}
 
 
 
-	public void checkIfactualizarMIEnabled(final Menu menuConfiguracion, MenuItem actualizarMI) {
+
+
+	public void checkIfactualizarMIEnabled(final Menu menuConfiguracion) {
 		JFXMain.executorPool.submit(()->{
 			if(UpdateTask.isUpdateAvailable()){
+				MenuItem actualizarMI=addMenuItem(Messages.getString("JFXMain.configUpdate"),null,menuConfiguracion); 
+				actualizarMI.setOnAction((a)->doUpdate());
 				actualizarMI.setVisible(true);
 				actualizarMI.getStyleClass().add("menu-item:focused"); 
 				actualizarMI.setStyle("-fx-background: -fx-accent;" 
@@ -441,6 +457,88 @@ public class ConfigGUI extends AbstractGUIController{
 		//  alert.showAndWait();
 		acercaDe.setResizable(true);
 		acercaDe.show();
+	}
+
+	/**
+	 * open an alert with te console log dump into a text area
+	 */
+	private void doShowLog() {
+		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.initOwner(JFXMain.stage);
+		alert.setTitle("Log");
+		alert.setHeaderText(null);
+		TextArea textArea = new TextArea();
+		textArea.setEditable(false);
+		textArea.setWrapText(true);
+		
+		// Store original streams
+		PrintStream originalOut = System.out;
+		PrintStream originalErr = System.err;
+		
+		// Create custom output streams that capture to textArea
+		PrintStream customOut = new PrintStream(new OutputStream() {
+			private StringBuilder buffer = new StringBuilder();
+			
+			@Override
+			public void write(int b) throws IOException {
+				char c = (char) b;
+				if (c == '\n') {
+					String line = buffer.toString();
+					buffer = new StringBuilder();
+					Platform.runLater(() -> {
+						textArea.appendText(line + "\n");
+						textArea.setScrollTop(Double.MAX_VALUE);
+					});
+					// Also write to original stream
+					originalOut.println(line);
+				} else if (c != '\r') {
+					buffer.append(c);
+				}
+			}
+		});
+		
+		PrintStream customErr = new PrintStream(new OutputStream() {
+			private StringBuilder buffer = new StringBuilder();
+			
+			@Override
+			public void write(int b) throws IOException {
+				char c = (char) b;
+				if (c == '\n') {
+					String line = buffer.toString();
+					buffer = new StringBuilder();
+					Platform.runLater(() -> {
+						textArea.appendText(line + "\n");
+						textArea.setScrollTop(Double.MAX_VALUE);
+					});
+					// Also write to original stream
+					originalErr.println(line);
+				} else if (c != '\r') {
+					buffer.append(c);
+				}
+			}
+		});
+		
+		// Redirect System.out and System.err to our custom streams
+		System.setOut(customOut);
+		System.setErr(customErr);
+		
+		// Add some test messages
+		System.out.println("Log viewer opened - capturing console output");
+		System.err.println("This error message should appear in the log");
+		
+		// Set up the dialog
+		alert.getDialogPane().setContent(textArea);
+		alert.getDialogPane().setPrefSize(800, 600);
+		alert.setResizable(true);
+		
+		// Restore original streams when dialog is closed
+		alert.setOnCloseRequest(e -> {
+			System.setOut(originalOut);
+			System.setErr(originalErr);
+		});
+		
+		alert.initModality(Modality.NONE);
+		alert.show();
 	}
 
 	public static void doConfigCultivo() {

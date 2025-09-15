@@ -200,18 +200,14 @@ public class UrsulaGISPreloader extends Preloader {
     public void handleStateChangeNotification(StateChangeNotification stateChangeNotification) {
         if (stateChangeNotification.getType() == Type.BEFORE_START) {
             // Update status before main application starts
-            updateStatus("Starting main application...", 1.0);
+            
             
             // Close preloader after a short delay to show the final status
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+    
             JFXMain  mainApp = (JFXMain) stateChangeNotification.getApplication();
             if(mainApp.stage!=null){
-                mainApp.stage.toBack();
-                System.out.println("send mainApp.stage to back");
+                //mainApp.stage.toBack();
+                //System.out.println("send mainApp.stage to back");
             }            
             if (preloaderStage != null) {
                 System.out.println("preloaderStage not null");
@@ -224,6 +220,15 @@ public class UrsulaGISPreloader extends Preloader {
     @Override
     public void handleProgressNotification(ProgressNotification progressNotification) {
         double progress = progressNotification.getProgress();
+        //JFXMain mainApp = (JFXMain) progressNotification.getApplication();
+        if(progress==1.0){
+            Stage stage = JFXMain.stage;
+            if(stage!=null && stage.isShowing()){
+                this.preloaderStage.toBack();
+            };
+        } else {
+            System.out.println("progress: "+progress);
+        }
         updateStatus(getStatusMessage(progress), progress);
     }
     

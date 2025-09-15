@@ -1,5 +1,6 @@
 package com.ursulagis.desktop.gui.nww;
 
+import gov.nasa.worldwind.BasicModel;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.WorldWindow;
@@ -27,6 +28,7 @@ import com.ursulagis.desktop.gui.nww.replacementLayers.GIBS_PlaceLabels;
 import com.ursulagis.desktop.gui.nww.replacementLayers.GoogleLayer;
 import com.ursulagis.desktop.gui.nww.replacementLayers.GoogleTiledImageLayer;
 import com.ursulagis.desktop.gui.nww.replacementLayers.Sentinel2Layer;
+import com.ursulagis.desktop.gui.nww.ZeroElevationsEarth;
 import javafx.scene.layout.BorderPane;
 
 import java.awt.BorderLayout;
@@ -45,29 +47,30 @@ public class WWPanel extends JPanel {
 	protected HighlightController highlightController;
 	protected JFXMain main;
 
-	public WWPanel(Dimension canvasSize, boolean includeStatusBar, JFXMain jfxMain) {
+	public WWPanel(boolean includeStatusBar, JFXMain jfxMain) {
 		super(new BorderLayout());
 		this.main=jfxMain;
 		this.wwd =new WorldWindowGLJPanel(); // WorldWindowGLJPanel no esta disponible en 2.0.0
 		// Try to create WorldWindow using the available configuration
 
 		// Check if WorldWindow was created successfully
-		if (this.wwd == null) {
-			throw new RuntimeException("Failed to create WorldWindow component. WorldWind configuration may be incomplete.");
-		}
+		// if (this.wwd == null) {
+		// 	throw new RuntimeException("Failed to create WorldWindow component. WorldWind configuration may be incomplete.");
+		// }
 		
 		//	((Component) this.wwd).setSize((int)canvasSize.getWidth()/4,(int) canvasSize.getHeight()/4);
-		((Component) this.wwd).setPreferredSize(canvasSize);
+		//((Component) this.wwd).setPreferredSize(canvasSize);
 
 		// Create the default model as described in the current worldwind
 		// properties.
-		Model m = (Model) WorldWind.createConfigurationComponent(AVKey.MODEL_CLASS_NAME);
-		//		final ElevationModel elevationModel = new ZeroElevationModel(){
-		//		m.getGlobe().setElevationModel(elevationModel);
+		ZeroElevationsEarth earth = new ZeroElevationsEarth();
+		BasicModel m = new BasicModel(earth,null);//no tiene minimap ni rosa de los vientos
+		//Model m = (Model) WorldWind.createConfigurationComponent(AVKey.MODEL_CLASS_NAME);
+		//m.setGlobe(earth);
 
 		//m.getLayers().clear();//TODO remover esto que es debug
-		AVList crs = new AVListImpl();
-		crs.setValue(AVKey.COORDINATE_SYSTEM, "EPSG:4326");
+		// AVList crs = new AVListImpl();
+		// crs.setValue(AVKey.COORDINATE_SYSTEM, "EPSG:4326");
 
 
 		//		
@@ -79,9 +82,11 @@ public class WWPanel extends JPanel {
 
 		//m.getLayers().add(new GIBS_PlaceLabels());
 		try {
-			m.getLayers().add(	new WMSTiledImageLayer(
-					WWXML.openDocumentFile("com/ursulagis/desktop/gui/nww/replacementLayers/GIBS_BlueMarble.xml", null),
-					null));
+			WMSTiledImageLayer blueMarbleLayer = new WMSTiledImageLayer(
+				WWXML.openDocumentFile("com/ursulagis/desktop/gui/nww/replacementLayers/GIBS_BlueMarble.xml", null),
+				null);
+			blueMarbleLayer.setName("Blue Marble");			
+			m.getLayers().add(blueMarbleLayer);
 		}catch(Exception e) {
 			System.out.println("fallo la carga del layer en gui/nww/replacementLayers/GIBS_BlueMarble.xml");
 			e.printStackTrace();
@@ -101,8 +106,9 @@ public class WWPanel extends JPanel {
 
 		try {
 			WMSTiledImageLayer bing = new WMSTiledImageLayer(
-					WWXML.openDocumentFile("gui/nww/replacementLayers/BingImageryEmxsys.xml", null),
+					WWXML.openDocumentFile("com/ursulagis/desktop/gui/nww/replacementLayers/BingImageryEmxsys.xml", null),
 					null);
+			bing.setName("Bing Imagery EXMSYS");
 			//bing.setMaxActiveAltitude(transicion);
 		//	bing.setMinActiveAltitude(0);
 			m.getLayers().add(bing);
@@ -122,6 +128,7 @@ public class WWPanel extends JPanel {
 		GoogleLayer roads = new GoogleLayer(GoogleLayer.Type.ROADS);
 		roads.setValue(AVKey.DATA_CACHE_NAME, "/Earth/Google/Roads");
 		roads.setMinActiveAltitude(0);
+		roads.setName("Google Roads");
 		//roads.setMaxActiveAltitude(200*transicion);
 		m.getLayers().add(roads);
 
@@ -147,6 +154,7 @@ public class WWPanel extends JPanel {
 		this.wwd.addSelectListener(new ClickAndGoSelectListener(this.getWwd(), WorldMapLayer.class));
 
 		this.add((Component) this.wwd, BorderLayout.CENTER);
+		
 		//this.setCenter(wwd);
 		if (includeStatusBar) {
 			this.statusBar = new StatusBar();
