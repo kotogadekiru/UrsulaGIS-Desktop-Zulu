@@ -6,16 +6,9 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Messages",
+            "name": "OpenBrowserUrl",
             "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.Messages",
-            "projectName": "UrsulaGIS-Desktop_Zulu"
-        },
-        {
-            "type": "java",
-            "name": "UrsulaGISPreloader",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop.gui.UrsulaGISPreloader",
+            "mainClass": "com.ursulagis.desktop.gui.utils.OpenBrowserUrl",
             "projectName": "UrsulaGIS-Desktop_Zulu"
         },
         {
@@ -28,10 +21,17 @@
                 "-Xms2G",
                 "-Xmx20G",
                 "-Djava.awt.headless=false",
-                "-Dprism.order=sw",
                 "-Dprism.verbose=false",
-                "-Dprism.forceGPU=false",
-                "-Djavafx.verbose=false"
+                "-Djavafx.verbose=false",
+                "-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=17",
+                "-Djogamp.gluegen.UseTempJarCache=true",
+                "-Djava.net.useSystemProxies=true",
+                "-XX:+UseG1GC",
+                "-Xdebug",
+                "--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED",
+                "--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED",
+                "--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED",
+                "--add-opens=javafx.base/javafx.beans=ALL-UNNAMED"
             ]
         }
     ]

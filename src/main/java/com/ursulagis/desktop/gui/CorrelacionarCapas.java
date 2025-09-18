@@ -153,7 +153,7 @@ public class CorrelacionarCapas {
 	
 	public void showSkatterSeries( String xAxisName, String yAxisName, XYChart.Series<Number, Number> series) {
 		Stage s= new Stage();	
-		s.setTitle("Grafico de correlaci�n");
+		s.setTitle("Grafico de correlación");//TODO replace with Messages
 		s.initOwner(JFXMain.stage);
 		s.getIcons().addAll(JFXMain.stage.getIcons());
 	    
@@ -161,7 +161,7 @@ public class CorrelacionarCapas {
 		chart.getXAxis().setLabel(xAxisName);                
 		chart.getYAxis().setLabel(yAxisName);
 
-		chart.setTitle("Correlaci�n");
+		chart.setTitle("Correlación");//TODO replace with Messages
 		
 		chart.getData().add(series);
 		String ecuation = chart.getEcuation(series);

@@ -33,6 +33,7 @@ import com.ursulagis.desktop.dao.fertilizacion.FertilizacionItem;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
 import com.ursulagis.desktop.dao.siembra.SiembraItem;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
+import com.ursulagis.desktop.dao.siembra.SiembraConfig.Unidad;
 import gov.nasa.worldwind.render.ExtrudedPolygon;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
@@ -57,9 +58,8 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 		super( new SiembraLabor());
 		this.siembra=_siembra;
 		this.fertilizacion=_fertilizacion;
-		this.esFertLinea=_esFertLinea;
-
-
+		this.esFertLinea=_esFertLinea;		
+		labor.getConfiguracion().dosisUnitProperty().set(Unidad.kgHa);
 		labor.setSemilla(siembra.getSemilla());//Cultivo(cultivo);
 		if(_esFertLinea) {
 			labor.setFertLinea(_fertilizacion.getFertilizante());
@@ -291,6 +291,14 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 				double peso = gArea/areaInterseccionesTotal;
 				dosisHaProm+=aPoly.getDosisHa()*peso;
 				fertL+=aPoly.getDosisFertLinea()*peso;
+				if(Double.isNaN(fertL)) {
+					System.out.println("item fertL es NaN");
+					fertL=0;
+				}
+				if(Double.isNaN(fertC)) {
+					System.out.println("item fertC es NaN");
+					fertC=0;
+				}
 				fertC+=aPoly.getDosisFertCostado()*peso;
 				elev+=aPoly.getElevacion()*peso;
 			}
@@ -416,8 +424,9 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 				//System.err.println("la interseccion devuelve null");
 			}
 		}	
-
-		fertLPoly=fertLPoly/areaTotal;
+		if(areaTotal>0) {
+			fertLPoly=fertLPoly/areaTotal;
+		}
 		ret.setDosistHa(fertLPoly);
 		return ret;		
 	}
@@ -516,7 +525,10 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 			aUnir.add(f.getGeometry());
 
 			siembraProm+=gArea*f.getDosisHa();//LaborItem.getDoubleFromObj(f.getAttribute(SIEMBRA_COLUMN));
-			fertPromL+=gArea*f.getDosisFertLinea();//LaborItem.getDoubleFromObj(f.getAttribute(LINEA_COLUMN));
+			if(!Double.isNaN(f.getDosisFertLinea())) {			
+				fertPromL+=gArea*f.getDosisFertLinea();//LaborItem.getDoubleFromObj(f.getAttribute(LINEA_COLUMN));
+			}
+			
 			fertPromC+=gArea*f.getDosisFertCostado();//LaborItem.getDoubleFromObj(f.getAttribute(LINEA_COLUMN));
 			elevProm+=gArea*f.getElevacion();
 		}
@@ -528,6 +540,10 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 			return catFeatures;}
 		siembraProm=siembraProm/areaInterseccion;
 		fertPromL=fertPromL/areaInterseccion;
+		if(Double.isNaN(fertPromL)) {
+			System.out.println("item fertPromL es NaN");
+			fertPromL=0;
+		}
 		fertPromC=fertPromC/areaInterseccion;
 		elevProm=elevProm/areaInterseccion;
 		List<Polygon> flatPolygons = PolygonValidator.geometryToFlatPolygons(union);

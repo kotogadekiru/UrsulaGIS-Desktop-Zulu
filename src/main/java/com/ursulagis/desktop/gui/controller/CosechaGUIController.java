@@ -657,6 +657,8 @@ public class CosechaGUIController extends AbstractGUIController {
 		umTask.installProgressBar(progressBox);
 
 		umTask.setOnSucceeded(handler -> {
+			fertEnabled.stream().forEach(l->l.getLayer().setEnabled(false));
+			suelosEnabled.stream().forEach(l->l.getLayer().setEnabled(false));
 			FertilizacionLabor ret = (FertilizacionLabor)handler.getSource().getValue();
 			insertBeforeCompass(getWwd(), ret.getLayer());
 			this.getLayerPanel().update(this.getWwd());

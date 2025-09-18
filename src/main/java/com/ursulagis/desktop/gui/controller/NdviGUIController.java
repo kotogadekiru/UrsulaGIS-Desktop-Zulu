@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 
 import org.locationtech.jts.geom.Geometry;
@@ -76,6 +77,7 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 public class NdviGUIController extends AbstractGUIController{
 
 
+	public List<Ndvi> ndviActivos=null;//secargan en el init de JFXMain
 	public NdviGUIController(JFXMain _main) {
 		super(_main);
 	}
@@ -398,11 +400,12 @@ public class NdviGUIController extends AbstractGUIController{
 
 	private void doConvertirNdviAcumuladoACosecha() {
 		List<Ndvi> ndvis = main.getNdviSeleccionados();
+		ndvis.sort((n1,n2)->n1.compareTo(n2));
 		Ndvi ndvi = ndvis.get(0);
 		Ndvi lNdvi = ndvis.get(ndvis.size()-1);
 		CosechaLabor labor = new CosechaLabor();
 		//String YYYY_MM_DD = "yyyy-MM-dd";
-		DateTimeFormatter format1 = DateTimeFormatter.ofPattern("dd-MM-yyy");
+		DateTimeFormatter format1 = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 		//LocalDate fecha = LocalDate.parse(v[0], format1);
 		//ndvi.setFecha(fecha);
 		labor.setNombre(ndvi.getNombre()+" -> "+format1.format(lNdvi.getFecha()));
@@ -703,7 +706,7 @@ public class NdviGUIController extends AbstractGUIController{
 	}
 
 	public void showNdviActivos() {
-		List<Ndvi> ndviActivos = DAH.getNdviActivos();
+		
 		for(int i=0;i<ndviActivos.size();i++) {
 			
 			Ndvi ndvi = ndviActivos.get(i);

@@ -146,8 +146,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 	 * @param recorrida
 	 * @param layer 
 	 */
-	private void doInterpolarRecorrida(Recorrida recorrida, Layer layer) {
-		main.enDesarrollo();
+	private void doInterpolarRecorrida(Recorrida recorrida, Layer layer) {		
 		List<Poligono> contornos = main.poligonoGUIController.getEnabledPoligonos();
 		if(contornos==null || contornos.size()<1) {
 			Alert enDesarrollo = new Alert(AlertType.INFORMATION,"Debe seleccionar un poligono "); 

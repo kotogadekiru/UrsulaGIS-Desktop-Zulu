@@ -255,7 +255,13 @@ public class LayerPanel extends VBox {
 
 
 	private void constructRootItem() {
-		RenderableLayer rootLayer = new RenderableLayer();
+		RenderableLayer rootLayer = new RenderableLayer(){
+			@Override	
+			public void dispose() {
+				System.out.println("disposing of rootLayer");
+				super.dispose();
+			}
+		};
 		rootLayer.setName(Messages.getString("LayerPanel.layerRootLabel")); 
 		rootItem = new CheckBoxTreeItem<Layer>(rootLayer);
 
@@ -376,8 +382,9 @@ public class LayerPanel extends VBox {
 				Object layerObject = nuLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 				Object layerObjectClass = nuLayer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
 
+				//Se Agrega un layer vacio para contener el root del arbol
 				if(layerObject==null && layerObjectClass==null) {
-					System.out.println(nuLayer.getName()+" no es de ursula "+nuLayer.getClass().getName());
+					//System.out.println(nuLayer.getName()+" no es de ursula "+nuLayer.getClass().getName());
 					return;//no es un layer de ursula. es de world wind
 				}
 

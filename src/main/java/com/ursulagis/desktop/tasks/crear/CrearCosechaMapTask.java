@@ -94,19 +94,20 @@ public class CrearCosechaMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 		//ancho
 		sb.append(Messages.getString("ProcessHarvestMapTask.27")
 				+df.format(cosechaItem.getAncho() ) 
-				+ Messages.getString("ProcessHarvestMapTask.28")); 
+				+"\n"); 
 		//rumbo
 		sb.append(Messages.getString("ProcessHarvestMapTask.29")
 				+df.format(cosechaItem.getRumbo() ) 
-				+Messages.getString("ProcessHarvestMapTask.30")); 
+				+"\n"); 
 		//id
 		sb.append(Messages.getString("ProcessHarvestMapTask.31")
 				+cosechaItem.getId() 
-				+Messages.getString("ProcessHarvestMapTask.32")); 
+				+"\n"); 
 		//elevacion
 		sb.append(Messages.getString("ProcessHarvestMapTask.25")
 				+df.format(cosechaItem.getElevacion() ) 
-				+ Messages.getString("ProcessHarvestMapTask.26"));
+				+"\n"
+				);
 		
 		sb.append(Messages.getString("OpenMargenMapTask.15")
 				+df.format(cosechaItem.getImporteHa() ) 

@@ -98,6 +98,9 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 	//private ExecutorService executorPool=null;
 
+ 	public List<Poligono> poligonosActivos=null;
+
+
 	public PoligonoGUIController(JFXMain _main) {
 		super(_main);
 
@@ -196,10 +199,10 @@ public class PoligonoGUIController extends AbstractGUIController{
 		//			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){	
 		//				doCrearFertilizacion((Poligono) layerObject);
 		//			}
-		//			return "converti a Fertilizacion"; //$NON-NLS-1$
+		//			return "converti a Fertilizacion"; //-NLS-1$
 		//		}));
 
-		//addMenuItem(Messages.getString("JFXMain.poligonos"),(a)->doImportarPoligonos(null),menuImportar); //$NON-NLS-1$
+		//addMenuItem(Messages.getString("JFXMain.poligonos"),(a)->doImportarPoligonos(null),menuImportar); //-NLS-1$
 		//importar poligonos
 		rootNodeP.add(new LayerAction((layer)->{
 			doImportarPoligonos(null);
@@ -224,12 +227,12 @@ public class PoligonoGUIController extends AbstractGUIController{
 //					}
 //
 //				}catch(Exception e) {
-//					System.err.println("Error al guardar los poligonos"); //$NON-NLS-1$
+//					System.err.println("Error al guardar los poligonos"); //-NLS-1$
 //					e.printStackTrace();
 //				}
 			});
 
-			return "Guarde los poligonos"; //$NON-NLS-1$
+			return "Guarde los poligonos"; //-NLS-1$
 		},Messages.getString("JFXMain.saveAction")));
 
 
@@ -251,12 +254,12 @@ public class PoligonoGUIController extends AbstractGUIController{
 //				}
 				doGetNdviTiffFiles(poligonos);
 			}catch(Exception e) {
-				System.err.println("Error al guardar los poligonos"); //$NON-NLS-1$
+				System.err.println("Error al guardar los poligonos"); //-NLS-1$
 				e.printStackTrace();
 			}
 			//});
 
-			return "ndvi obtenidos"; //$NON-NLS-1$
+			return "ndvi obtenidos"; //-NLS-1$
 		},Messages.getString("JFXMain.downloadNDVIAction")));
 
 		//		rootNodeP.add(constructPredicate(Messages.getString("JFXMain.downloadNDVIAction"),(layer)->{
@@ -265,7 +268,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		//				doGetNdviTiffFile(o);
 		//			}
 		//			
-		//			return "ndvi obtenido" + layer.getName();	 //$NON-NLS-1$
+		//			return "ndvi obtenido" + layer.getName();	 //-NLS-1$
 		//		}));
 
 		getLayerPanel().addAccionesClase(rootNodeP,Poligono.class);
@@ -280,7 +283,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
 				doEditarPoligono(layerObject);
 			}
-			return "edite poligono"; //$NON-NLS-1$
+			return "edite poligono"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.clonar"),(layer)->{
@@ -288,7 +291,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
 				doClonarPoligono((Poligono)layerObject);
 			}
-			return "clone poligono"; //$NON-NLS-1$
+			return "clone poligono"; //-NLS-1$
 		}));
 
 		//XXX simplificar poligono action. sirve para probar alinear los puntos que estan en un margen 
@@ -297,7 +300,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
 				doSimplificarPoligono((Poligono)layerObject);
 			}
-			return "simplifique poligono"; //$NON-NLS-1$
+			return "simplifique poligono"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.poligonToSiembraAction"),(layer)->{
@@ -307,7 +310,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 				doCrearSiembra(Collections.singletonList((Poligono) layerObject));
 			}
-			return "converti a Siembra"; //$NON-NLS-1$
+			return "converti a Siembra"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.poligonToFertAction"),(layer)->{
@@ -315,7 +318,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){	
 				doCrearFertilizacion(Collections.singletonList((Poligono) layerObject));
 			}
-			return "converti a Fertilizacion"; //$NON-NLS-1$
+			return "converti a Fertilizacion"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.poligonToPulvAction"),(layer)->{
@@ -323,7 +326,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
 				doCrearPulverizacion(Collections.singletonList((Poligono) layerObject));
 			}
-			return "converti a Pulverizacion"; //$NON-NLS-1$
+			return "converti a Pulverizacion"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.poligonToHarvestAction"),(layer)->{
@@ -331,7 +334,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
 				doCrearCosecha(Collections.singletonList((Poligono) layerObject));
 			}
-			return "converti a Cosecha"; //$NON-NLS-1$
+			return "converti a Cosecha"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.poligonToSoilAction"),(layer)->{
@@ -340,7 +343,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				doCrearSuelo((Poligono) layerObject);
 				layer.setEnabled(false);
 			}
-			return "converti a Suelo"; //$NON-NLS-1$
+			return "converti a Suelo"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.saveAction"),(layer)->{
@@ -348,7 +351,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
 				doGuardarPoligono((Poligono) layerObject);
 			}
-			return "Guarde Guarde"; //$NON-NLS-1$
+			return "Guarde Guarde"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.goToPoligonoAction"),(layer)->{
@@ -363,14 +366,14 @@ public class PoligonoGUIController extends AbstractGUIController{
 					viewGoTo(pos);
 				}
 			}
-			return "went to " + layer.getName(); //$NON-NLS-1$
+			return "went to " + layer.getName(); //-NLS-1$
 		}));
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.downloadNDVIAction"),(layer)->{
 			Object o =  layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);			
 			if(o instanceof Poligono){
 				doGetNdviTiffFile(o);
 			}
-			return "ndvi obtenido" + layer.getName();	 //$NON-NLS-1$
+			return "ndvi obtenido" + layer.getName();	 //-NLS-1$
 		}));
 
 		Collections.sort(poligonosP);
@@ -388,7 +391,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Camino.class.isAssignableFrom(layerObject.getClass())){
 				doConvertirARecorrida(layerObject);
 			}
-			return "converti a recorrida"; //$NON-NLS-1$			
+			return "converti a recorrida"; //-NLS-1$			
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate("Convertir a Circulo",
@@ -397,7 +400,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 					if(layerObject!=null && Camino.class.isAssignableFrom(layerObject.getClass())){
 						doCrearCirculo(layerObject);
 					}
-					return "converti a circulo"; //$NON-NLS-1$			
+					return "converti a circulo"; //-NLS-1$			
 				}));
 
 
@@ -407,7 +410,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Camino.class.isAssignableFrom(layerObject.getClass())){
 				doEditarCamino(layerObject);
 			}
-			return "edite camino"; //$NON-NLS-1$
+			return "edite camino"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.acortarCamino"),(layer)->{
@@ -415,7 +418,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			if(layerObject!=null && Camino.class.isAssignableFrom(layerObject.getClass())){
 				doAcortarCamino(layer, layerObject);
 			}
-			return "acorte camino"; //$NON-NLS-1$
+			return "acorte camino"; //-NLS-1$
 		}));
 	}
 
@@ -442,8 +445,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 		Camino p =(Camino)layerObject;
 		TextInputDialog nombreDialog = new TextInputDialog(p.getNombre());
 		nombreDialog.initOwner(JFXMain.stage);
-		nombreDialog.setTitle(Messages.getString("JFXMain.editarLayerDialogTitle")); //$NON-NLS-1$
-		nombreDialog.setContentText(Messages.getString("JFXMain.editarLayerPoligonName")); //$NON-NLS-1$
+		nombreDialog.setTitle(Messages.getString("JFXMain.editarLayerDialogTitle")); //-NLS-1$
+		nombreDialog.setContentText(Messages.getString("JFXMain.editarLayerPoligonName")); //-NLS-1$
 
 		Optional<String> nombreOptional = nombreDialog.showAndWait();
 		if(nombreOptional.isPresent()){
@@ -499,17 +502,17 @@ public class PoligonoGUIController extends AbstractGUIController{
 		SiembraLabor labor = new SiembraLabor();
 		LaborLayer layer = new LaborLayer();
 		labor.setLayer(layer);
-		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.255")); //$NON-NLS-1$ //$NON-NLS-2$
+		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.255")); //-NLS-1$ //-NLS-2$
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.256")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}				
 		
 		Optional<Double> plM2Obj= SiembraDosisObjetivoDialog.config(siembraConfigured.get());
 		if(!plM2Obj.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.256")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}
@@ -537,7 +540,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.260")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.260")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -545,13 +548,13 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 	private void doCrearFertilizacion(List<Poligono> polis) {
 		FertilizacionLabor labor = new FertilizacionLabor();
-		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.fertilizacion")); //$NON-NLS-1$ //$NON-NLS-2$
-		//labor.setNombre(poli.getNombre()+" "+Messages.getString("JFXMain.fertilizacion")); //$NON-NLS-1$ //$NON-NLS-2$
+		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.fertilizacion")); //-NLS-1$ //-NLS-2$
+		//labor.setNombre(poli.getNombre()+" "+Messages.getString("JFXMain.fertilizacion")); //-NLS-1$ //-NLS-2$
 		LaborLayer layer = new LaborLayer();
 		labor.setLayer(layer);
 		Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.261")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.261")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}							
@@ -578,7 +581,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.265")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.265")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -587,14 +590,14 @@ public class PoligonoGUIController extends AbstractGUIController{
 	private void doCrearPulverizacion(List<Poligono> polis) {
 		PulverizacionLabor labor = new PulverizacionLabor();
 		//labor.setNombre(poli.getNombre());
-		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.pulverizacion")); //$NON-NLS-1$ //$NON-NLS-2$
+		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.pulverizacion")); //-NLS-1$ //-NLS-2$
 		LaborLayer layer = new LaborLayer();
 		labor.setLayer(layer);
 
 		//TODO modificar el dialog controler para poder ingresar el caldo
 		Optional<PulverizacionLabor> pulvConfigured= PulverizacionConfigDialogController.config(labor);
 		if(!pulvConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.249")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.249")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}							
@@ -619,7 +622,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			polis.stream().forEach(p->p.getLayer().setEnabled(false));
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.253")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.253")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -648,31 +651,31 @@ public class PoligonoGUIController extends AbstractGUIController{
 		main.recorridaGUIController.doAsignarValoresRecorrida(recorrida);//esto guarda una recorrida nueva
 
 
-		//		TextInputDialog ppmPDialog = new TextInputDialog(Messages.getString("JFXMain.228")); //$NON-NLS-1$
+		//		TextInputDialog ppmPDialog = new TextInputDialog(Messages.getString("JFXMain.228")); //-NLS-1$
 		//		ppmPDialog.initOwner(JFXMain.stage);
-		//		ppmPDialog.setTitle(Messages.getString("JFXMain.229")); //$NON-NLS-1$
-		//		ppmPDialog.setContentText(Messages.getString("JFXMain.230")); //$NON-NLS-1$
+		//		ppmPDialog.setTitle(Messages.getString("JFXMain.229")); //-NLS-1$
+		//		ppmPDialog.setContentText(Messages.getString("JFXMain.230")); //-NLS-1$
 		//		Optional<String> ppmPOptional = ppmPDialog.showAndWait();
 		//		Double ppmP = PropertyHelper.parseDouble(ppmPOptional.get()).doubleValue();//Double.valueOf(ppmPOptional.get());
 		//
-		//		TextInputDialog ppmNDialog = new TextInputDialog(Messages.getString("JFXMain.231")); //$NON-NLS-1$
+		//		TextInputDialog ppmNDialog = new TextInputDialog(Messages.getString("JFXMain.231")); //-NLS-1$
 		//		ppmNDialog.initOwner(JFXMain.stage);
-		//		ppmNDialog.setTitle(Messages.getString("JFXMain.232")); //$NON-NLS-1$
-		//		ppmNDialog.setContentText(Messages.getString("JFXMain.233")); //$NON-NLS-1$
+		//		ppmNDialog.setTitle(Messages.getString("JFXMain.232")); //-NLS-1$
+		//		ppmNDialog.setContentText(Messages.getString("JFXMain.233")); //-NLS-1$
 		//		Optional<String> ppmNOptional = ppmNDialog.showAndWait();
 		//		Double ppmN = PropertyHelper.parseDouble(ppmNOptional.get()).doubleValue();
 		//
-		//		TextInputDialog pMODialog = new TextInputDialog(Messages.getString("JFXMain.234")); //$NON-NLS-1$
+		//		TextInputDialog pMODialog = new TextInputDialog(Messages.getString("JFXMain.234")); //-NLS-1$
 		//		pMODialog.initOwner(JFXMain.stage);
-		//		pMODialog.setTitle(Messages.getString("JFXMain.235")); //$NON-NLS-1$
-		//		pMODialog.setContentText(Messages.getString("JFXMain.236")); //$NON-NLS-1$
+		//		pMODialog.setTitle(Messages.getString("JFXMain.235")); //-NLS-1$
+		//		pMODialog.setContentText(Messages.getString("JFXMain.236")); //-NLS-1$
 		//		Optional<String> pMOOptional = pMODialog.showAndWait();
 		//		Double pMO = PropertyHelper.parseDouble(pMOOptional.get()).doubleValue();// Double.valueOf(pMOOptional.get());
 		//
-		//		TextInputDialog densidaDialog = new TextInputDialog(Messages.getNumberFormat().format(SueloItem.DENSIDAD_SUELO_KG)); //$NON-NLS-1$
+		//		TextInputDialog densidaDialog = new TextInputDialog(Messages.getNumberFormat().format(SueloItem.DENSIDAD_SUELO_KG)); //-NLS-1$
 		//		densidaDialog.initOwner(JFXMain.stage);
-		//		densidaDialog.setTitle("Configure la densidad"); //$NON-NLS-1$
-		//		densidaDialog.setContentText(SueloItem.DENSIDAD); //$NON-NLS-1$
+		//		densidaDialog.setTitle("Configure la densidad"); //-NLS-1$
+		//		densidaDialog.setContentText(SueloItem.DENSIDAD); //-NLS-1$
 		//		Optional<String> dOptional = densidaDialog.showAndWait();
 		//		Double densidad = PropertyHelper.parseDouble(dOptional.get()).doubleValue();// Double.valueOf(pMOOptional.get());
 		//		System.out.println("ingrese densidad "+densidad);
@@ -690,7 +693,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.237")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.237")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -978,7 +981,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 		Poligono poli = ExtraerPoligonosDeLaborTask.geometryToPoligono(union);
 		poli.setArea(has);
-		poli.setNombre(joiner.toString()); //$NON-NLS-1$
+		poli.setNombre(joiner.toString()); //-NLS-1$
 
 		MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(poli, this.getWwd(), this.getLayerPanel());		
 		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
@@ -996,8 +999,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 		Alert supDialog = new Alert(Alert.AlertType.INFORMATION);
 		supDialog.initOwner(JFXMain.stage);
-		supDialog.setTitle(Messages.getString("JFXMain.medirDistancia")); //$NON-NLS-1$
-		supDialog.setHeaderText(Messages.getString("JFXMain.medirDistanciaHeaderText")); //$NON-NLS-1$
+		supDialog.setTitle(Messages.getString("JFXMain.medirDistancia")); //-NLS-1$
+		supDialog.setHeaderText(Messages.getString("JFXMain.medirDistanciaHeaderText")); //-NLS-1$
 		// La posicion del Alert la pongo relativa a la ventana y lo corro del medio para que se vea mejor el lote
 		supDialog.setOnShowing(event -> {
 			        Window owner = supDialog.getOwner();
@@ -1014,7 +1017,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			    });
 		//Text t = new Text();
 		TextField nombreTF = new TextField();
-		nombreTF.setPromptText(Messages.getString("JFXMain.medirDistanciaHeaderText")); //$NON-NLS-1$
+		nombreTF.setPromptText(Messages.getString("JFXMain.medirDistanciaHeaderText")); //-NLS-1$
 		VBox vb = new VBox();
 		vb.getChildren().addAll(nombreTF);
 		supDialog.setGraphic(vb);
@@ -1080,7 +1083,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 				this.getLayerPanel().update(this.getWwd());
 			}catch(Exception e) {
-				System.err.println("Error al intesectar los poligonos"); //$NON-NLS-1$
+				System.err.println("Error al intesectar los poligonos"); //-NLS-1$
 				e.printStackTrace();
 			}
 		});
@@ -1199,10 +1202,10 @@ public class PoligonoGUIController extends AbstractGUIController{
 		LaborLayer layer = new LaborLayer();
 		labor.setLayer(layer);
 		//labor.setNombre(poli.getNombre());
-		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.cosecha")); //$NON-NLS-1$ //$NON-NLS-2$
+		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.cosecha")); //-NLS-1$ //-NLS-2$
 		Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.266")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.266")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -1229,7 +1232,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println(Messages.getString("JFXMain.270")); //$NON-NLS-1$
+			System.out.println(Messages.getString("JFXMain.270")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -1273,7 +1276,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 		File downloadLocation=null;
 		try {
-			downloadLocation = File.createTempFile(Messages.getString("JFXMain.214"), Messages.getString("JFXMain.215")).getParentFile(); //$NON-NLS-1$ //$NON-NLS-2$
+			downloadLocation = File.createTempFile(Messages.getString("JFXMain.214"), Messages.getString("JFXMain.215")).getParentFile(); //-NLS-1$ //-NLS-2$
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1323,8 +1326,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 
 	public void showPoligonosActivos() {
-		List<Poligono> poligonos = DAH.getPoligonosActivos();
-		showPoligonos(poligonos);
+		
+		showPoligonos(poligonosActivos);
 		//XXX obtener todos los ndvi de los poligonos activos no es bueno
 		//TODO marcar poligonos como a actualizar o actualizar los ndvi de
 		//los contornos de los lotes

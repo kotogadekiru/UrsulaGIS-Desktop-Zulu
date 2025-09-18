@@ -13,6 +13,7 @@ import static org.eclipse.persistence.config.PersistenceUnitProperties.TRANSACTI
 import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,8 @@ import com.ursulagis.desktop.dao.ordenCompra.Producto;
 import com.ursulagis.desktop.dao.ordenCompra.ProductoLabor;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
 import com.ursulagis.desktop.gui.JFXMain;
+
+import javafx.application.Platform;
 
 
 public class DAH {
@@ -254,6 +257,14 @@ public class DAH {
 	//	}
 
 	public static void saveAll(List<? extends Object> objects) {
+		if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
+			//System.out.println("save en el thread de javafx");
+			JFXMain.executorPool.submit(() -> {			
+			//	System.out.println("save fuera del thread de javafx");
+			saveAll(objects);
+			});
+			return;
+		}
 		DAH.beginTransaction();
 		try {
 			objects.forEach(p->DAH.save(p));
@@ -269,7 +280,14 @@ public class DAH {
 			System.out.println("no se guardan las clases que no son entidades "+entidad);
 			return;
 		}
-
+		if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
+			//System.out.println("save en el thread de javafx");
+			JFXMain.executorPool.submit(() -> {			
+			//	System.out.println("save fuera del thread de javafx");
+				save(entidad);
+			});
+			return;
+		}
 		EntityManager em = em();
 		if(DAH.transaction == null){
 			//	DAH.transaction = em.getTransaction();
@@ -312,6 +330,14 @@ public class DAH {
 	}
 
 	public static void removeAll(List<Object> entidades) {
+		if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
+			//System.out.println("save en el thread de javafx");
+			JFXMain.executorPool.submit(() -> {			
+			//	System.out.println("save fuera del thread de javafx");
+				removeAll(entidades);
+			});
+			return;
+		}
 		EntityManager em = em();
 		if(DAH.transaction == null){
 			//	DAH.transaction = em.getTransaction();
@@ -328,6 +354,14 @@ public class DAH {
 	}
 
 	public static void remove(Object entidad) {
+		if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
+			//System.out.println("save en el thread de javafx");
+			JFXMain.executorPool.submit(() -> {			
+			//	System.out.println("save fuera del thread de javafx");
+				remove(entidad);
+			});
+			return;
+		}
 		EntityManager em = em();
 		if(DAH.transaction == null){
 			//	DAH.transaction = em.getTransaction();
@@ -738,6 +772,14 @@ public class DAH {
 		return result;	
 
 	}
+
+    public static List<Poligono> getPoligonos(Lote lote) {
+    	TypedQuery<Poligono> query = em().createNamedQuery(Poligono.FIND_BY_LOTE, Poligono.class);
+		query.setParameter("lote", lote);
+		List<Poligono> results = query.getResultList();
+		System.out.println("getPoligonos for lote "+lote+" "+Arrays.toString(results.toArray()));
+		return results;
+    }
 
 
 

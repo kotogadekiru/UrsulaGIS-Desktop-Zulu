@@ -78,6 +78,10 @@ public class RecomendFertNFromHarvestMapTask extends ProcessMapTask<Fertilizacio
 							return;
 						}
 						Double areaGeom =  ProyectionConstants.A_HAS(geom.getArea());
+						if(areaGeom==0) {
+							System.out.println("item areaGeom es 0");
+							return;
+						}
 						fi.setGeometry(geom);
 						double absN = cItem.getRindeTnHa()*cultivo.getAbsN();
 						double dispNSuelo = getNDisponibleSuelo(geom);//incluye el organico a mineralizar.
@@ -88,7 +92,10 @@ public class RecomendFertNFromHarvestMapTask extends ProcessMapTask<Fertilizacio
 						double dispNFert = getNDisponibleFert(geom) / areaGeom;
 						//System.out.println("absN="+absN+" dispSuelo="+dispNSuelo+" dispNFert="+dispNFert);
 						double nAAplicar= absN-dispNSuelo-dispNFert;
-
+						if(Double.isNaN(nAAplicar)) {
+							System.out.println("item nAAplicar es NaN");
+							nAAplicar=0;
+						}
 
 						nAAplicar = Math.max(0, nAAplicar);
 						double reposicionN = nAAplicar / (fert.getPorcN()/100);

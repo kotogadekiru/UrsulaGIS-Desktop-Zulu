@@ -105,6 +105,7 @@ public class Campania implements Comparable<Campania>{
 //
 	@Override
 	public int compareTo(Campania arg0) {
+		if(arg0==null)return -1;
 		return this.inicio.compareTo(arg0.inicio);
 	}
 

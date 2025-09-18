@@ -35,8 +35,29 @@ public class Asignacion {
 	private Campania campania;
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Poligono contorno;
+	private Double superficie;
 	
 	public Asignacion() {
 		
+	}
+	public void setLote(Lote lote) {
+		this.lote = lote;
+		if(lote!=null) {
+			this.setPoligono( lote.getContorno());
+		}
+	}
+	public void setPoligono(Poligono poligono) {
+		if(poligono ==null)return;
+		this.contorno = poligono;
+		if(poligono!=null) {
+			this.superficie = poligono.getArea();
+		}
+	}
+
+	public Double getSuperficie() {
+		if(superficie==null && contorno!=null) {
+			superficie = contorno.getArea();
+		}
+		return superficie;
 	}
 }

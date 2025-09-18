@@ -43,6 +43,7 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 	@NamedQuery(name=Poligono.FIND_ALL, query="SELECT c FROM Poligono c ORDER BY lower(c.nombre)") ,
 	@NamedQuery(name=Poligono.FIND_NAME, query="SELECT o FROM Poligono o where o.nombre = :name") ,
 	@NamedQuery(name=Poligono.FIND_ACTIVOS, query="SELECT o FROM Poligono o where o.activo = true ORDER BY lower(o.nombre)") ,
+	@NamedQuery(name=Poligono.FIND_BY_LOTE, query="SELECT o FROM Poligono o where o.lote = :lote") ,
 }) 
 public class Poligono implements Comparable<Poligono>{
 	private static final String COORDINATE_CLOSE = "}";
@@ -51,6 +52,7 @@ public class Poligono implements Comparable<Poligono>{
 	public static final String FIND_ALL="Poligono.findAll";
 	public static final String FIND_NAME = "Poligono.findName";
 	public static final String FIND_ACTIVOS = "Poligono.findActivos";
+    public static final String FIND_BY_LOTE = "Poligono.findByLote";
 
 	//@Id @GeneratedValue
 	private Long id=null;

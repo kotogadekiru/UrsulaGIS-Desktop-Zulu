@@ -189,7 +189,22 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 					labor.insertFeature(ci);
 				} else{
 					//System.out.println("no inserto la feature "+ci+" "+empty+" "+valid+" "+big );
-					System.out.println(Messages.getString("ProcessHarvestMapTask.2")+featureNumber+Messages.getString("ProcessHarvestMapTask.3")+empty+Messages.getString("ProcessHarvestMapTask.4")+valid+Messages.getString("ProcessHarvestMapTask.5")+big); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+
+
+// ProcessHarvestMapTask.2=no inserto el feature 
+// ProcessHarvestMapTask.3=\ porque tiene una geometria empty=
+// ProcessHarvestMapTask.4=\ valid =
+// ProcessHarvestMapTask.5=\ big=
+// ProcessHarvestMapTask.6=\ puntos eliminados por punto duplicado
+
+					System.out.println(
+						"no inserto el feature "
+						+featureNumber+" porque tiene una geometria empty="
+						+empty
+						+" valid ="
+						+valid
+						+" big="
+						+big); 
 				}
 
 			} else { // no es point. Estoy abriendo una cosecha de poligonos.

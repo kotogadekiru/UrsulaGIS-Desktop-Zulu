@@ -768,8 +768,9 @@ public class SmartTableView<T> extends TableView<T> {
 					try {
 						Method setMethod = clazz.getMethod(setMethodName, fieldType);
 						setMethod.invoke(p,d);
-						DAH.save(p);
-						refresh();
+						// Platform.runLater(() -> {
+						 	DAH.save(p);
+						// });					
 					} catch (Exception e) {
 
 						e.printStackTrace();

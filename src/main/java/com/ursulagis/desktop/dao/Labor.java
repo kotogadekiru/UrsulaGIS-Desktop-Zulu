@@ -373,19 +373,24 @@ public abstract class Labor<E extends LaborItem>  {
 				SimpleFeatureType schema = inStore.getSchema();
 				System.out.println("Prescription Type: "+DataUtilities.encodeType(schema));
 				System.out.println(schema);
+				String title = schema.getName().toString();
+				//String title = inStore.getInfo().getTitle();
+				if (title != null && !title.trim().isEmpty()) {
+					setNombre(title.replaceAll("%20", " "));
+				} else {
+					// Fallback to a default name if title is null or empty
+					setNombre("Labor_" + System.currentTimeMillis());
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
 			//	if(nombreProperty.getValue() == null){
 			//nombreProperty.set(inStore.getInfo().getTitle().replaceAll("%20", " "));
-			String title = inStore.getInfo().getTitle();
-			if (title != null && !title.trim().isEmpty()) {
-				setNombre(title.replaceAll("%20", " "));
-			} else {
-				// Fallback to a default name if title is null or empty
-				setNombre("Labor_" + System.currentTimeMillis());
-			}
+			
+
+			// Get the name of the feature type
+		
 
 			//}
 		}

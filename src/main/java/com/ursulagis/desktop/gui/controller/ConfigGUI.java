@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.controlsfx.control.HyperlinkLabel;
 import org.geotools.api.data.FileDataStore;
 
 import com.google.zxing.BarcodeFormat;
@@ -62,6 +63,7 @@ import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.snake.SnakesLayer;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
 import com.ursulagis.desktop.gui.utils.LoggingOutputStream;
+import com.ursulagis.desktop.gui.utils.OpenBrowserUrl;
 import com.ursulagis.desktop.gui.utils.SmartTableView;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -79,6 +81,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -100,6 +103,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.Window;
+
 import com.ursulagis.desktop.tasks.CotizarOdenDeCompraOnlineTask;
 import com.ursulagis.desktop.tasks.GoogleGeocodingHelper;
 import com.ursulagis.desktop.tasks.UpdateTask;
@@ -1528,7 +1533,7 @@ public class ConfigGUI extends AbstractGUIController{
 			}
 			SmartTableView<Asignacion> table = new SmartTableView<Asignacion>(data,
 					Arrays.asList("Id"),                 //rejected
-					Arrays.asList("Lote","Campania","Cultivo","Contorno"));//order
+					Arrays.asList("Lote","Campania","Cultivo","Contorno","Superficie"));//order
 			table.setEditable(true);
 			table.setOnDoubleClick(()->new Asignacion()); //
 
@@ -1610,14 +1615,29 @@ public class ConfigGUI extends AbstractGUIController{
 		Image image = SwingFXUtils.toFXImage(qr, null);
 
 		Alert a = new Alert(AlertType.INFORMATION);
+		a.getButtonTypes().clear();
+		Window window = a.getDialogPane().getScene().getWindow();
+        window.setOnCloseRequest(e -> a.hide());         
+            
 		ImageView view = new ImageView();
 		a.initOwner(JFXMain.stage);
 		a.setTitle("Qr Code");
 		view.setImage(image);
 		VBox v = new VBox();
 		v.getChildren().add(view);
-		TextField link = new TextField(ret);
-		link.setEditable(false);
+		Hyperlink link = new Hyperlink("link");
+		link.setOnAction(new EventHandler<ActionEvent>() {
+		    public void handle(ActionEvent event) {
+				
+		        //Hyperlink link = (Hyperlink)event.getSource();
+				OpenBrowserUrl.browseTo(ret);
+		        //final String str = link == null ? "" : link.getText();
+		
+		     }
+		});
+
+		//TextField link = new TextField(ret);
+		//link.setEditable(false);
 		v.getChildren().add(link);
 
 		a.setResizable(true);

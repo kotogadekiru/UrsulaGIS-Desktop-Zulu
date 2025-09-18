@@ -178,16 +178,15 @@ public class JFXMain extends Application {
 	public static final String TITLE_VERSION = "Ursula GIS Zulu-"+VERSION; 
 	private static  final String ICON ="U_nueva_3_256x256_verde.png";//"gui/32x32-icon-earth.png";// "gui/1-512.png";//UrsulaGIS-Desktop/src/gui/32x32-icon-earth.png 
 	private static final String SOUND_FILENAME = "exito4.mp3";//"gui/Alarm08.wav";//"Alarm08.wav" funciona desde eclipse pero no desde el jar
-	private static final String SOUND_FILENAME_WAV = "gui/Alarm08.wav"; // Fallback WAV file  
+	//private static final String SOUND_FILENAME_WAV = "gui/Alarm08.wav"; // Fallback WAV file  
 
 	public static Stage stage=null;
 	private Scene scene=null;// usado en addDragAndDropSupport
-
-	//private Dimension canvasSize = new Dimension(1500, 800);
-	private SplitPane sp=null;
-	public WWPanel wwjPanel=null;
+	
+	public WWPanel wwjPanel=null;//contiene el world wind
+	protected LayerPanel layerPanel=null;//contriene el treeView con los layers
+	private SplitPane sp=null;//contiene el layerPanel y el wwjPanel
 	private Node wwNode=null;//contiene el arbol con los layers y el swingnode con el world wind
-	protected LayerPanel layerPanel=null;
 	public VBox progressBox = new VBox();
 
 	public static ExecutorService executorPool = Executors.newCachedThreadPool();
@@ -206,19 +205,26 @@ public class JFXMain extends Application {
 	public MargenGUIController margenGUIController = new MargenGUIController(this);
 	public GenericLaborGUIController genericGUIController = new GenericLaborGUIController(this);
 
+	@Override
+    public void init() throws Exception {
+		notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_INIT));
+        // Perform non-GUI initialization tasks here
+        System.out.println("Application init() called. Loading configurations...");
+        // Example: load a configuration file
+        // config = loadConfiguration(); 
+		setInitialPosition();//pone init Lat y initLong en Configuracion
+		TarjetaHelper.initTarjeta();
+		poligonoGUIController.poligonosActivos = DAH.getPoligonosActivos();
+		ndviGUIController.ndviActivos = DAH.getNdviActivos();
+
+    }
 
 	@Override
 	public void start(Stage primaryStage) {
+		notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_START));
 		try {
-			// Notify preloader that we're starting
-			notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_START));
-			
 			JFXMain.stage = primaryStage;
 			primaryStage.setTitle(TITLE_VERSION);
-			
-			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.1));			
-			
 			loadMainIcon(primaryStage); 
 
 			Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
@@ -226,11 +232,10 @@ public class JFXMain extends Application {
 			int canvasWidth = (int) (primaryScreenBounds.getWidth()*0.8);
 			int canvasHeight = (int) (primaryScreenBounds.getHeight()*0.8);			
 			
-			MenuBar menuBar = constructMenuBar();
-			setInitialPosition();//pone init Lat y initLong en Configuracion
+			MenuBar menuBar = constructMenuBar();			
 			
 			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.3));			
+			notifyPreloader(new Preloader.ProgressNotification(0.2));			
 			
 			Node layerTreeAndWWswingNodeSplitPane = createLayerTreeAndWWswingNodeSplitPane();			
 			VBox.setVgrow(layerTreeAndWWswingNodeSplitPane, Priority.ALWAYS);
@@ -239,7 +244,7 @@ public class JFXMain extends Application {
 			primaryStage.setScene(scene);
 			
 			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.2));			
+			notifyPreloader(new Preloader.ProgressNotification(0.3));			
 
 			primaryStage.setOnHiding((e)-> {				
 				//close swing node
@@ -255,23 +260,24 @@ public class JFXMain extends Application {
 			configGUIController.startKeyBoardListener();
 			
 			// Notify preloader of progress
-			notifyPreloader(new Preloader.ProgressNotification(0.8));
-			primaryStage.setOnShowing((e)->{
-				System.out.println("primaryStage onShowing");
+			notifyPreloader(new Preloader.ProgressNotification(0.4));
+			// primaryStage.setOnShowing((e)->{
+			// 	System.out.println("primaryStage onShowing");
 				
-			});
-			primaryStage.setOnShown((e)->{
-				System.out.println("primaryStage onShown");				
-			});
+			// });
+			// primaryStage.setOnShown((e)->{
+			// 	System.out.println("primaryStage onShown");				
+			// });
 
-			//primaryStage.show();//aca se pasa divider position de 0.15 a 0.85
+			//primaryStage.show();//el show lo hace el preloader
 		
 			addDragAndDropSupport();
 			//start clearCache cronJob
 			startClearCacheCronJob();
-			
-			// Final progress notification
-			//notifyPreloader(new Preloader.ProgressNotification(1.0));
+			notifyPreloader(new Preloader.ProgressNotification(0.5));
+			loadActiveLayers();
+			notifyPreloader(new Preloader.ProgressNotification(0.9));
+	
 		}catch(Exception e) {
 			System.out.println("no se pudo hacer start de JFXMain.start(stage)");
 			e.printStackTrace();
@@ -433,11 +439,11 @@ public class JFXMain extends Application {
 				this.getWwd().addSelectListener((SelectListener) layer);
 			}
 		}
-		notifyPreloader(new Preloader.ProgressNotification(0.7));
+
 			
-		loadActiveLayers();
 	
-		notifyPreloader(new Preloader.ProgressNotification(0.9));
+	
+
 		return sp;
 	}
 
@@ -910,23 +916,16 @@ public class JFXMain extends Application {
 
 	private void loadActiveLayers(){
 		Platform.runLater(() -> {
-		//		long now = System.currentTimeMillis();
-		//		DAH.getAllAgroquimicos();
-		//		DAH.getAllCultivos();
-		//		DAH.getAllSemillas();
-		//		DAH.getAllFertilizantes();
-		//		System.out.println("tarde "+(System.currentTimeMillis()-now)+" en inicializar los defaults");
-		//tarde 11148 en inicializar los defaults
-		TarjetaHelper.initTarjeta();
-		this.poligonoGUIController.showPoligonosActivos();
-		this.ndviGUIController.showNdviActivos();
+		
+			
+			this.poligonoGUIController.showPoligonosActivos();
+			this.ndviGUIController.showNdviActivos();
+
 		//Al agregar los poligonos y ndvi se resetea el divider position
 	
 		//todo enviar mensage al loader de que se termino de cargar la app
-		setSplitPaneDividerPosition();
-		
-		stage.show();	
-		notifyPreloader(new Preloader.ProgressNotification(1));		
+			setSplitPaneDividerPosition();
+		//stage.show();		
 		});
 	}	
 
@@ -1144,31 +1143,31 @@ public class JFXMain extends Application {
 		if(!this.isPlayingSound) {
 			Platform.runLater(() -> {
 				URL url = JFXMain.class.getClassLoader().getResource(SOUND_FILENAME);
-				System.out.println("=== SOUND DEBUG ===");
-				System.out.println("Looking for sound file: " + SOUND_FILENAME);
-				System.out.println("URL found: " + url);
+				// System.out.println("=== SOUND DEBUG ===");
+				// System.out.println("Looking for sound file: " + SOUND_FILENAME);
+				// System.out.println("URL found: " + url);
 				
 				if (url != null) {
 					try {
 						String uriString = url.toURI().toString();
-						System.out.println("URI string: " + uriString);
+						// System.out.println("URI string: " + uriString);
 						
 						AudioClip plonkSound = new AudioClip(uriString);
-						System.out.println("AudioClip created successfully");
+						// System.out.println("AudioClip created successfully");
 						
 						this.isPlayingSound = true;
 						plonkSound.setVolume(0.50);
-						System.out.println("Volume set to 0.50, attempting to play...");
+						// System.out.println("Volume set to 0.50, attempting to play...");
 						
 						plonkSound.play();
-						System.out.println("play() method called");
+						// System.out.println("play() method called");
 						
 						// Reset flag after a short delay to allow sound to finish
 						executorPool.execute(() -> {
 							try {
 								Thread.sleep(2000); // 2 seconds
 								this.isPlayingSound = false;
-								System.out.println("Sound playback flag reset");
+								// System.out.println("Sound playback flag reset");
 							} catch (InterruptedException e) {
 								Thread.currentThread().interrupt();
 								this.isPlayingSound = false;
@@ -1182,56 +1181,7 @@ public class JFXMain extends Application {
 						System.out.println("Unexpected error: " + e.getMessage());
 						e.printStackTrace();
 					}
-				} else {
-					System.out.println("ERROR: Sound file not found: " + SOUND_FILENAME);
-					System.out.println("Trying fallback WAV file: " + SOUND_FILENAME_WAV);
-					// Try fallback WAV file
-					URL wavUrl = JFXMain.class.getClassLoader().getResource(SOUND_FILENAME_WAV);
-					if (wavUrl != null) {
-						try {
-							String wavUriString = wavUrl.toURI().toString();
-							System.out.println("WAV URI string: " + wavUriString);
-							
-							AudioClip wavSound = new AudioClip(wavUriString);
-							System.out.println("WAV AudioClip created successfully");
-							
-							this.isPlayingSound = true;
-							wavSound.setVolume(0.50);
-							System.out.println("WAV Volume set to 0.50, attempting to play...");
-							
-							wavSound.play();
-							System.out.println("WAV play() method called");
-							
-							// Reset flag after a short delay
-							executorPool.execute(() -> {
-								try {
-									Thread.sleep(2000);
-									this.isPlayingSound = false;
-									System.out.println("WAV Sound playback flag reset");
-								} catch (InterruptedException e) {
-									Thread.currentThread().interrupt();
-									this.isPlayingSound = false;
-								}
-							});
-						} catch (Exception e) {
-							System.out.println("WAV playback error: " + e.getMessage());
-							e.printStackTrace();
-						}
-					} else {
-						System.out.println("ERROR: WAV fallback file also not found: " + SOUND_FILENAME_WAV);
-						System.out.println("Available resources in classpath:");
-						try {
-							java.util.Enumeration<java.net.URL> resources = 
-								JFXMain.class.getClassLoader().getResources("");
-							while (resources.hasMoreElements()) {
-								System.out.println("  - " + resources.nextElement());
-							}
-						} catch (Exception e) {
-							System.out.println("Could not list resources: " + e.getMessage());
-						}
-					}
 				}
-				System.out.println("=== END SOUND DEBUG ===");
 			});
 		}else {
 			System.out.println("no reprodusco el sonido porque ya hay un player andando");
@@ -1239,26 +1189,26 @@ public class JFXMain extends Application {
 	}
 
 	// Test method to debug audio system
-	public void testAudioSystem() {
-		System.out.println("=== AUDIO SYSTEM TEST ===");
-		System.out.println("JavaFX Platform: " + javafx.application.Platform.isFxApplicationThread());
-	//	System.out.println("JavaFX Toolkit: " + javafx.application.Platform.isToolkitInitialized());
+	// public void testAudioSystem() {
+	// 	System.out.println("=== AUDIO SYSTEM TEST ===");
+	// 	System.out.println("JavaFX Platform: " + javafx.application.Platform.isFxApplicationThread());
+	// //	System.out.println("JavaFX Toolkit: " + javafx.application.Platform.isToolkitInitialized());
 		
-		// Test with a simple beep sound
-		Platform.runLater(() -> {
-			try {
-				// Create a simple test sound using JavaFX built-in sound
-				AudioClip testSound = new AudioClip("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT");
-				testSound.setVolume(0.3);
-				testSound.play();
-				System.out.println("Test beep sound played");
-			} catch (Exception e) {
-				System.out.println("Test sound failed: " + e.getMessage());
-				e.printStackTrace();
-			}
-		});
-		System.out.println("=== END AUDIO SYSTEM TEST ===");
-	}
+	// 	// Test with a simple beep sound
+	// 	Platform.runLater(() -> {
+	// 		try {
+	// 			// Create a simple test sound using JavaFX built-in sound
+	// 			AudioClip testSound = new AudioClip("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT");
+	// 			testSound.setVolume(0.3);
+	// 			testSound.play();
+	// 			System.out.println("Test beep sound played");
+	// 		} catch (Exception e) {
+	// 			System.out.println("Test sound failed: " + e.getMessage());
+	// 			e.printStackTrace();
+	// 		}
+	// 	});
+	// 	System.out.println("=== END AUDIO SYSTEM TEST ===");
+	// }
 
 	public void addDragAndDropSupport(){
 		scene.setOnDragOver(new EventHandler<DragEvent>() {
