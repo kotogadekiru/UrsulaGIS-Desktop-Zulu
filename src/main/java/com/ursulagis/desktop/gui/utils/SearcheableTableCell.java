@@ -129,7 +129,7 @@ public class SearcheableTableCell <T, C> extends TableCell<T, C> {
 
     class CustomSearchableComboBoxSkin<C1> extends SkinBase<ComboBox<C1>> {
    
-	   private static final Image filterIcon = new Image(CustomSearchableComboBoxSkin.class.getResource("/impl/org/controlsfx/table/filter.png").toExternalForm());
+	   private final Image filterIcon = new Image(CustomSearchableComboBoxSkin.class.getResource("/impl/org/controlsfx/table/filter.png").toExternalForm());
    
 	   /**
 		* A "normal" combobox used internally as a delegate to get the default combo box behavior.

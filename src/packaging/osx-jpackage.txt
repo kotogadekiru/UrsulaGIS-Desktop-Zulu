@@ -13,5 +13,7 @@
 --java-options --add-opens=javafx.base/javafx.collections=ALL-UNNAMED
 --java-options --add-opens=javafx.base/javafx.beans=ALL-UNNAMED
 --java-options --add-opens=javafx.base/javafx.beans.property=ALL-UNNAMED
+--java-options -Dhttps.protocols=TLSv1.2,TLSv1.3
+--java-options -Djdk.tls.client.protocols=TLSv1.2,TLSv1.3
 ${macos.sign}
 ${macos.sign.identity}

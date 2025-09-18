@@ -25,6 +25,7 @@ import java.util.zip.ZipEntry;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -532,6 +533,13 @@ public class GetNdviForLaborTask4 extends Task<List<Ndvi>>{
 	 */
 	private static HttpResponse makeGetRequest(GenericUrl url){
 		HttpResponse response = null;
+		
+		// Configure SSL/TLS settings to handle handshake issues
+		System.setProperty("https.protocols", "TLSv1.2,TLSv1.3");
+		System.setProperty("jdk.tls.client.protocols", "TLSv1.2,TLSv1.3");
+		System.setProperty("javax.net.ssl.trustStore", System.getProperty("java.home") + "/lib/security/cacerts");
+		System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
+		
 		HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 		JsonFactory JSON_FACTORY = new JacksonFactory();
 		HttpRequestFactory requestFactory =
@@ -539,8 +547,13 @@ public class GetNdviForLaborTask4 extends Task<List<Ndvi>>{
 					@Override
 					public void initialize(HttpRequest request) {
 						request.setParser(new JsonObjectParser(JSON_FACTORY));
-						request.setReadTimeout(0);
-						request.setConnectTimeout(0);
+						request.setReadTimeout(30000);
+						request.setConnectTimeout(30000);
+						
+						// Add headers to help with SSL handshake
+						HttpHeaders headers = request.getHeaders();
+						headers.set("User-Agent", "UrsulaGIS-Desktop/1.0");
+						headers.set("Accept", "*/*");
 					}
 				});
 

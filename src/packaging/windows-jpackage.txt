@@ -26,6 +26,8 @@
 --java-options -Djava.awt.headless=false
 --java-options -Dprism.order=sw
 --java-options -Dprism.forceGPU=false
+--java-options -Dhttps.protocols=TLSv1.2,TLSv1.3
+--java-options -Djdk.tls.client.protocols=TLSv1.2,TLSv1.3
 --win-shortcut
 --win-shortcut-prompt
 --win-per-user-install
