@@ -11,9 +11,15 @@ on:
   workflow_dispatch:
   #  branches: [ main ]
 
+# Explicitly request permissions for creating releases
+permissions:
+  contents: write
+  packages: write
+
 env:
   DEV_IDENTITY: BXPZTQZ35S # Your Apple Dev identity, something like BXPZTQZ35S
   PRIMARY_BUNDLE_ID: com.ursulagis.desktop.JFXMain # Unique to your app, often the launcher class
+  APP_VERSION: 1.0.${{ github.run_number }}
 
 jobs:
   build:
@@ -39,7 +45,8 @@ jobs:
       - name: Add Wix to Path
         run: echo "$HOME/target/wix" >> $GITHUB_PATH
         if: matrix.os == 'windows-latest'
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -47,9 +54,71 @@ jobs:
           distribution: 'liberica'
           java-package: jdk+fx
           cache: 'maven'
-      - name: "Build with Maven"
-        if: matrix.os != 'macos-latest'
+      - name: "Build with Maven (Windows)"
+        if: matrix.os == 'windows-latest'
         run: mvn -B clean install --file pom.xml
+        env:
+          MAVEN_OPTS: "-Dos.detected.name=windows"
+      
+      - name: "Build with Maven (Linux)"
+        if: matrix.os == 'ubuntu-latest'
+        run: mvn -B clean install --file pom.xml
+        env:
+          MAVEN_OPTS: "-Dos.detected.name=linux"
+      
+      - name: "Build with Maven (macOS)"
+        if: matrix.os == 'macos-latest'
+        run: mvn -B clean install --file pom.xml
+        env:
+          MAVEN_OPTS: "-Dos.detected.name=osx"
+      
+      - name: "List build artifacts (Windows)"
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "Build artifacts in target directory:"
+          dir target
+          echo "MSI files:"
+          dir target\*.msi
+      
+      - name: "List build artifacts (Linux)"
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          echo "Build artifacts in target directory:"
+          ls -la target/
+          echo "DEB files:"
+          ls -la target/*.deb
+      
+      - name: "List build artifacts (macOS)"
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "Build artifacts in target directory:"
+          ls -la target/
+          echo "DMG files:"
+          ls -la target/*.dmg
+      
+      - name: "Upload Windows Installer"
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_Win_x64_Installer
+          path: target/*.msi
+          retention-days: 30
+      
+      - name: "Upload Linux Installer"
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_Linux_x64_Installer
+          path: target/*.deb
+          retention-days: 30
+      
+      - name: "Upload macOS Installer"
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_macOS_x64_Installer
+          path: target/*.dmg
+          retention-days: 30
       # - name: "Build with Maven (macOS No Signing)"
       #   env:
       #     MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
@@ -100,14 +169,59 @@ jobs:
       #   uses: devbotsxyz/xcode-staple@v1
       #   with:
       #     product-path: ${{ env.DMG_PATH }}
-      - name: Update Automatic Release
-        uses: marvinpinto/action-automatic-releases@latest
+      - name: "Create Release (Windows)"
+        if: matrix.os == 'windows-latest' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN}}"
-          automatic_release_tag: ${{ matrix.os }}
+          tag_name: UrsulaGIS-Desktop_Zulu_Win_x64_Installer-${{ env.APP_VERSION }}
+          name: Windows Installer Build -${{ env.APP_VERSION }}
+          body: |
+            Windows MSI installer built from commit ${{ github.sha }}
+            
+            **Build Info:**
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Run: ${{ github.run_number }}
+            - Date: ${{ github.event.head_commit.timestamp }}
+          files: |
+            target/*.msi
           prerelease: true
-          title: ${{ matrix.os }} Development Build
-          files: | 
-            ./target/*.msi
-            ./target/*.dmg
-            ./target/*.deb
+          draft: false
+      
+      - name: "Create Release (Linux)"
+        if: matrix.os == 'ubuntu-latest' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: UrsulaGIS-Desktop_Zulu_Linux_x64_Installer-${{ env.APP_VERSION }}
+          name: Linux Installer Build -${{ env.APP_VERSION }}
+          body: |
+            Linux DEB installer built from commit ${{ github.sha }}
+            
+            **Build Info:**
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Run: ${{ github.run_number }}
+            - Date: ${{ github.event.head_commit.timestamp }}
+          files: |
+            target/*.deb
+          prerelease: true
+          draft: false
+      
+      - name: "Create Release (macOS)"
+        if: matrix.os == 'macos-latest' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: UrsulaGIS-Desktop_Zulu_macOS_x64_Installer-${{ env.APP_VERSION }}
+          name: macOS Installer Build -${{ env.APP_VERSION }}
+          body: |
+            macOS DMG installer built from commit ${{ github.sha }}
+            
+            **Build Info:**
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Run: ${{ github.run_number }}
+            - Date: ${{ github.event.head_commit.timestamp }}
+          files: |
+            target/*.dmg
+          prerelease: true
+          draft: false
