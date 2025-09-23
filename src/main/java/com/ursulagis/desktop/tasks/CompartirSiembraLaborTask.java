@@ -97,6 +97,18 @@ public class CompartirSiembraLaborTask extends Task<String> {
 	protected String call()  {
 		this.updateProgress(0, 10);
 		//TODO exportar prescripcion!
+		Geometry contornoG = GeometryHelper.extractContornoGeometry(siembraLabor);
+				
+				
+		Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
+		//GeometryHelper.simplificarPoligono(contornoP);
+		System.out.println("contorno siembra es "+contornoG.toText());
+		if(contornoP!=null) {
+			ordenSiembra.setPoligonoString(contornoP.getPositionsString());
+		} else {
+			System.out.println("no se pudo extraer el contorno de la cosecha");
+		}
+
 		String ordenUrl = uploadLaborFile(this.siembraLabor);
 		this.ordenSiembra.setOrdenShpZipUrl(ordenUrl);
 		this.updateProgress(1, 10);
@@ -312,17 +324,7 @@ public class CompartirSiembraLaborTask extends Task<String> {
 		
 		if(retOp.isPresent()) {
 			OrdenSiembra ret = retOp.get();
-			Platform.runLater(()->{				
-				Geometry contornoG = GeometryHelper.extractContornoGeometry(siembra);
-				
-				System.out.println("contorno siembra es "+contornoG.toText());
-				Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
-				if(contornoP!=null) {
-					ret.setPoligonoString(contornoP.getPositionsString());
-				} else {
-					System.out.println("no se pudo extraer el contorno de la cosecha");
-				}
-			});
+
 			return ret;
 		} else {return null;}		
 	
@@ -346,6 +348,7 @@ public class CompartirSiembraLaborTask extends Task<String> {
 		//1 crear un directorio temporal
 		Path dir = FileHelper.createTempDir("toUpload");
 		//2 crear un archivo shape dentro del directorio para subir
+		String nombre=labor.getNombre();//todo replace invalid characters
 		File shpFile = FileHelper.getNewShapeFileAt(dir,"labor.shp");
 		//2 exportar la labor al directorio
 		ExportarPrescripcionSiembraTask export = new ExportarPrescripcionSiembraTask(labor,shpFile,ordenSiembra.getUnidad());
