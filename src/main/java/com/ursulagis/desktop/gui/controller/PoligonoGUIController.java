@@ -50,7 +50,9 @@ import gov.nasa.worldwind.ogc.kml.KMLAbstractFeature;
 import gov.nasa.worldwind.ogc.kml.KMLBoundary;
 import gov.nasa.worldwind.ogc.kml.KMLDocument;
 import gov.nasa.worldwind.ogc.kml.KMLFolder;
+import gov.nasa.worldwind.ogc.kml.KMLLinearRing;
 import gov.nasa.worldwind.ogc.kml.KMLPlacemark;
+import gov.nasa.worldwind.ogc.kml.KMLPolygon;
 import gov.nasa.worldwind.ogc.kml.KMLRoot;
 import gov.nasa.worldwind.util.Logging;
 import gov.nasa.worldwind.util.measure.MeasureTool;
@@ -1446,12 +1448,26 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 	public void importPlacemarkPoligon(KMLPlacemark placemark) {
 		try {
-			String name = placemark.getName();
-			//TODO implementar para importar puntos como medicion
-			KMLBoundary boundary = (KMLBoundary)placemark.getGeometry().getField("outerBoundaryIs");
-			if(boundary ==null)return;
-			PositionList coordinates = boundary.getLinearRing().getCoordinates();
-			Poligono poli = GeometryHelper.constructPolygon(coordinates);
+			String name = placemark.getName();			
+			PositionList shell = null;//
+			List<PositionList> holes = null;	
+
+			if(placemark.getGeometry() instanceof KMLPolygon) {
+				holes = new ArrayList<PositionList>();	
+				KMLPolygon kmlPolygon = (KMLPolygon)placemark.getGeometry();		
+				
+				Iterable<? extends KMLLinearRing> innerBoundariesIterable = kmlPolygon.getInnerBoundaries();//.getField("innerBoundaryIs");			
+					 for(KMLLinearRing innerRing : innerBoundariesIterable) {					
+							holes.add(innerRing.getCoordinates());					
+					 }					
+			}
+			KMLBoundary boundary = (KMLBoundary)placemark.getGeometry().getField("outerBoundaryIs");		
+			if(boundary ==null)return;			
+			shell = boundary.getLinearRing().getCoordinates();
+
+		
+		
+			Poligono poli = GeometryHelper.constructPolygon(shell,holes);
 			poli.setNombre(name);		
 			double lonLatArea = poli.toGeometry().getArea();
 			Double has = ProyectionConstants.A_HAS(lonLatArea);
