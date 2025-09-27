@@ -62,18 +62,18 @@ import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.UnzipUtility;
 
 
-public class GetNdviForLaborTask4 extends Task<List<Ndvi>>{
+public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	private static final String NDVI_DOWNLOAD_TYPE_CONFIG_KEY = "NDVI_DOWNLOAD_TYPE(SR/TOA)";
 	private static final String TOA = "TOA";
 	int MAX_URL_LENGHT = 4443;//2048 segun un stackoverflow //4443 segun pruevas con chrome// corresponde a 129 puntos
 	protected int featureCount=0;
 	protected int featureNumber=0;
 	
-	private ProgressBar progressBarTask;
-	private Pane progressPane;
-	private Label progressBarLabel;
-	private HBox progressContainer;
-	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
+	// private ProgressBar progressBarTask;
+	// private Pane progressPane;
+	// private Label progressBarLabel;
+	// private HBox progressContainer;
+	// private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
 	
 
 	//"ursulaGIS.cosechaService";//"ursulaGISv23";	//Nov 13, 2022 
@@ -336,6 +336,7 @@ public class GetNdviForLaborTask4 extends Task<List<Ndvi>>{
 		List<LocalDate> processedDates = Collections.synchronizedList(new ArrayList<LocalDate>());
 		List<Ndvi>  resFiles = uniqueDates.stream().collect( ()->new  ArrayList<Ndvi>(),
 				(tiffFiles, assetDate) ->{
+					if(isCancelled())return;
 					String sEnd = format1.format(assetDate.plusDays(1));
 					String sBegin = format1.format(assetDate.minusDays(1));
 					System.out.println("buscando los ndvi entre "+sBegin+" y "+sEnd);
@@ -569,37 +570,37 @@ public class GetNdviForLaborTask4 extends Task<List<Ndvi>>{
 		return response;
 	}
 
-	public void installProgressBar(Pane progressBox) {
-		this.progressPane= progressBox;
-		progressBarTask = new ProgressBar();			
-		progressBarTask.setProgress(0);
+	// public void installProgressBar(Pane progressBox) {
+	// 	this.progressPane= progressBox;
+	// 	progressBarTask = new ProgressBar();			
+	// 	progressBarTask.setProgress(0);
 
-		progressBarTask.progressProperty().bind(this.progressProperty());
-		progressBarLabel = new Label(contorno.getNombre()+" "+this.begin+"->"+this.end);
-		progressBarLabel.setTextFill(Color.BLACK);
-
-
-		Button cancel = new Button();
-		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
-			this.cancel();
-			this.uninstallProgressBar();
-		});
-		Image imageDecline = new Image(getClass().getResourceAsStream(MMG_GUI_EVENT_CLOSE_PNG));
-		cancel.setGraphic(new ImageView(imageDecline));
-
-		//progressBarLabel.setStyle("-fx-color: black");
-		progressContainer = new HBox();
-		progressContainer.getChildren().addAll(cancel,progressBarLabel,progressBarTask);
-		Platform.runLater(()->{
-			progressBox.getChildren().add(progressContainer);
-		});
+	// 	progressBarTask.progressProperty().bind(this.progressProperty());
+	// 	progressBarLabel = new Label(contorno.getNombre()+" "+this.begin+"->"+this.end);
+	// 	progressBarLabel.setTextFill(Color.BLACK);
 
 
-	}
-	public void uninstallProgressBar() {		
-		progressPane.getChildren().remove(progressContainer);
-	}
+	// 	Button cancel = new Button();
+	// 	cancel.setOnAction(ae->{
+	// 		System.out.println("cancelando el ProcessMapTask");
+	// 		this.cancel();
+	// 		this.uninstallProgressBar();
+	// 	});
+	// 	Image imageDecline = new Image(getClass().getResourceAsStream(MMG_GUI_EVENT_CLOSE_PNG));
+	// 	cancel.setGraphic(new ImageView(imageDecline));
+
+	// 	//progressBarLabel.setStyle("-fx-color: black");
+	// 	progressContainer = new HBox();
+	// 	progressContainer.getChildren().addAll(cancel,progressBarLabel,progressBarTask);
+	// 	Platform.runLater(()->{
+	// 		progressBox.getChildren().add(progressContainer);
+	// 	});
+
+
+	// }
+	// public void uninstallProgressBar() {		
+	// 	progressPane.getChildren().remove(progressContainer);
+	// }
 
 
 	public void setFinDate(LocalDate date) {
