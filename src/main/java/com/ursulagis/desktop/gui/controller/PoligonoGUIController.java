@@ -16,6 +16,17 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Window;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -30,17 +41,8 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 
-import com.ursulagis.desktop.dao.Labor;
-import com.ursulagis.desktop.dao.Ndvi;
-import com.ursulagis.desktop.dao.Poligono;
-import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
-import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
-import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
-import com.ursulagis.desktop.dao.recorrida.Camino;
-import com.ursulagis.desktop.dao.recorrida.Muestra;
-import com.ursulagis.desktop.dao.recorrida.Recorrida;
-import com.ursulagis.desktop.dao.siembra.SiembraLabor;
-import com.ursulagis.desktop.dao.suelo.Suelo;
+
+
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Position.PositionList;
@@ -56,6 +58,7 @@ import gov.nasa.worldwind.ogc.kml.KMLPolygon;
 import gov.nasa.worldwind.ogc.kml.KMLRoot;
 import gov.nasa.worldwind.util.Logging;
 import gov.nasa.worldwind.util.measure.MeasureTool;
+
 import com.ursulagis.desktop.gui.FertilizacionConfigDialogController;
 import com.ursulagis.desktop.gui.HarvestConfigDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
@@ -71,17 +74,19 @@ import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.gui.utils.DateConverter;
 import com.ursulagis.desktop.gui.utils.NumberInputDialog;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Window;
+
+
+import com.ursulagis.desktop.dao.Labor;
+import com.ursulagis.desktop.dao.Ndvi;
+import com.ursulagis.desktop.dao.Poligono;
+import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
+import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
+import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
+import com.ursulagis.desktop.dao.recorrida.Camino;
+import com.ursulagis.desktop.dao.recorrida.Muestra;
+import com.ursulagis.desktop.dao.recorrida.Recorrida;
+import com.ursulagis.desktop.dao.siembra.SiembraLabor;
+import com.ursulagis.desktop.dao.suelo.Suelo;
 import com.ursulagis.desktop.tasks.GetNdviForLaborTask4;
 import com.ursulagis.desktop.tasks.crear.CrearCosechaMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearFertilizacionMapTask;
@@ -95,6 +100,9 @@ import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
+//import com.ursulagis.desktop.gui.nww.MeasureTool;
+import com.ursulagis.desktop.gui.nww.MeasureToolForShape;
+
 
 public class PoligonoGUIController extends AbstractGUIController{
 
@@ -491,14 +499,24 @@ public class PoligonoGUIController extends AbstractGUIController{
 	public void doEditarPoligono(Object layerObject) {
 		//mostrar un dialogo para editar el nombre del poligono
 		Poligono p =(Poligono)layerObject;
-
+		MeasureToolForShape measureTool = (MeasureToolForShape)p.getLayer().getValue(PoligonLayerFactory.MEASURE_TOOL);
+		measureTool.setShowControlPoints(true);
+		measureTool.setCreationMode(false);
+		
 		PoligonoDialog pd = new PoligonoDialog(p,true);
-		Optional<Poligono> op = pd.showAndWait();
-		if(op.isPresent()) {
-			p = op.get();
-			System.out.println("p edited");
+		pd.setOnHidden((event)->{
+			measureTool.setShowControlPoints(false);
+			measureTool.setCreationMode(false);
 			this.getLayerPanel().update(this.getWwd());
-		}
+		});
+
+		pd.show();
+	
+		// if(op.isPresent()) {
+	
+		
+	
+		// }
 	}
 	private void doCrearSiembra(List<Poligono> polis) {
 		SiembraLabor labor = new SiembraLabor();
@@ -819,7 +837,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 		clon.setNombre(p.getNombre()+" clon");
 		clon.setArea(p.getArea());
 		clon.getPositions().addAll(p.getPositions());
-		MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(clon, this.getWwd(), this.getLayerPanel());		
+		MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(clon, this.getWwd(), this.getLayerPanel());	
+		measureTool.setCreationMode(false);
 		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 		this.getLayerPanel().update(this.getWwd());	
 	}
@@ -912,8 +931,9 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 	public void doCrearPoligono(){
 		Poligono poli = new Poligono();
-		MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(poli, this.getWwd(), this.getLayerPanel());
-		measureTool.setArmed(true);
+		MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
+		measureTool.setCreationMode(true);
+		measureTool.setShowControlPoints(true);
 
 		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 		this.getLayerPanel().update(this.getWwd());
@@ -923,7 +943,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 		//Optional<Poligono> op = 
 		pd.show();
 		pd.setOnHidden((event)->{			
-			measureTool.setArmed(false);
+			measureTool.setCreationMode(false);
+			measureTool.setShowControlPoints(false);
 			Poligono op = pd.getResult();
 			if(op!=null) {
 				//p = op.get();
@@ -985,7 +1006,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 		poli.setArea(has);
 		poli.setNombre(joiner.toString()); //-NLS-1$
 
-		MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(poli, this.getWwd(), this.getLayerPanel());		
+		MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());	
+		measureTool.setCreationMode(false);	
 		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 		this.getLayerPanel().update(this.getWwd());		
 	}
@@ -1076,7 +1098,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 				for(Geometry g : geometriasOutput){
 					Poligono poli = ExtraerPoligonosDeLaborTask.geometryToPoligono(g);
 					if(poli ==null)continue;
-					MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(poli, this.getWwd(), this.getLayerPanel());
+					MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
+					measureTool.setCreationMode(false);
 					double has = ProyectionConstants.A_HAS(g.getArea());
 					poli.setArea(has);
 					poli.setNombre(nombre+" ["+num+"]");num++; 
@@ -1316,8 +1339,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 		Platform.runLater(()->{
 			for(Poligono poli : poligonos){
-				MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(poli, this.getWwd(), this.getLayerPanel());
-
+				MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
+				measureTool.setCreationMode(false);
 				insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 				this.getLayerPanel().update(this.getWwd());//ponerlo fuera del for?
 
@@ -1392,6 +1415,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 					//						}
 					//					}		
 					this.getLayerPanel().update(this.getWwd());
+					
 				} catch (IOException | XMLStreamException e) {
 					e.printStackTrace();
 				}
@@ -1432,7 +1456,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 						}
 
-						MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(poli, this.getWwd(), this.getLayerPanel());
+						MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
+						measureTool.setCreationMode(false);
 						poli.setArea(has);
 						insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 					}//fin del while sobre las features
@@ -1472,7 +1497,9 @@ public class PoligonoGUIController extends AbstractGUIController{
 			double lonLatArea = poli.toGeometry().getArea();
 			Double has = ProyectionConstants.A_HAS(lonLatArea);
 
-			MeasureTool measureTool = PoligonLayerFactory.createPoligonMeasureTool(poli, this.getWwd(), this.getLayerPanel());
+			MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
+			
+			measureTool.setCreationMode(false);
 			poli.setArea(has);
 			insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 		}catch(Exception e) {
