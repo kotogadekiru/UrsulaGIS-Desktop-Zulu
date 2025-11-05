@@ -6,24 +6,30 @@ import java.awt.Cursor;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.ursulagis.desktop.dao.Labor;
-import com.ursulagis.desktop.dao.Poligono;
-import com.ursulagis.desktop.dao.recorrida.Camino;
-import gov.nasa.worldwind.WorldWindow;
-import gov.nasa.worldwind.avlist.AVKey;
-import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.layers.RenderableLayer;
-import gov.nasa.worldwind.util.UnitsFormat;
-import gov.nasa.worldwind.util.measure.MeasureTool;
-import gov.nasa.worldwind.util.measure.MeasureToolController;
-import com.ursulagis.desktop.gui.nww.LayerPanel;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
+
+
+import gov.nasa.worldwind.WorldWindow;
+import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.layers.RenderableLayer;
+import gov.nasa.worldwind.util.UnitsFormat;
+ import gov.nasa.worldwind.util.measure.MeasureTool;
+ import gov.nasa.worldwind.util.measure.MeasureToolController;
+
+
+import com.ursulagis.desktop.gui.nww.LayerPanel;
+import com.ursulagis.desktop.dao.Labor;
+import com.ursulagis.desktop.dao.Poligono;
+import com.ursulagis.desktop.dao.recorrida.Camino;
+//import com.ursulagis.desktop.gui.nww.MeasureTool;
+//import com.ursulagis.desktop.gui.nww.MeasureToolController;
+
 import javafx.stage.Modality;
 
 public class PathLayerFactory {

@@ -20,7 +20,9 @@ import javax.persistence.Transient;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.io.WKTReader;
 
 import com.ursulagis.desktop.dao.config.Lote;
 
@@ -34,6 +36,8 @@ import gov.nasa.worldwind.layers.Layer;
 import com.ursulagis.desktop.gui.Messages;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 @Data
@@ -64,10 +68,16 @@ public class Poligono implements Comparable<Poligono>{
 	 */
 	private boolean activo =false;
 	private String positionsString="";
+	private String text="";//resultado de toText de la geometria
 	//un poligono tiene LineString shell y LineString[] holes  #ver PolygonValidator
-	@Transient
+	
+	//@Transient //transient va en el metodo getPositions()
 	private List<Position> positions = new ArrayList<Position>();
-	@Transient
+	//@Transient
+	private List<List<Position>> huecos = new ArrayList<List<Position>>();
+	//@Transient
+	private Geometry geometry=null;
+	//@Transient
 	private Layer layer =null;
 	
 	private List<Ndvi> imagenesPoligono =null;
@@ -97,6 +107,11 @@ public class Poligono implements Comparable<Poligono>{
 	private List<Ndvi> getImagenesPoligono(){
 		return this.imagenesPoligono;
 	}
+
+
+	/** 
+	 * construir positionsString a partir de las posiciones
+	 */
 	public String getPositionsString(){
 		StringBuilder sb = new StringBuilder();
 		sb.append(COORDINATE_OPEN);
@@ -120,11 +135,7 @@ public class Poligono implements Comparable<Poligono>{
 		//System.out.println(positionsString);
 		return positionsString;
 	}
-	
-	@Column( columnDefinition="DECIMAL(32,15)")
-	public double getArea() {
-		return this.area;
-	}
+
 	/**
 	 * metodo que toma un string conf formato {{{lat,long},{lat}}}
 	 * y crea la lista de posiciones del poligono
@@ -194,6 +205,41 @@ public class Poligono implements Comparable<Poligono>{
 		}
 	}
 
+	public String getText(){
+		Geometry g = this.geometry;//this.toGeometry();
+		if(g==null)return "";
+		this.text = g.toText();
+		return this.text;
+	}
+
+	public void setText(String s){
+		this.text = s;
+		if(s==null || s.isEmpty())return;
+		WKTReader reader = new WKTReader(ProyectionConstants.getGeometryFactory());
+		try {
+			//System.out.println("readding geometry from text "+s);
+			Geometry g = reader.read(s);//org.locationtech.jts.io.ParseException: Expected word but found End-of-Stream (line 1)
+			this.setPositions(GeometryHelper.geometryToPositions(g.getGeometryN(0)));
+			if(huecos==null){
+				huecos = new ArrayList<List<Position>>();
+			}
+			huecos.clear();
+			for(int i=1;i<g.getNumGeometries();i++){
+				huecos.add(GeometryHelper.geometryToPositions(g.getGeometryN(i)));
+			}
+			//TODO set holes
+		} catch (Exception e) {
+			System.out.println("error al leer el poligono desde el texto "+s);
+			e.printStackTrace();
+		}
+	}
+	
+	@Column( columnDefinition="DECIMAL(32,15)")
+	public double getArea() {
+		return this.area;
+	}
+	
+
 	public void setNombre(String n){
 		this.nombre=n;
 		if(this.layer!=null){
@@ -219,6 +265,39 @@ public class Poligono implements Comparable<Poligono>{
 	public List<Position> getPositions(){
 		return this.positions;
 	}
+	@Transient
+	public List<List<Position>> getHuecos(){
+		return this.huecos;
+	}
+	@Transient
+	public Geometry getGeometry(){
+		if(this.geometry==null){
+			this.geometry = this.toGeometry();
+		}
+		return this.geometry;
+	}
+	@Transient
+	public void setGeometry(Geometry g){
+		//TODO update positions and huecos, area, text
+		this.geometry = g;
+		try {
+			//System.out.println("readding geometry from text "+s);
+		
+			this.setPositions(GeometryHelper.geometryToPositions(g.getGeometryN(0)));
+			if(huecos==null){
+				huecos = new ArrayList<List<Position>>();
+			}
+			huecos.clear();
+			for(int i=1;i<g.getNumGeometries();i++){
+				huecos.add(GeometryHelper.geometryToPositions(g.getGeometryN(i)));
+			}
+			//TODO set holes
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		this.setArea(ProyectionConstants.A_HAS(g.getArea()));
+		this.text = g.toText();
+	}
 
 	public void setArea(double a){
 		this.area =a;
@@ -237,23 +316,7 @@ public class Poligono implements Comparable<Poligono>{
 	}
 
 	public Geometry toGeometry(){
-		try {
-			GeometryFactory fact = ProyectionConstants.getGeometryFactory();// GeometryFactory();
-			List<? extends Position> positions = this.getPositions();
-			Coordinate[] coordinates = new Coordinate[positions.size()];
-			for(int i=0;i<positions.size();i++){
-				Position p = positions.get(i);	
-				Coordinate c = new Coordinate(p.getLongitude().getDegrees(),p.getLatitude().getDegrees(),p.getElevation());
-
-				coordinates[i]=c;
-			}
-			coordinates[coordinates.length-1]=coordinates[0];//en caso de que la geometria no este cerrada
-			Polygon poly = fact.createPolygon(coordinates);	
-			return poly;
-		}catch(Exception e) {
-			e.printStackTrace();
-			return null;
-		}
+		return GeometryHelper.poligonotoGeometry(this);
 	}
 
 	@Override
@@ -272,7 +335,7 @@ public class Poligono implements Comparable<Poligono>{
 	 * metodo que devuelve el string necesario para consultar el ndvi
 	 * @return
 	 */
-	public String getPoligonoToString() {
+	public String getPoligonoToStringOld() {
 		List<? extends Position> positions = this.getPositions();
 
 		StringBuilder sb = new StringBuilder();
@@ -283,8 +346,45 @@ public class Poligono implements Comparable<Poligono>{
 			sb.append("["+lon.degrees+","+lat.degrees+"],");
 		}
 		sb.deleteCharAt(sb.length()-1);
-
+//TODO agregar los huecos
 		sb.append("]]]");
+		String polygons=sb.toString();
+		return polygons;
+	}
+
+	public String getPoligonoToString() {
+		List<? extends Position> positions = this.getPositions();
+
+		StringBuilder sb = new StringBuilder();
+		//sb.append("[");//multi poligono
+		sb.append("[");//poligon
+		sb.append("[");//shell
+		for(Position p:positions){	
+			Angle lon= p.getLongitude();
+			Angle lat = p.getLatitude();
+			sb.append("["+lon.degrees+","+lat.degrees+"],");
+		}	
+		sb.deleteCharAt(sb.length()-1);
+		sb.append("]");//close shell
+		if(huecos!=null||huecos.size()>0){
+			sb.append(",");//huecos
+			for(List<Position> hole:huecos){
+				sb.append("[");//hole
+				for(Position p:hole){
+					Angle lon= p.getLongitude();
+					Angle lat = p.getLatitude();
+					sb.append("["+lon.degrees+","+lat.degrees+"],");
+				}
+				sb.deleteCharAt(sb.length()-1);
+				sb.append("],");//close hole
+			}
+			sb.deleteCharAt(sb.length()-1);
+			//sb.append("]");//close huecos
+		}
+		sb.append("]");//close poligon
+		//sb.append("]");//close multi poligono
+//TODO agregar los huecos
+		
 		String polygons=sb.toString();
 		return polygons;
 	}

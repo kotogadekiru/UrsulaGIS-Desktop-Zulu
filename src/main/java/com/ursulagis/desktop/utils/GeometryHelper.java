@@ -18,6 +18,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
@@ -32,9 +33,11 @@ import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
 import com.ursulagis.desktop.dao.Poligono;
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Position.PositionList;
 import gov.nasa.worldwind.geom.Sector;
+import gov.nasa.worldwind.render.SurfacePolygon;
 import gov.nasa.worldwind.util.measure.MeasureTool;
 import com.ursulagis.desktop.gui.PoligonLayerFactory;
 import com.ursulagis.desktop.tasks.procesar.ExtraerPoligonosDeLaborTask;
@@ -64,7 +67,7 @@ public class GeometryHelper {
 
 		Poligono poli = constructPoligono(union);//ExtraerPoligonosDeLaborTask.geometryToPoligono(union);
 		poli.setArea(has);
-		poli.setNombre(joiner.toString()); //$NON-NLS-1$
+		poli.setNombre(joiner.toString()); //-NLS-1$
 		return poli;
 	}
 
@@ -492,9 +495,39 @@ public class GeometryHelper {
 		//return rumbo;
 	}
 
+	public static List<Position>  geometryToPositions( Geometry seed) {
+		List<Position> iterable=new ArrayList<Position>();
+		Coordinate[] coordinates = seed.getCoordinates();
+		for(Coordinate c : coordinates){
+			iterable.add(Position.fromDegrees(c.y, c.x));							
+		}
+		return iterable;
+	}
 
 	public static Poligono constructPoligono(Geometry g) {
 		return ExtraerPoligonosDeLaborTask.geometryToPoligono((Geometry)g);
+	}
+
+	public static Poligono geometryToPoligono(Geometry g,Poligono poli){					
+			Geometry mainBoundary = ((Geometry) g).getBoundary();
+			if(mainBoundary.getNumGeometries() == 0)return null;
+			Geometry seed = mainBoundary.getGeometryN(0);
+			List<Position> shell = GeometryHelper.geometryToPositions(seed);
+			List<List<Position>> holes = new ArrayList<List<Position>>();
+			//iterable tiene las posiciones de la geometrya 0 o contorno
+			for(int n = 1; n < mainBoundary.getNumGeometries(); n++){//recooro las otras geometrias uniendolas a iterable en el punto mas cercano
+
+				List<Position> posNToAdd = GeometryHelper.geometryToPositions(mainBoundary.getGeometryN(n));
+				holes.add(posNToAdd);
+			}			
+			if(poli==null) {poli=new Poligono();}
+			//poli = new Poligono();
+			poli.setPositions(shell);
+			poli.setHuecos(holes);
+			
+			double has = ProyectionConstants.A_HAS(g.getArea());
+			poli.setArea(has);
+			return poli;		
 	}
 	
 	@Deprecated //no maneja el caso de multipoligon
@@ -715,6 +748,7 @@ public class GeometryHelper {
 		geometriasOutput.addAll(polys);
 		return geometriasOutput;
 	}
+	
 	/**
 	 * metodo que recorre todas las geometrias haciendo las intersecciones de todos con todos.
 	 * @param aIntersectar: Lista de geometrias a intersectar 
@@ -1235,11 +1269,25 @@ public class GeometryHelper {
 
 	}
 
-	public static Poligono constructPolygon(PositionList coordinates) {		
+	/**
+	 * metod para importar poligonos desde KML
+	 * @param coordinates
+	 * @param holes
+	 * @return
+	 */
+	public static Poligono constructPolygon(PositionList coordinates,List<PositionList> holes) {		
 		System.out.println("convirtiendo PositionList a poligono "+coordinates);		
 		List<Position> positions = new ArrayList<Position>();
 		for(Position pos: coordinates.list) {
 			positions.add(pos);
+		}
+		List<List<Position>> huecos = new ArrayList<List<Position>>();
+		for(PositionList hole : holes) {
+			List<Position> holePositions = new ArrayList<Position>();
+			for(Position pos : hole.list) {
+				holePositions.add(pos);
+			}
+			huecos.add(holePositions);
 		}
 //		positions.add(positions.get(0));
 
@@ -1260,9 +1308,93 @@ public class GeometryHelper {
 
 		Poligono p = new Poligono();
 		p.setPositions(positions);		
+		p.setHuecos(huecos);
 	//	p.setArea(GeometryHelper.getHas(g));
 		return p;
 	}
 
+	/**
+	 * metodo que convierte un poligono a una geometria es el que se usa en Poligono.toGeometry()
+	 * @param poli
+	 * @return
+	 */
+	public static Geometry poligonotoGeometry(Poligono poli){
+		try {
+			GeometryFactory fact = ProyectionConstants.getGeometryFactory();// GeometryFactory();
 
+			List<? extends Position> positions = poli.getPositions();
+			if(positions==null||positions.size()==0)return null;
+			Coordinate[] coordinates = positionListToCoordinateArray(positions);
+			LinearRing[] holes = null;
+			if(poli.getHuecos()!=null){
+				holes = new LinearRing[poli.getHuecos().size()];
+				for(int i=0;i<poli.getHuecos().size();i++){
+					List<? extends Position> hole = poli.getHuecos().get(i);
+					Coordinate[] holeCoordinates = positionListToCoordinateArray(hole);
+					holes[i]=fact.createLinearRing(holeCoordinates);
+				}
+			}
+			LinearRing shell = fact.createLinearRing(coordinates);
+			Polygon poly = fact.createPolygon(shell, holes);
+			//Polygon poly = fact.createPolygon(coordinates, holes);
+			//Polygon poly = fact.createPolygon(coordinates);	
+			return poly;
+		}catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	public static Coordinate[] positionListToCoordinateArray(List<? extends Position> positions) {
+		Coordinate[] coordinates = new Coordinate[positions.size()];
+		for(int i=0;i<positions.size();i++){
+			Position p = positions.get(i);	
+			Coordinate c = positionToCoordinate(p);
+
+			coordinates[i]=c;
+		}
+		coordinates[coordinates.length-1]=coordinates[0];//en caso de que la geometria no este cerrada
+		return coordinates;
+	}
+
+	public static Coordinate positionToCoordinate(Position p) {
+		Coordinate c = new Coordinate(p.getLongitude().getDegrees(),p.getLatitude().getDegrees(),p.getElevation());
+		return c;
+	}
+
+    public static Geometry getGeometryFromSurfacePolygon(SurfacePolygon surfaceShape) {
+		try {
+			GeometryFactory fact = ProyectionConstants.getGeometryFactory();// GeometryFactory();
+			List<Iterable<? extends LatLon>> boundaries =  surfaceShape.getBoundaries();
+			List<? extends Position> positions =(List<Position>) boundaries.get(0);
+			if(positions==null||positions.size()==0)return null;
+			Coordinate[] coordinates = positionListToCoordinateArray(positions);
+			LinearRing[] holes = null;
+			if(boundaries.size()>1){
+				holes = new LinearRing[boundaries.size()-1];
+				for(int i=1;i<boundaries.size();i++){
+					List<? extends Position> hole = (List<Position>) boundaries.get(i);
+					Coordinate[] holeCoordinates = positionListToCoordinateArray(hole);
+					holes[i]=fact.createLinearRing(holeCoordinates);
+				}				
+			}
+			LinearRing shell = fact.createLinearRing(coordinates);
+			Polygon poly = fact.createPolygon(shell, holes);
+			//Polygon poly = fact.createPolygon(coordinates, holes);
+			//Polygon poly = fact.createPolygon(coordinates);	
+			return poly;
+		}catch(Exception e) {
+			e.printStackTrace();
+			return null;
+		}       
+    }
+
+	public static SurfacePolygon createSurfacePolygonFromPoligono(Poligono poli) {
+		List<Position> positions = poli.getPositions();
+		SurfacePolygon shape = new SurfacePolygon();
+		shape.setLocations(positions);
+		for(List<Position> hole : poli.getHuecos()){
+			shape.addInnerBoundary(hole);
+		}
+		return shape;
+	}
 }

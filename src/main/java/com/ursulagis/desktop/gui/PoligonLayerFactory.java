@@ -8,14 +8,19 @@ import java.util.List;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Poligono;
+
+import org.locationtech.jts.geom.Geometry;
+
 import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.layers.RenderableLayer;
+import gov.nasa.worldwind.render.SurfacePolygon;
 import gov.nasa.worldwind.util.UnitsFormat;
-import gov.nasa.worldwind.util.measure.MeasureTool;
-import gov.nasa.worldwind.util.measure.MeasureToolController;
-import com.ursulagis.desktop.gui.nww.LayerPanel;
+// import gov.nasa.worldwind.util.measure.MeasureTool;
+// import gov.nasa.worldwind.util.measure.MeasureToolController;
+
+
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.control.Alert;
@@ -23,13 +28,21 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
+
+import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
+import com.ursulagis.desktop.gui.nww.LayerPanel;
+import com.ursulagis.desktop.gui.nww.MeasureTool;
+import com.ursulagis.desktop.gui.nww.MeasureToolController;
+import com.ursulagis.desktop.gui.nww.MeasureToolForShape;
+import com.ursulagis.desktop.gui.nww.MeasureToolForShapeController;
 
 public class PoligonLayerFactory {
 
 	
 	public static final String MEASURE_TOOL = "MeasureTool";
 
+	@Deprecated
 	public static MeasureTool createMeasureTool(WorldWindow wwd, RenderableLayer surfaceLayer) {
 		MeasureTool measureTool = new MeasureTool(wwd,surfaceLayer);
 		measureTool.setController(new MeasureToolController());
@@ -43,8 +56,93 @@ public class PoligonLayerFactory {
 		measureTool.setArmed(false);
 		return measureTool;
 	}
+
+	/**
+	 * Creates a new MeasureToolForShape for surface polygon editing with inner boundaries support.
+	 * This is the recommended method for polygon editing as it provides better support for complex shapes.
+	 *
+	 * @param wwd the WorldWindow to attach to
+	 * @param surfaceLayer the layer to add shapes to
+	 * @return a configured MeasureToolForShape instance
+	 */
+	// public static MeasureToolForShape createMeasureToolForShape(WorldWindow wwd, RenderableLayer surfaceLayer) {
+	// 	MeasureToolForShape measureTool = new MeasureToolForShape(wwd, surfaceLayer);
+	// 	measureTool.setController(new MeasureToolForShapeController());
+	// 	measureTool.getUnitsFormat().setLengthUnits(UnitsFormat.METERS);
+	// 	measureTool.getUnitsFormat().setAreaUnits(UnitsFormat.HECTARE);
+	// 	measureTool.getUnitsFormat().setShowDMS(false);
+	// 	measureTool.setShowControlPoints(true); // Show control points by default for editing
+	// 	// Don't disarm the tool here - let the caller decide when to arm/disarm
+	// 	// measureTool.setArmed(false);
+	// 	return measureTool;
+	// }
 	
+	/**
+	 * Creates a MeasureToolForShape for editing a specific Poligono with inner boundaries support.
+	 * This is the recommended method for polygon editing as it provides better support for complex shapes.
+	 *
+	 * @param poli the Poligono to edit
+	 * @param wwd the WorldWindow to attach to
+	 * @param layerPanel the layer panel
+	 * @return a configured MeasureToolForShape instance
+	 */
+	static public MeasureToolForShape createPoligonMeasureToolForShape(Poligono poli, WorldWindow wwd,LayerPanel layerPanel){	
+		RenderableLayer surfaceLayer = new RenderableLayer();		
+		surfaceLayer.setValue(Labor.LABOR_LAYER_IDENTIFICATOR, poli);
+		surfaceLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, poli.getClass());
+		poli.setLayer(surfaceLayer);
+
+		MeasureToolForShape measureTool = new MeasureToolForShape(wwd, surfaceLayer);
+		measureTool.setController(new MeasureToolForShapeController());
+		measureTool.getUnitsFormat().setLengthUnits(UnitsFormat.METERS);
+		measureTool.getUnitsFormat().setAreaUnits(UnitsFormat.HECTARE);
+		measureTool.getUnitsFormat().setShowDMS(false);
+
+		
+		surfaceLayer.setValue(MEASURE_TOOL, measureTool);
+		
+		// Create SurfacePolygon with positions and inner boundaries
+		SurfacePolygon shape = GeometryHelper.createSurfacePolygonFromPoligono(poli);
+		shape.setAttributes(measureTool.getBasicShapeAttributes());
+		shape.setValue("NAME", poli.getNombre());
+		shape.setValue(AVKey.DISPLAY_NAME, poli.getNombre());	
+		measureTool.setSurfaceShape(shape);
+		
+		// Configure control points visibility (set to true for editing)
+		measureTool.setShowControlPoints(false);//start on false, set to true when editing
+		
+		// Set up property change listener for real-time updates
+		DoubleProperty valueProperty= new SimpleDoubleProperty();
+		valueProperty.setValue(poli.getArea());
+
+		measureTool.addPropertyChangeListener((event)->{
+			// Handle armed state changes
+			if(event.getPropertyName().equals(MeasureToolForShape.EVENT_ARMED)){
+				if (measureTool.isCreationMode()) {
+					((Component) wwd).setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+				} else {
+					((Component) wwd).setCursor(Cursor.getDefaultCursor());
+				}
+			}
+			// Handle position changes
+			else if(event.getPropertyName().equals(MeasureToolForShape.EVENT_POSITION_REPLACE) ||
+					event.getPropertyName().equals(MeasureToolForShape.EVENT_POSITION_ADD) ||
+					event.getPropertyName().equals(MeasureToolForShape.EVENT_POSITION_REMOVE)){								
+				Geometry geometry = GeometryHelper.getGeometryFromSurfacePolygon(measureTool.getSurfaceShape());
+				if(geometry!=null){
+					poli.setGeometry(geometry);
+					double area = measureTool.getArea()/ProyectionConstants.METROS2_POR_HA;
+					poli.setArea(area);
+					valueProperty.setValue(area);
+				}			
+			}		
+		});
+
+		return measureTool;
+	}
+
 	@SuppressWarnings("unchecked")
+	@Deprecated
 	static public MeasureTool createPoligonMeasureTool(Poligono poli, WorldWindow wwd,LayerPanel layerPanel){
 		RenderableLayer surfaceLayer = new RenderableLayer();
 //		{
@@ -58,9 +156,11 @@ public class PoligonLayerFactory {
 		surfaceLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, poli.getClass());
 		MeasureTool measureTool = createMeasureTool(wwd, surfaceLayer);
 		surfaceLayer.setValue(MEASURE_TOOL, measureTool);
-		List<Position> positions = poli.getPositions();
-
-		measureTool.setPositions((ArrayList<? extends Position>) positions);
+		SurfacePolygon shape = GeometryHelper.createSurfacePolygonFromPoligono(poli);
+		//shape.addInnerBoundary(poli.getHuecos());
+		measureTool.setMeasureShape(shape);
+		measureTool.setShowControlPoints(false);
+		//measureTool.setPositions((ArrayList<? extends Position>) positions);
 	
 				
 		DoubleProperty valueProperty= new SimpleDoubleProperty();

@@ -330,14 +330,14 @@ public class DAH {
 	}
 
 	public static void removeAll(List<Object> entidades) {
-		if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
-			//System.out.println("save en el thread de javafx");
-			JFXMain.executorPool.submit(() -> {			
-			//	System.out.println("save fuera del thread de javafx");
-				removeAll(entidades);
-			});
-			return;
-		}
+		// if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
+		// 	//System.out.println("save en el thread de javafx");
+		// 	JFXMain.executorPool.submit(() -> {			
+		// 	//	System.out.println("save fuera del thread de javafx");
+		// 		removeAll(entidades);
+		// 	});
+		// 	return;
+		// }
 		EntityManager em = em();
 		if(DAH.transaction == null){
 			//	DAH.transaction = em.getTransaction();

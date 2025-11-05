@@ -33,6 +33,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+
+import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
@@ -197,20 +199,26 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 //			return poli;
 //		} else {return null;}
 //	}
-	
 	public static Poligono geometryToPoligono(Geometry g){			
+		Poligono poli = new Poligono();
+		poli.setGeometry(g);
+		double has = ProyectionConstants.A_HAS(g.getArea());
+		poli.setArea(has);
+		return poli;
+	}
+	public static Poligono geometryToPoligonoOLD(Geometry g){			
 		//Object g=feature.getDefaultGeometry();
 		
 		if(g instanceof Geometry){						
 			Geometry mainBoundary = ((Geometry) g).getBoundary();
 			if(mainBoundary.getNumGeometries() == 0)return null;
 			Geometry seed = mainBoundary.getGeometryN(0);
-			List<Position> iterable = geometryToPositions(seed);
+			List<Position> iterable = GeometryHelper.geometryToPositions(seed);
 			//iterable tiene las posiciones de la geometrya 0 o contorno
 			for(int n = 1; n < mainBoundary.getNumGeometries(); n++){//recooro las otras geometrias uniendolas a iterable en el punto mas cercano
 				//Geometry toAdd =mainBoundary.getGeometryN(n);// mp.getGeometryN(0);
 				//Coordinate[] cToAdd= toAdd.getCoordinates();
-				List<Position> posNToAdd = geometryToPositions(mainBoundary.getGeometryN(n));
+				List<Position> posNToAdd = GeometryHelper.geometryToPositions(mainBoundary.getGeometryN(n));
 				//1 buscar los puntos de cada una de las geometrias que esten mas cerca
 				int minIt=0;
 				int minCoord=0;
@@ -276,7 +284,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 			try{	
 				g = TopologyPreservingSimplifier.simplify(poli.toGeometry(), ProyectionConstants.metersToLongLat(0.25));
 				//g =g.buffer(0);		
-				poli.setPositions(geometryToPositions(g));
+				poli.setPositions(GeometryHelper.geometryToPositions(g));
 			}catch(Exception e){
 				e.printStackTrace();
 			}
@@ -287,14 +295,14 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 		} else {return null;}
 	}
 
-	private static List<Position>  geometryToPositions( Geometry seed) {
-		List<Position> iterable=new ArrayList<Position>();
-		Coordinate[] coordinates = seed.getCoordinates();
-		for(Coordinate c : coordinates){
-			iterable.add(Position.fromDegrees(c.y, c.x));							
-		}
-		return iterable;
-	}
+	// private static List<Position>  geometryToPositions( Geometry seed) {
+	// 	List<Position> iterable=new ArrayList<Position>();
+	// 	Coordinate[] coordinates = seed.getCoordinates();
+	// 	for(Coordinate c : coordinates){
+	// 		iterable.add(Position.fromDegrees(c.y, c.x));							
+	// 	}
+	// 	return iterable;
+	// }
 
 	public static Poligono itemToPoligono(LaborItem feature){			
 		Object g=feature.getGeometry();

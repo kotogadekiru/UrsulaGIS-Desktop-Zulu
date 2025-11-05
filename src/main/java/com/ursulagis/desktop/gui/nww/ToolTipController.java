@@ -99,7 +99,7 @@ public class ToolTipController implements SelectListener, Disposable
             }
                 
            if(event.isRightClick())    {//este evento no se lanza
-        	   System.out.println("right click!");
+        	   //System.out.println("right click!");
         	   this.handleRigthClick(event);
            }
             
@@ -133,6 +133,9 @@ public class ToolTipController implements SelectListener, Disposable
             this.lastRightClickObject = event.getTopObject();
             
             LaborItem item = ((LaborItem)  ((AVList) this.lastRightClickObject).getValue(ProcessMapTask.LABOR_ITEM_AVKey) );	
+            if(item == null) {
+                return;
+            }
           
 
             
@@ -162,6 +165,10 @@ public class ToolTipController implements SelectListener, Disposable
         	ReusableExtrudedPolygon renderablePolygon = (ReusableExtrudedPolygon)rolloverObject;
         	LaborItem dao = (LaborItem) renderablePolygon.getValue(ProcessMapTask.LABOR_ITEM_AVKey);
         	rolloverText = ProcessMapTask.createTooltipForLaborItem(dao.getGeometry(),dao);        	
+        } else if(rolloverObject instanceof gov.nasa.worldwind.render.SurfacePolygon) {
+        	// Handle SurfacePolygon shapes for tooltips
+        	gov.nasa.worldwind.render.SurfacePolygon surfacePolygon = (gov.nasa.worldwind.render.SurfacePolygon)rolloverObject;
+        	rolloverText = createTooltipForSurfacePolygon(surfacePolygon);
         }    
      
        
@@ -241,5 +248,42 @@ public class ToolTipController implements SelectListener, Disposable
     protected void removeLayer(Layer layer)
     {
         this.wwd.getModel().getLayers().remove(layer);
+    }
+    
+    /**
+     * Create tooltip text for SurfacePolygon shapes
+     * @param surfacePolygon the SurfacePolygon to create tooltip for
+     * @return tooltip text
+     */
+    protected String createTooltipForSurfacePolygon(gov.nasa.worldwind.render.SurfacePolygon surfacePolygon) {
+        StringBuilder sb = new StringBuilder();
+        
+        // Get name if available
+        String name = surfacePolygon.getStringValue(AVKey.DISPLAY_NAME);
+        if (name != null && !name.isEmpty()) {
+            sb.append("Name: ").append(name).append("\n");
+        }
+        
+        // Get area if available
+        String area = surfacePolygon.getStringValue("AREA");
+        if (area != null && !area.isEmpty()) {
+            sb.append("Area: ").append(area).append("\n");
+        }
+        
+        // Get perimeter if available
+        String perimeter = surfacePolygon.getStringValue("PERIMETER");
+        if (perimeter != null && !perimeter.isEmpty()) {
+            sb.append("Perimeter: ").append(perimeter).append("\n");
+        }
+        
+        // Get any custom properties
+        if (surfacePolygon.hasKey("DESCRIPTION")) {
+            String description = surfacePolygon.getStringValue("DESCRIPTION");
+            if (description != null && !description.isEmpty()) {
+                sb.append("Description: ").append(description);
+            }
+        }
+        
+        return sb.length() > 0 ? sb.toString() : "Surface Polygon";
     }
 }

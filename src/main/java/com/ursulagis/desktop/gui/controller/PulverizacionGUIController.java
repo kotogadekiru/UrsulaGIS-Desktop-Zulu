@@ -24,6 +24,7 @@ import javafx.scene.layout.Pane;
 import com.ursulagis.desktop.tasks.CompartirPulverizacionLaborTask;
 import com.ursulagis.desktop.tasks.importar.ProcessPulvMapTask;
 import com.ursulagis.desktop.tasks.procesar.ExportarPrescripcionPulverizacionTask;
+import com.ursulagis.desktop.tasks.procesar.ExportarPrescripcionPulverizacionJSONTask;
 import com.ursulagis.desktop.tasks.procesar.UnirPulverizacionesMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
@@ -76,6 +77,14 @@ public class PulverizacionGUIController {
 		pulverizacionesP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.exportarFertPAction"),(layer)->{		
 			doExportarPrescPulverizacion((PulverizacionLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
 			return "pulverizacion prescripcion exportada" + layer.getName(); //$NON-NLS-1$
+		}));
+
+		/**
+		 *Accion que permite exportar prescripcion de una pulverizacion en formato JSON
+		 */
+		pulverizacionesP.add(LayerAction.constructPredicate("Exportar Prescripción JSON",(layer)->{		
+			doExportarPrescPulverizacionJSON((PulverizacionLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+			return "pulverizacion prescripcion JSON exportada" + layer.getName(); //$NON-NLS-1$
 		}));
 
 		/**
@@ -154,6 +163,55 @@ public class PulverizacionGUIController {
 				ept.uninstallProgressBar();
 				doOpenPulvMap(Collections.singletonList(ret));
 			});
+			JFXMain.executorPool.execute(ept);		
+		}
+		
+		/**
+		 * Exporta una prescripción de pulverización en formato JSON compatible con drones XAG
+		 */
+		public void doExportarPrescPulverizacionJSON(PulverizacionLabor laborToExport) {
+			String nombre = laborToExport.getNombre();
+			File jsonFile = FileHelper.getNewFile(nombre, "json");
+
+			if(jsonFile == null) {
+				return; // Usuario canceló
+			}
+
+			// Asegurar que tenga extensión .json
+			if(!jsonFile.getName().toLowerCase().endsWith(".json")) {
+				jsonFile = new File(jsonFile.getAbsolutePath() + ".json");
+			}
+
+			Alert a = new Alert(Alert.AlertType.WARNING);
+			a.setTitle("Advertencia");
+			a.setContentText("Antes de aplicar consulte a un Ing. Agronomo!");
+			a.initOwner(JFXMain.stage);
+			a.show();
+
+			ExportarPrescripcionPulverizacionJSONTask ept = new ExportarPrescripcionPulverizacionJSONTask(laborToExport, jsonFile); 
+			ept.installProgressBar(main.progressBox);
+
+			ept.setOnSucceeded(handler -> {
+				File ret = (File)handler.getSource().getValue();
+				main.playSound();
+				ept.uninstallProgressBar();
+				
+				Alert success = new Alert(Alert.AlertType.INFORMATION);
+				success.setTitle("Exportación completada");
+				success.setContentText("Prescripción JSON exportada exitosamente: " + ret.getName());
+				success.initOwner(JFXMain.stage);
+				success.show();
+			});
+			
+			ept.setOnFailed(handler -> {
+				ept.uninstallProgressBar();
+				Alert error = new Alert(Alert.AlertType.ERROR);
+				error.setTitle("Error");
+				error.setContentText("Error al exportar prescripción JSON: " + handler.getSource().getException().getMessage());
+				error.initOwner(JFXMain.stage);
+				error.show();
+			});
+			
 			JFXMain.executorPool.execute(ept);		
 		}
 		

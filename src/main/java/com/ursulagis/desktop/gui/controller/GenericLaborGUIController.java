@@ -19,7 +19,7 @@ import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.dao.suelo.Suelo;
 import gov.nasa.worldwind.layers.Layer;
-import gov.nasa.worldwind.util.measure.MeasureTool;
+//import gov.nasa.worldwind.util.measure.MeasureTool;
 import com.ursulagis.desktop.gui.CosechaHistoChart;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
@@ -28,13 +28,8 @@ import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
 import com.ursulagis.desktop.gui.utils.NombreTableColumn;
 import com.ursulagis.desktop.gui.utils.SmartTableView;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.scene.Scene;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TableView;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
+import com.ursulagis.desktop.gui.nww.MeasureTool;
+import com.ursulagis.desktop.gui.nww.MeasureToolForShape;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
 import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.tasks.procesar.ClonarLaborMapTask;
@@ -43,6 +38,17 @@ import com.ursulagis.desktop.tasks.procesar.OutliersLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.ResumirLaborMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
+
+
+import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.scene.Scene;
+import javafx.scene.control.Slider;
+import javafx.scene.control.TableView;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
+
+
 
 public class GenericLaborGUIController extends AbstractGUIController {
 
@@ -177,41 +183,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		/**
 		 * Accion que permite quitar un item del arbol
 		 */
-		todosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.removeLayerAction"),(layer)->{
-			getWwd().getModel().getLayers().remove(layer);
-			Object layerObject =  layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-			if(layerObject!=null && Labor.class.isAssignableFrom(layerObject.getClass())){
-				Labor<?> l = (Labor<?>)layerObject;	
-				l.dispose();
-			}
-			if(layerObject instanceof Poligono){
-				Poligono poli = (Poligono) layerObject;
-				poli.setActivo(false);
-				if(poli.getId()!=null){
-					DAH.save(poli);
-				}
-			}
-			if(layerObject instanceof Ndvi){
-				Ndvi ndvi = (Ndvi) layerObject;
-				ndvi.setActivo(false);
-				if(ndvi.getId()!=null){
-					try {
-						DAH.save(ndvi);
-					}catch(Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}
-			MeasureTool mt = (MeasureTool)layer.getValue(PoligonLayerFactory.MEASURE_TOOL);		
-			if(mt!=null) {
-				mt.setArmed(false);
-				mt.dispose();
-			}
-
-			layer.dispose();
-			getLayerPanel().update(getWwd());
-			return "layer removido" + layer.getName(); 
-		}));
+		todosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.removeLayerAction"),l->doRemoveLayer(l)));
 
 		//editar opacidad
 		//JFXMain.layerTransparencia=Transparencia
@@ -245,6 +217,48 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		stage.setTitle(Messages.getString("JFXMain.layerTransparencia")+" "+layer.getName());
 		stage.show();
 	}	
+
+	private String doRemoveLayer(Layer layer) {
+		
+			getWwd().getModel().getLayers().remove(layer);
+			Object layerObject =  layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if(layerObject!=null && Labor.class.isAssignableFrom(layerObject.getClass())){
+				Labor<?> l = (Labor<?>)layerObject;	
+				l.dispose();
+			}
+			if(layerObject instanceof Poligono){
+				Poligono poli = (Poligono) layerObject;
+				poli.setActivo(false);
+				if(poli.getId()!=null){
+					DAH.save(poli);
+				}
+			}
+			if(layerObject instanceof Ndvi){
+				Ndvi ndvi = (Ndvi) layerObject;
+				ndvi.setActivo(false);
+				if(ndvi.getId()!=null){
+					try {
+						DAH.save(ndvi);
+					}catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			Object mtObj = layer.getValue(PoligonLayerFactory.MEASURE_TOOL);		
+			if(mtObj!=null && mtObj instanceof MeasureToolForShape) {
+				MeasureToolForShape mt = (MeasureToolForShape)mtObj;
+				mt.setCreationMode(false);
+				mt.dispose();
+			} else if(mtObj!=null && mtObj instanceof MeasureTool) {
+				MeasureTool mt = (MeasureTool)mtObj;
+				mt.setArmed(false);
+				mt.dispose();
+			}
+
+			layer.dispose();
+			getLayerPanel().update(getWwd());
+			return "layer removido" + layer.getName(); 
+	}
 
 	private void doClonarLabor(Labor<?> labor) {
 		ClonarLaborMapTask umTask = new ClonarLaborMapTask(labor);

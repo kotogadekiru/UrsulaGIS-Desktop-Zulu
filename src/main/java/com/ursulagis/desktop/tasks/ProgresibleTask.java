@@ -14,7 +14,7 @@ import java.io.InputStream;
 public abstract class ProgresibleTask<E> extends Task<E>{
 	
 	private static final String TASK_CLOSE_ICON = "gui/event-close.png";
-	public static final String ZOOM_TO_KEY = "ZOOM_TO";
+	//public static final String ZOOM_TO_KEY = "ZOOM_TO";
 	
 	private ProgressBar progressBarTask;
 	private Pane progressPane;
