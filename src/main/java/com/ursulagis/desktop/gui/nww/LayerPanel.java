@@ -311,14 +311,24 @@ public class LayerPanel extends VBox {
 	}
 
 	private void setGraphic(CheckBoxTreeItem<Layer> item,String iconUrl) {
-		ImageView mv = new ImageView();		
-		mv.setImage(new Image(this.getClass().getResourceAsStream(iconUrl)));		
-		mv.setFitWidth(TREE_ITEM_ICON_WIDTH);
-		mv.setPreserveRatio(true);
-		mv.setSmooth(true);
-		mv.setCache(true);
-		item.setGraphic(mv);
-
+		ImageView mv = new ImageView();
+		// Use absolute path from classpath root to ensure resources are found in packaged applications
+		String resourcePath = "/com/ursulagis/desktop/gui/nww/" + iconUrl;
+		InputStream iconStream = this.getClass().getResourceAsStream(resourcePath);
+		if (iconStream == null) {
+			// Fallback to relative path for backwards compatibility
+			iconStream = this.getClass().getResourceAsStream(iconUrl);
+		}
+		if (iconStream != null) {
+			mv.setImage(new Image(iconStream));
+			mv.setFitWidth(TREE_ITEM_ICON_WIDTH);
+			mv.setPreserveRatio(true);
+			mv.setSmooth(true);
+			mv.setCache(true);
+			item.setGraphic(mv);
+		} else {
+			System.err.println("Warning: Could not load icon: " + iconUrl);
+		}
 	}
 
 	//TODO permitir agrupar por establecimiento campania y lote
