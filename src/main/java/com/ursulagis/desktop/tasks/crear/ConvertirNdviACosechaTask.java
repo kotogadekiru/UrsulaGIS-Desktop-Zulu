@@ -43,10 +43,11 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 		rindeProm=_rinde;
 		ndvi=_ndvi;
 		try {
-			NDVI_RINDE_CERO=
+			double CULTIVO_NDVI_RINDE_CERO=
 					cosechaLabor
 					.getCultivo()
 					.getNdviRindeCero();
+			if(CULTIVO_NDVI_RINDE_CERO>ShowNDVITifFileTask.MIN_VALUE) NDVI_RINDE_CERO=CULTIVO_NDVI_RINDE_CERO;
 		}catch(Exception e) {
 			e.printStackTrace();
 			NDVI_RINDE_CERO=ShowNDVITifFileTask.MIN_VALUE;
@@ -66,7 +67,7 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 			Double value = Double.valueOf(gpa.getValue());
 			//OJO cuando se trabaja con el jar la version de world wind que esta levantando no es la que usa eclipse.
 			// es por eso que el jar permite valores Nan y en eclipse no.
-			if(value < NDVI_RINDE_CERO || value > ShowNDVITifFileTask.MAX_VALUE || value == 0 || value.isNaN()){
+			if(value < NDVI_RINDE_CERO ||value == ShowNDVITifFileTask.WATER_RENDER_VALUE||value == ShowNDVITifFileTask.CLOUD_RENDER_VALUE || value > ShowNDVITifFileTask.MAX_VALUE || value == 0 || value.isNaN()){
 					continue;
 			} else{
 			//System.out.println("calculando el promedio para el valor "+value+" suma parcial "+sum+" size "+size);
@@ -153,7 +154,9 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 				
 				GridPointAttributes attr = it.hasNext() ? it.next() : null;
 				double ndvi = attr.getValue();
-				if((ndvi<=NDVI_RINDE_CERO)){//&&(x<3 || y<3||x>width-3||y>height-3)){
+				if((ndvi<=NDVI_RINDE_CERO) 
+					|| ndvi == ShowNDVITifFileTask.WATER_RENDER_VALUE 
+					||ndvi == ShowNDVITifFileTask.CLOUD_RENDER_VALUE ){//&&(x<3 || y<3||x>width-3||y>height-3)){
 					continue;//me salteo la primera fila de cada costado
 				}
 				
