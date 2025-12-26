@@ -1,5 +1,8 @@
 package com.ursulagis.desktop.gui;
 
+import java.awt.MouseInfo;
+import java.awt.Point;
+import javafx.scene.control.MenuItem;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -24,6 +27,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Dialog;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
@@ -99,55 +103,60 @@ public class LaborItemGUIController extends AbstractGUIController{
 	public void showDialog( LaborItem item) {
 		Platform.runLater(()->{
 			try {
-				Dialog<Boolean> d= new Dialog<Boolean>();
-				Window window = d.getDialogPane().getScene().getWindow();
-				window.setOnCloseRequest((e) -> d.hide());
-				d.initOwner(JFXMain.stage);
-				
-				
+				//Todo change dialog to context menu
+				ContextMenu menu = new ContextMenu();
+			
+				MenuItem borrarItem = new MenuItem(Messages.getString("LaborItemGUIController.Borrar"));
+				borrarItem.setOnAction((e) ->{doDeleteAction(item, this.getWwd());});
+				menu.getItems().add(borrarItem);
+			
+				MenuItem editarItem = new MenuItem(Messages.getString("LaborItemGUIController.Editar"));
+				editarItem.setOnAction((e) ->doEditAction(item, this.getWwd()));
+				menu.getItems().add(editarItem);
 
-				
-				d.setTitle(Messages.getString("LaborItemGUIController.Item")+item.getId()
-				+" "+Messages.getString("LaborItemGUIController.Acciones"));
+				MenuItem extraerPoligonoItem = new MenuItem(Messages.getString("LaborItemGUIController.ExtraerPoligono"));
+				extraerPoligonoItem.setOnAction((e) ->doExtraerPoligonoAction(item, this.getWwd()));
+				menu.getItems().add(extraerPoligonoItem);
 
-				//		d.getDialogPane().getButtonTypes().add(ButtonType.OK);
-				//		d.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
-				Button delete = new Button(Messages.getString("LaborItemGUIController.Borrar"));
-				delete.setOnAction(a->{
-					System.out.println("borrar item "+item.getId());
-					doDeleteAction(item, this.getWwd());
-					window.hide();				
-				});
-				VBox.setMargin(delete, new Insets(5,10, 5, 5));
+				Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+				menu.show(JFXMain.stage, mouseLocation.getX(), mouseLocation.getY());
 				
-				Button edit =new Button(Messages.getString("LaborItemGUIController.Editar"));
-				edit.setOnAction(a->{
-					System.out.println("editar item "+item.getId());	
-					doEditAction(item,this.getWwd());
-					window.hide();				
-				});
-				VBox.setMargin(edit, new Insets(5,10, 5, 5));
+				// Button delete = new Button(Messages.getString("LaborItemGUIController.Borrar"));
+				// delete.setOnAction(a->{
+				// 	System.out.println("borrar item "+item.getId());
+				// 	doDeleteAction(item, this.getWwd());
+				// 	window.hide();				
+				// });
+				// VBox.setMargin(delete, new Insets(5,10, 5, 5));
 				
-				Button extractPoligono =new Button(Messages.getString("LaborItemGUIController.ExtraerPoligono"));
-				extractPoligono.setOnAction(a->{
-					System.out.println("editar item "+item.getId());	
-					doExtraerPoligonoAction(item,this.getWwd());
-					window.hide();				
-				});
-				VBox.setMargin(extractPoligono, new Insets(5,10, 5, 5));
+				// Button edit =new Button(Messages.getString("LaborItemGUIController.Editar"));
+				// edit.setOnAction(a->{
+				// 	System.out.println("editar item "+item.getId());	
+				// 	doEditAction(item,this.getWwd());
+				// 	window.hide();				
+				// });
+				// VBox.setMargin(edit, new Insets(5,10, 5, 5));
 				
-				VBox v= new VBox();
-				v.getChildren().addAll(delete,edit,extractPoligono);
-				v.setPadding(new Insets(10, 10, 10, 10));
+				// Button extractPoligono =new Button(Messages.getString("LaborItemGUIController.ExtraerPoligono"));
+				// extractPoligono.setOnAction(a->{
+				// 	System.out.println("editar item "+item.getId());	
+				// 	doExtraerPoligonoAction(item,this.getWwd());
+				// 	window.hide();				
+				// });
+				// VBox.setMargin(extractPoligono, new Insets(5,10, 5, 5));
+				
+				// VBox v= new VBox();
+				// v.getChildren().addAll(delete,edit,extractPoligono);
+				// v.setPadding(new Insets(10, 10, 10, 10));
 
-				d.getDialogPane().setContent(v);
-				d.initModality(Modality.NONE);		
-				d.getDialogPane().setPrefWidth(250); // <-- solution
-				d.setWidth(100);	
-				d.setResizable(true);
+				// d.getDialogPane().setContent(v);
+				// d.initModality(Modality.NONE);		
+				// d.getDialogPane().setPrefWidth(250); // <-- solution
+				// d.setWidth(100);	
+				// d.setResizable(true);
 
-				d.setResultConverter((buttonType)->true);
-				d.showAndWait();
+				// d.setResultConverter((buttonType)->true);
+				// d.showAndWait();
 			}catch(Exception e ) {
 				e.printStackTrace();
 			}
