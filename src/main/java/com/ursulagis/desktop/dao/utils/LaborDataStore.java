@@ -183,7 +183,8 @@ public class LaborDataStore<E> {
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				Thread.currentThread().interrupt();
+				throw new RuntimeException("Thread interrupted while waiting for lock", e);
 			}
 		}
 		locked.add(labor);
@@ -274,6 +275,9 @@ public class LaborDataStore<E> {
 		}	
 		checkLock(labor);//wait until lock released
 		Geometry cosechaGeom = laborItem.getGeometry();
+		if(cosechaGeom == null) {
+			return;
+		}
 		Envelope geomEnvelope=cosechaGeom.getEnvelopeInternal();
 
 		//synchronized(labor.featureBuilder){
