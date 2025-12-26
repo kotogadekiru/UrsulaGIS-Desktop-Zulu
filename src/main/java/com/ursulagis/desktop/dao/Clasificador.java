@@ -569,14 +569,18 @@ public class Clasificador {
 		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.9"),labor.getType());
 
 		SimpleFeatureIterator it = labor.outCollection.features();
-		while(it.hasNext()){
-			SimpleFeature fIn = it.next();
+		try {
+			while(it.hasNext()){
+				SimpleFeature fIn = it.next();
 
-			LaborItem li=labor.constructFeatureContainerStandar(fIn,false);
-			li.setCategoria(this.getCategoryFor(li.getAmount()));
-			SimpleFeature f = li.getFeature(labor.getFeatureBuilder());
-			boolean res = newOutcollection.add(f);
+				LaborItem li=labor.constructFeatureContainerStandar(fIn,false);
+				li.setCategoria(this.getCategoryFor(li.getAmount()));
+				SimpleFeature f = li.getFeature(labor.getFeatureBuilder());
+				boolean res = newOutcollection.add(f);
 
+			}
+		} finally {
+			it.close();
 		}
 		labor.setOutCollection(newOutcollection);
 
