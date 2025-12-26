@@ -137,7 +137,7 @@ public class Poligono implements Comparable<Poligono>{
 	}
 
 	/**
-	 * metodo que toma un string conf formato {{{lat,long},{lat}}}
+	 * metodo que toma un string conf formato {{{lat,long},{lat,long}}}
 	 * y crea la lista de posiciones del poligono
 	 * @param s
 	 */
@@ -282,16 +282,34 @@ public class Poligono implements Comparable<Poligono>{
 		this.geometry = g;
 		try {
 			//System.out.println("readding geometry from text "+s);
-		
-			this.setPositions(GeometryHelper.geometryToPositions(g.getGeometryN(0)));
-			if(huecos==null){
-				huecos = new ArrayList<List<Position>>();
+			if(g instanceof Polygon) {
+				Polygon pol = (Polygon)g;
+				// Use getExteriorRing() for shell, not getGeometryN(0)
+				this.setPositions(GeometryHelper.geometryToPositions(pol.getExteriorRing()));
+				if(huecos==null){
+					huecos = new ArrayList<List<Position>>();
+				}else{
+					huecos.clear();
+				}
+				// Use getInteriorRingN() for holes, not getGeometryN(i)
+				for(int i=0; i<pol.getNumInteriorRing(); i++){
+					huecos.add(GeometryHelper.geometryToPositions(pol.getInteriorRingN(i)));
+				}
+			} else {
+				// For MultiPolygon or other geometry types, use boundary approach
+				Geometry mainBoundary = g.getBoundary();
+				if(mainBoundary.getNumGeometries() > 0) {
+					this.setPositions(GeometryHelper.geometryToPositions(mainBoundary.getGeometryN(0)));
+					if(huecos==null){
+						huecos = new ArrayList<List<Position>>();
+					}else{
+						huecos.clear();
+					}
+					for(int i=1; i<mainBoundary.getNumGeometries(); i++){
+						huecos.add(GeometryHelper.geometryToPositions(mainBoundary.getGeometryN(i)));
+					}
+				}
 			}
-			huecos.clear();
-			for(int i=1;i<g.getNumGeometries();i++){
-				huecos.add(GeometryHelper.geometryToPositions(g.getGeometryN(i)));
-			}
-			//TODO set holes
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -356,7 +374,7 @@ public class Poligono implements Comparable<Poligono>{
 		List<? extends Position> positions = this.getPositions();
 
 		StringBuilder sb = new StringBuilder();
-		//sb.append("[");//multi poligono
+		sb.append("[");//multi poligono; gee espera multipoligono ee.Geometry.MultiPolygon(paths);
 		sb.append("[");//poligon
 		sb.append("[");//shell
 		for(Position p:positions){	
@@ -382,7 +400,7 @@ public class Poligono implements Comparable<Poligono>{
 			//sb.append("]");//close huecos
 		}
 		sb.append("]");//close poligon
-		//sb.append("]");//close multi poligono
+		sb.append("]");//close multi poligono
 //TODO agregar los huecos
 		
 		String polygons=sb.toString();
