@@ -91,6 +91,11 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 		for(LaborItem i:items) {
 			FertilizacionItem fi=(FertilizacionItem) i;
 			Geometry itemGeometry=fi.getGeometry();
+			
+			if(itemGeometry == null) {
+				System.err.println("Saltando item con geometría nula: " + i.getId());
+				continue;
+			}
 
 			List<Polygon> flatPolygons = PolygonValidator.geometryToFlatPolygons(itemGeometry);
 			if(flatPolygons.size()>1) {
@@ -102,10 +107,14 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 				//					//quedarse con las 50 mas grandes
 				//				}
 
-				p=(Polygon)GeometryHelper.douglassPeuckerSimplify(p);//esto hace que sea mas liviano
+				Geometry simplifiedGeometry=GeometryHelper.douglassPeuckerSimplify(p);//esto hace que sea mas liviano
 				Double dosisHa = fi.getDosistHa();
-				SimpleFeature exportFeature = fb.buildFeature(null, new Object[]{p,dosisHa,0,0});
+				SimpleFeature exportFeature = fb.buildFeature(null, new Object[]{simplifiedGeometry,dosisHa,0,0});
 				if(exportSize<MAX_ITEMS) {
+					if(exportFeature == null || exportFeature.getDefaultGeometry() == null) {
+						System.err.println("Saltando feature con geometría nula: " + i.getId());
+						continue;
+					}
 					boolean ret = exportFeatureCollection.add(exportFeature);
 					if(!ret) {
 						System.err.println("no se pudo ingresar la feature "+i.getId()+" ");

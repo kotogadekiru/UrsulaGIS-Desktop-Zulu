@@ -105,7 +105,7 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 public class ShowNDVITifFileTask extends Task<Layer>{
 	public static final double WATER_RENDER_VALUE = 0.09; //para que quede sobre el nivel del suelo
 	public static final double CLOUD_RENDER_VALUE = 2;// 2.2;
-	private static final int WATER_VALUE = -2;
+	public static final int WATER_VALUE = -2;
 	private static final int CLOUD_VALUE = 2;
 	public static final double MAX_VALUE = 1.0;//1.0;//con soja en floracion no pasa de 0.9
 	public static final double MIN_VALUE =0.1;// 0.2;

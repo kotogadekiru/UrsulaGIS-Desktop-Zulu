@@ -587,7 +587,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
 
         this.surfaceShape.getBoundaries().forEach(boundary -> {
             @SuppressWarnings("unchecked")
-            List<Position> list = (List<Position>) boundary;
+            List<Position> list = (List<Position>) boundary;//TODO: boundary puede cambiar de orden por lo que necesito mantener una copia local
             createControlPointsForList(list);
         });
 

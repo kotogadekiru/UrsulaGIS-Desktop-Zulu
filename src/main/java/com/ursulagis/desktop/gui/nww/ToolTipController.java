@@ -6,16 +6,20 @@
 
 package com.ursulagis.desktop.gui.nww;
 
+import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
+import com.ursulagis.desktop.dao.Poligono;
 import gov.nasa.worldwind.*;
 import gov.nasa.worldwind.avlist.*;
 import gov.nasa.worldwind.event.*;
 import gov.nasa.worldwindx.examples.ApplicationTemplate;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.LaborItemGUIController;
-import javafx.scene.control.Dialog;
+import com.ursulagis.desktop.gui.PoligonLayerFactory;
+import com.ursulagis.desktop.gui.PoligonoItemGUIController;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import gov.nasa.worldwind.layers.*;
+import gov.nasa.worldwind.render.*;
 import gov.nasa.worldwind.util.*;
 
 /**
@@ -132,17 +136,71 @@ public class ToolTipController implements SelectListener, Disposable
         if (event.getTopObject() != null && event.getTopObject() instanceof AVList) {
             this.lastRightClickObject = event.getTopObject();
             
+            // Check if it's a LaborItem
             LaborItem item = ((LaborItem)  ((AVList) this.lastRightClickObject).getValue(ProcessMapTask.LABOR_ITEM_AVKey) );	
-            if(item == null) {
+            if(item != null) {
+                LaborItemGUIController controller = new LaborItemGUIController(main);
+                controller.showDialog(item);
                 return;
             }
-          
-
             
-            LaborItemGUIController controller = new LaborItemGUIController(main);
-            controller.showDialog(item);
-
+            // Check if it's a SurfacePolygon (polygon)
+            if (this.lastRightClickObject instanceof SurfacePolygon) {
+                SurfacePolygon surfacePolygon = (SurfacePolygon) this.lastRightClickObject;
+                
+                // Find the layer that contains this SurfacePolygon
+                RenderableLayer polygonLayer = findLayerForSurfacePolygon(surfacePolygon);
+                if (polygonLayer != null) {
+                    // Get the Poligono from the layer
+                    Object layerObject = polygonLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+                    if (layerObject instanceof Poligono) {
+                       // Poligono poli = (Poligono) layerObject;
+                        // Show dialog with edit button
+                        if (main != null) {
+                            PoligonoItemGUIController controller = new PoligonoItemGUIController(main);
+                            controller.showDialog(polygonLayer);
+                        }
+                    }
+                }
+            }
         }
+    }
+    
+    /**
+     * Find the RenderableLayer that contains the given SurfacePolygon
+     * @param surfacePolygon the SurfacePolygon to find the layer for
+     * @return the RenderableLayer containing the polygon, or null if not found
+     */
+    private RenderableLayer findLayerForSurfacePolygon(SurfacePolygon surfacePolygon) {
+        if (this.wwd == null || this.wwd.getModel() == null) {
+            return null;
+        }
+        
+        LayerList layers = this.wwd.getModel().getLayers();
+        for (Layer layer : layers) {
+            if (layer instanceof RenderableLayer) {
+                RenderableLayer renderableLayer = (RenderableLayer) layer;
+                
+                // Check if this layer has a MeasureToolForShape that contains this SurfacePolygon
+                if (renderableLayer.hasKey(PoligonLayerFactory.MEASURE_TOOL)) {
+                    Object measureToolObj = renderableLayer.getValue(PoligonLayerFactory.MEASURE_TOOL);
+                    if (measureToolObj instanceof MeasureToolForShape) {
+                        MeasureToolForShape measureTool = (MeasureToolForShape) measureToolObj;
+                        if (measureTool.getSurfaceShape() == surfacePolygon) {
+                            return renderableLayer;
+                        }
+                    }
+                }
+                
+                // Also check if the SurfacePolygon is directly in this layer's renderables
+                for (Renderable renderable : renderableLayer.getRenderables()) {
+                    if (renderable == surfacePolygon) {
+                        return renderableLayer;
+                    }
+                }
+            }
+        }
+        return null;
     }
     
 	/**

@@ -83,6 +83,7 @@ public class UrsulaGISPreloader extends Preloader {
     }
     
     private VBox createPreloaderWebView() {       
+        
         WebView webView = new WebView();		
 		webView.autosize();
 		WebEngine engine = webView.getEngine();

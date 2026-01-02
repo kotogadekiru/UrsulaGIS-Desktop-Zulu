@@ -113,6 +113,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 		this.contorno=contorno;
 	//	downloadDir=downloadDirectory;
 		observableList=_observableList;
+		updateTaskName();
 	}
 	public List<Ndvi> call() {	
 		try {
@@ -605,10 +606,26 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 
 	public void setFinDate(LocalDate date) {
 		this.end=date;
+		updateTaskName();
 	}
 
 	public void setBeginDate(LocalDate initialDate) {
 		this.begin=initialDate;
+		updateTaskName();
+	}
+	
+	private void updateTaskName() {
+		String name = "NDVI";
+		if(contorno != null) {
+			name += " para " + contorno.getNombre();
+		}
+		if(this.begin != null && this.end != null) {
+			name += " " + this.begin + " -> " + this.end;
+		} else if(this.end != null) {
+			name += " hasta " + this.end;
+		}
+		this.taskName = name;
+		System.out.println("taskName: "+this.taskName);
 	}
 
 	public void setIgnoreNDVI(List<Ndvi> _ndviToIgnore) {

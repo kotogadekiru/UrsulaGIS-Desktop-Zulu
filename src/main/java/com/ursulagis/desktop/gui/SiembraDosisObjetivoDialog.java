@@ -131,6 +131,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
 	void updatePlM2Obj() {
 		
 		Unidad unidad = unidadSelected;
+		if(unidad==null) return;
     	String value = tfDosis.getText();
     	if("".equals(value))return;
     	Semilla s = labor.getSemilla();
@@ -184,8 +185,10 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
     void updatePreview() {    	    	
     	updatePlM2Obj();     	
     	Semilla s = this.labor.getSemilla();
-    	double sM2=this.plM2Obj/s.getPG();
-    	lblSm2.setText(PropertyHelper.formatDouble(sM2));
+		if(this.plM2Obj!=null) {
+			double sM2=this.plM2Obj/s.getPG();
+			lblSm2.setText(PropertyHelper.formatDouble(sM2));
+		}
     	updateLblKgHa();
     	updateLblBolsaHa();
     	updateLblSHa();

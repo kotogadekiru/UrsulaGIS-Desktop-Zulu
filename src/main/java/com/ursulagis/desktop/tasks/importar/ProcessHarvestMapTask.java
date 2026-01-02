@@ -207,9 +207,9 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 						+big); 
 				}
 
-			} else { // no es point. Estoy abriendo una cosecha de poligonos.
-				
-				double area = ci.getGeometry().getArea();
+			} else if(geometry !=null && geometry instanceof Geometry) { // no es point. Estoy abriendo una cosecha de poligonos.
+				Geometry geom = (Geometry) geometry;
+				double area = geom.getArea();
 				double has = ProyectionConstants.A_HAS(area);
 
 				if(has>supMinimaHas){

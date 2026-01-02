@@ -837,6 +837,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		clon.setNombre(p.getNombre()+" clon");
 		clon.setArea(p.getArea());
 		clon.getPositions().addAll(p.getPositions());
+		clon.getHuecos().addAll(p.getHuecos());
 		MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(clon, this.getWwd(), this.getLayerPanel());	
 		measureTool.setCreationMode(false);
 		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());

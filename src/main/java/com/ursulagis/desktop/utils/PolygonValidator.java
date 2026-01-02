@@ -14,26 +14,34 @@ public class PolygonValidator {
 	public static List<Polygon> geometryToFlatPolygons(Geometry itemGeometry){
 		List<Polygon> ret=new ArrayList<Polygon>();
 
-		if(itemGeometry instanceof MultiPolygon){
-			//System.out.println("convirtiendo un multipolygon en polygon " +itemGeometry);
+		if(itemGeometry == null){
+			return ret;
+		}
+
+		if(itemGeometry instanceof Polygon) {
+			// Single-part polygon - add it directly
+			Polygon pi =(Polygon)itemGeometry;
+			ret.add(polygonToFlatPolygon(pi));
+		} else if(itemGeometry instanceof MultiPolygon){
+			// MultiPolygon - recursively process each geometry
 			MultiPolygon mp = (MultiPolygon)itemGeometry;
 			for(int i=0;i<mp.getNumGeometries();i++){
 				Geometry gi=mp.getGeometryN(i);
-				if(gi instanceof Polygon){
-					Polygon pi =(Polygon)gi;
-					ret.add(polygonToFlatPolygon(pi));
-				}else if(gi instanceof MultiPolygon){
-					System.err.println("gi es MultyPolygon en geometryToFlatPolygons");
-					ret.addAll(geometryToFlatPolygons(gi));
-				}else {
-					System.err.println("estoy perdiendo la geometria "+gi.toText());
-				}
-				//si no es polygono ignorarla?
+				ret.addAll(geometryToFlatPolygons(gi));
 			}
-
-		} else if(itemGeometry instanceof Polygon) {
-			Polygon pi =(Polygon)itemGeometry;
-			ret.add(polygonToFlatPolygon(pi));
+		} else if(itemGeometry instanceof GeometryCollection) {
+			// Handle GeometryCollection by processing each geometry recursively
+			GeometryCollection gc = (GeometryCollection)itemGeometry;
+			for(int i=0;i<gc.getNumGeometries();i++){
+				Geometry gi=gc.getGeometryN(i);
+				ret.addAll(geometryToFlatPolygons(gi));
+			}
+		} else if(itemGeometry.getNumGeometries() > 1){
+			// Handle any other geometry type that contains multiple geometries
+			for(int i=0;i<itemGeometry.getNumGeometries();i++){
+				Geometry gi=itemGeometry.getGeometryN(i);
+				ret.addAll(geometryToFlatPolygons(gi));
+			}
 		} else {
 			System.out.println("geometry no es multiPolygon ni poligon "+ itemGeometry);
 		}

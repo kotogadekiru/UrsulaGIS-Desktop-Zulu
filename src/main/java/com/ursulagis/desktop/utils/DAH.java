@@ -280,14 +280,14 @@ public class DAH {
 			System.out.println("no se guardan las clases que no son entidades "+entidad);
 			return;
 		}
-		if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
-			//System.out.println("save en el thread de javafx");
-			JFXMain.executorPool.submit(() -> {			
-			//	System.out.println("save fuera del thread de javafx");
-				save(entidad);
-			});
-			return;
-		}
+		// if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
+		// 	//System.out.println("save en el thread de javafx");
+		// 	JFXMain.executorPool.submit(() -> {			
+		// 	//	System.out.println("save fuera del thread de javafx");
+		// 		save(entidad);
+		// 	});
+		// 	return;
+		// }
 		EntityManager em = em();
 		if(DAH.transaction == null){
 			//	DAH.transaction = em.getTransaction();

@@ -233,11 +233,17 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 		//2 crear un archivo shape dentro del directorio para subir
 		File shpFile = FileHelper.getNewShapeFileAt(dir,"labor.shp");
 		//2 exportar la labor al directorio
+		try {
 		ExportarPrescripcionFertilizacionTask export = new ExportarPrescripcionFertilizacionTask(labor,shpFile);
-		export.guardarConfig=false;//como es un temp dir no quiero guardar LAST_FILE
-		export.call();
+			export.guardarConfig=false;//como es un temp dir no quiero guardar LAST_FILE
+			export.call();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("error al exportar la labor "+labor.getNombre());
+			return null;
+		}
 		File zipFile = UnzipUtility.zipFiles(FileHelper.selectAllFiles(dir),dir.toFile());
-		return zipFile;
+		return zipFile;	
 	}
 	
 	public static  JsonDeserializer<Producto> getProductoDeserializer() {
