@@ -93,7 +93,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 			if (layerObject==null){
 			}else if(Labor.class.isAssignableFrom(layerObject.getClass())){
-				doResumirLabor((Labor<?>) layerObject);
+				doResumirLabor((Labor<LaborItem>) layerObject);
 			}
 			return "resumi labor " + layer.getName();
 		}));
@@ -339,7 +339,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 	}
 	
 
-	private void doResumirLabor(Labor<?> labor) {		
+	private void doResumirLabor(Labor<LaborItem> labor) {		
 		ResumirLaborMapTask uMmTask = new ResumirLaborMapTask(labor);
 
 		uMmTask.installProgressBar(progressBox);

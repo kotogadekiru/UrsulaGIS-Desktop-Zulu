@@ -21,7 +21,7 @@ public abstract class ProgresibleTask<E> extends Task<E>{
 	private Label progressBarLabel;
 	private HBox progressContainer;
 	
-	protected String taskName="";
+	protected String taskName="taskt name not set";
 	/**
 	 * cantidad de features a procesar
 	 */
@@ -55,7 +55,7 @@ public abstract class ProgresibleTask<E> extends Task<E>{
 		progressBarTask.progressProperty().bind(this.progressProperty());
 		progressBarLabel = new Label(taskName);
 		progressBarLabel.setTextFill(Color.BLACK);
-		progressBarLabel.textProperty().bind(this.titleProperty());
+		//progressBarLabel.textProperty().bind(this.titleProperty());
 
 
 		Button cancel = new Button();

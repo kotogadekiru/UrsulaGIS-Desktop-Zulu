@@ -44,7 +44,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem>> {
 	private Labor<?> aResumir=null;
 	//private Map<Class,Function<LaborItem,String>> tooltipCreator = ClonarLaborMapTask.constructTooltipCreator();
-	public ResumirLaborMapTask(Labor<?> _aResumir) {	
+	public ResumirLaborMapTask(Labor<LaborItem> _aResumir) {	
+		super(_aResumir);
 		aResumir=_aResumir;
 		this.labor=ClonarLaborMapTask.laborConstructor()
 				.get(aResumir.getClass())

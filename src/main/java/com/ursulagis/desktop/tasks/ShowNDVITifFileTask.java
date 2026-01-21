@@ -46,6 +46,8 @@ import com.ursulagis.desktop.dao.Clasificador;
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
+import com.ursulagis.desktop.dao.utils.PropertyHelper;
+
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.avlist.AVList;
@@ -670,9 +672,10 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 
 			};
 
-			NumberFormat df=Messages.getNumberFormat();
+			//NumberFormat df=Messages.getNumberFormat();
+			
 			if(porcNubes>0) {
-				layer.setName(fileName+" "+df.format(porcNubes*100)+"% "+Messages.getString("ShowNDVITifFileTask.nublado"));
+				layer.setName(fileName+" "+PropertyHelper.formatDouble(porcNubes*100)+"% "+Messages.getString("ShowNDVITifFileTask.nublado"));
 			}else {
 				layer.setName(fileName);
 			}

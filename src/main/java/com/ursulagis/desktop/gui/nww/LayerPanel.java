@@ -133,7 +133,7 @@ public class LayerPanel extends VBox {
 		if(rootItem==null){//TODO si cambio el locale reconstriur el root item
 			constructRootItem();  
 		} else{//clear leaf nodes
-			for(TreeItem<?> item : rootItem.getChildren()){
+			for(TreeItem<?> item : rootItem.getChildren()){//remove all class node children
 //				item.getChildren().stream().forEach(i->{
 //					listeners.stream().forEach(l->{
 //						i.valueProperty().removeListener(l);	
@@ -162,7 +162,7 @@ public class LayerPanel extends VBox {
 					"Compass".equalsIgnoreCase(nombre)||
 					"Capas".equalsIgnoreCase(nombre))continue; 
 
-			final CheckBoxTreeItem<Layer> checkBoxTreeItem = new CheckBoxTreeItem<Layer>(layer);
+			CheckBoxTreeItem<Layer> checkBoxTreeItem = new CheckBoxTreeItem<Layer>(layer);
 
 			Object value = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 			Object clazz = layer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
@@ -186,7 +186,7 @@ public class LayerPanel extends VBox {
 					rootItemName = Messages.getString("LayerPanel.rootItemName"+layerClass.getSimpleName());
 				}
 
-				RenderableLayer rootLayer = new RenderableLayer();
+				RenderableLayer rootLayer = createRenderableLayer();
 				rootLayer.setName(rootItemName);
 				rootLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR,layerClass);
 
@@ -254,18 +254,12 @@ public class LayerPanel extends VBox {
 	}
 
 
-	private void constructRootItem() {
-		RenderableLayer rootLayer = new RenderableLayer(){
-			@Override	
-			public void dispose() {
-				System.out.println("disposing of rootLayer");
-				super.dispose();
-			}
-		};
+	private void constructRootItem() {//construye el nodo capas con los nodos de las clases de labor
+		RenderableLayer rootLayer = createRenderableLayer();
 		rootLayer.setName(Messages.getString("LayerPanel.layerRootLabel")); 
 		rootItem = new CheckBoxTreeItem<Layer>(rootLayer);
 
-		RenderableLayer poliLayer = new RenderableLayer();
+		RenderableLayer poliLayer = createRenderableLayer();
 		poliLayer.setName(Messages.getString("LayerPanel.rootItemNamePoligono")); 
 		poliLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, Poligono.class);
 		CheckBoxTreeItem<Layer>poliItem = new CheckBoxTreeItem<Layer>(poliLayer);
@@ -274,7 +268,7 @@ public class LayerPanel extends VBox {
 		rootItem.getChildren().add(poliItem);
 
 
-		RenderableLayer pulvLayer = new RenderableLayer();
+		RenderableLayer pulvLayer = createRenderableLayer();
 		pulvLayer.setName(Messages.getString("LayerPanel.pulvLabel")); 
 		pulvLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, PulverizacionLabor.class);
 		CheckBoxTreeItem<Layer>pulverizacionesItem = new CheckBoxTreeItem<Layer>(pulvLayer);
@@ -282,7 +276,7 @@ public class LayerPanel extends VBox {
 		rootItems.put(PulverizacionLabor.class, pulverizacionesItem);
 		rootItem.getChildren().add(pulverizacionesItem);
 
-		RenderableLayer fertLayer = new RenderableLayer();
+		RenderableLayer fertLayer = createRenderableLayer();
 		fertLayer.setName(Messages.getString("LayerPanel.fertLabel")); 
 		fertLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, FertilizacionLabor.class);
 		CheckBoxTreeItem<Layer>fertilizacionestItem = new CheckBoxTreeItem<Layer>(fertLayer);
@@ -290,7 +284,7 @@ public class LayerPanel extends VBox {
 		rootItems.put(FertilizacionLabor.class, fertilizacionestItem);
 		rootItem.getChildren().add(fertilizacionestItem);
 
-		RenderableLayer siembrLayer = new RenderableLayer();
+		RenderableLayer siembrLayer = createRenderableLayer();
 		siembrLayer.setName(Messages.getString("LayerPanel.SiembLabel")); 
 		siembrLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, SiembraLabor.class);
 		CheckBoxTreeItem<Layer>siembrasItem = new CheckBoxTreeItem<Layer>(siembrLayer);	
@@ -298,7 +292,7 @@ public class LayerPanel extends VBox {
 		rootItems.put(SiembraLabor.class, siembrasItem);
 		rootItem.getChildren().add(siembrasItem);
 
-		RenderableLayer cosechLayer = new RenderableLayer();
+		RenderableLayer cosechLayer = createRenderableLayer();
 		cosechLayer.setName(Messages.getString("LayerPanel.cosechLabel")); 
 		cosechLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, CosechaLabor.class);
 		CheckBoxTreeItem<Layer>cosechasItem = new CheckBoxTreeItem<Layer>(cosechLayer);
@@ -308,6 +302,16 @@ public class LayerPanel extends VBox {
 
 		//rootItem.getChildren().addAll(rootItems.values());//pulverizacionesItem,fertilizacionestItem,siembrasItem,cosechasItem);
 		rootItem.setExpanded(true);
+	}
+
+	private RenderableLayer createRenderableLayer() {//crea un renderable layer metodo dispose
+		return new RenderableLayer(){
+			@Override	
+			public void dispose() {
+				System.out.println("disposing of rootLayer "+this.getName());
+				super.dispose();
+			}
+		};
 	}
 
 	private void setGraphic(CheckBoxTreeItem<Layer> item,String iconUrl) {
@@ -576,7 +580,7 @@ public class LayerPanel extends VBox {
 		//	if(cellLayer == null || !nuLayer.equals(cellLayer)) {
 				menu.getItems().forEach(mi->{
 					mi.setOnAction(null);
-					mi.setText("cleared MI");					
+					mi.setText("cleared MI");									
 					if(menuItemsPool.size()<50) {
 						menuItemsPool.add(mi);
 					}

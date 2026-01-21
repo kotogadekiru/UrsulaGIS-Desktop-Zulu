@@ -113,6 +113,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 
 	public ProcessMapTask(E labor2) {
 		labor=labor2;
+		this.taskName=labor.getNombre();
 	}
 
 	@Override
