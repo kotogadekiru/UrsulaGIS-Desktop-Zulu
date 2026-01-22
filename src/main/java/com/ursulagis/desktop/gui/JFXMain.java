@@ -186,7 +186,7 @@ public class JFXMain extends Application {
 	public WWPanel wwjPanel=null;//contiene el world wind
 	protected LayerPanel layerPanel=null;//contriene el treeView con los layers
 	private SplitPane sp=null;//contiene el layerPanel y el wwjPanel
-	private Node wwNode=null;//contiene el arbol con los layers y el swingnode con el world wind
+	//private Node wwNode=null;//contiene el arbol con los layers y el swingnode con el world wind
 	public VBox progressBox = new VBox();
 
 	public static ExecutorService executorPool = Executors.newCachedThreadPool();
@@ -1105,7 +1105,7 @@ public class JFXMain extends Application {
 		SnapshotParameters params = new SnapshotParameters();
 		params.setFill(Color.TRANSPARENT);
 
-		WritableImage image = wwNode.snapshot(params, null);
+		WritableImage image = sp.snapshot(params, null);
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle(Messages.getString("JFXMain.395")); 
 
@@ -1272,6 +1272,19 @@ public class JFXMain extends Application {
 		
 		try	{			
 			//System.setProperty("prism.order", "es2");
+			// Fix for DPI scaling coordinate mismatch between JavaFX and Swing on Windows
+			// When display is scaled (e.g., 125%), SwingNode doesn't properly transform coordinates
+			// Setting glass.win.renderScale=1.0 ensures rendering uses physical pixels matching Swing
+			// This prevents coordinate offset issues when clicking in embedded Swing components
+			if (System.getProperty("os.name", "").toLowerCase().contains("windows")) {
+				if (System.getProperty("glass.win.renderScale") == null) {
+					System.setProperty("glass.win.renderScale", "1.0");
+				}
+				// Also ensure Swing uses the same coordinate system
+				if (System.getProperty("sun.java2d.uiScale") == null) {
+					System.setProperty("sun.java2d.uiScale", "1.0");
+				}
+			}
 			System.setProperty("javafx.preloader", UrsulaGISPreloader.class.getCanonicalName());
 			Application.launch(JFXMain.class, args);
 		}catch (Exception e){
