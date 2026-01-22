@@ -53,6 +53,10 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			doUnirFertilizaciones(null);
 			return "unidas";	
 		},2));
+		rootNodeP.add(new LayerAction(Messages.getString("JFXMain.grillarFertilizacion"),(layer)->{
+			doUnirFertilizaciones(null);
+			return "grillada";	
+		},1));
 		getLayerPanel().addAccionesClase(rootNodeP,FertilizacionLabor.class);
 	}
 	
@@ -83,6 +87,10 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			return "fertilizacion partida" + layer.getName(); 
 		}));
 		
+		fertilizacionesP.add(new LayerAction(Messages.getString("JFXMain.grillarFertilizacion"),(layer)->{
+			doUnirFertilizaciones((FertilizacionLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+			return "grillada";	
+		},1));
 		/**
 		 * Accion permite exportar la labor como shp
 		 */
@@ -411,6 +419,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				insertBeforeCompass(getWwd(), ret.getLayer());
 				this.getLayerPanel().update(this.getWwd());
 			}
+			fertilizacionesAUnir.forEach(f -> f.getLayer().setEnabled(false));
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			System.out.println(Messages.getString("JFXMain.287")); 

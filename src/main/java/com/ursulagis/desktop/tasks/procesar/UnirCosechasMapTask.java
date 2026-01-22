@@ -34,14 +34,14 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 	private boolean calibrar;
 
 	public UnirCosechasMapTask(List<CosechaLabor> cosechas){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new CosechaLabor());
+		this.taskName="unir cosechas";
 		this.cosechas=new ArrayList<CosechaLabor>();
 		for(CosechaLabor l:cosechas){
 			if(l.getLayer().isEnabled()){
 				this.cosechas.add(l);
 			}
 		};
-
-		super.labor = new CosechaLabor();
 		//TODO asignar las columnas a  los valores estanar
 		labor.colAmount.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
 		labor.colRendimiento.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
@@ -73,7 +73,7 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 		String nombre =null;
 		String prefijo = "Clon";
 		if(cosechas.size()>1){
-			prefijo = "Union";
+			prefijo = Messages.getString("Common.Union");
 		}
 		int featuresInsertadas=0;
 		//TODO agregar una etapa de calibracion de cosechas

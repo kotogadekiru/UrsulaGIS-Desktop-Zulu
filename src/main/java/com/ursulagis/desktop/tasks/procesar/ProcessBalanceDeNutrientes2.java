@@ -45,20 +45,20 @@ public class ProcessBalanceDeNutrientes2 extends ProcessMapTask<SueloItem,Suelo>
 	private List<FertilizacionLabor> fertilizaciones;
 
 	public ProcessBalanceDeNutrientes2(List<Suelo> suelos,List<CosechaLabor> cosechas,List<FertilizacionLabor> fertilizaciones) {
+		super(new Suelo());
+		this.taskName="balance de nutrientes 2";
 		this.suelos=suelos;
 		this.fertilizaciones=fertilizaciones;
 		this.cosechas =cosechas;
 
-		Suelo suelo = new Suelo();
-		suelo.colDensidadProperty=new SimpleStringProperty("Densidad");
-		suelo.setLayer(new LaborLayer());
+		labor.colDensidadProperty=new SimpleStringProperty("Densidad");
+		labor.setLayer(new LaborLayer());
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Balance de Nutrientes ");
 		cosechas.forEach((c)->sb.append(c.getNombre()+" "));
-		suelo.setNombre(sb.toString());
-		suelo.setLayer(new LaborLayer());
-		super.labor=suelo;
+		labor.setNombre(sb.toString());
+		labor.setLayer(new LaborLayer());
 
 	}
 

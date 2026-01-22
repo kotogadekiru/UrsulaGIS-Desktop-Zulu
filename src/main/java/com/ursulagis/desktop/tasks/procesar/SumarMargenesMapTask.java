@@ -34,11 +34,12 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 	private boolean rellenarHuecos = false;
 			
 	public SumarMargenesMapTask(List<Margen> _margenes){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new Margen());
+		this.taskName="sumar margenes";
 		this.margenes=_margenes;
 		for(Margen l:margenes){
 			l.getLayer().setEnabled(false);
 		};
-		super.labor = new Margen();
 		//TODO asignar las columnas a  los valores estandar
 //		labor.colAmount.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
 //		labor.colRendimiento.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);

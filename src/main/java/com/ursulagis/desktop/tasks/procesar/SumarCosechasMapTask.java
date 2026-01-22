@@ -23,6 +23,7 @@ import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import com.ursulagis.desktop.dao.cosecha.CosechaItem;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import gov.nasa.worldwind.render.ExtrudedPolygon;
+import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearCosechaMapTask;
@@ -35,6 +36,8 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 	private List<CosechaLabor> cosechas;
 
 	public SumarCosechasMapTask(List<CosechaLabor> cosechas){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new CosechaLabor());
+		this.taskName="sumar cosechas";
 		this.cosechas=cosechas;
 		for(CosechaLabor l:cosechas){
 			l.getLayer().setEnabled(false);
@@ -43,8 +46,6 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 //				
 //			}
 		};
-
-		super.labor = new CosechaLabor();
 		//asignar las columnas a  los valores estandar
 		//labor.colAmount.set(CosechaLabor.);
 
@@ -71,7 +72,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 		ReferencedEnvelope unionEnvelope = null;
 		double ancho = labor.getConfigLabor().getAnchoGrilla();
 		String nombre =null;
-		String prefijo = "grilla";
+		String prefijo = Messages.getString("Common.Grilla");
 		if(cosechas.size()>1){
 			prefijo = "suma";
 		}

@@ -13,6 +13,7 @@ import org.locationtech.jts.geom.Geometry;
 import com.ursulagis.desktop.dao.siembra.SiembraItem;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import gov.nasa.worldwind.render.ExtrudedPolygon;
+import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirASiembraTask;
@@ -26,6 +27,8 @@ public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 	//private boolean calibrar;
 
 	public UnirSiembrasMapTask(List<SiembraLabor> _siembras){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new SiembraLabor());
+		this.taskName="unir siembras";
 		this.siembras=new ArrayList<SiembraLabor>();
 		for(SiembraLabor l:_siembras){
 			if(l.getLayer().isEnabled()){
@@ -33,7 +36,6 @@ public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 			}
 		};
 		SiembraLabor sRef = this.siembras.get(0);
-		super.labor = new SiembraLabor();
 		//TODO asignar las columnas a  los valores estanar
 		labor.colAmount.set(SiembraLabor.COLUMNA_KG_SEMILLA);
 		labor.colDosisSemilla.set(SiembraLabor.COLUMNA_KG_SEMILLA);
@@ -67,9 +69,9 @@ public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 		//	ReferencedEnvelope unionEnvelope = null;
 		//double ancho = labor.getConfiguracion().getAnchoFiltroOutlayers();
 		String nombre =null;
-		String prefijo = "Grilla";
+		String prefijo = Messages.getString("Common.Grilla");
 		if(siembras.size()>1){
-			prefijo = "Union";
+			prefijo = Messages.getString("Common.Union");
 		}
 		int featuresInsertadas=0;
 		//TODO agregar una etapa de calibracion de cosechas

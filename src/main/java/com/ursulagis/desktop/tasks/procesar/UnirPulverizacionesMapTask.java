@@ -23,6 +23,7 @@ import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import com.ursulagis.desktop.dao.pulverizacion.PulverizacionItem;
 import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
 import gov.nasa.worldwind.render.ExtrudedPolygon;
+import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearPulverizacionMapTask;
@@ -35,6 +36,8 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 	private List<PulverizacionLabor> pulverizaciones;
 
 	public UnirPulverizacionesMapTask(List<PulverizacionLabor> pulverizaciones){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new PulverizacionLabor());
+		this.taskName="unir pulverizaciones";
 		this.pulverizaciones=new ArrayList<PulverizacionLabor>();
 		for(PulverizacionLabor l:pulverizaciones){
 			if(l.getLayer().isEnabled()){
@@ -42,8 +45,6 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 				
 			}
 		};
-
-		super.labor = new PulverizacionLabor();
 		//asignar las columnas a  los valores estandar
 		labor.colAncho.set(PulverizacionLabor.COLUMNA_ANCHO);
 		labor.colCurso.set(PulverizacionLabor.COLUMNA_CURSO);
@@ -68,9 +69,9 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 		ReferencedEnvelope unionEnvelope = null;
 		double ancho = labor.getConfigLabor().getAnchoGrilla();
 		String nombre =null;
-		String prefijo = "Grilla";
+		String prefijo = Messages.getString("Common.Grilla");
 		if(pulverizaciones.size()>1){
-			prefijo = "Union";
+			prefijo = Messages.getString("Common.Union");
 		}
 //		int featuresInsertadas=0;
 		for(PulverizacionLabor pulv:pulverizaciones){

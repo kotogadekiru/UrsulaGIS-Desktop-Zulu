@@ -42,7 +42,7 @@ import java.util.List;
 
 public class OpenMargenMapTask extends ProcessMapTask<MargenItem,Margen> {
 	public OpenMargenMapTask(Margen sueloMap) {
-		this.labor=sueloMap;
+		super(sueloMap);
 	}
 	
 	public void doProcess() throws IOException {

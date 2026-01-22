@@ -46,9 +46,9 @@ public class GrillarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLa
 
 			
 	public GrillarCosechasMapTask(List<CosechaLabor> cosechas){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new CosechaLabor());
+		this.taskName="grillar cosechas";
 		this.cosechas=cosechas;
-
-		super.labor = new CosechaLabor();
 		//TODO asignar las columnas a  los valores estanar
 		labor.colAmount.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
 		labor.colRendimiento.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);

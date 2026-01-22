@@ -41,18 +41,18 @@ public class InterpolarRecorridaMapTask extends ProcessMapTask<SueloItem,Suelo> 
 
 
 	public InterpolarRecorridaMapTask(Recorrida r,List<Poligono> contornos) {
+		super(new Suelo());
+		this.taskName="interpolar recorrida";
 		this.contornos = contornos;
 		this.recorrida =r;
-		Suelo suelo = new Suelo();
-		suelo.colDensidadProperty=new SimpleStringProperty("Densidad");
-		suelo.setLayer(new LaborLayer());
+		labor.colDensidadProperty=new SimpleStringProperty("Densidad");
+		labor.setLayer(new LaborLayer());
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("Interpolado de "+r.getNombre()+" ");
 		contornos.forEach((c)->sb.append(c.getNombre()+" "));
-		suelo.setNombre(sb.toString());
-		suelo.setLayer(new LaborLayer());
-		super.labor=suelo;
+		labor.setNombre(sb.toString());
+		labor.setLayer(new LaborLayer());
 		
 		String anchoGrillaString = JFXMain.config.getPropertyOrDefault(CosechaConfig.ANCHO_GRILLA_KEY,Messages.getString("JFXMain.288"));
 		try {

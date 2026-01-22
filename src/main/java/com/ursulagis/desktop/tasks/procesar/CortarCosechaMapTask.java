@@ -33,10 +33,10 @@ public class CortarCosechaMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 	private List<Poligono> poligonos=null;
 
 	public CortarCosechaMapTask(CosechaLabor cosechaACortar,List<Poligono> _poligonos){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new CosechaLabor());
+		this.taskName="cortar cosecha";
 		this.cosecha=cosechaACortar;
 		this.poligonos=_poligonos;
-
-		super.labor = new CosechaLabor();
 		//TODO asignar las columnas a  los valores estanar
 		labor.colAmount.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
 		labor.colRendimiento.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
