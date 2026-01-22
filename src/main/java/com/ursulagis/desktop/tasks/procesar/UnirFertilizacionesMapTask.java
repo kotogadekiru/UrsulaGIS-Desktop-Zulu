@@ -23,6 +23,8 @@ import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionItem;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
 import gov.nasa.worldwind.render.ExtrudedPolygon;
+
+import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearFertilizacionMapTask;
@@ -35,6 +37,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 	private List<FertilizacionLabor> fertilizaciones;
 
 	public UnirFertilizacionesMapTask(List<FertilizacionLabor> fertilizaciones){//RenderableLayer layer, FileDataStore store, double d, Double correccionRinde) {
+		super(new FertilizacionLabor());		
 		this.fertilizaciones=new ArrayList<FertilizacionLabor>();
 		for(FertilizacionLabor l:fertilizaciones){
 			if(l.getLayer().isEnabled()){
@@ -42,8 +45,6 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 
 			}
 		};
-
-		super.labor = new FertilizacionLabor();
 		//asignar las columnas a  los valores estandar
 		labor.colAmount.set(FertilizacionLabor.COLUMNA_KG_HA);
 		labor.colKgHaProperty.set(FertilizacionLabor.COLUMNA_KG_HA);
@@ -51,13 +52,14 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		labor.colCurso.set(FertilizacionLabor.COLUMNA_CURSO);
 		labor.colDistancia.set(FertilizacionLabor.COLUMNA_DISTANCIA);
 		labor.colElevacion.set(FertilizacionLabor.COLUMNA_ELEVACION);
-
-		String nombreProgressBar = "grillar fertilizacion";
+		//usar Messages.getString("UnirFertilizacionesMapTask.grillarFertilizacion");
+		String nombreProgressBar = Messages.getString("JFXMain.grillarFertilizacion");
 		if(fertilizaciones.size()>1){
-			nombreProgressBar = "unir fertilizaciones";
+			nombreProgressBar = Messages.getString("JFXMain.unirFertilizaciones");
 		}
 		labor.setLayer(new LaborLayer());
 		labor.setNombre(nombreProgressBar);//este es el nombre que se muestra en el progressbar
+		this.taskName=nombreProgressBar;
 	}
 
 	/**
@@ -70,10 +72,17 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		ReferencedEnvelope unionEnvelope = null;
 		double ancho = labor.getConfigLabor().getAnchoGrilla();
 		String nombre =null;
-		String prefijo = "grilla";
+		String prefijo = Messages.getString("Common.Grilla");
 		if(fertilizaciones.size()>1){
-			prefijo = "union";
+			prefijo = Messages.getString("Common.Union");
 		}
+		
+		// Validar que haya fertilizaciones habilitadas
+		if(fertilizaciones.isEmpty()){
+			System.err.println("No hay fertilizaciones habilitadas para procesar");
+			return;
+		}
+		
 		//		int featuresInsertadas=0;
 		for(FertilizacionLabor fert:fertilizaciones){
 			if(nombre == null){
@@ -103,12 +112,21 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 			//			reader.close();
 
 			ReferencedEnvelope b = fert.outCollection.getBounds();
-			if(unionEnvelope==null){
-				unionEnvelope=b;
-			}else{
-				unionEnvelope.expandToInclude(b);
+			if(b != null){
+				if(unionEnvelope==null){
+					unionEnvelope=b;
+				}else{
+					unionEnvelope.expandToInclude(b);
+				}
 			}
 		}
+		
+		// Validar que se haya obtenido un envelope válido
+		if(unionEnvelope == null || unionEnvelope.isEmpty()){
+			System.err.println("No se pudo obtener un envelope válido de las fertilizaciones");
+			return;
+		}
+		
 		labor.setNombre(nombre);
 		labor.setLayer(new LaborLayer());
 
@@ -216,72 +234,87 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		for(FertilizacionItem fPoly : fertilizacionesPoly){			
 			//XXX si es una cosecha de ambientes el area es importante
 			Geometry g = fPoly.getGeometry();
+			if(g == null || g.isEmpty()){
+				continue; // Saltar geometrías nulas o vacías
+			}
 			try{
-				g = EnhancedPrecisionOp.intersection(poly,g);
-				Double areaInterseccion = g.getArea();
-				sumAreaInterseccion += areaInterseccion;
-				areasIntersecciones.put(fPoly,areaInterseccion);
-				if(union==null){
-					union = g;
+				// Validar que la geometría sea válida antes de la intersección
+				if(!g.isValid()){
+					System.err.println("Geometría inválida detectada, intentando corregir: "+g);
+					g = g.buffer(0); // Intenta corregir geometrías inválidas
 				}
-				intersections.add(g);
-
+				Geometry intersection = EnhancedPrecisionOp.intersection(poly, g);
+				if(intersection != null && !intersection.isEmpty()){
+					Double areaInterseccion = intersection.getArea();
+					if(areaInterseccion > 0){
+						sumAreaInterseccion += areaInterseccion;
+						areasIntersecciones.put(fPoly, areaInterseccion);
+						if(union==null){
+							union = intersection;
+						}
+						intersections.add(intersection);
+					}
+				}
 			}catch(Exception e){
 				System.err.println("no se pudo hacer la interseccion entre\n"+poly+"\n y\n"+g);
+				e.printStackTrace();
 			}		
 		}
 
+		// Validar que haya intersecciones válidas
+		if(intersections.isEmpty() || sumAreaInterseccion <= getAreaMinimaLongLat()){
+			return null;
+		}
+
 		FertilizacionItem f = null;
+		double insumoProm=0,ancho=0,distancia=0,elev=0,rumbo=0;// , pesos=0;
+		ancho=labor.getConfigLabor().getAnchoGrilla();
+		distancia=ancho;
+		
+		GeometryFactory fact = intersections.get(0).getFactory();
+		Geometry[] geomArray = new Geometry[intersections.size()];
+		GeometryCollection colectionCat = fact.createGeometryCollection(intersections.toArray(geomArray));
 
-		if(sumAreaInterseccion>getAreaMinimaLongLat()){
-			double insumoProm=0,ancho=0,distancia=0,elev=0,rumbo=0;// , pesos=0;
-			ancho=labor.getConfigLabor().getAnchoGrilla();
-			distancia=ancho;
-
-			GeometryFactory fact = intersections.get(0).getFactory();
-			Geometry[] geomArray = new Geometry[intersections.size()];
-			GeometryCollection colectionCat = fact.createGeometryCollection(intersections.toArray(geomArray));
-
-			try{
-				union = colectionCat.convexHull();//esto hace que no se cubra el area entre polygonos a menos que la grilla sea mas grande que el area
-			}catch(Exception e){	
-				System.err.println("fallo convexHull de collectionCat");
-				e.printStackTrace();
+		try{
+			union = colectionCat.convexHull();//esto hace que no se cubra el area entre polygonos a menos que la grilla sea mas grande que el area
+			if(union == null || union.isEmpty()){
 				return null;
 			}
-
-
-			double areaPoly = union.getArea();//areaPoly es el area de la union de las intersecciones
-			double sumAreaInteseccion =0.0;
-			for(FertilizacionItem fPoly : areasIntersecciones.keySet()){
-				Double areaInterseccion = areasIntersecciones.get(fPoly);//cPoly.getGeometry();
-				sumAreaInteseccion+=areaInterseccion;
-				if(areaInterseccion==null){
-					//System.out.println("g es null asi que no lo incluyo en la suma "+cPoly);
-					continue;}
-				double peso = areaInterseccion/areaPoly;//al dividir por el area del poligono en vez del area de la interseccion saco la suma en vez del promedio
-				insumoProm+=fPoly.getDosistHa()*peso;
-				elev+=fPoly.getElevacion()*areaInterseccion;//la elevacion debe ser el promedio no la suma
-			}
-			elev=elev/sumAreaInteseccion;
-
-			//	System.out.println("pesos = "+pesos);
-			synchronized(labor){
-				f = new FertilizacionItem();
-				f.setId(labor.getNextID());
-				labor.setPropiedadesLabor(f);
-			}
-
-
-
-			f.setGeometry(union);
-			f.setDosistHa(insumoProm);
-			f.setAncho(ancho);
-			f.setDistancia(distancia);
-			f.setElevacion(elev);
-			f.setRumbo(rumbo);
-			//simpleFeature = c.getFeature(fBuilder);
+		}catch(Exception e){	
+			System.err.println("fallo convexHull de collectionCat");
+			e.printStackTrace();
+			return null;
 		}
+
+		double areaPoly = union.getArea();//areaPoly es el area de la union de las intersecciones
+		double sumAreaInteseccion =0.0;
+		for(FertilizacionItem fPoly : areasIntersecciones.keySet()){
+			Double areaInterseccion = areasIntersecciones.get(fPoly);//cPoly.getGeometry();
+			sumAreaInteseccion+=areaInterseccion;
+			if(areaInterseccion==null){
+				//System.out.println("g es null asi que no lo incluyo en la suma "+cPoly);
+				continue;}
+			double peso = areaInterseccion/areaPoly;//al dividir por el area del poligono en vez del area de la interseccion saco la suma en vez del promedio
+			insumoProm+=fPoly.getDosistHa()*peso;
+			elev+=fPoly.getElevacion()*areaInterseccion;//la elevacion debe ser el promedio no la suma
+		}
+		elev=elev/sumAreaInteseccion;
+
+		//	System.out.println("pesos = "+pesos);
+		synchronized(labor){
+			f = new FertilizacionItem();
+			f.setId(labor.getNextID());
+			labor.setPropiedadesLabor(f);
+		}
+
+		f.setGeometry(union);
+		f.setDosistHa(insumoProm);
+		f.setAncho(ancho);
+		f.setDistancia(distancia);
+		f.setElevacion(elev);
+		f.setRumbo(rumbo);
+		//simpleFeature = c.getFeature(fBuilder);
+		
 		return f;
 	}
 
