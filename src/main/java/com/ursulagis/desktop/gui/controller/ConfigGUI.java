@@ -59,6 +59,7 @@ import com.ursulagis.desktop.gui.CorrelacionarCapas;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.MargenConfigDialogController;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.MultiLayerHistoChart;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.snake.SnakesLayer;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
@@ -172,6 +173,11 @@ public class ConfigGUI extends AbstractGUIController{
 		addMenuItem(Messages.getString("JFXMain.goTo"),(a)->showGoToDialog(),menuHerramientas);
 		addMenuItem(Messages.getString("JFXMain.bulk_ndvi_download"),(a)->main.ndviGUIController.doBulkNDVIDownload(),menuHerramientas);
 		addMenuItem(Messages.getString("JFXMain.correlacionarCapas"),(a)->doCorrelacionarCapas(),menuHerramientas);
+				/**
+		 * Accion que muestra el histograma de todas las capas activas
+		 */
+				addMenuItem(Messages.getString("JFXMain.showMultiLayerHistogramAction"),(a)->showMultiLayerHistoChart(),menuHerramientas);
+				
 		//addMenuItem(Messages.getString("JFXMain.JugarSnake"),(a)->doJugarSnake(),menuHerramientas);
 		/*Menu Exportar*/
 		final Menu menuExportar = new Menu(Messages.getString("JFXMain.exportar"));		 
@@ -1608,6 +1614,18 @@ public class ConfigGUI extends AbstractGUIController{
 		menuItemProductos.setOnAction(action);
 		parent.getItems().addAll(menuItemProductos);
 		return menuItemProductos;
+	}
+	public void showMultiLayerHistoChart() {
+		Platform.runLater(() -> {
+			MultiLayerHistoChart histoChart = new MultiLayerHistoChart(this.getWwd());
+			Stage histoStage = new Stage();
+			histoStage.setTitle(Messages.getString("MultiLayerHistoChart.Title"));
+			histoStage.getIcons().addAll(JFXMain.stage.getIcons());
+			histoStage.initOwner(JFXMain.stage);
+			Scene scene = new Scene(histoChart, 1000, 600);
+			histoStage.setScene(scene);
+			histoStage.show();
+		});
 	}
 
 	public  void showQR(String ret) {

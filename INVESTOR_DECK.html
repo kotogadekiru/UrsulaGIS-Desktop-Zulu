@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrsulaGIS Desktop - Investor Deck</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            background: white;
+            margin-bottom: 2px;
+            page-break-after: always;
+        }
+
+        .slide h1 {
+            font-size: 3.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .slide h2 {
+            font-size: 2.5em;
+            color: #34495e;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .slide h3 {
+            font-size: 2em;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .slide p, .slide li {
+            font-size: 1.3em;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .slide ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .slide li {
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .slide li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .title-slide {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .title-slide h1 {
+            color: white;
+            font-size: 4.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .title-slide h2 {
+            color: rgba(255,255,255,0.9);
+            font-size: 2em;
+            font-weight: 300;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .feature-card h4 {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px;
+        }
+
+        .stat-box .number {
+            font-size: 4em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-box .label {
+            font-size: 1.5em;
+            opacity: 0.9;
+        }
+
+        table {
+            width: 100%;
+            max-width: 1000px;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table th, table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 20px;
+            border-left: 5px solid #ffc107;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+
+        .risk-item {
+            background: #f8d7da;
+            padding: 15px;
+            border-left: 5px solid #dc3545;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .mitigation {
+            background: #d4edda;
+            padding: 15px;
+            border-left: 5px solid #28a745;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        @media print {
+            .slide {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Slide 1: Title -->
+    <div class="slide title-slide">
+        <h1>UrsulaGIS Desktop</h1>
+        <h2>Transforming Agriculture Through Advanced Geospatial Intelligence</h2>
+        <p style="margin-top: 40px; font-size: 1.5em;">Investment Opportunity</p>
+        <p style="font-size: 1.2em; opacity: 0.9;">Version 1.0.1 | December 2024</p>
+    </div>
+
+    <!-- Slide 2: Executive Summary -->
+    <div class="slide">
+        <h2>Executive Summary</h2>
+        <div class="two-column" style="margin-top: 40px;">
+            <div>
+                <h3>The Opportunity</h3>
+                <ul>
+                    <li><strong>$XX Billion</strong> global precision agriculture market (13% CAGR)</li>
+                    <li><strong>$XX Billion</strong> GIS software market (12% CAGR)</li>
+                    <li>Underserved market: Agricultural professionals need specialized GIS tools</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Our Solution</h3>
+                <p><strong>UrsulaGIS Desktop</strong> - A comprehensive Geographic Information System combining:</p>
+                <ul>
+                    <li>Professional GIS capabilities</li>
+                    <li>Specialized agricultural management tools</li>
+                    <li>3D visualization technology</li>
+                    <li>Cross-platform desktop application</li>
+                </ul>
+            </div>
+        </div>
+        <div class="highlight" style="margin-top: 40px;">
+            <h3 style="margin-bottom: 15px;">Investment Ask</h3>
+            <p style="font-size: 1.5em;"><strong>$X Million Series A</strong> - Product development, market expansion, team scaling</p>
+        </div>
+    </div>
+
+    <!-- Slide 3: The Problem -->
+    <div class="slide">
+        <h2>The Problem</h2>
+        <div class="two-column" style="margin-top: 40px;">
+            <div>
+                <h3>For Agricultural Professionals</h3>
+                <ul>
+                    <li>Generic GIS software lacks agricultural-specific features</li>
+                    <li>Expensive enterprise solutions ($10K-$50K+ per license)</li>
+                    <li>Complex interfaces requiring GIS expertise</li>
+                    <li>Limited integration with agricultural equipment data</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Market Pain Points</h3>
+                <ul>
+                    <li><strong>Inefficiency:</strong> Manual data processing and analysis</li>
+                    <li><strong>Cost:</strong> High licensing fees for enterprise solutions</li>
+                    <li><strong>Complexity:</strong> Steep learning curves</li>
+                    <li><strong>Integration:</strong> Poor data interoperability</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Our Solution -->
+    <div class="slide">
+        <h2>Our Solution</h2>
+        <h3 style="text-align: center; margin-bottom: 40px;">UrsulaGIS Desktop - A Unified Platform</h3>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>🗺️ Professional GIS</h4>
+                <ul>
+                    <li>Multi-format data support</li>
+                    <li>Advanced spatial analysis</li>
+                    <li>3D visualization (NASA WorldWind)</li>
+                    <li>Coordinate reference systems</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>🌱 Agricultural Tools</h4>
+                <ul>
+                    <li>Crop management (planting & harvest)</li>
+                    <li>Fertilization planning</li>
+                    <li>Spraying operations</li>
+                    <li>NDVI & soil analysis</li>
+                    <li>Financial margin calculations</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>💻 Modern Desktop App</h4>
+                <ul>
+                    <li>Cross-platform (Windows, macOS, Linux)</li>
+                    <li>Intuitive JavaFX interface</li>
+                    <li>Drag-and-drop import</li>
+                    <li>Plugin architecture</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>📊 Data Management</h4>
+                <ul>
+                    <li>Shapefile, GeoTIFF, Excel, PDF</li>
+                    <li>Export capabilities</li>
+                    <li>QR code integration</li>
+                    <li>Multi-language support</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Key Features -->
+    <div class="slide">
+        <h2>Key Features & Capabilities</h2>
+        <div class="two-column" style="margin-top: 40px;">
+            <div>
+                <h3>Agricultural Labor Management</h3>
+                <ul>
+                    <li><strong>Siembra (Planting):</strong> Track seed planting with spatial data</li>
+                    <li><strong>Cosecha (Harvest):</strong> Analyze yield data with precision mapping</li>
+                    <li><strong>Fertilización:</strong> Optimize fertilizer application</li>
+                    <li><strong>Pulverización:</strong> Manage pesticide applications</li>
+                    <li><strong>Recorrida:</strong> Field monitoring and data collection</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Advanced Analysis</h3>
+                <ul>
+                    <li><strong>NDVI Analysis:</strong> Crop health monitoring</li>
+                    <li><strong>Soil Analysis:</strong> Nutrient mapping</li>
+                    <li><strong>Margin Analysis:</strong> Profitability per field zone</li>
+                    <li><strong>3D Visualization:</strong> Immersive terrain views</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Technology -->
+    <div class="slide">
+        <h2>Technology & Architecture</h2>
+        <div class="two-column" style="margin-top: 40px;">
+            <div>
+                <h3>Core Technologies</h3>
+                <ul>
+                    <li><strong>Java 18</strong> - Modern runtime</li>
+                    <li><strong>JavaFX 24</strong> - Rich UI framework</li>
+                    <li><strong>NASA WorldWind 2.4</strong> - 3D visualization</li>
+                    <li><strong>GeoTools 33.2</strong> - Industry-standard GIS</li>
+                    <li><strong>JOGL</strong> - High-performance rendering</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Key Advantages</h3>
+                <ul>
+                    <li>Cross-platform single codebase</li>
+                    <li>Extensible plugin architecture</li>
+                    <li>Scalable for large datasets</li>
+                    <li>Modern technology stack</li>
+                    <li>Open standards compatibility</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Market Opportunity -->
+    <div class="slide">
+        <h2>Market Opportunity</h2>
+        <div class="feature-grid" style="margin-top: 40px;">
+            <div class="stat-box">
+                <div class="number">$XXB</div>
+                <div class="label">Precision Agriculture Market</div>
+            </div>
+            <div class="stat-box">
+                <div class="number">13%</div>
+                <div class="label">CAGR Growth Rate</div>
+            </div>
+            <div class="stat-box">
+                <div class="number">$XXB</div>
+                <div class="label">GIS Software Market</div>
+            </div>
+            <div class="stat-box">
+                <div class="number">12%</div>
+                <div class="label">CAGR Growth Rate</div>
+            </div>
+        </div>
+        <div style="margin-top: 40px;">
+            <h3>Target Customers</h3>
+            <div class="two-column">
+                <div>
+                    <h4>Primary Market</h4>
+                    <ul>
+                        <li>Large-scale farms & cooperatives</li>
+                        <li>Agricultural consultants</li>
+                        <li>Equipment manufacturers</li>
+                        <li>Research institutions</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Geographic Focus</h4>
+                    <ul>
+                        <li>Initial: Latin America</li>
+                        <li>Expansion: North America</li>
+                        <li>Future: Europe, Asia-Pacific</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Competitive Landscape -->
+    <div class="slide">
+        <h2>Competitive Positioning</h2>
+        <table style="margin-top: 40px;">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>UrsulaGIS</th>
+                    <th>ArcGIS</th>
+                    <th>QGIS</th>
+                    <th>Farm Software</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Agricultural Tools</td>
+                    <td>✅ Comprehensive</td>
+                    <td>❌ Limited</td>
+                    <td>❌ Limited</td>
+                    <td>✅ Yes</td>
+                </tr>
+                <tr>
+                    <td>3D Visualization</td>
+                    <td>✅ NASA WorldWind</td>
+                    <td>✅ Yes</td>
+                    <td>⚠️ Limited</td>
+                    <td>❌ No</td>
+                </tr>
+                <tr>
+                    <td>Cost</td>
+                    <td>💰 Competitive</td>
+                    <td>💰💰💰 Expensive</td>
+                    <td>✅ Free</td>
+                    <td>💰💰 Moderate</td>
+                </tr>
+                <tr>
+                    <td>Ease of Use</td>
+                    <td>✅ Intuitive</td>
+                    <td>⚠️ Complex</td>
+                    <td>⚠️ Complex</td>
+                    <td>✅ Good</td>
+                </tr>
+                <tr>
+                    <td>Cross-platform</td>
+                    <td>✅ Yes</td>
+                    <td>⚠️ Limited</td>
+                    <td>✅ Yes</td>
+                    <td>⚠️ Varies</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="highlight" style="margin-top: 30px;">
+            <h3>Our Competitive Advantages</h3>
+            <p>1. Specialized agricultural focus | 2. Cost-effective pricing | 3. User-friendly interface | 4. Comprehensive all-in-one solution | 5. Modern technology stack</p>
+        </div>
+    </div>
+
+    <!-- Slide 9: Business Model -->
+    <div class="slide">
+        <h2>Business Model</h2>
+        <div class="feature-grid" style="margin-top: 40px;">
+            <div class="feature-card">
+                <h4>1. Software Licensing</h4>
+                <ul>
+                    <li>Desktop: $X,XXX/user/year</li>
+                    <li>Enterprise: $XX,XXX/org/year</li>
+                    <li>Educational: Discounted</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>2. Professional Services</h4>
+                <ul>
+                    <li>Implementation & training</li>
+                    <li>Custom development</li>
+                    <li>Consulting services</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>3. Plugin Marketplace</h4>
+                <ul>
+                    <li>Third-party plugins</li>
+                    <li>Revenue sharing</li>
+                    <li>(Future offering)</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>4. Cloud Services</h4>
+                <ul>
+                    <li>Data sync & backup</li>
+                    <li>Cloud analytics</li>
+                    <li>Mobile integration</li>
+                    <li>(Future offering)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Go-to-Market -->
+    <div class="slide">
+        <h2>Go-to-Market Strategy</h2>
+        <div style="margin-top: 40px;">
+            <div class="two-column">
+                <div>
+                    <h3>Phase 1: Market Entry (Months 1-6)</h3>
+                    <ul>
+                        <li>Target: Agricultural consultants</li>
+                        <li>Channels: Direct sales, trade shows</li>
+                        <li>Focus: Latin America</li>
+                        <li>Goal: 100 paying customers</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3>Phase 2: Expansion (Months 7-12)</h3>
+                    <ul>
+                        <li>Target: Large-scale operations</li>
+                        <li>Channels: Equipment partnerships</li>
+                        <li>Focus: North America</li>
+                        <li>Goal: 500 paying customers</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: 40px;">
+                <h3>Phase 3: Scale (Year 2+)</h3>
+                <ul>
+                    <li>Target: Enterprise companies</li>
+                    <li>Channels: Reseller network, online</li>
+                    <li>Focus: Global expansion</li>
+                    <li>Goal: 2,000+ paying customers</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Traction -->
+    <div class="slide">
+        <h2>Traction & Milestones</h2>
+        <div class="two-column" style="margin-top: 40px;">
+            <div>
+                <h3>Current Status</h3>
+                <ul>
+                    <li>✅ Version 1.0.1 released</li>
+                    <li>✅ Core GIS functionality complete</li>
+                    <li>✅ Agricultural tools implemented</li>
+                    <li>✅ Cross-platform support</li>
+                    <li>✅ Plugin architecture</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Next Milestones (6-12 Months)</h3>
+                <ul>
+                    <li>🎯 Cloud integration</li>
+                    <li>🎯 Mobile companion app</li>
+                    <li>🎯 Enhanced analytics & ML</li>
+                    <li>🎯 API for integrations</li>
+                    <li>🎯 First 100 paying customers</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 12: Financial Projections -->
+    <div class="slide">
+        <h2>Financial Projections</h2>
+        <table style="margin-top: 40px;">
+            <thead>
+                <tr>
+                    <th>Year</th>
+                    <th>Customers</th>
+                    <th>ARPU*</th>
+                    <th>Revenue</th>
+                    <th>Growth</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Year 1</strong></td>
+                    <td>100</td>
+                    <td>$X,XXX</td>
+                    <td>$XXX,XXX</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><strong>Year 2</strong></td>
+                    <td>500</td>
+                    <td>$X,XXX</td>
+                    <td>$X.XM</td>
+                    <td>400%</td>
+                </tr>
+                <tr>
+                    <td><strong>Year 3</strong></td>
+                    <td>2,000</td>
+                    <td>$X,XXX</td>
+                    <td>$XX.XM</td>
+                    <td>300%</td>
+                </tr>
+            </tbody>
+        </table>
+        <p style="margin-top: 20px; font-size: 0.9em;">*Average Revenue Per User</p>
+        <div class="highlight" style="margin-top: 30px;">
+            <p><strong>Path to Profitability:</strong> Break-even Month 18-24 | Positive cash flow Year 2 | Profitable Year 3</p>
+        </div>
+    </div>
+
+    <!-- Slide 13: Use of Funds -->
+    <div class="slide">
+        <h2>Use of Funds</h2>
+        <h3 style="text-align: center; margin-bottom: 40px;">$X Million Series A Funding</h3>
+        <table style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Allocation</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Product Development</strong></td>
+                    <td>40%</td>
+                    <td>Cloud features, mobile app, ML/AI capabilities</td>
+                </tr>
+                <tr>
+                    <td><strong>Sales & Marketing</strong></td>
+                    <td>30%</td>
+                    <td>Team expansion, marketing campaigns, partnerships</td>
+                </tr>
+                <tr>
+                    <td><strong>Operations</strong></td>
+                    <td>15%</td>
+                    <td>Infrastructure, tools, office space</td>
+                </tr>
+                <tr>
+                    <td><strong>Team</strong></td>
+                    <td>10%</td>
+                    <td>Key hires (engineering, sales, product)</td>
+                </tr>
+                <tr>
+                    <td><strong>Reserve</strong></td>
+                    <td>5%</td>
+                    <td>Working capital and contingencies</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Slide 14: Risks -->
+    <div class="slide">
+        <h2>Risks & Mitigation</h2>
+        <div style="margin-top: 40px;">
+            <div class="risk-item">
+                <h4>⚠️ Market Risk: Slow Adoption</h4>
+                <p>Agricultural sector can be slow to adopt new technology</p>
+                <div class="mitigation">
+                    <strong>Mitigation:</strong> Focus on ROI demonstration, partner with trusted advisors
+                </div>
+            </div>
+            <div class="risk-item">
+                <h4>⚠️ Competitive Risk: Large Players</h4>
+                <p>Established GIS companies with significant resources</p>
+                <div class="mitigation">
+                    <strong>Mitigation:</strong> Focus on agricultural specialization, superior UX
+                </div>
+            </div>
+            <div class="risk-item">
+                <h4>⚠️ Technical Risk: Technology Changes</h4>
+                <p>Java/JavaFX ecosystem evolution</p>
+                <div class="mitigation">
+                    <strong>Mitigation:</strong> Modern stack, active community, modular architecture
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 15: Vision -->
+    <div class="slide">
+        <h2>Vision & Roadmap</h2>
+        <div class="highlight" style="margin-top: 40px; text-align: center;">
+            <h2 style="color: #667eea;">"To become the leading GIS platform for precision agriculture globally"</h2>
+        </div>
+        <div class="two-column" style="margin-top: 40px;">
+            <div>
+                <h3>5-Year Roadmap</h3>
+                <ul>
+                    <li><strong>Year 1-2:</strong> Foundation - Market presence, customer base, cloud infrastructure</li>
+                    <li><strong>Year 3-4:</strong> Expansion - International, mobile, enterprise features</li>
+                    <li><strong>Year 5:</strong> Market Leadership - Comprehensive ecosystem, partnerships</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Future Innovations</h3>
+                <ul>
+                    <li>🤖 AI/ML Integration</li>
+                    <li>☁️ Cloud Platform (SaaS)</li>
+                    <li>📱 Mobile Apps</li>
+                    <li>🔗 IoT Integration</li>
+                    <li>🌐 Global Expansion</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 16: Investment Highlights -->
+    <div class="slide">
+        <h2>Investment Highlights</h2>
+        <div class="feature-grid" style="margin-top: 40px;">
+            <div class="feature-card">
+                <h4>✅ Large & Growing Market</h4>
+                <p>$XX Billion precision agriculture market, 13% CAGR</p>
+            </div>
+            <div class="feature-card">
+                <h4>✅ Proven Technology</h4>
+                <p>Working product v1.0.1, modern scalable architecture</p>
+            </div>
+            <div class="feature-card">
+                <h4>✅ Strong Position</h4>
+                <p>Specialized focus, cost-effective, user-friendly</p>
+            </div>
+            <div class="feature-card">
+                <h4>✅ Clear Revenue Path</h4>
+                <p>Defined business model, multiple revenue streams</p>
+            </div>
+            <div class="feature-card">
+                <h4>✅ Experienced Team</h4>
+                <p>Technical expertise, domain knowledge, execution capability</p>
+            </div>
+            <div class="feature-card">
+                <h4>✅ Significant Upside</h4>
+                <p>Large addressable market, expansion opportunities, platform potential</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 17: The Ask -->
+    <div class="slide">
+        <h2>The Ask</h2>
+        <div class="stat-box" style="max-width: 800px; margin: 40px auto;">
+            <div class="number">$X Million</div>
+            <div class="label">Series A Funding</div>
+        </div>
+        <div class="two-column" style="margin-top: 40px;">
+            <div>
+                <h3>Use of Funds</h3>
+                <ul>
+                    <li>Accelerate product development</li>
+                    <li>Build sales & marketing team</li>
+                    <li>Expand market presence</li>
+                    <li>Develop cloud & mobile platforms</li>
+                </ul>
+            </div>
+            <div>
+                <h3>What We're Looking For</h3>
+                <ul>
+                    <li>Strategic investors with industry connections</li>
+                    <li>B2B SaaS growth experience</li>
+                    <li>Partners for market expansion</li>
+                    <li>Long-term vision alignment</li>
+                </ul>
+            </div>
+        </div>
+        <div class="highlight" style="margin-top: 40px;">
+            <h3>Expected Outcomes</h3>
+            <p>500+ customers by Year 2 | $X.XM+ ARR by Year 2 | Market leadership | Path to Series B</p>
+        </div>
+    </div>
+
+    <!-- Slide 18: Contact -->
+    <div class="slide title-slide">
+        <h1>Let's Connect</h1>
+        <div style="margin-top: 60px; font-size: 1.5em;">
+            <p><strong>UrsulaGIS Desktop</strong></p>
+            <p style="margin-top: 30px;">Email: contact@ursulagis.com</p>
+            <p>Website: www.ursulagis.com</p>
+            <p style="margin-top: 40px; font-size: 1.2em;">Investment Inquiries: investors@ursulagis.com</p>
+        </div>
+    </div>
+</body>
+</html>
