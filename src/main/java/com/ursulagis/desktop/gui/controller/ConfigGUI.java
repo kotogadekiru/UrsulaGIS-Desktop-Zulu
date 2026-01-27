@@ -969,8 +969,41 @@ public class ConfigGUI extends AbstractGUIController{
 			numberFormat.setMaximumFractionDigits(2);
 
 			String totalString = numberFormat.format(total);
-			Label importeTotalLabel = new Label("Importe total: "+totalString);			
-			//TODO actualizar el importe total cuando se cambia el precio o la cantidad
+			String importeTotalLabelText = Messages.getString("ConfigGUI.importeTotal");
+			Label importeTotalLabel = new Label(importeTotalLabelText + ": " + totalString);			
+			
+			// Función para actualizar el importe total en el label
+			Runnable updateTotalLabel = () -> {
+				Platform.runLater(() -> {
+					oc.calcImporteTotal();
+					Double newTotal = oc.getImporteTotal();
+					if(newTotal == null) {
+						newTotal = 0.0;
+					}
+					String newTotalString = numberFormat.format(newTotal);
+					importeTotalLabel.setText(importeTotalLabelText + ": " + newTotalString);
+				});
+			};
+			
+			// Listener para detectar cambios en la lista de items (agregar/eliminar)
+			data.addListener((javafx.collections.ListChangeListener.Change<? extends OrdenCompraItem> change) -> {
+				while (change.next()) {
+					if (change.wasAdded() || change.wasRemoved()) {
+						updateTotalLabel.run();
+					}
+				}
+			});
+			
+			// Listener para detectar cuando se completa la edición de una celda en la tabla
+			// Esto captura cambios en cantidad, precio o importe cuando se edita una celda
+			table.editingCellProperty().addListener((obs, oldCell, newCell) -> {
+				// Cuando se completa la edición (newCell es null después de tener un valor), actualizar el total
+				if (oldCell != null && newCell == null) {
+					// La edición se completó, actualizar el total
+					updateTotalLabel.run();
+				}
+			});
+			
 			importeTotalLabel.setPadding(new Insets(5,5,5,5));//ar,d,ab,izq
 			hBoxTotal.getChildren().add(importeTotalLabel);		
 			v.getChildren().add(hBoxTotal);
