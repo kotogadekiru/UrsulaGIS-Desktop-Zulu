@@ -142,7 +142,7 @@ public class SiembraGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println(Messages.getString("SiembraGUIController.doEditSiembraSucceeded")); 
+				System.out.println("doEditSiembra succeeded"); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
@@ -170,7 +170,7 @@ public class SiembraGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println(Messages.getString("CosechaGUIController.processUniteHarvestMapsTaskSucceeded")); 
+			System.out.println("ProcessUniteHarvestMapsTask succeeded"); 
 			playSound();
 		});//fin del OnSucceeded											
 		JFXMain.executorPool.execute(umTask);
@@ -240,7 +240,7 @@ public class SiembraGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println(Messages.getString("JFXMain.grillarSiembraSucceeded")); 
+			System.out.println("GrillarSiembrasMapTask succeeded"); 
 			playSound();
 		});//fin del OnSucceeded		
 		JFXMain.executorPool.execute(umTask);
@@ -316,7 +316,7 @@ public class SiembraGUIController {
 				labor.setLayer(new LaborLayer());
 				Optional<SiembraLabor> cosechaConfigured= SiembraConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("SiembraGUIController.dialogCancelledNoFertilizacion")); 
+					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -329,7 +329,7 @@ public class SiembraGUIController {
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
 
-					System.out.println(Messages.getString("SiembraGUIController.openFertMapTaskSucceeded")); 
+					System.out.println("OpenFertMapTask succeeded"); 
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
@@ -460,7 +460,7 @@ public class SiembraGUIController {
 		siembra.setNombre(cosecha.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(siembra);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
+			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			siembra.dispose();//libero los recursos reservados
 			return;
 		}		

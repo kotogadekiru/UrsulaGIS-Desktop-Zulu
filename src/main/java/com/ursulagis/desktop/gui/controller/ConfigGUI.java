@@ -333,7 +333,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 
 	public void doProcessMargin() {		
-		System.out.println(Messages.getString("ConfigGUI.processingMargins")); 
+		System.out.println("processingMargins"); 
 
 		Margen margen = new Margen();
 		margen.setLayer(new LaborLayer());
@@ -356,7 +356,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);
 		if(!margenConfigured.isPresent()){//
-			System.out.println(Messages.getString("ConfigGUI.dialogCancelledNoMargenes")); 
+			System.out.println("el dialogo termino con cancel asi que no continuo con el calculo de los margenes"); 
 			return;
 		}							
 
@@ -370,7 +370,7 @@ public class ConfigGUI extends AbstractGUIController{
 			this.getLayerPanel().update(this.getWwd());
 			playSound();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("ConfigGUI.processMarginTaskSucceeded")); 
+			System.out.println("ProcessMarginTask succeeded"); 
 		});
 		executorPool.execute(uMmTask);
 	}
@@ -383,7 +383,7 @@ public class ConfigGUI extends AbstractGUIController{
 				labor.setLayer(new LaborLayer());
 				Optional<Margen> cosechaConfigured= MargenConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("ConfigGUI.dialogCancelledNoFertilizacion")); 
+					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -397,7 +397,7 @@ public class ConfigGUI extends AbstractGUIController{
 					this.getLayerPanel().update(this.getWwd());
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
-					System.out.println(Messages.getString("ConfigGUI.openSoilMapTaskSucceeded")); 
+					System.out.println("OpenSoilMapTask succeeded"); 
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);

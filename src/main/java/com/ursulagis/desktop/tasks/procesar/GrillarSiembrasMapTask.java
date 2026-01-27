@@ -98,7 +98,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		labor.setLayer(new LaborLayer());
 		// 2 generar una grilla de ancho ="ancho" que cubra bounds
 		List<Polygon>  grilla = construirGrilla(unionEnvelope, ancho);
-		System.out.println(Messages.getString("GrillarSiembrasMapTask.3")+grilla.size()+Messages.getString("GrillarSiembrasMapTask.4"));
+		System.out.println("creando una grilla con"+grilla.size()+" elementos");
 
 		featureCount = grilla.size();
 
@@ -128,7 +128,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 								if(f!=null){
 									boolean res = features.add(f);
 									if(!res){
-										System.out.println(Messages.getString("GrillarSiembrasMapTask.5")+f);
+										System.out.println("no se pudo agregar la feature"+f);
 									}
 								}
 							}
@@ -136,7 +136,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 							updateProgress( this.featureNumber, featureCount);
 
 						}catch(Exception e){
-							System.err.println(Messages.getString("GrillarSiembrasMapTask.6"));
+							System.err.println("error al construir un elemento de la grilla");
 							e.printStackTrace();
 						}
 						},
@@ -147,7 +147,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 			s.clearCache();
 		}
 
-		System.out.println(Messages.getString("GrillarSiembrasMapTask.7")+byPolygon.size()+Messages.getString("GrillarSiembrasMapTask.8"));
+		System.out.println("cree una union de"+byPolygon.size()+" elementos");
 
 		if(labor.inCollection == null){
 			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarSiembrasMapTask.9"),labor.getType());
@@ -155,7 +155,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){
-			System.out.println(Messages.getString("GrillarSiembrasMapTask.10"));
+			System.out.println("no se pudieron agregar las features al outCollection");
 		}
 
 		labor.constructClasificador();
@@ -163,7 +163,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		runLater(byPolygon.values());
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println(Messages.getString("GrillarSiembrasMapTask.11")+time+Messages.getString("GrillarSiembrasMapTask.12")+time/featureCount+Messages.getString("GrillarSiembrasMapTask.13"));
+		System.out.println("tarde"+time+" milisegundos en unir las siembras. es"+time/featureCount+" milisegundos por polígono");
 	}
 
 	/**

@@ -351,7 +351,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			playSound();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("ConfigGUI.processMarginTaskSucceeded")); 
+			System.out.println("ProcessMarginTask succeeded"); 
 		});
 		executorPool.execute(uMmTask);
 	}

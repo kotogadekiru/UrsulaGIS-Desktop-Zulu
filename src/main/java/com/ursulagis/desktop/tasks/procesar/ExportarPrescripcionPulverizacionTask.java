@@ -245,7 +245,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 					buffered = colectionCat.union();
 					buffered =buffered.buffer(bufer);
 				}catch(Exception e){
-					System.out.println(Messages.getString("ProcessHarvestMapTask.10")); //$NON-NLS-1$
+					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
 					//java.lang.IllegalArgumentException: Comparison method violates its general contract!
 					try{
 					buffered= EnhancedPrecisionOp.buffer(colectionCat, bufer);//java.lang.IllegalArgumentException: Comparison method violates its general contract!

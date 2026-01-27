@@ -97,7 +97,7 @@ public class SueloGUIController extends AbstractGUIController{
 
 			playSound();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("SueloGUIController.balanceNutrientesTaskSucceeded")); 
+			System.out.println("balanceNutrientesTask succeeded"); 
 		});
 		JFXMain.executorPool.execute(balanceNutrientesTask);
 	}
@@ -206,7 +206,7 @@ public class SueloGUIController extends AbstractGUIController{
 				labor.setLayer(new LaborLayer());
 				Optional<Suelo> cosechaConfigured= SueloConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("SueloGUIController.dialogCancelledNoFertilizacion")); 
+					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -220,7 +220,7 @@ public class SueloGUIController extends AbstractGUIController{
 					umTask.uninstallProgressBar();
 					main.viewGoTo(ret);
 
-					System.out.println(Messages.getString("SueloGUIController.openSoilMapTaskSucceeded")); 
+					System.out.println("OpenSoilMapTask succeeded"); 
 					main.playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);

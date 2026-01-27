@@ -29,9 +29,7 @@ public class SimplificarCaminoTask extends Task<Camino>{
 		NumberFormat nf = Messages.getNumberFormat();
 		System.out.println("antes "+nf.format(camino.getLongitud()));
 		//SimplificarCaminoTask.ordenarTriadas(camino);
-		ponerInicioYFin(camino);
 		ordenarRecorrido(camino);
-		quitarInicioYFin(camino);
 		//this.ordenarRecorrido2(this.camino);
 		System.out.println("despues "+nf.format(camino.getLongitud()));
 		return camino;
@@ -91,18 +89,16 @@ public class SimplificarCaminoTask extends Task<Camino>{
 	public int ordenarRecorrido(Camino c){
 		// The tricky part of this code is not testing 2 adjacents edges for
 		// crosses.
-		// You need to be careful when edge lands on 0. (temp helps this check)
+		// Optimiza el camino para que sea lo mas corto posible
+		// Permite intercambiar todos los puntos, incluyendo el primero y el ultimo
 		int crosses = 1;
-		int temp=0;
 
 		for(int tries2 =0;tries2<1000 && crosses>0;tries2++) {
 			crosses=0;
-			temp=0;
-			for (int i = 0; i < positions.size(); i++) {
-				//ordena el camino entre el primero y el ultimo para que sea lo mas corto posible
-				temp = (i > 0) ? 0 : 1;
-				for (int j = i ; j < positions.size() -1 -temp; j++) {
-					//cruzo i con todos los siguientes excepto el ultimo y el primero
+			for (int i = 0; i < positions.size() - 1; i++) {
+				//permite intercambiar con todos los puntos siguientes
+				for (int j = i + 2; j < positions.size(); j++) {
+					//cruzo i con todos los siguientes excepto el inmediatamente siguiente (i+1)
 					crosses+=swapIfCrossed(i,j,positions);
 				}
 			}
@@ -132,13 +128,20 @@ public class SimplificarCaminoTask extends Task<Camino>{
 	 */
 	public int swapIfCrossed(int i, int j,List<Position> positions) {
 		if (i == j)	return 0;
+		if (i >= j) return 0; // asegurar que i < j
 		//		double dij= distance(i, j);
 		//		if(dij>2*this.resolucion){
 		//			return false;//no permito caminos mas largos del doble de la resolucion
 		//		}
 		//i2 es el indice del siguiente nodo despues de i
-		int i2 = (i + 1) % positions.size(); // may be wasteful, but safer
-		int j2 = (j + 1) % positions.size();
+		// Para un camino abierto (no ciclico), no usamos modulo
+		int i2 = i + 1;
+		int j2 = j + 1;
+		
+		// Verificar que los indices sean validos (no tratar como ciclo)
+		if (i2 >= positions.size() || j2 >= positions.size()) {
+			return 0;
+		}
 
 		double sumaDiags =distanciaPuntosGrados(i, j,positions) + distanciaPuntosGrados(i2, j2,positions);
 		double sumaLados =distanciaPuntosGrados(i, i2,positions)+ distanciaPuntosGrados(j, j2,positions);

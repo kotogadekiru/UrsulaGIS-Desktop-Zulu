@@ -244,12 +244,12 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 		labor.clearCache();
 		reader.close();
 
-		System.out.println(+puntosEliminados+Messages.getString("ProcessHarvestMapTask.6"));	
+		System.out.println(+puntosEliminados+" puntos eliminados por punto duplicado");	
 		if(labor.getConfiguracion().correccionOutlayersEnabled()){
-			System.out.println(Messages.getString("ProcessHarvestMapTask.7")+toleranciaCoeficienteVariacion); //$NON-NLS-1$
+			System.out.println("corriegiendo outlayers con CV Max"+toleranciaCoeficienteVariacion); //$NON-NLS-1$
 			corregirOutlayersParalell();		
 		} else { 
-			System.out.println(Messages.getString("ProcessHarvestMapTask.8")); //$NON-NLS-1$
+			System.out.println("no corrijo outlayers"); //$NON-NLS-1$
 		}
 		CosechaConfig config = (CosechaConfig)labor.getConfiguracion();
 
@@ -623,7 +623,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 			double distancia =geo.distance(geo2)/ProyectionConstants.metersToLat();
 
 			double distanciaInvert = (ancho-distancia);
-			if(distanciaInvert<0)System.out.println(Messages.getString("ProcessHarvestMapTask.19")+distanciaInvert); //$NON-NLS-1$
+			if(distanciaInvert<0)System.out.println("distancia-1 es menor a cero"+distanciaInvert); //$NON-NLS-1$
 			//los pesos van de ~ancho^2 para los mas cercanos a 0 para los mas lejanos
 			double weight =  Math.pow(distanciaInvert,2);	
 			if(isBetweenMaxMin(cantidadCosecha)){
@@ -642,8 +642,8 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 			//			promedioRinde = Math.max(promedioRinde,labor.minRindeProperty.doubleValue());
 			promedioAltura = sumatoriaAltura/divisor;
 		}else{
-			System.out.println(Messages.getString("ProcessHarvestMapTask.20")+ divisor); //$NON-NLS-1$
-			System.out.println(Messages.getString("ProcessHarvestMapTask.21")+sumatoriaRinde); //$NON-NLS-1$
+			System.out.println("divisor es <0"+ divisor); //$NON-NLS-1$
+			System.out.println("sumatoria de rindes ="+sumatoriaRinde); //$NON-NLS-1$
 		}
 		//4) obtener la varianza (LA DIF ABSOLUTA DEL DATO Y EL PROM DE LA MUESTRA) (EJ. ABS(10-9.3)/9.3 = 13%)
 		//SI 13% ES MAYOR A TOLERANCIA CV% REEMPLAZAR POR PROMEDIO SINO NO

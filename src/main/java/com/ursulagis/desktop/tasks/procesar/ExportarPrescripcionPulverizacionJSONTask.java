@@ -324,7 +324,7 @@ public class ExportarPrescripcionPulverizacionJSONTask extends ProgresibleTask<F
 					buffered = colectionCat.union();
 					buffered = buffered.buffer(bufer);
 				}catch(Exception e){
-					System.out.println(Messages.getString("ProcessHarvestMapTask.10"));
+					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision");
 					try{
 						buffered = org.locationtech.jts.precision.EnhancedPrecisionOp.buffer(colectionCat, bufer);
 					}catch(Exception e2){

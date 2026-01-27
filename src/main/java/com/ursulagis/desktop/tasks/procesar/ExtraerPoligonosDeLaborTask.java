@@ -104,7 +104,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 					}
 					poligonos.add(poli);
 				} else{
-					System.out.println(Messages.getString("ExtraerPoligonosDeLaborTask.2")+has); //$NON-NLS-1$
+					System.out.println("el polígono es chico"+has); //$NON-NLS-1$
 				}
 				//}
 				index++;
@@ -330,7 +330,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println(Messages.getString("ExtraerPoligonosDeLaborTask.3")); //$NON-NLS-1$
+			System.out.println("cancelando el ProcessMapTask"); //$NON-NLS-1$
 			this.cancel();
 			this.uninstallProgressBar();
 		});
@@ -411,7 +411,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 					buffered = colectionCat.union();
 					buffered =buffered.buffer(bufer);
 				}catch(Exception e){
-					System.out.println(Messages.getString("ProcessHarvestMapTask.10")); //$NON-NLS-1$
+					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
 					//java.lang.IllegalArgumentException: Comparison method violates its general contract!
 					try{
 					buffered= EnhancedPrecisionOp.buffer(colectionCat, bufer);//java.lang.IllegalArgumentException: Comparison method violates its general contract!

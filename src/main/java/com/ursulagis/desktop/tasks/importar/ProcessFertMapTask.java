@@ -64,7 +64,7 @@ public class ProcessFertMapTask extends ProcessMapTask<FertilizacionItem,Fertili
 			featureCount=labor.getInCollection().size();
 		}
 		
-		System.out.println(Messages.getString("ProcessFertMapTask.0")+DataUtilities.encodeType(reader.getFeatureType())); //$NON-NLS-1$
+		System.out.println("Fertilización Type:"+DataUtilities.encodeType(reader.getFeatureType())); //$NON-NLS-1$
 
 		int divisor = 1;
 

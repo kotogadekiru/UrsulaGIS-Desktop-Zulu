@@ -125,7 +125,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				//this.wwjPanel.repaint();//null pointer
-				System.out.println(Messages.getString("FertilizacionGUIController.doEditFertilizacionSucceeded")); 
+				System.out.println("doEditFertilización succeeded"); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
@@ -208,7 +208,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 			}	
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("FertilizacionGUIController.doEditFertilizacionSucceeded")); 
+			System.out.println("doEditFertilización succeeded"); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
@@ -230,7 +230,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				fAPartir.setActivo(false);
 			}		
 			umTask2.uninstallProgressBar();
-			System.out.println(Messages.getString("FertilizacionGUIController.doEditFertilizacionSucceeded")); 
+			System.out.println("doEditFertilización succeeded"); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask2);
@@ -246,7 +246,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		labor.setNombre(fertilizacionLabor.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
+			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -380,7 +380,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				labor.setLayer(new LaborLayer());
 				Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("FertilizacionGUIController.dialogCancelledNoFertilizacion")); 
+					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -394,7 +394,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
 
-					System.out.println(Messages.getString("FertilizacionGUIController.openFertMapTaskSucceeded")); 
+					System.out.println("OpenFertMapTask succeeded"); 
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
@@ -422,7 +422,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			fertilizacionesAUnir.forEach(f -> f.getLayer().setEnabled(false));
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("CosechaGUIController.processUniteFertMapsTaskSucceeded")); 
+			System.out.println("ProcessUniteFertMapsTask succeeded"); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);

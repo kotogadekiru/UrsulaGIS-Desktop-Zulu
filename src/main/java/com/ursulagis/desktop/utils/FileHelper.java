@@ -111,7 +111,7 @@ public class FileHelper {
 	 * @param f2 filter regex "*.jpg"
 	 */
 	public static List<File> chooseFiles(String f1,String f2) {
-		System.out.println(Messages.getString("FileHelper.choosingFiles")); //$NON-NLS-1$
+		System.out.println("eligiendo archivos"); //$NON-NLS-1$
 		List<File> files =null;
 		FileChooser fileChooser = new FileChooser();
 
@@ -130,15 +130,15 @@ public class FileHelper {
 			lastFile=File.listRoots()[0];
 		} 	
 		try{
-			System.out.println(Messages.getString("FileHelper.debugLastFile")+lastFile); //$NON-NLS-1$
+			System.out.println("último archivo"+lastFile); //$NON-NLS-1$
 			//if(lastFile != null && lastFile.exists()){
-			System.out.println(Messages.getString("FileHelper.debugParentDirectory")+lastFile.getParent()); //$NON-NLS-1$
-			System.out.println(Messages.getString("FileHelper.debugFileName")+lastFile.getName()); //$NON-NLS-1$
+			System.out.println("directorio padre"+lastFile.getParent()); //$NON-NLS-1$
+			System.out.println("último nombre de archivo"+lastFile.getName()); //$NON-NLS-1$
 			fileChooser.setInitialDirectory(lastFile.getParentFile());
 			fileChooser.setInitialFileName(lastFile.getName());
-			System.out.println(Messages.getString("FileHelper.showingMultipleDialog")); //$NON-NLS-1$
+			System.out.println("mostrando múltiples diálogos..."); //$NON-NLS-1$
 			files = fileChooser.showOpenMultipleDialog(JFXMain.stage);
-			System.out.println(Messages.getString("FileHelper.dialogShown")); //$NON-NLS-1$
+			System.out.println("diálogo mostrado"); //$NON-NLS-1$
 			//		file = files.get(0);
 		}catch(Exception e){
 			e.printStackTrace();
@@ -151,7 +151,7 @@ public class FileHelper {
 			}
 
 		}
-		System.out.println(Messages.getString("FileHelper.filesSelected")+files); //$NON-NLS-1$
+		System.out.println("archivos seleccionados"+files); //$NON-NLS-1$
 
 		try {
 			if(files!=null && files.size()>0){
@@ -162,7 +162,7 @@ public class FileHelper {
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-		System.out.println(Messages.getString("FileHelper.returningFiles")); //$NON-NLS-1$
+		System.out.println("retornando archivos"); //$NON-NLS-1$
 		return files;
 	}
 
@@ -244,7 +244,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println(Messages.getString("FileHelper.fileSelectedToSave")+file); //$NON-NLS-1$
+		System.out.println("archivo seleccionado para guardar"+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -288,7 +288,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println(Messages.getString("FileHelper.debugSelectedFile")+file); //$NON-NLS-1$
+		System.out.println("archivo seleccionado para guardar"+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -331,7 +331,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println(Messages.getString("FileHelper.debugSelectedFile")+file); //$NON-NLS-1$
+		System.out.println("archivo seleccionado para guardar"+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -366,7 +366,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println(Messages.getString("archivo seleccionado para guardar")+file); 
+		System.out.println("archivo seleccionado para guardar"+file); 
 
 		return file;
 	}

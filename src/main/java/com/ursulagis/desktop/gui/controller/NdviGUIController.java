@@ -389,7 +389,7 @@ public class NdviGUIController extends AbstractGUIController{
 				this.getLayerPanel().update(this.getWwd());
 				pmtask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println(Messages.getString("NdviGUIController.editHarvestMapTaskSucceeded")); 
+				System.out.println("EditHarvestMapTask succeeded"); 
 				playSound();
 				main.viewGoTo(ret);
 			});
@@ -466,7 +466,7 @@ public class NdviGUIController extends AbstractGUIController{
 //				this.getLayerPanel().update(this.getWwd());
 //				pmtask.uninstallProgressBar();
 //				main.wwjPanel.repaint();
-//				System.out.println(Messages.getString("NdviGUIController.editHarvestMapTaskSucceeded")); 
+//				System.out.println("EditHarvestMapTask succeeded"); 
 //				playSound();
 //				main.viewGoTo(ret);
 //			});

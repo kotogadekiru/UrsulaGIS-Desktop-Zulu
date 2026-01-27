@@ -277,7 +277,7 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 				areasIntersecciones.put(sPoly,areaInterseccion);				
 					
 			}catch(Exception e){
-				System.err.println(Messages.getString("GrillarCosechasMapTask.14")+poly+Messages.getString("GrillarCosechasMapTask.15")+g); //$NON-NLS-1$ //$NON-NLS-2$
+				System.err.println("no se pudo hacer la intersección entre"+poly+""+g); //$NON-NLS-1$ //$NON-NLS-2$
 			}		
 		}		
 		//si el area intersectada es mayor a un minimo procedo a crear la siembra promedio
