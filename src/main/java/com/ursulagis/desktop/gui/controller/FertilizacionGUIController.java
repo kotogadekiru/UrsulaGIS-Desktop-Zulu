@@ -125,7 +125,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				//this.wwjPanel.repaint();//null pointer
-				System.out.println(Messages.getString("JFXMain.283")); 
+				System.out.println(Messages.getString("FertilizacionGUIController.doEditFertilizacionSucceeded")); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
@@ -152,12 +152,12 @@ public class FertilizacionGUIController extends AbstractGUIController {
 
 		VBox vb = new VBox();
 		vb.getChildren().add(new HBox(new Label(Messages.getString("ProcessSplitFertMap.PCprimeraParticion")),firsPartPCTF)); 
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.301")),min)); 
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.302")),max)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMin")),min)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMax")),max)); 
 
 		minMaxDialog.setGraphic(vb);
-		minMaxDialog.setTitle(Messages.getString("JFXMain.303")); 
-		minMaxDialog.setContentText(Messages.getString("JFXMain.304")); 
+		minMaxDialog.setTitle(Messages.getString("CosechaGUIController.configureMaximoMinimoDosis")); 
+		minMaxDialog.setContentText(Messages.getString("CosechaGUIController.ceroParaIgnorar")); 
 		minMaxDialog.initOwner(JFXMain.stage);
 		Optional<ButtonType> res = minMaxDialog.showAndWait();
 		Double firsPartPC=null, minFert =null,maxFert=null; 
@@ -208,7 +208,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 			}	
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.283")); 
+			System.out.println(Messages.getString("FertilizacionGUIController.doEditFertilizacionSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
@@ -230,7 +230,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				fAPartir.setActivo(false);
 			}		
 			umTask2.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.283")); 
+			System.out.println(Messages.getString("FertilizacionGUIController.doEditFertilizacionSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask2);
@@ -243,10 +243,10 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		boolean directa = true;
 
 		labor.setLayer(layer);
-		labor.setNombre(fertilizacionLabor.getNombre()+" "+Messages.getString("JFXMain.255"));  
+		labor.setNombre(fertilizacionLabor.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -260,13 +260,13 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		TextField max = new TextField(df.format(0));
 
 		VBox vb = new VBox();
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.425")),dc)); 
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.426")),min)); 
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.427")),max)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("FertilizacionGUIController.dosisObj")),dc)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("FertilizacionGUIController.dosisMin")),min)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("FertilizacionGUIController.dosisMax")),max)); 
 
 		minMaxDialog.setGraphic(vb);
-		minMaxDialog.setTitle(Messages.getString("JFXMain.303")); 
-		minMaxDialog.setContentText(Messages.getString("JFXMain.304")); 
+		minMaxDialog.setTitle(Messages.getString("CosechaGUIController.configureMaximoMinimoDosis")); 
+		minMaxDialog.setContentText(Messages.getString("CosechaGUIController.ceroParaIgnorar")); 
 		//dateDialog.setHeaderText("Fecha Desde");
 		minMaxDialog.initOwner(JFXMain.stage);
 		Optional<ButtonType> res = minMaxDialog.showAndWait();
@@ -380,7 +380,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				labor.setLayer(new LaborLayer());
 				Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("JFXMain.308")); 
+					System.out.println(Messages.getString("FertilizacionGUIController.dialogCancelledNoFertilizacion")); 
 					continue;
 				}							
 
@@ -394,7 +394,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
 
-					System.out.println(Messages.getString("JFXMain.309")); 
+					System.out.println(Messages.getString("FertilizacionGUIController.openFertMapTaskSucceeded")); 
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
@@ -422,7 +422,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			fertilizacionesAUnir.forEach(f -> f.getLayer().setEnabled(false));
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.287")); 
+			System.out.println(Messages.getString("CosechaGUIController.processUniteFertMapsTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);

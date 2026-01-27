@@ -180,7 +180,7 @@ public class CrearSueloMapTask extends ProcessMapTask<SueloItem,Suelo> {
 		//MATERIA ORGANICA
 		sb.append("MO(0-20): "+df.format(si.getPorcMO())+"%\n");
 	//	sb.append(df.format(si.getPorcMO()));
-	//	sb.append("% " + Messages.getString("JFXMain.236") + " 0-20cm \n ");//JFXMain.236=%M0
+	//	sb.append("% " + Messages.getString("PoligonoGUIController.materiaOrganica") + " 0-20cm \n ");//JFXMain.236=%M0
 
 		//DENSIDAD APARENTE
 		df.setMaximumFractionDigits(0);

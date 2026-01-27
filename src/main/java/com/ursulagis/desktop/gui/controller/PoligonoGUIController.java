@@ -522,17 +522,17 @@ public class PoligonoGUIController extends AbstractGUIController{
 		SiembraLabor labor = new SiembraLabor();
 		LaborLayer layer = new LaborLayer();
 		labor.setLayer(layer);
-		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.255")); //-NLS-1$ //-NLS-2$
+		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("CosechaGUIController.siembra")); //-NLS-1$ //-NLS-2$
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); //-NLS-1$
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}				
 		
 		Optional<Double> plM2Obj= SiembraDosisObjetivoDialog.config(siembraConfigured.get());
 		if(!plM2Obj.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); //-NLS-1$
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}
@@ -560,7 +560,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.260")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.crearSiembraMapTaskSucceeded")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -574,7 +574,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		labor.setLayer(layer);
 		Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.261")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.dialogCancelledNoHarvest")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}							
@@ -601,7 +601,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.265")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.openHarvestMapTaskSucceeded")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -617,7 +617,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		//TODO modificar el dialog controler para poder ingresar el caldo
 		Optional<PulverizacionLabor> pulvConfigured= PulverizacionConfigDialogController.config(labor);
 		if(!pulvConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.249")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.dialogCancelledNoHarvest")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}							
@@ -642,7 +642,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			polis.stream().forEach(p->p.getLayer().setEnabled(false));
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.253")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.openHarvestMapTaskSucceeded")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -671,24 +671,24 @@ public class PoligonoGUIController extends AbstractGUIController{
 		main.recorridaGUIController.doAsignarValoresRecorrida(recorrida);//esto guarda una recorrida nueva
 
 
-		//		TextInputDialog ppmPDialog = new TextInputDialog(Messages.getString("JFXMain.228")); //-NLS-1$
+		//		TextInputDialog ppmPDialog = new TextInputDialog(Messages.getString("PoligonoGUIController.ppmP")); //-NLS-1$
 		//		ppmPDialog.initOwner(JFXMain.stage);
-		//		ppmPDialog.setTitle(Messages.getString("JFXMain.229")); //-NLS-1$
-		//		ppmPDialog.setContentText(Messages.getString("JFXMain.230")); //-NLS-1$
+		//		ppmPDialog.setTitle(Messages.getString("PoligonoGUIController.configurePpmP")); //-NLS-1$
+		//		ppmPDialog.setContentText(Messages.getString("PoligonoGUIController.ppmPRange")); //-NLS-1$
 		//		Optional<String> ppmPOptional = ppmPDialog.showAndWait();
 		//		Double ppmP = PropertyHelper.parseDouble(ppmPOptional.get()).doubleValue();//Double.valueOf(ppmPOptional.get());
 		//
-		//		TextInputDialog ppmNDialog = new TextInputDialog(Messages.getString("JFXMain.231")); //-NLS-1$
+		//		TextInputDialog ppmNDialog = new TextInputDialog(Messages.getString("PoligonoGUIController.ppmNO3Range")); //-NLS-1$
 		//		ppmNDialog.initOwner(JFXMain.stage);
-		//		ppmNDialog.setTitle(Messages.getString("JFXMain.232")); //-NLS-1$
-		//		ppmNDialog.setContentText(Messages.getString("JFXMain.233")); //-NLS-1$
+		//		ppmNDialog.setTitle(Messages.getString("PoligonoGUIController.configurePpmN")); //-NLS-1$
+		//		ppmNDialog.setContentText(Messages.getString("PoligonoGUIController.ppmNO3")); //-NLS-1$
 		//		Optional<String> ppmNOptional = ppmNDialog.showAndWait();
 		//		Double ppmN = PropertyHelper.parseDouble(ppmNOptional.get()).doubleValue();
 		//
-		//		TextInputDialog pMODialog = new TextInputDialog(Messages.getString("JFXMain.234")); //-NLS-1$
+		//		TextInputDialog pMODialog = new TextInputDialog(Messages.getString("PoligonoGUIController.moRange")); //-NLS-1$
 		//		pMODialog.initOwner(JFXMain.stage);
-		//		pMODialog.setTitle(Messages.getString("JFXMain.235")); //-NLS-1$
-		//		pMODialog.setContentText(Messages.getString("JFXMain.236")); //-NLS-1$
+		//		pMODialog.setTitle(Messages.getString("PoligonoGUIController.configureMateriaOrganica")); //-NLS-1$
+		//		pMODialog.setContentText(Messages.getString("PoligonoGUIController.materiaOrganica")); //-NLS-1$
 		//		Optional<String> pMOOptional = pMODialog.showAndWait();
 		//		Double pMO = PropertyHelper.parseDouble(pMOOptional.get()).doubleValue();// Double.valueOf(pMOOptional.get());
 		//
@@ -713,7 +713,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println(Messages.getString("JFXMain.237")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.openHarvestMapTaskSucceeded")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -853,7 +853,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			showPoligonos(poligonos);			
 			umTask.uninstallProgressBar();
 			this.main.wwjPanel.repaint();
-			System.out.println(Messages.getString("JFXMain.280")); 
+			System.out.println(Messages.getString("JFXMain.poligonosExtraidosSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
@@ -976,7 +976,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				}
 				umTask.uninstallProgressBar();
 				viewGoTo(ret);
-				System.out.println(Messages.getString("JFXMain.286")); 
+				System.out.println(Messages.getString("CosechaGUIController.processUniteHarvestMapsTaskSucceeded")); 
 				playSound();
 			});//fin del OnSucceeded
 			JFXMain.executorPool.execute(umTask);
@@ -1231,7 +1231,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.cosecha")); //-NLS-1$ //-NLS-2$
 		Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.266")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.dialogCancelledNoHarvest")); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -1258,7 +1258,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println(Messages.getString("JFXMain.270")); //-NLS-1$
+			System.out.println(Messages.getString("PoligonoGUIController.openHarvestMapTaskSucceeded")); //-NLS-1$
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
@@ -1302,7 +1302,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 		File downloadLocation=null;
 		try {
-			downloadLocation = File.createTempFile(Messages.getString("JFXMain.214"), Messages.getString("JFXMain.215")).getParentFile(); //-NLS-1$ //-NLS-2$
+			downloadLocation = File.createTempFile(Messages.getString("PoligonoGUIController.ndviTemp"), Messages.getString("PoligonoGUIController.tempFileSuffix")).getParentFile(); //-NLS-1$ //-NLS-2$
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1427,7 +1427,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		List<FileDataStore> stores = FileHelper.chooseShapeFileAndGetMultipleStores(files);
 		executorPool.submit(()->{
 			if (stores != null) {for(FileDataStore store : stores){//abro cada store y lo dibujo en el harvestMap individualmente
-				System.out.println(Messages.getString("JFXMain.312")); //$NON-NLS-1$
+				System.out.println(Messages.getString("PoligonoGUIController.loadingStoresToImportPolygons")); //$NON-NLS-1$
 				try {
 					String storeName = store.getNames().get(0).getLocalPart().replace("%20", " ");
 					//System.out.println(storeName);

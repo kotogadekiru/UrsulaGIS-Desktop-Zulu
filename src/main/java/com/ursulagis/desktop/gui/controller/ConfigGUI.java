@@ -215,7 +215,7 @@ public class ConfigGUI extends AbstractGUIController{
 		addMenuItem(Messages.getString("JFXMain.configNDVIMI"),(a)->doShowNdviTable(),menuConfiguracion); //
 		addMenuItem(Messages.getString("JFXMain.configRecorridaMI"),(a)->doShowRecorridaTable(),menuConfiguracion); //
 		addMenuItem(Messages.getString("JFXMain.OrdenCompra"),(a)->doShowOrdenesCompra(),menuConfiguracion); //
-		addMenuItem(Messages.getString("JFXMain.362"),(a)->doShowLaboresTable(),menuConfiguracion); //
+		addMenuItem(Messages.getString("ConfigGUI.labores"),(a)->doShowLaboresTable(),menuConfiguracion); //
 		addMenuItem(Messages.getString("JFXMain.configPulverizacionMI"),(a)->doShowOrdenesPulverizacionTable(),menuConfiguracion); //
 		addMenuItem(Messages.getString("JFXMain.configFertilizacionMI"),(a)->doShowOrdenesFertilizacionTable(),menuConfiguracion); //
 		addMenuItem(Messages.getString("JFXMain.configSiembraMI"),(a)->doShowOrdenesSiembraTable(),menuConfiguracion); //
@@ -333,7 +333,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 
 	public void doProcessMargin() {		
-		System.out.println(Messages.getString("JFXMain.319")); 
+		System.out.println(Messages.getString("ConfigGUI.processingMargins")); 
 
 		Margen margen = new Margen();
 		margen.setLayer(new LaborLayer());
@@ -350,13 +350,13 @@ public class ConfigGUI extends AbstractGUIController{
 		margen.setCosechas(cosechasEnabled);
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(Messages.getString("JFXMain.320")); //Rentabilidades
-		cosechasEnabled.forEach((c)->sb.append(c.getNombre()+Messages.getString("JFXMain.321"))); 
+		sb.append(Messages.getString("ConfigGUI.renta")); //Rentabilidades
+		cosechasEnabled.forEach((c)->sb.append(c.getNombre()+Messages.getString("ConfigGUI.spaceSeparator"))); 
 		margen.setNombre(sb.toString());
 
 		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);
 		if(!margenConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.322")); 
+			System.out.println(Messages.getString("ConfigGUI.dialogCancelledNoMargenes")); 
 			return;
 		}							
 
@@ -370,7 +370,7 @@ public class ConfigGUI extends AbstractGUIController{
 			this.getLayerPanel().update(this.getWwd());
 			playSound();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.323")); 
+			System.out.println(Messages.getString("ConfigGUI.processMarginTaskSucceeded")); 
 		});
 		executorPool.execute(uMmTask);
 	}
@@ -383,7 +383,7 @@ public class ConfigGUI extends AbstractGUIController{
 				labor.setLayer(new LaborLayer());
 				Optional<Margen> cosechaConfigured= MargenConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("JFXMain.317")); 
+					System.out.println(Messages.getString("ConfigGUI.dialogCancelledNoFertilizacion")); 
 					continue;
 				}							
 
@@ -397,7 +397,7 @@ public class ConfigGUI extends AbstractGUIController{
 					this.getLayerPanel().update(this.getWwd());
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
-					System.out.println(Messages.getString("JFXMain.318")); 
+					System.out.println(Messages.getString("ConfigGUI.openSoilMapTaskSucceeded")); 
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
@@ -455,7 +455,7 @@ public class ConfigGUI extends AbstractGUIController{
 	 */
 	public void doShowAcercaDe() {
 		Alert acercaDe = new Alert(AlertType.INFORMATION);
-		acercaDe.titleProperty().set(Messages.getString("JFXMain.363")+JFXMain.TITLE_VERSION); //
+		acercaDe.titleProperty().set(Messages.getString("ConfigGUI.acercaDe")+JFXMain.TITLE_VERSION); //
 		acercaDe.initOwner(JFXMain.stage);
 		//acercaDe.setHeaderText(this.TITLE_VERSION+"\n"+this.BUILD_INFO+"\nVisitar www.ursulagis.com");
 		//acercaDe.contentTextProperty().set();
@@ -579,13 +579,13 @@ public class ConfigGUI extends AbstractGUIController{
 							)
 					);
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Cultivo(Messages.getString("JFXMain.372"))); //
+			table.setOnDoubleClick(()->new Cultivo(Messages.getString("ConfigGUI.nuevoCultivo"))); //
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.373")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.cultivos")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 		});
@@ -615,7 +615,7 @@ public class ConfigGUI extends AbstractGUIController{
 					);//,dataLotes);
 			table.setEditable(true);
 			table.getSelectionModel().setSelectionMode(	SelectionMode.MULTIPLE	);
-			table.setOnDoubleClick(()->new Fertilizante(Messages.getString("JFXMain.374"))); //
+			table.setOnDoubleClick(()->new Fertilizante(Messages.getString("ConfigGUI.nuevoFertilizante"))); //
 			table.setEliminarAction(
 					list->{
 						Platform.runLater(()->{		
@@ -634,7 +634,7 @@ public class ConfigGUI extends AbstractGUIController{
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.375")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.fertilizantes")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 		});
@@ -674,7 +674,7 @@ public class ConfigGUI extends AbstractGUIController{
 			});
 
 
-			table.setOnDoubleClick(()->new Agroquimico(Messages.getString("JFXMain.376"))); //
+			table.setOnDoubleClick(()->new Agroquimico(Messages.getString("ConfigGUI.nuevo"))); //
 
 			table.addSecondaryClickConsumer(Messages.getString("SmartTableView.Activar"),(r)-> {
 				doToggleAgroquimico(r);
@@ -683,7 +683,7 @@ public class ConfigGUI extends AbstractGUIController{
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.377")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.agroquimicos")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 		});
@@ -716,18 +716,18 @@ public class ConfigGUI extends AbstractGUIController{
 							DAH.getAllCampanias()							
 							);
 			if(data.size()==0){
-				data.add(new Campania(Messages.getString("JFXMain.378")));//TODO obtener el anio actual y armar 16/17 //
+				data.add(new Campania(Messages.getString("ConfigGUI.campaniaDefault")));//TODO obtener el anio actual y armar 16/17 //
 			}
 			SmartTableView<Campania> table = new SmartTableView<Campania>(data,
 					Arrays.asList("Id"),
 					Arrays.asList("Nombre","Inicio","Fin")
 					);//,data);
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Campania(Messages.getString("JFXMain.379"))); //
+			table.setOnDoubleClick(()->new Campania(Messages.getString("ConfigGUI.nuevaCampania"))); //
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.380")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.campanias")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 
@@ -798,7 +798,7 @@ public class ConfigGUI extends AbstractGUIController{
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.381")); //
+			tablaStage.setTitle(Messages.getString("BulkNdviDownloadGUI.poligonos")); //
 			tablaStage.setScene(scene);
 
 			tablaStage.onHiddenProperty().addListener((o,old,n)->{
@@ -1475,7 +1475,7 @@ public class ConfigGUI extends AbstractGUIController{
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.382")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.ndvi")); //
 			tablaStage.setScene(scene);
 
 			tablaStage.onHiddenProperty().addListener((o,old,n)->{
@@ -1502,9 +1502,9 @@ public class ConfigGUI extends AbstractGUIController{
 		Locale actual = Messages.getLocale();
 
 		ChoiceDialog<String> dialog = new ChoiceDialog<>(capitalizeLocale.apply(actual), displayLocales.keySet());
-		dialog.setTitle(Messages.getString("JFXMain.383")); //
-		dialog.setHeaderText(Messages.getString("JFXMain.384")); //
-		dialog.setContentText(Messages.getString("JFXMain.385")); //
+		dialog.setTitle(Messages.getString("ConfigGUI.idioma")); //
+		dialog.setHeaderText(Messages.getString("ConfigGUI.idiomaDelSistema")); //
+		dialog.setContentText(Messages.getString("ConfigGUI.seleccioneSuIdioma")); //
 		dialog.initOwner(JFXMain.stage);
 
 		Optional<String> result = dialog.showAndWait();
@@ -1532,12 +1532,12 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Id"),     //rejected
 					Arrays.asList("Nombre","Contorno","Empresa","SuperficieTotal","SuperficieAgricola","SuperficieGanadera","SuperficieDesperdicio"));//order
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Establecimiento(Messages.getString("JFXMain.386"))); //
+			table.setOnDoubleClick(()->new Establecimiento(Messages.getString("ConfigGUI.nuevoEstablecimiento"))); //
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.387")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.establecimientos")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 
@@ -1558,12 +1558,12 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Id"),                 //rejected
 					Arrays.asList("Nombre","Contorno"));//order
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Lote(Messages.getString("JFXMain.388"))); //
+			table.setOnDoubleClick(()->new Lote(Messages.getString("ConfigGUI.nuevoLote"))); //
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.389")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.lotes")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 
@@ -1602,18 +1602,18 @@ public class ConfigGUI extends AbstractGUIController{
 							DAH.getAllEmpresas()
 							);
 			if(data.size()<1){
-				data.add(new Empresa(Messages.getString("JFXMain.390"))); //
+				data.add(new Empresa(Messages.getString("ConfigGUI.nuevaEmpresa"))); //
 			}
 			SmartTableView<Empresa> table = new SmartTableView<Empresa>(data,
 					Arrays.asList("Id"),     //rejected
 					Arrays.asList("Nombre"));//order
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Empresa(Messages.getString("JFXMain.391"))); //
+			table.setOnDoubleClick(()->new Empresa(Messages.getString("ConfigGUI.nuevaEmpresa"))); //
 
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.392")); //
+			tablaStage.setTitle(Messages.getString("ConfigGUI.empresas")); //
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 
@@ -1635,11 +1635,11 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Nombre","Cultivo","PesoDeMill","PG"));//order
 
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Semilla(Messages.getString("JFXMain.393"),DAH.getAllCultivos().get(0))); //
+			table.setOnDoubleClick(()->new Semilla(Messages.getString("ConfigGUI.nuevaSemilla"),DAH.getAllCultivos().get(0))); //
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.394"));
+			tablaStage.setTitle(Messages.getString("ConfigGUI.semillas"));
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 		});
@@ -1652,7 +1652,7 @@ public class ConfigGUI extends AbstractGUIController{
 							DAH.getAllPlagas()
 							);
 			if(data.size()<1){
-				data.add(new Plaga(Messages.getString("JFXMain.395"))); //
+				data.add(new Plaga(Messages.getString("JFXMain.saveImageTitle"))); //
 			}
 			SmartTableView<Plaga> table = new SmartTableView<Plaga>(data,
 					Arrays.asList("Id"),     //rejected
@@ -1679,13 +1679,13 @@ public class ConfigGUI extends AbstractGUIController{
 					e.printStackTrace();
 					DAH.rollbackTransaction();
 					Alert error = new Alert(AlertType.ERROR);
-					error.setContentText(Messages.getString("JFXMain.401")); // "Error al guardar la configuración"
+					error.setContentText(Messages.getString("PlagaAgroquimicosDialog.errorGuardarConfiguracion")); // "Error al guardar la configuración"
 					error.showAndWait();
 				}
 			});
 			
 			// Add double-click handler for empty space to create new plaga
-			table.setOnDoubleClick(()->new Plaga(Messages.getString("JFXMain.395")));
+			table.setOnDoubleClick(()->new Plaga(Messages.getString("JFXMain.saveImageTitle")));
 			
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();

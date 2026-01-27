@@ -72,12 +72,12 @@ public class ExportarPrescripcionSiembraTask extends ProgresibleTask<File>{
 		try {
 			SimpleFeatureType type = null;
 			//*the_geom:    												:4326,
-			//	String typeDescriptor = Messages.getString("JFXMain.341")+Polygon.class.getCanonicalName()+Messages.getString("JFXMain.342") //$NON-NLS-1$ //$NON-NLS-2$
+			//	String typeDescriptor = Messages.getString("ExportarPrescripcionSiembraTask.theGeom")+Polygon.class.getCanonicalName()+Messages.getString("ExportarPrescripcionSiembraTask.srid4326") //$NON-NLS-1$ //$NON-NLS-2$
 			//
-			//		+ SiembraLabor.COLUMNA_DOSIS_LINEA + Messages.getString("JFXMain.343") //$NON-NLS-1$ :java.lang.Long,
-			//		+ SiembraLabor.COLUMNA_DOSIS_COSTADO + Messages.getString("JFXMain.344") //$NON-NLS-1$ :java.lang.Long,
+			//		+ SiembraLabor.COLUMNA_DOSIS_LINEA + Messages.getString("ExportarPrescripcionSiembraTask.javaLangLong") //$NON-NLS-1$ :java.lang.Long,
+			//		+ SiembraLabor.COLUMNA_DOSIS_COSTADO + Messages.getString("ExportarPrescripcionSiembraTask.javaLangLong") //$NON-NLS-1$ :java.lang.Long,
 			//		//seeding
-			//		+ Messages.getString("JFXMain.345") + Messages.getString("JFXMain.346"); //$NON-NLS-1$ :java.lang.Long
+			//		+ Messages.getString("ExportarPrescripcionSiembraTask.siembra") + Messages.getString("ExportarPrescripcionSiembraTask.javaLangLong"); //$NON-NLS-1$ :java.lang.Long
 
 
 			//		Map<String,String> availableColums = new LinkedHashMap<String,String>();
@@ -99,7 +99,7 @@ public class ExportarPrescripcionSiembraTask extends ProgresibleTask<File>{
 			System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ the_geom:Polygon:4326,Fert L:java.lang.Long,Fert C:java.lang.Long,seeding:java.lang.Long
 			//System.out.println("Long.SIZE="+Long.SIZE);//64bits=16bytes. ok!! //$NON-NLS-1$
 			try {
-				//type = DataUtilities.createType(Messages.getString("JFXMain.349"), typeDescriptor); //$NON-NLS-1$
+				//type = DataUtilities.createType(Messages.getString("ExportarPrescripcionSiembraTask.prescType"), typeDescriptor); //$NON-NLS-1$
 				type = DataUtilities.createType("PrescType", typeDescriptor); //$NON-NLS-1$
 			} catch (SchemaException e) {
 				e.printStackTrace();
@@ -273,7 +273,7 @@ public class ExportarPrescripcionSiembraTask extends ProgresibleTask<File>{
 				config.setProperty(Configuracion.LAST_FILE, shapeFile.getAbsolutePath());
 				config.save();
 			}
-			//		System.out.println(Messages.getString("JFXMain.355")+ shapeFile); //$NON-NLS-1$
+			//		System.out.println(Messages.getString("ExportarPrescripcionSiembraTask.emptyString")+ shapeFile); //$NON-NLS-1$
 			//		Configuracion config = Configuracion.getInstance();
 			//		config.setProperty(Configuracion.LAST_FILE, shapeFile.getAbsolutePath());
 			//		config.save();

@@ -351,7 +351,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			playSound();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.323")); 
+			System.out.println(Messages.getString("ConfigGUI.processMarginTaskSucceeded")); 
 		});
 		executorPool.execute(uMmTask);
 	}

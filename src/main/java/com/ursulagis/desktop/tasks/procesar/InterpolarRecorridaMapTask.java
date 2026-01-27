@@ -54,7 +54,7 @@ public class InterpolarRecorridaMapTask extends ProcessMapTask<SueloItem,Suelo> 
 		labor.setNombre(sb.toString());
 		labor.setLayer(new LaborLayer());
 		
-		String anchoGrillaString = JFXMain.config.getPropertyOrDefault(CosechaConfig.ANCHO_GRILLA_KEY,Messages.getString("JFXMain.288"));
+		String anchoGrillaString = JFXMain.config.getPropertyOrDefault(CosechaConfig.ANCHO_GRILLA_KEY,Messages.getString("CosechaGUIController.defaultGridWidth"));
 		try {
 			this.anchoGrilla = Messages.getNumberFormat().parse(anchoGrillaString).doubleValue();
 			minDist= ProyectionConstants.metersToLongLat(anchoGrilla);

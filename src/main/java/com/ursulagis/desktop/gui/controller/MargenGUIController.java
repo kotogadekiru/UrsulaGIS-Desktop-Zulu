@@ -74,10 +74,10 @@ public class MargenGUIController extends AbstractGUIController {
 	}
 	
 	private void doEditMargin(Margen margen) {		
-		System.out.println(Messages.getString("JFXMain.324")); 
+		System.out.println(Messages.getString("MargenGUIController.editingMargins")); 
 		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);
 		if(!margenConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.325")); 
+			System.out.println(Messages.getString("JFXMain.dialogCancelledNoMargenes")); 
 			return;
 		}							
 		OpenMargenMapTask uMmTask = new OpenMargenMapTask(margen);
@@ -86,7 +86,7 @@ public class MargenGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			uMmTask.uninstallProgressBar();
 			this.main.wwjPanel.repaint();
-			System.out.println(Messages.getString("JFXMain.326")); 
+			System.out.println(Messages.getString("JFXMain.editMarginTaskSucceeded")); 
 			playSound();
 		});
 		executorPool.execute(uMmTask);
@@ -94,7 +94,7 @@ public class MargenGUIController extends AbstractGUIController {
 	
 	private String doSumarMargenes(Layer l) {
 		List<Margen> margenes = main.getMargenesSeleccionados();
-		System.out.println(Messages.getString("JFXMain.324")); 
+		System.out.println(Messages.getString("MargenGUIController.editingMargins")); 
 							
 		SumarMargenesMapTask uMmTask = new SumarMargenesMapTask(margenes);
 		uMmTask.installProgressBar(progressBox);

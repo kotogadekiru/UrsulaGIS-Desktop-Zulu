@@ -199,7 +199,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 
 				//				Optional<Recorrida> configured= RecorridaConfigDialogController.config(labor);
 				//				if(!configured.isPresent()){//
-				//					System.out.println(Messages.getString("JFXMain.308")); 
+				//					System.out.println(Messages.getString("FertilizacionGUIController.dialogCancelledNoFertilizacion")); 
 				//					continue;
 				//				}							
 

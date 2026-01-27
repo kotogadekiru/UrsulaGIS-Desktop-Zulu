@@ -34,15 +34,15 @@ public class PlagaAgroquimicosDialog extends Dialog<ButtonType> {
 	public PlagaAgroquimicosDialog(Plaga plaga) {
 		super();
 		
-		this.setTitle(Messages.getString("JFXMain.397") + ": " + plaga.getNombre()); // "Configurar Agroquímicos"
-		this.setHeaderText(Messages.getString("JFXMain.398")); // "Seleccione los agroquímicos registrados para esta plaga"
+		this.setTitle(Messages.getString("PlagaAgroquimicosDialog.configurarAgroquimicos") + ": " + plaga.getNombre()); // "Configurar Agroquímicos"
+		this.setHeaderText(Messages.getString("PlagaAgroquimicosDialog.seleccioneAgroquimicosRegistrados")); // "Seleccione los agroquímicos registrados para esta plaga"
 		
 		VBox mainVBox = new VBox(10);
 		mainVBox.setPadding(new Insets(10));
 		
 		// Umbral de daño
 		HBox umbralBox = new HBox(10);
-		Label umbralLabel = new Label(Messages.getString("JFXMain.399")); // "Umbral de Daño:"
+		Label umbralLabel = new Label(Messages.getString("PlagaAgroquimicosDialog.umbralDeDanio")); // "Umbral de Daño:"
 		TextField umbralField = new TextField(plaga.getUmbralDanio() != null ? plaga.getUmbralDanio().toString() : "0.0");
 		umbralBox.getChildren().addAll(umbralLabel, umbralField);
 		
@@ -119,8 +119,8 @@ public class PlagaAgroquimicosDialog extends Dialog<ButtonType> {
 		centerPanel.setCenter(buttonsBox);
 		
 		// Labels para las tablas
-		Label availableLabel = new Label(Messages.getString("JFXMain.400")); // "Agroquímicos Disponibles:"
-		Label registeredLabel = new Label(Messages.getString("JFXMain.396")); // "Agroquímicos Registrados"
+		Label availableLabel = new Label(Messages.getString("PlagaAgroquimicosDialog.agroquimicosDisponibles")); // "Agroquímicos Disponibles:"
+		Label registeredLabel = new Label(Messages.getString("PlagaAgroquimicosDialog.agroquimicosRegistrados")); // "Agroquímicos Registrados"
 		
 		VBox availableBox = new VBox(5, availableLabel, availableTable);
 		VBox.setVgrow(availableTable, Priority.ALWAYS);
@@ -162,7 +162,7 @@ public class PlagaAgroquimicosDialog extends Dialog<ButtonType> {
 					DAH.rollbackTransaction();
 					e.printStackTrace();
 					Alert error = new Alert(AlertType.ERROR);
-					error.setContentText(Messages.getString("JFXMain.401")); // "Error al guardar"
+					error.setContentText(Messages.getString("PlagaAgroquimicosDialog.errorGuardarConfiguracion")); // "Error al guardar"
 					error.showAndWait();
 				}
 			}

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.ursulagis.desktop.dao.config.Cultivo;
+import com.ursulagis.desktop.gui.Messages;
 
 public class CultivoHelper {
 	public static final String GIRASOL = "Girasol";
@@ -42,7 +43,7 @@ public class CultivoHelper {
 //	Zn	0.053	0.5
 //	Ni	-	-
 	private static Cultivo getMaiz(){
-		Cultivo c = new Cultivo(MAIZ);
+		Cultivo c = new Cultivo(Messages.getString("Cultivo.Nombre.Maiz"));
 		c.setAbsN(22d);
 		c.setAbsP(4d);
 		c.setAbsK(19d);
@@ -78,7 +79,7 @@ public class CultivoHelper {
 //	Zn	-	-
 //	Ni	-	-
 	private static Cultivo getSorgo(){
-		Cultivo c = new Cultivo(SORGO);
+		Cultivo c = new Cultivo(Messages.getString("Cultivo.Nombre.Sorgo"));
 		c.setAbsN(30d);
 		c.setAbsP(4.4d);
 		c.setAbsK(20.8d);
@@ -109,7 +110,7 @@ public class CultivoHelper {
 //	Zn	0.052	0.5
 //	Ni	-	-
 	private static Cultivo getTrigo(){
-		Cultivo c = new Cultivo(TRIGO);
+		Cultivo c = new Cultivo(Messages.getString("Cultivo.Nombre.Trigo"));
 		c.setAbsN(30d);
 		c.setAbsP(5d);
 		c.setAbsK(19d);
@@ -143,7 +144,7 @@ public class CultivoHelper {
 //	Zn	-	-
 //	Ni	-	-
 	private static Cultivo getCebada(){
-		Cultivo c = new Cultivo(CEBADA);
+		Cultivo c = new Cultivo(Messages.getString("Cultivo.Nombre.Cebada"));
 		c.setAbsN(26d);
 		c.setAbsP(4d);
 		c.setAbsK(19d);
@@ -177,7 +178,7 @@ public class CultivoHelper {
 //	Zn	0.052	0.5
 //	Ni	-	-
 	private static Cultivo getSoja(){
-		Cultivo c = new Cultivo(SOJA);
+		Cultivo c = new Cultivo(Messages.getString("Cultivo.Nombre.Soja"));
 		c.setAbsN(30d);
 		c.setAbsP(5d);
 		c.setAbsK(19d);
@@ -213,7 +214,7 @@ public class CultivoHelper {
 //	Zn	0.04	0.5
 //	Ni	-	-
 	private static Cultivo getGirasol(){
-		Cultivo c = new Cultivo(GIRASOL);
+		Cultivo c = new Cultivo(Messages.getString("Cultivo.Nombre.Girasol"));
 		c.setAbsN(22.2);
 		c.setAbsP(4d);
 		c.setAbsK(26.2);

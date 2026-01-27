@@ -142,7 +142,7 @@ public class SiembraGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println(Messages.getString("JFXMain.282")); 
+				System.out.println(Messages.getString("SiembraGUIController.doEditSiembraSucceeded")); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
@@ -170,7 +170,7 @@ public class SiembraGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println(Messages.getString("JFXMain.286")); 
+			System.out.println(Messages.getString("CosechaGUIController.processUniteHarvestMapsTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded											
 		JFXMain.executorPool.execute(umTask);
@@ -186,7 +186,7 @@ public class SiembraGUIController {
 		}
 		
 		String anchoDefaultString =JFXMain.config.getPropertyOrDefault(LaborConfig.ANCHO_GRILLA_KEY,
-				Messages.getString("JFXMain.288"));
+				Messages.getString("CosechaGUIController.defaultGridWidth"));
 		Double ancho = 10.0;
 		try {
 			ancho = PropertyHelper.parseDouble(anchoDefaultString).doubleValue();
@@ -194,9 +194,9 @@ public class SiembraGUIController {
 			e.printStackTrace();
 		}
 		ancho = NumberInputDialog.showAndWait(
-				Messages.getString("JFXMain.289"), 
-						Messages.getString("JFXMain.289"), //Configure el ancho de la grilla 
-						Messages.getString("JFXMain.290"),//JFXMain.290
+				Messages.getString("CosechaGUIController.configureAnchoGrilla"), 
+						Messages.getString("CosechaGUIController.configureAnchoGrilla"), //Configure el ancho de la grilla 
+						Messages.getString("CosechaGUIController.anchoGrilla"),//JFXMain.290
 						anchoDefaultString, 
 						Messages.getString("JFXMain.SeparatorWarningTooltip"));
 		if (ancho.isNaN()) {
@@ -316,7 +316,7 @@ public class SiembraGUIController {
 				labor.setLayer(new LaborLayer());
 				Optional<SiembraLabor> cosechaConfigured= SiembraConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("JFXMain.310")); 
+					System.out.println(Messages.getString("SiembraGUIController.dialogCancelledNoFertilizacion")); 
 					continue;
 				}							
 
@@ -329,7 +329,7 @@ public class SiembraGUIController {
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
 
-					System.out.println(Messages.getString("JFXMain.311")); 
+					System.out.println(Messages.getString("SiembraGUIController.openFertMapTaskSucceeded")); 
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
@@ -457,10 +457,10 @@ public class SiembraGUIController {
 		SiembraLabor siembra = new SiembraLabor();
 		LaborLayer layer = new LaborLayer();
 		siembra.setLayer(layer);
-		siembra.setNombre(cosecha.getNombre()+" "+Messages.getString("JFXMain.255"));  
+		siembra.setNombre(cosecha.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(siembra);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			siembra.dispose();//libero los recursos reservados
 			return;
 		}		

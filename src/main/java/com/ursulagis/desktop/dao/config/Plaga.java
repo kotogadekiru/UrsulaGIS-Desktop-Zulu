@@ -35,6 +35,9 @@ public class Plaga implements Comparable<Plaga> {
 	// Umbral de daño (porcentaje o valor numérico según el contexto)
 	private Double umbralDanio = 0.0;
 	
+	// Unidad del umbral de daño (ej: %, individuos/m², etc.)
+	private String unidadUmbralDanio = "%";
+	
 	// Agroquímicos registrados para el tratamiento de esta plaga
 	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinTable(

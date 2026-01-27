@@ -252,8 +252,61 @@ public class JFXMain extends Application {
 					JFXMain.config.save();
 					DAH.closeEm();					
 					System.out.println("Application Closed by click to Close Button(X)"); 
-					getWwd().shutdown();
-					System.exit(0); 
+					
+					// Properly shutdown WorldWindow and release OpenGL resources
+					try {
+						// Shutdown WorldWindow first
+						if (getWwd() != null) {
+							getWwd().shutdown();
+						}
+						
+						// Dispose of the WorldWindow component on Swing EDT
+						if (wwjPanel != null && wwjPanel.getWwd() instanceof java.awt.Component) {
+							java.awt.Component wwdComponent = (java.awt.Component) wwjPanel.getWwd();
+							if (wwdComponent != null) {
+								SwingUtilities.invokeLater(() -> {
+									try {
+										// Remove from parent to allow proper disposal
+										java.awt.Container parent = wwdComponent.getParent();
+										if (parent != null) {
+											parent.remove(wwdComponent);
+										}
+										// Clear any listeners or resources
+										if (wwdComponent instanceof javax.swing.JComponent) {
+											((javax.swing.JComponent) wwdComponent).removeAll();
+										}
+									} catch (Exception ex) {
+										System.err.println("Error disposing component: " + ex.getMessage());
+									}
+								});
+							}
+						}
+						
+						// Give OpenGL context time to release resources before exit
+						// The shutdown() call is asynchronous, so we need a small delay
+						new Thread(() -> {
+							try {
+								// Wait for OpenGL context cleanup to complete
+								Thread.sleep(150); // Small delay for OpenGL cleanup
+							} catch (InterruptedException ie) {
+								Thread.currentThread().interrupt();
+							}
+							System.exit(0);
+						}).start();
+					} catch (Exception ex) {
+						// If shutdown fails, still exit but log the error
+						System.err.println("Error during shutdown: " + ex.getMessage());
+						ex.printStackTrace();
+						// Still exit even if there's an error
+						new Thread(() -> {
+							try {
+								Thread.sleep(50);
+							} catch (InterruptedException ie) {
+								Thread.currentThread().interrupt();
+							}
+							System.exit(0);
+						}).start();
+					}
 				});
 			});
 		
@@ -975,13 +1028,13 @@ public class JFXMain extends Application {
 					// Before reading the raster, verify that the file contains imagery.
 					AVList metadata = reader.readMetadata(sourceFile, null);
 					if (metadata == null || !AVKey.IMAGE.equals(metadata.getStringValue(AVKey.PIXEL_FORMAT)))
-						throw new Exception(Messages.getString("JFXMain.222")); 
+						throw new Exception(Messages.getString("JFXMain.errorNotImageFile")); 
 
 					// Read the file into the raster. read() returns potentially several rasters if there are multiple
 					// files, but in this case there is only one so just use the first element of the returned array.
 					DataRaster[] rasters = reader.read(sourceFile, null);
 					if (rasters == null || rasters.length == 0)
-						throw new Exception(Messages.getString("JFXMain.223")); 
+						throw new Exception(Messages.getString("JFXMain.errorCantReadImageFile")); 
 
 					DataRaster raster = rasters[0];
 
@@ -989,7 +1042,7 @@ public class JFXMain extends Application {
 					// files associated with the image file.
 					final Sector sector = (Sector) raster.getValue(AVKey.SECTOR);
 					if (sector == null)
-						throw new Exception(Messages.getString("JFXMain.224")); 
+						throw new Exception(Messages.getString("JFXMain.errorNoLocationSpecified")); 
 
 					// Request a sub-raster that contains the whole image. This step is necessary because only sub-rasters
 					// are reprojected (if necessary); primary rasters are not.
@@ -1010,7 +1063,7 @@ public class JFXMain extends Application {
 
 					// Verify that the sub-raster can create a BufferedImage, then create one.
 					if (!(subRaster instanceof BufferedImageRaster))
-						throw new Exception(Messages.getString("JFXMain.225")); 
+						throw new Exception(Messages.getString("JFXMain.errorCannotGetBufferedImage")); 
 					BufferedImage image = ((BufferedImageRaster) subRaster).getBufferedImage();
 
 
@@ -1045,7 +1098,7 @@ public class JFXMain extends Application {
 					Platform.runLater(()->{
 						// Add the SurfaceImage to a layer.
 						SurfaceImageLayer layer = new SurfaceImageLayer();
-						layer.setName(Messages.getString("JFXMain.226")); 
+						layer.setName(Messages.getString("JFXMain.importedSurfaceImage")); 
 						layer.setPickEnabled(false);
 						layer.addRenderable(si1);
 
@@ -1075,17 +1128,17 @@ public class JFXMain extends Application {
 //			this.poligonoGUIController.showPoligonos(poligonos);			
 //			umTask.uninstallProgressBar();
 //			this.wwjPanel.repaint();
-//			System.out.println(Messages.getString("JFXMain.280")); 
+//			System.out.println(Messages.getString("JFXMain.poligonosExtraidosSucceeded")); 
 //			playSound();
 //		});//fin del OnSucceeded						
 //		JFXMain.executorPool.execute(umTask);
 //	}
 
 //	private void doEditMargin(Margen margen) {		
-//		System.out.println(Messages.getString("JFXMain.324")); 
+//		System.out.println(Messages.getString("MargenGUIController.editingMargins")); 
 //		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);
 //		if(!margenConfigured.isPresent()){//
-//			System.out.println(Messages.getString("JFXMain.325")); 
+//			System.out.println(Messages.getString("JFXMain.dialogCancelledNoMargenes")); 
 //			return;
 //		}							
 //		OpenMargenMapTask uMmTask = new OpenMargenMapTask(margen);
@@ -1094,7 +1147,7 @@ public class JFXMain extends Application {
 //			this.getLayerPanel().update(this.getWwd());
 //			uMmTask.uninstallProgressBar();
 //			this.wwjPanel.repaint();
-//			System.out.println(Messages.getString("JFXMain.326")); 
+//			System.out.println(Messages.getString("JFXMain.editMarginTaskSucceeded")); 
 //			playSound();
 //		});
 //		executorPool.execute(uMmTask);
@@ -1107,11 +1160,11 @@ public class JFXMain extends Application {
 
 		WritableImage image = sp.snapshot(params, null);
 		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle(Messages.getString("JFXMain.395")); 
+		fileChooser.setTitle(Messages.getString("JFXMain.saveImageTitle")); 
 
 		File lastFile = null;
-		String lastFileName =  config.getPropertyOrDefault(Configuracion.LAST_FILE,Messages.getString("JFXMain.396")); 
-		if(lastFileName != Messages.getString("JFXMain.397")){ 
+		String lastFileName =  config.getPropertyOrDefault(Configuracion.LAST_FILE,Messages.getString("PlagaAgroquimicosDialog.agroquimicosRegistrados")); 
+		if(lastFileName != Messages.getString("PlagaAgroquimicosDialog.configurarAgroquimicos")){ 
 			lastFile = new File(lastFileName);
 		}
 		if(lastFile ==null || ! lastFile.exists()) {
@@ -1123,13 +1176,13 @@ public class JFXMain extends Application {
 
 		// Set extension filter
 		FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(
-				Messages.getString("JFXMain.398"), Messages.getString("JFXMain.399"));  
+				Messages.getString("PlagaAgroquimicosDialog.seleccioneAgroquimicosRegistrados"), Messages.getString("PlagaAgroquimicosDialog.umbralDeDanio"));  
 		fileChooser.getExtensionFilters().add(extFilter);
 		// Show save file dialog
 		File snapsthotFile = fileChooser.showSaveDialog(JFXMain.stage);
 
 		try {
-			ImageIO.write(SwingFXUtils.fromFXImage(image, null), Messages.getString("JFXMain.400"), snapsthotFile); 
+			ImageIO.write(SwingFXUtils.fromFXImage(image, null), Messages.getString("PlagaAgroquimicosDialog.agroquimicosDisponibles"), snapsthotFile); 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1235,7 +1288,7 @@ public class JFXMain extends Application {
 					success = true;
 
 					//	String filePath = null;
-					FileNameExtensionFilter filter = new FileNameExtensionFilter(Messages.getString("JFXMain.421"),Messages.getString("JFXMain.422"));  
+					FileNameExtensionFilter filter = new FileNameExtensionFilter(Messages.getString("JFXMain.shpOnlyFilter"),Messages.getString("JFXMain.shpExtension"));  
 					List<File> shpFiles = db.getFiles();
 					shpFiles.removeIf(f->{
 						return !filter.accept(f);
@@ -1250,7 +1303,7 @@ public class JFXMain extends Application {
 						cosechaGUIController.doOpenCosecha(shpFiles);//ok!
 					}
 
-					FileNameExtensionFilter tifFilter = new FileNameExtensionFilter(Messages.getString("JFXMain.423"),Messages.getString("JFXMain.424"));  
+					FileNameExtensionFilter tifFilter = new FileNameExtensionFilter(Messages.getString("JFXMain.tifOnlyFilter"),Messages.getString("JFXMain.tifExtension"));  
 					List<File> tifFiles = db.getFiles();
 					tifFiles.removeIf(f->!tifFilter.accept(f));
 					if(tifFiles.size()>0){

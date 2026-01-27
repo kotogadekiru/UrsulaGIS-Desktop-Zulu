@@ -201,7 +201,7 @@ public class BulkNdviDownloadGUI {
 			
 			//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-			tablaStage.setTitle(Messages.getString("JFXMain.381")); //$NON-NLS-1$
+			tablaStage.setTitle(Messages.getString("BulkNdviDownloadGUI.poligonos")); //$NON-NLS-1$
 			tablaStage.setScene(scene);
 			tablaStage.show();	 
 			

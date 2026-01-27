@@ -111,18 +111,18 @@ public class FileHelper {
 	 * @param f2 filter regex "*.jpg"
 	 */
 	public static List<File> chooseFiles(String f1,String f2) {
-		System.out.println(Messages.getString("JFXMain.403")); //$NON-NLS-1$
+		System.out.println(Messages.getString("FileHelper.choosingFiles")); //$NON-NLS-1$
 		List<File> files =null;
 		FileChooser fileChooser = new FileChooser();
 
-		fileChooser.setTitle(Messages.getString("JFXMain.404")); //$NON-NLS-1$
+		fileChooser.setTitle(Messages.getString("FileHelper.selectFile")); //$NON-NLS-1$
 		fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(f1, f2));
 
 		//Configuracion config = Configuracion.getInstance();
 		File lastFile = null;
 		Configuracion config = JFXMain.config;
 		config.loadProperties();
-		String lastFileName =config.getPropertyOrDefault(Configuracion.LAST_FILE,Messages.getString("JFXMain.405")); //$NON-NLS-1$
+		String lastFileName =config.getPropertyOrDefault(Configuracion.LAST_FILE,Messages.getString("FileHelper.emptyString")); //$NON-NLS-1$
 		if(lastFileName != null){
 			lastFile = new File(lastFileName);
 		}
@@ -130,15 +130,15 @@ public class FileHelper {
 			lastFile=File.listRoots()[0];
 		} 	
 		try{
-			System.out.println(Messages.getString("JFXMain.406")+lastFile); //$NON-NLS-1$
+			System.out.println(Messages.getString("FileHelper.debugLastFile")+lastFile); //$NON-NLS-1$
 			//if(lastFile != null && lastFile.exists()){
-			System.out.println(Messages.getString("JFXMain.407")+lastFile.getParent()); //$NON-NLS-1$
-			System.out.println(Messages.getString("JFXMain.408")+lastFile.getName()); //$NON-NLS-1$
+			System.out.println(Messages.getString("FileHelper.debugParentDirectory")+lastFile.getParent()); //$NON-NLS-1$
+			System.out.println(Messages.getString("FileHelper.debugFileName")+lastFile.getName()); //$NON-NLS-1$
 			fileChooser.setInitialDirectory(lastFile.getParentFile());
 			fileChooser.setInitialFileName(lastFile.getName());
-			System.out.println(Messages.getString("JFXMain.409")); //$NON-NLS-1$
+			System.out.println(Messages.getString("FileHelper.showingMultipleDialog")); //$NON-NLS-1$
 			files = fileChooser.showOpenMultipleDialog(JFXMain.stage);
-			System.out.println(Messages.getString("JFXMain.410")); //$NON-NLS-1$
+			System.out.println(Messages.getString("FileHelper.dialogShown")); //$NON-NLS-1$
 			//		file = files.get(0);
 		}catch(Exception e){
 			e.printStackTrace();
@@ -151,7 +151,7 @@ public class FileHelper {
 			}
 
 		}
-		System.out.println(Messages.getString("JFXMain.411")+files); //$NON-NLS-1$
+		System.out.println(Messages.getString("FileHelper.filesSelected")+files); //$NON-NLS-1$
 
 		try {
 			if(files!=null && files.size()>0){
@@ -162,14 +162,14 @@ public class FileHelper {
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-		System.out.println(Messages.getString("JFXMain.412")); //$NON-NLS-1$
+		System.out.println(Messages.getString("FileHelper.returningFiles")); //$NON-NLS-1$
 		return files;
 	}
 
 	public static List<FileDataStore> chooseShapeFileAndGetMultipleStores(List<File> files) {
 		if(files==null){
 			//	List<File> 
-			files =chooseFiles(Messages.getString("JFXMain.401"), Messages.getString("JFXMain.402")); //$NON-NLS-1$ //$NON-NLS-2$
+			files =chooseFiles(Messages.getString("PlagaAgroquimicosDialog.errorGuardarConfiguracion"), Messages.getString("FileHelper.fileExtensionShp")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		List<FileDataStore> stores = new ArrayList<FileDataStore>();
 		if (files != null) {
@@ -213,9 +213,9 @@ public class FileHelper {
 	 */
 	public static File getNewShapeFile(String nombre) {
 		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle(Messages.getString("JFXMain.413")); //$NON-NLS-1$
+		fileChooser.setTitle(Messages.getString("FileHelper.saveFile")); //$NON-NLS-1$
 		fileChooser.getExtensionFilters().add(
-				new FileChooser.ExtensionFilter(Messages.getString("JFXMain.414"), Messages.getString("JFXMain.415"))); //$NON-NLS-1$ //$NON-NLS-2$
+				new FileChooser.ExtensionFilter(Messages.getString("FileHelper.fileTypeShp"), Messages.getString("FileHelper.fileExtensionShpPattern"))); //$NON-NLS-1$ //$NON-NLS-2$
 
 
 		File lastFile = null;
@@ -244,7 +244,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println(Messages.getString("JFXMain.416")+file); //$NON-NLS-1$
+		System.out.println(Messages.getString("FileHelper.fileSelectedToSave")+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -257,9 +257,9 @@ public class FileHelper {
 	 */
 	public static File getNewTiffFile(String nombre) {
 		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle(Messages.getString("JFXMain.417")); //$NON-NLS-1$
+		fileChooser.setTitle(Messages.getString("FileHelper.selectFileTitle")); //$NON-NLS-1$
 		fileChooser.getExtensionFilters().add(
-				new FileChooser.ExtensionFilter(Messages.getString("JFXMain.418"), Messages.getString("JFXMain.419"))); //$NON-NLS-1$ //$NON-NLS-2$
+				new FileChooser.ExtensionFilter(Messages.getString("FileHelper.fileTypeTif"), Messages.getString("FileHelper.fileExtensionTifPattern"))); //$NON-NLS-1$ //$NON-NLS-2$
 
 		File lastFile = null;
 		//Configuracion config =Configuracion.getInstance();
@@ -288,7 +288,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println(Messages.getString("JFXMain.420")+file); //$NON-NLS-1$
+		System.out.println(Messages.getString("FileHelper.debugSelectedFile")+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -300,7 +300,7 @@ public class FileHelper {
 	 */
 	public static File getNewFile(String nombre,String ext) {
 		FileChooser fileChooser = new FileChooser();		
-		fileChooser.setTitle(Messages.getString("JFXMain.417")); //$NON-NLS-1$
+		fileChooser.setTitle(Messages.getString("FileHelper.selectFileTitle")); //$NON-NLS-1$
 		fileChooser.getExtensionFilters().add(
 				new FileChooser.ExtensionFilter(ext.toUpperCase(), ext)); //$NON-NLS-1$ //$NON-NLS-2$
 		File lastFile = null;
@@ -331,7 +331,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println(Messages.getString("JFXMain.420")+file); //$NON-NLS-1$
+		System.out.println(Messages.getString("FileHelper.debugSelectedFile")+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -343,7 +343,7 @@ public class FileHelper {
 	 */
 	public static File chooseFile(String path,String ext) {
 		FileChooser fileChooser = new FileChooser();		
-		fileChooser.setTitle(Messages.getString("JFXMain.417")); //$NON-NLS-1$
+		fileChooser.setTitle(Messages.getString("FileHelper.selectFileTitle")); //$NON-NLS-1$
 		fileChooser.getExtensionFilters().add(
 				new FileChooser.ExtensionFilter(ext.toUpperCase(), ext)); //$NON-NLS-1$ //$NON-NLS-2$
 		File lastFile = new File(path);

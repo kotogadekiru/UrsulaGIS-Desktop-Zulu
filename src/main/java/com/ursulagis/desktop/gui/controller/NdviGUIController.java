@@ -305,7 +305,7 @@ public class NdviGUIController extends AbstractGUIController{
 				}catch(Throwable t){
 					t.printStackTrace();
 					System.out.println("no hay ningun ndvi para mostrar"); 
-					return new VBox(new Label(Messages.getString("JFXMain.207"))); 
+					return new VBox(new Label(Messages.getString("NdviGUIController.upps"))); 
 				}
 			}			
 		};
@@ -349,9 +349,9 @@ public class NdviGUIController extends AbstractGUIController{
 		Double rinde = null;
 		try {
 			Double rindeEsperado = cosechaConfigured.get().getCultivo().getRindeEsperado();
-			TextInputDialog rindePromDialog = new TextInputDialog(Messages.getNumberFormat().format(rindeEsperado));//Messages.getString("JFXMain.272")); 
-			rindePromDialog.setTitle(Messages.getString("JFXMain.273")); 
-			rindePromDialog.setContentText(Messages.getString("JFXMain.274")); 
+			TextInputDialog rindePromDialog = new TextInputDialog(Messages.getNumberFormat().format(rindeEsperado));//Messages.getString("NdviGUIController.rinde")); 
+			rindePromDialog.setTitle(Messages.getString("NdviGUIController.configureRinde")); 
+			rindePromDialog.setContentText(Messages.getString("NdviGUIController.rinde")); 
 			rindePromDialog.initOwner(JFXMain.stage);
 			Optional<String> rPromOptional = rindePromDialog.showAndWait();
 			rinde = PropertyHelper.parseDouble(rPromOptional.get()).doubleValue();//Double.valueOf(anchoOptional.get());
@@ -367,8 +367,8 @@ public class NdviGUIController extends AbstractGUIController{
 			Alert a = new Alert(Alert.AlertType.ERROR);
 			a.initOwner(JFXMain.stage);
 
-			a.setTitle(Messages.getString("JFXMain.275")); 
-			a.setHeaderText(Messages.getString("JFXMain.276")+sep+Messages.getString("JFXMain.277"));  
+			a.setTitle(Messages.getString("NdviGUIController.errorFormato")); 
+			a.setHeaderText(Messages.getString("NdviGUIController.numeroInvalido")+sep+Messages.getString("NdviGUIController.separadorDecimales"));  
 			a.setContentText(e.getMessage());
 			a.show();
 			return;
@@ -389,7 +389,7 @@ public class NdviGUIController extends AbstractGUIController{
 				this.getLayerPanel().update(this.getWwd());
 				pmtask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println(Messages.getString("JFXMain.279")); 
+				System.out.println(Messages.getString("NdviGUIController.editHarvestMapTaskSucceeded")); 
 				playSound();
 				main.viewGoTo(ret);
 			});
@@ -466,7 +466,7 @@ public class NdviGUIController extends AbstractGUIController{
 //				this.getLayerPanel().update(this.getWwd());
 //				pmtask.uninstallProgressBar();
 //				main.wwjPanel.repaint();
-//				System.out.println(Messages.getString("JFXMain.279")); 
+//				System.out.println(Messages.getString("NdviGUIController.editHarvestMapTaskSucceeded")); 
 //				playSound();
 //				main.viewGoTo(ret);
 //			});
@@ -546,9 +546,9 @@ public class NdviGUIController extends AbstractGUIController{
 		DecimalFormat format=PropertyHelper.getDoubleConverter();//(DecimalFormat) Messages.getNumberFormat();
 		Double dosisMax = null;
 		try {
-			TextInputDialog dMaxDialog = new TextInputDialog(Messages.getString("JFXMain.295")); //fertMax 
-			dMaxDialog.setTitle(Messages.getString("JFXMain.295")); 
-			dMaxDialog.setContentText(Messages.getString("JFXMain.295")); 
+			TextInputDialog dMaxDialog = new TextInputDialog(Messages.getString("NdviGUIController.fertMax")); //fertMax 
+			dMaxDialog.setTitle(Messages.getString("NdviGUIController.fertMax")); 
+			dMaxDialog.setContentText(Messages.getString("NdviGUIController.fertMax")); 
 			dMaxDialog.initOwner(JFXMain.stage);
 			Optional<String> dMaxOpt = dMaxDialog.showAndWait();
 			System.out.println("opt max "+ dMaxOpt.get());
@@ -560,8 +560,8 @@ public class NdviGUIController extends AbstractGUIController{
 			Alert a = new Alert(Alert.AlertType.ERROR);
 			a.initOwner(JFXMain.stage);
 
-			a.setTitle(Messages.getString("JFXMain.275")); 
-			a.setHeaderText(Messages.getString("JFXMain.276")+sep+Messages.getString("JFXMain.277"));  
+			a.setTitle(Messages.getString("NdviGUIController.errorFormato")); 
+			a.setHeaderText(Messages.getString("NdviGUIController.numeroInvalido")+sep+Messages.getString("NdviGUIController.separadorDecimales"));  
 			a.setContentText(e.getMessage());
 			a.show();
 			return;
@@ -569,9 +569,9 @@ public class NdviGUIController extends AbstractGUIController{
 
 		Double dosisMin = null;
 		try {
-			TextInputDialog dMinDialog = new TextInputDialog(Messages.getString("JFXMain.294")); 
-			dMinDialog.setTitle(Messages.getString("JFXMain.294")); 
-			dMinDialog.setContentText(Messages.getString("JFXMain.294")); 
+			TextInputDialog dMinDialog = new TextInputDialog(Messages.getString("NdviGUIController.fertMin")); 
+			dMinDialog.setTitle(Messages.getString("NdviGUIController.fertMin")); 
+			dMinDialog.setContentText(Messages.getString("NdviGUIController.fertMin")); 
 			dMinDialog.initOwner(JFXMain.stage);
 			Optional<String> dMinOpt= dMinDialog.showAndWait();
 			dosisMin = format.parse(dMinOpt.get()).doubleValue();// Double.valueOf(dMinOpt.get());
@@ -582,8 +582,8 @@ public class NdviGUIController extends AbstractGUIController{
 			Alert a = new Alert(Alert.AlertType.ERROR);
 			a.initOwner(JFXMain.stage);
 
-			a.setTitle(Messages.getString("JFXMain.275")); 
-			a.setHeaderText(Messages.getString("JFXMain.276")+sep+Messages.getString("JFXMain.277"));  
+			a.setTitle(Messages.getString("NdviGUIController.errorFormato")); 
+			a.setHeaderText(Messages.getString("NdviGUIController.numeroInvalido")+sep+Messages.getString("NdviGUIController.separadorDecimales"));  
 			a.setContentText(e.getMessage());
 			a.show();
 			return;
@@ -604,8 +604,8 @@ public class NdviGUIController extends AbstractGUIController{
 			Alert a = new Alert(Alert.AlertType.ERROR);
 			a.initOwner(JFXMain.stage);
 
-			a.setTitle(Messages.getString("JFXMain.275")); 
-			a.setHeaderText(Messages.getString("JFXMain.276")+sep+Messages.getString("JFXMain.277"));  
+			a.setTitle(Messages.getString("NdviGUIController.errorFormato")); 
+			a.setHeaderText(Messages.getString("NdviGUIController.numeroInvalido")+sep+Messages.getString("NdviGUIController.separadorDecimales"));  
 			a.setContentText(e.getMessage());
 			a.show();
 			return;
@@ -627,8 +627,8 @@ public class NdviGUIController extends AbstractGUIController{
 			Alert a = new Alert(Alert.AlertType.ERROR);
 			a.initOwner(JFXMain.stage);
 
-			a.setTitle(Messages.getString("JFXMain.275")); 
-			a.setHeaderText(Messages.getString("JFXMain.276")+sep+Messages.getString("JFXMain.277"));  
+			a.setTitle(Messages.getString("NdviGUIController.errorFormato")); 
+			a.setHeaderText(Messages.getString("NdviGUIController.numeroInvalido")+sep+Messages.getString("NdviGUIController.separadorDecimales"));  
 			a.setContentText(e.getMessage());
 			a.show();
 			return;

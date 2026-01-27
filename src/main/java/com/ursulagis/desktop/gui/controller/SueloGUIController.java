@@ -72,7 +72,7 @@ public class SueloGUIController extends AbstractGUIController{
 	
 	
 	public void doProcesarBalanceNutrientes() {		
-		//System.out.println(Messages.getString("JFXMain.327")); 
+		//System.out.println(Messages.getString("SueloGUIController.balanceNutrientesTask")); 
 		//todo pasar el filtrado por visibles aca y pasar nuevas listas solo con las visibles
 		List<Suelo> suelosEnabled = main.getSuelosSeleccionados();
 		List<FertilizacionLabor> fertEnabled = main.getFertilizacionesSeleccionadas();		
@@ -97,7 +97,7 @@ public class SueloGUIController extends AbstractGUIController{
 
 			playSound();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.328")); 
+			System.out.println(Messages.getString("SueloGUIController.balanceNutrientesTaskSucceeded")); 
 		});
 		JFXMain.executorPool.execute(balanceNutrientesTask);
 	}
@@ -142,7 +142,7 @@ public class SueloGUIController extends AbstractGUIController{
 		try {
 			Cultivo cultivo = cosecha.getCultivo();
 			Double aguaPorCampania = cultivo.getAbsAgua()*cultivo.getRindeEsperado();
-			TextInputDialog lluviaCampaniaDialog = new TextInputDialog(Messages.getNumberFormat().format(aguaPorCampania));//Messages.getString("JFXMain.272")); 
+			TextInputDialog lluviaCampaniaDialog = new TextInputDialog(Messages.getNumberFormat().format(aguaPorCampania));//Messages.getString("NdviGUIController.rinde")); 
 			lluviaCampaniaDialog.setTitle(Messages.getString("LluviaCampania")); 
 			lluviaCampaniaDialog.setContentText(Messages.getString("LluviaCampania")); 
 			lluviaCampaniaDialog.initOwner(JFXMain.stage);
@@ -157,8 +157,8 @@ public class SueloGUIController extends AbstractGUIController{
 			Alert a = new Alert(Alert.AlertType.ERROR);
 			a.initOwner(JFXMain.stage);
 
-			a.setTitle(Messages.getString("JFXMain.275")); 
-			a.setHeaderText(Messages.getString("JFXMain.276")+sep+Messages.getString("JFXMain.277"));  
+			a.setTitle(Messages.getString("NdviGUIController.errorFormato")); 
+			a.setHeaderText(Messages.getString("NdviGUIController.numeroInvalido")+sep+Messages.getString("NdviGUIController.separadorDecimales"));  
 			a.setContentText(e.getMessage());
 			a.show();
 			return;
@@ -189,7 +189,7 @@ public class SueloGUIController extends AbstractGUIController{
 //				pmtask.uninstallProgressBar();
 //
 //				main.wwjPanel.repaint();
-//				System.out.println(Messages.getString("JFXMain.279")); 
+//				System.out.println(Messages.getString("NdviGUIController.editHarvestMapTaskSucceeded")); 
 //				main.playSound();
 //				main.viewGoTo(ret);
 //			});
@@ -206,7 +206,7 @@ public class SueloGUIController extends AbstractGUIController{
 				labor.setLayer(new LaborLayer());
 				Optional<Suelo> cosechaConfigured= SueloConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("JFXMain.315")); 
+					System.out.println(Messages.getString("SueloGUIController.dialogCancelledNoFertilizacion")); 
 					continue;
 				}							
 
@@ -220,7 +220,7 @@ public class SueloGUIController extends AbstractGUIController{
 					umTask.uninstallProgressBar();
 					main.viewGoTo(ret);
 
-					System.out.println(Messages.getString("JFXMain.316")); 
+					System.out.println(Messages.getString("SueloGUIController.openSoilMapTaskSucceeded")); 
 					main.playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);

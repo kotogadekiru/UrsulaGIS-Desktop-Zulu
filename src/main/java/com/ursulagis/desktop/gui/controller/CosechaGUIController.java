@@ -265,7 +265,7 @@ public class CosechaGUIController extends AbstractGUIController {
 				labor.setLayer(layer);
 				Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println(Messages.getString("JFXMain.306")); 
+					System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 					labor.dispose();//libero los recursos reservados
 					continue;
 				}							
@@ -278,7 +278,7 @@ public class CosechaGUIController extends AbstractGUIController {
 					this.getLayerPanel().update(this.getWwd());
 					viewGoTo(ret);
 					umTask.uninstallProgressBar();
-					System.out.println(Messages.getString("JFXMain.307")); 
+					System.out.println(Messages.getString("CosechaGUIController.openHarvestMapTaskSucceeded")); 
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
@@ -376,7 +376,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			}
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.287")); 
+			System.out.println(Messages.getString("CosechaGUIController.processUniteFertMapsTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
@@ -395,8 +395,8 @@ public class CosechaGUIController extends AbstractGUIController {
 
 		if(cosechasAUnir.size()>1) {
 			Alert calibrarAlert = new Alert(Alert.AlertType.CONFIRMATION);
-			calibrarAlert.setTitle(Messages.getString("JFXMain.284")); 
-			calibrarAlert.setContentText(Messages.getString("JFXMain.285")); 
+			calibrarAlert.setTitle(Messages.getString("CosechaGUIController.calibrarCosechas")); 
+			calibrarAlert.setContentText(Messages.getString("CosechaGUIController.deseaCalibrarPromediosCosechas")); 
 			calibrarAlert.getButtonTypes().setAll(ButtonType.YES,ButtonType.NO);
 			Optional<ButtonType> calibrarButton = calibrarAlert.showAndWait();
 			if(calibrarButton.isPresent()){
@@ -420,7 +420,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println(Messages.getString("JFXMain.286")); 
+			System.out.println(Messages.getString("CosechaGUIController.processUniteHarvestMapsTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
@@ -445,7 +445,7 @@ public class CosechaGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println(Messages.getString("JFXMain.279")); 
+				System.out.println(Messages.getString("NdviGUIController.editHarvestMapTaskSucceeded")); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
@@ -462,7 +462,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		}
 		
 		String anchoDefaultString =JFXMain.config.getPropertyOrDefault(CosechaConfig.ANCHO_GRILLA_KEY,
-				Messages.getString("JFXMain.288"));
+				Messages.getString("CosechaGUIController.defaultGridWidth"));
 		Double ancho = 10.0;
 		try {
 			ancho = PropertyHelper.parseDouble(anchoDefaultString).doubleValue();
@@ -470,9 +470,9 @@ public class CosechaGUIController extends AbstractGUIController {
 			e.printStackTrace();
 		}
 		ancho = NumberInputDialog.showAndWait(
-				Messages.getString("JFXMain.289"), 
-						Messages.getString("JFXMain.289"), //Configure el ancho de la grilla 
-						Messages.getString("JFXMain.290"),//JFXMain.290
+				Messages.getString("CosechaGUIController.configureAnchoGrilla"), 
+						Messages.getString("CosechaGUIController.configureAnchoGrilla"), //Configure el ancho de la grilla 
+						Messages.getString("CosechaGUIController.anchoGrilla"),//JFXMain.290
 						anchoDefaultString, 
 						Messages.getString("JFXMain.SeparatorWarningTooltip"));
 		if (ancho.isNaN()) {
@@ -488,10 +488,10 @@ public class CosechaGUIController extends AbstractGUIController {
 		
 //		TextInputDialog anchoDialog = new TextInputDialog(
 //				JFXMain.config.getPropertyOrDefault(CosechaConfig.ANCHO_GRILLA_KEY,
-//						Messages.getString("JFXMain.288"))); 
+//						Messages.getString("CosechaGUIController.defaultGridWidth"))); 
 //		anchoDialog.initOwner(JFXMain.stage);
-//		anchoDialog.setTitle(Messages.getString("JFXMain.289")); 
-//		anchoDialog.setContentText(Messages.getString("JFXMain.290")); 
+//		anchoDialog.setTitle(Messages.getString("CosechaGUIController.configureAnchoGrilla")); 
+//		anchoDialog.setContentText(Messages.getString("CosechaGUIController.anchoGrilla")); 
 //		Optional<String> anchoOptional = anchoDialog.showAndWait();
 //		if(anchoOptional.isPresent()){
 //			JFXMain.config.loadProperties();
@@ -529,7 +529,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println(Messages.getString("JFXMain.291")); 
+			System.out.println(Messages.getString("CosechaGUIController.grillarCosechasMapTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded		
 		JFXMain.executorPool.execute(umTask);
@@ -549,7 +549,7 @@ public class CosechaGUIController extends AbstractGUIController {
 //				}
 //				umTask.uninstallProgressBar();
 //				viewGoTo(ret);
-//				System.out.println(Messages.getString("JFXMain.286")); 
+//				System.out.println(Messages.getString("CosechaGUIController.processUniteHarvestMapsTaskSucceeded")); 
 //				playSound();
 //			});//fin del OnSucceeded
 //			JFXMain.executorPool.execute(umTask);
@@ -568,24 +568,24 @@ public class CosechaGUIController extends AbstractGUIController {
 		double densidadDeMuestrasDeseada=0;
 		double cantidadMinimaDeMuestrasPoligonoAMuestrear=0;
 
-		TextInputDialog supMinDialog = new TextInputDialog(Messages.getString("JFXMain.238")); 
+		TextInputDialog supMinDialog = new TextInputDialog(Messages.getString("CosechaGUIController.superficieMinima")); 
 		supMinDialog.initOwner(JFXMain.stage);
-		supMinDialog.setTitle(Messages.getString("JFXMain.239")); 
-		supMinDialog.setContentText(Messages.getString("JFXMain.240")); 
+		supMinDialog.setTitle(Messages.getString("CosechaGUIController.superficieMinimaRequeridaMuestreo")); 
+		supMinDialog.setContentText(Messages.getString("CosechaGUIController.supMinimaHas")); 
 		Optional<String> supMinOpt = supMinDialog.showAndWait();
 		superficieMinimaAMuestrear = PropertyHelper.parseDouble(supMinOpt.get()).doubleValue();
 
-		TextInputDialog densidadDialog = new TextInputDialog(Messages.getString("JFXMain.241")); 
+		TextInputDialog densidadDialog = new TextInputDialog(Messages.getString("CosechaGUIController.cantidadMuestrasPorHa")); 
 		densidadDialog.initOwner(JFXMain.stage);
-		densidadDialog.setTitle(Messages.getString("JFXMain.242")); 
-		densidadDialog.setContentText(Messages.getString("JFXMain.243")); 
+		densidadDialog.setTitle(Messages.getString("CosechaGUIController.cantidadHectareasPorMuestra")); 
+		densidadDialog.setContentText(Messages.getString("CosechaGUIController.hasPorMuestra")); 
 		Optional<String> densidadOptional = densidadDialog.showAndWait();
 		densidadDeMuestrasDeseada =PropertyHelper.parseDouble(densidadOptional.get()).doubleValue();// Double.valueOf(densidadOptional.get());
 
-		TextInputDialog cMinDialog = new TextInputDialog(Messages.getString("JFXMain.244")); 
+		TextInputDialog cMinDialog = new TextInputDialog(Messages.getString("CosechaGUIController.cantidadMinimaMuestrasPorPoligono")); 
 		cMinDialog.initOwner(JFXMain.stage);
-		cMinDialog.setTitle(Messages.getString("JFXMain.245")); 
-		cMinDialog.setContentText(Messages.getString("JFXMain.246")); 
+		cMinDialog.setTitle(Messages.getString("CosechaGUIController.configureCantidadMinimaMuestras")); 
+		cMinDialog.setContentText(Messages.getString("CosechaGUIController.cantidadMinima")); 
 		Optional<String> cantOptional = cMinDialog.showAndWait();
 		cantidadMinimaDeMuestrasPoligonoAMuestrear = PropertyHelper.parseDouble(cantOptional.get()).doubleValue();//Double.valueOf(cantOptional.get());
 
@@ -617,10 +617,10 @@ public class CosechaGUIController extends AbstractGUIController {
 		FertilizacionLabor fertN = new FertilizacionLabor();
 		fertN.setLayer(new LaborLayer());
 
-		fertN.setNombre(cosecha.getNombre()+Messages.getString("JFXMain.299")); 
+		fertN.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionN")); 
 		Optional<FertilizacionLabor> fertConfigured= FertilizacionConfigDialogController.config(fertN);
 		if(!fertConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.300")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			return;
 		}							
 
@@ -631,12 +631,12 @@ public class CosechaGUIController extends AbstractGUIController {
 		TextField max = new TextField(df.format(0));
 
 		VBox vb = new VBox();
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.301")),min)); 
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.302")),max)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMin")),min)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMax")),max)); 
 
 		minMaxDialog.setGraphic(vb);
-		minMaxDialog.setTitle(Messages.getString("JFXMain.303")); 
-		minMaxDialog.setContentText(Messages.getString("JFXMain.304")); 
+		minMaxDialog.setTitle(Messages.getString("CosechaGUIController.configureMaximoMinimoDosis")); 
+		minMaxDialog.setContentText(Messages.getString("CosechaGUIController.ceroParaIgnorar")); 
 		minMaxDialog.initOwner(JFXMain.stage);
 		Optional<ButtonType> res = minMaxDialog.showAndWait();
 		Double minFert =null,maxFert=null; 
@@ -673,7 +673,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.305")); 
+			System.out.println(Messages.getString("CosechaGUIController.recomendFertNFromHarvestPotentialMapTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
@@ -687,10 +687,10 @@ public class CosechaGUIController extends AbstractGUIController {
 		FertilizacionLabor fertPAbs = new FertilizacionLabor();
 		fertPAbs.setLayer(new LaborLayer());
 		
-		fertPAbs.setNombre(cosecha.getNombre()+Messages.getString("JFXMain.292")); 
+		fertPAbs.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionP")); 
 		Optional<FertilizacionLabor> fertConfigured= FertilizacionConfigDialogController.config(fertPAbs);
 		if(!fertConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.300")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			return;
 		}							
 
@@ -703,12 +703,12 @@ public class CosechaGUIController extends AbstractGUIController {
 
 		VBox vb = new VBox();
 		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.ppmPObj")),ppmObj));
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.301")),min)); 
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.302")),max)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMin")),min)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMax")),max)); 
 
 		minMaxDialog.setGraphic(vb);
-		minMaxDialog.setTitle(Messages.getString("JFXMain.303")); 
-		minMaxDialog.setContentText(Messages.getString("JFXMain.304")); 
+		minMaxDialog.setTitle(Messages.getString("CosechaGUIController.configureMaximoMinimoDosis")); 
+		minMaxDialog.setContentText(Messages.getString("CosechaGUIController.ceroParaIgnorar")); 
 		minMaxDialog.initOwner(JFXMain.stage);
 		Optional<ButtonType> res = minMaxDialog.showAndWait();
 		Double ppmObjD=null,minFert =null,maxFert=null; 
@@ -755,7 +755,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.305")); 
+			System.out.println(Messages.getString("CosechaGUIController.recomendFertNFromHarvestPotentialMapTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
@@ -768,10 +768,10 @@ public class CosechaGUIController extends AbstractGUIController {
 		FertilizacionLabor labor = new FertilizacionLabor();
 		labor.setLayer(new LaborLayer());
 
-		labor.setNombre(cosecha.getNombre()+Messages.getString("JFXMain.292")); 
+		labor.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionP")); 
 		Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.293")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			return;
 		}					
 
@@ -782,12 +782,12 @@ public class CosechaGUIController extends AbstractGUIController {
 		TextField max = new TextField(df.format(0));
 
 		VBox vb = new VBox();
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.294")),min)); 
-		vb.getChildren().add(new HBox(new Label(Messages.getString("JFXMain.295")),max)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("NdviGUIController.fertMin")),min)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("NdviGUIController.fertMax")),max)); 
 
 		minMaxDialog.setGraphic(vb);
-		minMaxDialog.setTitle(Messages.getString("JFXMain.296")); 
-		minMaxDialog.setContentText(Messages.getString("JFXMain.297")); 
+		minMaxDialog.setTitle(Messages.getString("CosechaGUIController.configureMaximoMinimoDosis")); 
+		minMaxDialog.setContentText(Messages.getString("CosechaGUIController.ceroParaIgnorar")); 
 		minMaxDialog.initOwner(JFXMain.stage);
 		Optional<ButtonType> res = minMaxDialog.showAndWait();
 		Double minFert =null,maxFert=null; 
@@ -821,7 +821,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println(Messages.getString("JFXMain.298")); 
+			System.out.println(Messages.getString("CosechaGUIController.recomendFertFromHarvestPotentialMapTaskSucceeded")); 
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
@@ -876,10 +876,10 @@ public class CosechaGUIController extends AbstractGUIController {
 		FertilizacionLabor labor = new FertilizacionLabor();
 		LaborLayer layer = new LaborLayer();
 		labor.setLayer(layer);
-		labor.setNombre(cosecha.getNombre()+" "+Messages.getString("JFXMain.255"));  
+		labor.setNombre(cosecha.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<FertilizacionLabor> siembraConfigured= FertilizacionConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -911,7 +911,7 @@ public class CosechaGUIController extends AbstractGUIController {
 
 		Optional<PulverizacionLabor> siembraConfigured= PulverizacionConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -961,7 +961,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		labor.setNombre(cosecha.getNombre()+" "+Messages.getString("JFXMain.cosechaNueva"));  
 		Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println(Messages.getString("JFXMain.256")); 
+			System.out.println(Messages.getString("CosechaGUIController.dialogCancelledNoHarvest")); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		

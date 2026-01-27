@@ -135,7 +135,7 @@ public class PulverizacionGUIController {
 				umTask.uninstallProgressBar();
 				//	viewGoTo(ret);
 				main.wwjPanel.repaint();
-				System.out.println(Messages.getString("JFXMain.281")); //$NON-NLS-1$
+				System.out.println(Messages.getString("PulverizacionGUIController.doEditPulverizacionSucceeded")); //$NON-NLS-1$
 				main.playSound();
 			});//fin del OnSucceeded						
 			//umTask.start();
@@ -225,7 +225,7 @@ public class PulverizacionGUIController {
 					labor.setLayer(new LaborLayer());
 					Optional<PulverizacionLabor> cosechaConfigured= PulverizacionConfigDialogController.config(labor);
 					if(!cosechaConfigured.isPresent()){//
-						System.out.println(Messages.getString("JFXMain.313")); //$NON-NLS-1$
+						System.out.println(Messages.getString("PulverizacionGUIController.dialogCancelledNoFertilizacion")); //$NON-NLS-1$
 						continue;
 					}							
 
@@ -241,7 +241,7 @@ public class PulverizacionGUIController {
 						umTask.uninstallProgressBar();
 						main.viewGoTo(ret);
 
-						System.out.println(Messages.getString("JFXMain.314")); //$NON-NLS-1$
+						System.out.println(Messages.getString("PulverizacionGUIController.processPulvMapTaskSucceeded")); //$NON-NLS-1$
 						main.playSound();
 					});//fin del OnSucceeded
 					//umTask.start();
@@ -270,7 +270,7 @@ public class PulverizacionGUIController {
 				}
 				umTask.uninstallProgressBar();
 				viewGoTo(ret);
-				System.out.println(Messages.getString("JFXMain.287")); 
+				System.out.println(Messages.getString("CosechaGUIController.processUniteFertMapsTaskSucceeded")); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
