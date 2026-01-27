@@ -45,6 +45,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import com.ursulagis.desktop.tasks.CompartirCosechaLaborTask;
+import com.ursulagis.desktop.tasks.crear.ConvertirACosechaTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirAFertilizacionTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirAPulverizacionTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirASueloTask;
@@ -231,16 +232,24 @@ public class CosechaGUIController extends AbstractGUIController {
 		}));
 
 
-		/**
-		 * Accion permite exportar la cosecha como shp de puntos
-		 */
-		cosechasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.exportarCosechaAPuntosAction"),(layer)->{
-			doExportHarvestDePuntos((CosechaLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
-			return "cosecha exportada como puntos: " + layer.getName(); 
-		}));
+	/**
+	 * Accion permite exportar la cosecha como shp de puntos
+	 */
+	cosechasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.exportarCosechaAPuntosAction"),(layer)->{
+		doExportHarvestDePuntos((CosechaLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+		return "cosecha exportada como puntos: " + layer.getName(); 
+	}));
 
-		Collections.sort(cosechasP);
-		return cosechasP;
+	/**
+	 * Accion permite crear otra cosecha asignando valores por clase
+	 */
+	cosechasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.doCrearCosechaDesdeCosecha"),(layer)->{
+		doCrearCosechaDesdeCosecha((CosechaLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+		return "cosecha creada desde cosecha: " + layer.getName(); 
+	}));
+
+	Collections.sort(cosechasP);
+	return cosechasP;
 	}
 
 	/**
@@ -938,6 +947,36 @@ public class CosechaGUIController extends AbstractGUIController {
 //		String nombre = laborToExport.getNombre();
 //		File shapeFile = FileHelper.getNewShapeFile(nombre);
 //		executorPool.execute(()->ExportarCosechaDePuntosTask.run(laborToExport, shapeFile));
+	}
+
+	/**
+	 * toma una cosecha, pregunta los rendimientos deseados para cada clase
+	 * y crea otra cosecha asignando los valores ingresados por clase
+	 * @param cosecha
+	 */
+	private void doCrearCosechaDesdeCosecha(CosechaLabor cosecha) {
+		CosechaLabor labor = new CosechaLabor();
+		LaborLayer layer = new LaborLayer();
+		labor.setLayer(layer);
+		labor.setNombre(cosecha.getNombre()+" "+Messages.getString("JFXMain.cosechaNueva"));  
+		Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
+		if(!cosechaConfigured.isPresent()){//
+			System.out.println(Messages.getString("JFXMain.256")); 
+			labor.dispose();//libero los recursos reservados
+			return;
+		}		
+		Map<String,Double[]> mapClaseValor = main.configGUIController.doAsignarValoresCosecha(cosecha,new String[] {Messages.getString("JFXMain.Rendimiento")});//"Rendimiento"
+		ConvertirACosechaTask csTask = new ConvertirACosechaTask(cosecha,labor,mapClaseValor);
+		csTask.installProgressBar(progressBox);
+		csTask.setOnSucceeded(handler -> {
+			CosechaLabor ret = (CosechaLabor)handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			csTask.uninstallProgressBar();
+			viewGoTo(ret);
+			playSound();
+		});//fin del OnSucceeded
+		JFXMain.executorPool.execute(csTask);
 	}
 	//XXX insert aqui
 
