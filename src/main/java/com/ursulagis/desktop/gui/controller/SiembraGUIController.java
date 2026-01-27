@@ -29,10 +29,14 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.layout.Pane;
+import com.ursulagis.desktop.dao.LaborConfig;
+import com.ursulagis.desktop.dao.utils.PropertyHelper;
+import com.ursulagis.desktop.gui.utils.NumberInputDialog;
 import com.ursulagis.desktop.tasks.CompartirSiembraLaborTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirASiembraTask;
 import com.ursulagis.desktop.tasks.importar.ProcessSiembraMapTask;
 import com.ursulagis.desktop.tasks.procesar.ExportarPrescripcionSiembraTask;
+import com.ursulagis.desktop.tasks.procesar.GrillarSiembrasMapTask;
 import com.ursulagis.desktop.tasks.procesar.SiembraFertTask;
 import com.ursulagis.desktop.tasks.procesar.UnirSiembrasMapTask;
 import com.ursulagis.desktop.utils.DAH;
@@ -104,6 +108,14 @@ public class SiembraGUIController {
 			doCompartirSiembra((SiembraLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
 			return "siembra compartida" + layer.getName(); //$NON-NLS-1$
 		}));
+		
+		/**
+		 * Accion que permite grillear una siembra
+		 */
+		siembrasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.grillarSiembra"),(layer)->{
+			doGrillarSiembras((SiembraLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+			return "siembra grilleada" + layer.getName(); 
+		}));
 	}
 	
 	//	public void addSiembrasRootNodeActions() {
@@ -161,6 +173,76 @@ public class SiembraGUIController {
 			System.out.println(Messages.getString("JFXMain.286")); 
 			playSound();
 		});//fin del OnSucceeded											
+		JFXMain.executorPool.execute(umTask);
+	}
+	
+	private void doGrillarSiembras(SiembraLabor siembraAGrillar) {
+		List<SiembraLabor> siembrasAUnir = new ArrayList<SiembraLabor>();
+		if(siembraAGrillar == null){
+			List<SiembraLabor> siembrasEnabled = main.getSiembrasSeleccionadas();
+			siembrasAUnir.addAll( siembrasEnabled);//si no hago esto me da un concurrent modification exception al modificar layers en paralelo
+		} else {
+			siembrasAUnir.add(siembraAGrillar);
+		}
+		
+		String anchoDefaultString =JFXMain.config.getPropertyOrDefault(LaborConfig.ANCHO_GRILLA_KEY,
+				Messages.getString("JFXMain.288"));
+		Double ancho = 10.0;
+		try {
+			ancho = PropertyHelper.parseDouble(anchoDefaultString).doubleValue();
+		}catch(Exception e ) {
+			e.printStackTrace();
+		}
+		ancho = NumberInputDialog.showAndWait(
+				Messages.getString("JFXMain.289"), 
+						Messages.getString("JFXMain.289"), //Configure el ancho de la grilla 
+						Messages.getString("JFXMain.290"),//JFXMain.290
+						anchoDefaultString, 
+						Messages.getString("JFXMain.SeparatorWarningTooltip"));
+		if (ancho.isNaN()) {
+			//si ancho is NaN el usuario salio sin ingresar un valor
+			return;
+		} else {
+			JFXMain.config.loadProperties();
+			JFXMain.config.setProperty(LaborConfig.ANCHO_GRILLA_KEY,PropertyHelper.formatDouble(ancho));
+			JFXMain.config.save();
+		}
+
+		Alert rellenarHuecosAlert= new Alert(Alert.AlertType.CONFIRMATION);
+		rellenarHuecosAlert.initOwner(JFXMain.stage);
+		rellenarHuecosAlert.setTitle(Messages.getString("JFXMain.rellenar_huecos")); 
+		rellenarHuecosAlert.setContentText(Messages.getString("JFXMain.rellenar_huecos")); 
+		boolean rellenarHuecos = false;
+		rellenarHuecosAlert.getButtonTypes().setAll(ButtonType.YES,ButtonType.NO);
+		Optional<ButtonType> rellenarHuecosButton = rellenarHuecosAlert.showAndWait();
+		if(rellenarHuecosButton.isPresent()){
+			if(rellenarHuecosButton.get().equals(ButtonType.YES)){
+				rellenarHuecos=true;
+			}
+		}
+
+		GrillarSiembrasMapTask umTask = new GrillarSiembrasMapTask(siembrasAUnir);
+		umTask.setRellenarHuecos(rellenarHuecos);
+		umTask.setAncho(ancho);
+		umTask.installProgressBar(progressBox);
+		umTask.setOnSucceeded(handler -> {
+			SiembraLabor ret = (SiembraLabor)handler.getSource().getValue();
+			if(ret.getLayer()!=null){
+				insertBeforeCompass(getWwd(), ret.getLayer());
+				// Deshabilitar todas las siembras que se grillearon
+				for(SiembraLabor s : siembrasAUnir) {
+					if(s.getLayer() != null) {
+						s.getLayer().setEnabled(false);
+					}
+				}
+				this.getLayerPanel().update(this.getWwd());
+			}
+			umTask.uninstallProgressBar();
+			viewGoTo(ret);
+
+			System.out.println(Messages.getString("JFXMain.grillarSiembraSucceeded")); 
+			playSound();
+		});//fin del OnSucceeded		
 		JFXMain.executorPool.execute(umTask);
 	}
 	
