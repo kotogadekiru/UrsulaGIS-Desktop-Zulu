@@ -45,6 +45,7 @@ import com.ursulagis.desktop.dao.config.Establecimiento;
 import com.ursulagis.desktop.dao.config.Fertilizante;
 import com.ursulagis.desktop.dao.config.Grano;
 import com.ursulagis.desktop.dao.config.Lote;
+import com.ursulagis.desktop.dao.config.Plaga;
 import com.ursulagis.desktop.dao.config.Semilla;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.ordenCompra.OrdenCompra;
@@ -666,6 +667,13 @@ public class DAH {
 			});
 		}
 
+		return results;
+	}
+
+	public static List<Plaga> getAllPlagas() {
+		TypedQuery<Plaga> query = em().createNamedQuery(
+				Plaga.FIND_ALL, Plaga.class);
+		List<Plaga> results = query.getResultList();
 		return results;
 	}
 

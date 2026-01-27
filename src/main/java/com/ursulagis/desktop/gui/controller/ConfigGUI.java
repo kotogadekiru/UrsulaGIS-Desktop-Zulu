@@ -46,6 +46,7 @@ import com.ursulagis.desktop.dao.config.Empresa;
 import com.ursulagis.desktop.dao.config.Establecimiento;
 import com.ursulagis.desktop.dao.config.Fertilizante;
 import com.ursulagis.desktop.dao.config.Lote;
+import com.ursulagis.desktop.dao.config.Plaga;
 import com.ursulagis.desktop.dao.config.Semilla;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
@@ -59,6 +60,7 @@ import com.ursulagis.desktop.gui.CorrelacionarCapas;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.MargenConfigDialogController;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.PlagaAgroquimicosDialog;
 import com.ursulagis.desktop.gui.MultiLayerHistoChart;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.snake.SnakesLayer;
@@ -82,8 +84,11 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -97,10 +102,13 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.scene.control.SplitPane;
 import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -194,6 +202,7 @@ public class ConfigGUI extends AbstractGUIController{
 		addMenuItem(Messages.getString("JFXMain.fertilizantesMenuItem"),(a)->doConfigFertilizantes(),menuConfiguracion); //
 		addMenuItem(Messages.getString("JFXMain.agroquimicosMenuItem"),(a)->doConfigAgroquimicos(),menuConfiguracion); //
 		addMenuItem(Messages.getString("JFXMain.configSemillasMenuItem"),(a)->doConfigSemillas(),menuConfiguracion); //
+		addMenuItem(Messages.getString("JFXMain.configPlagaMI"),(a)->doConfigPlaga(),menuConfiguracion); //
 		//	addMenuItem(Messages.getString("JFXMain.Caldo"),(a)->doConfigCaldos(),menuConfiguracion); //
 
 
@@ -1635,6 +1644,58 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.show();	 
 		});
 	}
+
+	public static void doConfigPlaga() {
+		Platform.runLater(()->{
+			final ObservableList<Plaga> data =
+					FXCollections.observableArrayList(
+							DAH.getAllPlagas()
+							);
+			if(data.size()<1){
+				data.add(new Plaga(Messages.getString("JFXMain.395"))); //
+			}
+			SmartTableView<Plaga> table = new SmartTableView<Plaga>(data,
+					Arrays.asList("Id"),     //rejected
+					Arrays.asList("Nombre","UmbralDanio"),//order
+					Arrays.asList(
+							Messages.getString("Plaga.Nombre"),
+							Messages.getString("Plaga.UmbralDanio")));//names
+			table.setEditable(true);
+			
+			// Add secondary click action to configure agroquimicos
+			table.addSecondaryClickConsumer(Messages.getString("Plaga.ConfigurarAgroquimicos"), (plaga) -> {
+				PlagaAgroquimicosDialog.show(plaga);
+			});
+			
+			// Configure delete action
+			table.setEliminarAction(list -> {
+				try {
+					DAH.beginTransaction();
+					List<Object> toRemove = new ArrayList<Object>();
+					toRemove.addAll(list);
+					DAH.removeAll(toRemove);
+					DAH.commitTransaction();
+				} catch(Exception e) {
+					e.printStackTrace();
+					DAH.rollbackTransaction();
+					Alert error = new Alert(AlertType.ERROR);
+					error.setContentText(Messages.getString("JFXMain.401")); // "Error al guardar la configuración"
+					error.showAndWait();
+				}
+			});
+			
+			// Add double-click handler for empty space to create new plaga
+			table.setOnDoubleClick(()->new Plaga(Messages.getString("JFXMain.395")));
+			
+			Scene scene = new Scene(table, 800, 600);
+			Stage tablaStage = new Stage();
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+			tablaStage.setTitle(Messages.getString("JFXMain.configPlagaMI")); //
+			tablaStage.setScene(scene);
+			tablaStage.show();	 
+		});	
+	}
+	
 
 	/**
 	 * Funcion util para vincular un metodo con un item en un menu
