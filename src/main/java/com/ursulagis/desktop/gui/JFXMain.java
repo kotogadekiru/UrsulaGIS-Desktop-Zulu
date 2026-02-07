@@ -187,7 +187,7 @@ public class JFXMain extends Application {
 	protected LayerPanel layerPanel=null;//contriene el treeView con los layers
 	private SplitPane sp=null;//contiene el layerPanel y el wwjPanel
 	//private Node wwNode=null;//contiene el arbol con los layers y el swingnode con el world wind
-	public VBox progressBox = new VBox();
+	public static VBox progressBox = new VBox();
 
 	public static ExecutorService executorPool = Executors.newCachedThreadPool();
 	private boolean isPlayingSound=false;

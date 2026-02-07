@@ -105,6 +105,7 @@ public class Messages {
 		 locales.add(new Locale("EN"));
 		 locales.add(new Locale("PT"));
 		 locales.add(new Locale("FR"));
+		 locales.add(new Locale("DE"));
 		return locales;
 	}
 	

@@ -1488,17 +1488,23 @@ public class ConfigGUI extends AbstractGUIController{
 	}
 
 	public static void doChangeLocale() {
-		List<Locale> locales = Messages.getLocales();
-
+		//List<Locale> locales = Messages.getLocales();
+		//get a list of all locales
+		Locale[] allLocales = Locale.getAvailableLocales();
+		List<Locale> locales = Arrays.asList(allLocales);
 		Function<Locale,String> capitalizeLocale = (Locale loc) ->{
+			// Use full display name to avoid duplicate keys (e.g., "Englisch" for en_NU and en_JM)
 			String key = loc.getDisplayLanguage(Messages.getLocale());
-			key = key.substring(0, 1).toUpperCase() + key.substring(1);
+			if(key.length()>1){
+				key = key.substring(0, 1).toUpperCase() + key.substring(1);
+			}
 			return key;
 		};
 
 		Map<String, Locale> displayLocales =
 				locales.stream().collect(Collectors.toMap(capitalizeLocale,
-						(Locale loc) -> loc));
+						(Locale loc) -> loc,
+						(existing, replacement) -> existing)); // Handle duplicates by keeping the first one
 		Locale actual = Messages.getLocale();
 
 		ChoiceDialog<String> dialog = new ChoiceDialog<>(capitalizeLocale.apply(actual), displayLocales.keySet());

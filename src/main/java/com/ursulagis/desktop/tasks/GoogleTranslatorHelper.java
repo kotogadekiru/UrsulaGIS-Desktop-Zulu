@@ -1,8 +1,10 @@
 package com.ursulagis.desktop.tasks;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,73 +26,71 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
-import com.google.auth.Credentials;
-import com.google.cloud.translate.Translate;
-import com.google.cloud.translate.TranslateOptions;
-import com.google.cloud.translate.TranslateOptions.Builder;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 import gov.nasa.worldwind.geom.Position;
 import com.ursulagis.desktop.gui.Messages;
-import javafx.concurrent.Task;
+import com.ursulagis.desktop.tasks.ProgresibleTask;
 /**
  * Clase que toma un archivo messages_[locale].properties y lo traduce al locale indicado usando google translator
  */
-public class GoogleTranslatorHelper extends Task<File>{
+public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 	private static String key ="AIzaSyC6m54rSOpbe5Tar_b2O2XWGkxCn7BImnU";
 	private static String project = "UrsulaGIS";
 	private static String GEOCODE_API_GOOGLE_URL ="https://maps.googleapis.com/maps/api/geocode/json";//?address=";
+	private static String TRANSLATE_API_GOOGLE_URL = "https://translation.googleapis.com/language/translate/v2";
 
 	private ResourceBundle baseBoundle=null;
 	private Locale outLocale=null;
 
 	public GoogleTranslatorHelper(ResourceBundle _baseBoundle,Locale _outLocale) {
+		this.taskName="Traduciendo el archivo messages_"+_outLocale.getLanguage()+".properties";
 		this.baseBoundle=_baseBoundle;
 		this.outLocale=_outLocale;
 	}
 
-	public static Position obtenerPositionDirect(String query){
-		GenericUrl url = new GenericUrl(GEOCODE_API_GOOGLE_URL);
-		url.put("address", query);
-		url.put("key", key);
-		System.out.println("buscando la traduccion de "+query+" con el url \n"+url);
-		HttpResponse response = makeRequest(url);
-		try {
-			return 	parseGeoCodeResponse(response);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
+	// public static Position obtenerPositionDirect(String query){
+	// 	GenericUrl url = new GenericUrl(GEOCODE_API_GOOGLE_URL);
+	// 	url.put("address", query);
+	// 	url.put("key", key);
+	// 	System.out.println("buscando la traduccion de "+query+" con el url \n"+url);
+	// 	HttpResponse response = makeRequest(url);
+	// 	try {
+	// 		return 	parseGeoCodeResponse(response);
+	// 	} catch (IOException e) {
+	// 		e.printStackTrace();
+	// 		return null;
+	// 	}
 
 
-	}
+	// }
 
-	private static Position parseGeoCodeResponse(HttpResponse response) throws IOException {
-		GenericJson content = response.parseAs(GenericJson.class);
-		System.out.println("response content:\n"+content);
+	// private static Position parseGeoCodeResponse(HttpResponse response) throws IOException {
+	// 	GenericJson content = response.parseAs(GenericJson.class);
+	// 	System.out.println("response content:\n"+content);
 
-		//{"results":[{"address_components":[{"long_name":"Pehuaj�","short_name":"Pehuaj�","types":["locality","political"]},{"long_name":"Pehuaj� Partido","short_name":"Pehuaj� Partido","types":["administrative_area_level_2","political"]},{"long_name":"Buenos Aires Province","short_name":"Buenos Aires Province","types":["administrative_area_level_1","political"]},{"long_name":"Argentina","short_name":"AR","types":["country","political"]}],"formatted_address":"Pehuaj�, Buenos Aires Province, Argentina","geometry":{"bounds":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}},"location":{"lat":-35.8107166,"lng":-61.8987832},"location_type":"APPROXIMATE","viewport":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}}},"place_id":"ChIJ86BrWCz4wJURA89cs7G_REg","types":["locality","political"]}],"status":"OK"}
-		ArrayMap<String,Object> data = (ArrayMap<String,Object>) content.getUnknownKeys();
-		for(String key :data.keySet()){
-			ArrayList<Object> val =(ArrayList<Object>) data.get(key);
-			for(Object o:val){
-				System.out.println("object: "+o);
+	// 	//{"results":[{"address_components":[{"long_name":"Pehuaj�","short_name":"Pehuaj�","types":["locality","political"]},{"long_name":"Pehuaj� Partido","short_name":"Pehuaj� Partido","types":["administrative_area_level_2","political"]},{"long_name":"Buenos Aires Province","short_name":"Buenos Aires Province","types":["administrative_area_level_1","political"]},{"long_name":"Argentina","short_name":"AR","types":["country","political"]}],"formatted_address":"Pehuaj�, Buenos Aires Province, Argentina","geometry":{"bounds":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}},"location":{"lat":-35.8107166,"lng":-61.8987832},"location_type":"APPROXIMATE","viewport":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}}},"place_id":"ChIJ86BrWCz4wJURA89cs7G_REg","types":["locality","political"]}],"status":"OK"}
+	// 	ArrayMap<String,Object> data = (ArrayMap<String,Object>) content.getUnknownKeys();
+	// 	for(String key :data.keySet()){
+	// 		ArrayList<Object> val =(ArrayList<Object>) data.get(key);
+	// 		for(Object o:val){
+	// 			System.out.println("object: "+o);
 
-				ArrayMap<String,Object> valMap = (ArrayMap<String,Object>) o;
-				ArrayMap<String,Object> geometry = (ArrayMap<String, Object>)valMap.get("geometry");
-				ArrayMap<String,Object> location = (ArrayMap<String, Object>)geometry.get("location");
-				BigDecimal lat = (BigDecimal) location.get("lat");
-				BigDecimal lng = (BigDecimal) location.get("lng");
+	// 			ArrayMap<String,Object> valMap = (ArrayMap<String,Object>) o;
+	// 			ArrayMap<String,Object> geometry = (ArrayMap<String, Object>)valMap.get("geometry");
+	// 			ArrayMap<String,Object> location = (ArrayMap<String, Object>)geometry.get("location");
+	// 			BigDecimal lat = (BigDecimal) location.get("lat");
+	// 			BigDecimal lng = (BigDecimal) location.get("lng");
 
-				//			    "lat" : 37.4224764,
-				//	            "lng" : -122.0842499
-				System.out.println("lat: "+lat+ " lon: "+lng);
-				return Position.fromDegrees(lat.doubleValue(), lng.doubleValue());
-			}
+	// 			//			    "lat" : 37.4224764,
+	// 			//	            "lng" : -122.0842499
+	// 			System.out.println("lat: "+lat+ " lon: "+lng);
+	// 			return Position.fromDegrees(lat.doubleValue(), lng.doubleValue());
+	// 		}
 
-		}
-		return null;
-	}
+	// 	}
+	// 	return null;
+	// }
 
 	/**
 	 * metodo que ejecuta un request
@@ -117,27 +117,53 @@ public class GoogleTranslatorHelper extends Task<File>{
 		}	
 	}
 	/**
-	 * 
-	 * @param s
+	 * Translates text using Google Cloud Translate REST API with API key
+	 * @param s text to translate
 	 * @return s traducido al outLocale
 	 */
 	private String traducir(String s) {
-		 //TODO(developer): Uncomment these lines.
-		// import com.google.cloud.translate.*;
-		// Translate translate = TranslateOptions.getDefaultInstance().getService();
-		TranslateOptions translateOptions = TranslateOptions.getDefaultInstance();
+		if (s == null || s.trim().isEmpty()) {
+			return s;
+		}
 		
-		Builder builder = translateOptions.toBuilder();
-		builder.setTargetLanguage(outLocale.getLanguage());
-		builder.setProjectId(project);
-		
-		Credentials creds = builder.getCredentials();
-	
-		//translateOptions.
-		//Translate.translate();
-		//Translation translation = translate.translate("�Hola Mundo!");
-		//System.out.printf("Translated Text:\n\t%s\n", translation.getTranslatedText());
-		return s;
+		try {
+			// Use Google Cloud Translate REST API v2 with API key
+			GenericUrl url = new GenericUrl(TRANSLATE_API_GOOGLE_URL);
+			url.put("key", key);
+			url.put("q", s);
+			url.put("target", outLocale.getLanguage());
+			url.put("format", "text");
+			
+			HttpResponse response = makeRequest(url);
+			if (response == null) {
+				System.err.println("Failed to get response from Google Translate API");
+				return s;
+			}
+			
+			GenericJson content = response.parseAs(GenericJson.class);
+			ArrayMap<String, Object> data = (ArrayMap<String, Object>) content.getUnknownKeys();
+			
+			// Parse response: {"data": {"translations": [{"translatedText": "..."}]}}
+			ArrayMap<String, Object> dataMap = (ArrayMap<String, Object>) data.get("data");
+			if (dataMap != null) {
+				ArrayList<Object> translations = (ArrayList<Object>) dataMap.get("translations");
+				if (translations != null && !translations.isEmpty()) {
+					ArrayMap<String, Object> translation = (ArrayMap<String, Object>) translations.get(0);
+					String translatedText = (String) translation.get("translatedText");
+					if (translatedText != null) {
+						return translatedText;
+					}
+				}
+			}
+			
+			System.err.println("Failed to parse translation response");
+			return s;
+		} catch (Exception e) {
+			System.err.println("Error translating with Google Cloud Translate API: " + e.getMessage());
+			e.printStackTrace();
+			// Fallback: return original text if translation fails
+			return s;
+		}
 	}
 
 	@Override
@@ -149,20 +175,19 @@ public class GoogleTranslatorHelper extends Task<File>{
 		File ret = new File(fileName);
 		//todo recorrer outlocale 
 		Enumeration<String> keys = baseBoundle.getKeys();
-		Stream<String> entries =((List<String>)Collections.list(keys))
-				.parallelStream().map(k->k+"="+traducir(baseBoundle.getString(k)));
-		try {
-		FileWriter writer = new FileWriter(ret);
-		entries.forEach(e->{
-			try {
-				writer.write(e+"\n");
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}	
-		});
-		writer.close();
-		}catch(Exception e) {
+		List<String> keyList = Collections.list(keys);
+		
+		try (OutputStreamWriter writer = new OutputStreamWriter(
+				new FileOutputStream(ret), StandardCharsets.UTF_8)) {
+			// Use sequential stream since we're writing to a file
+			// Process each key and write the translated entry
+			for (String key : keyList) {
+				String value = baseBoundle.getString(key);
+				String translatedValue = traducir(value);
+				writer.write(key + "=" + translatedValue + "\n");
+			}
+		} catch (Exception e) {
+			System.err.println("Error writing translation file: " + e.getMessage());
 			e.printStackTrace();
 		}
 		//traducir lo que viene despues del =
@@ -171,7 +196,7 @@ public class GoogleTranslatorHelper extends Task<File>{
 	}
 
 	public static void main(String[] args) {
-		Locale loc = new Locale("FR");
+		Locale loc = new Locale("DE");
 		ResourceBundle baseBoundle1 = Messages.getBoundle();
 		GoogleTranslatorHelper t = new GoogleTranslatorHelper(baseBoundle1,loc);
 		t.call();
