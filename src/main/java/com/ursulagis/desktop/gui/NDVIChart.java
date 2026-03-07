@@ -8,20 +8,30 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
 import gov.nasa.worldwind.WorldWindow;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.SurfaceImageLayer;
 import com.ursulagis.desktop.gui.nww.LayerPanel;
+import com.ursulagis.desktop.tasks.ProcessMapTask;
+
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.application.Platform;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
@@ -36,6 +46,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
+
+import com.ursulagis.desktop.utils.DaylightCalculator;
 import com.ursulagis.desktop.utils.ExcelHelper;
 //agrege que extende de vbox 
 public class NDVIChart extends VBox {
@@ -56,7 +68,7 @@ public class NDVIChart extends VBox {
 	
 		//System.out.println("mostrar grafico");
 		final NumberAxis xAxis = new NumberAxis();
-		xAxis.setLabel("Fecha");
+		xAxis.setLabel(Messages.getString("JFXMain.show_ndvi_chart.Fecha"));//	NDVIHistoChart.fecha"));
 		xAxis.setTickLabelFormatter(new StringConverter<Number>() {
 			@Override
 			public String toString(Number epochDay) {
@@ -83,7 +95,13 @@ public class NDVIChart extends VBox {
 		xAxis.setAutoRanging(false);
 		
 		final NumberAxis yAxis = new NumberAxis();
-		yAxis.setLabel("NDVI");
+		if(!acumulado) {
+			//yAxis.setLabel("NDVI");
+			yAxis.setLabel(Messages.getString("NDVIHistoChart.NDVI"));
+		} else {//acumulado
+			yAxis.setLabel(Messages.getString("NDVIHistoChart.DIAS_NDVI"));
+			//yAxis.setLabel("DIAS NDVI 100%");//TODO traducir	
+		}
 	
 		ObservableList<Series<Number, Number>> data = FXCollections.observableArrayList();// new ArrayList<Series<Number, Number>>();
 
@@ -92,7 +110,9 @@ public class NDVIChart extends VBox {
 					Ndvi lNdvi = (Ndvi)l2.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 					return lNdvi.getContorno().getNombre();// fecha me devuelve siempre hoy por eso no hace la animacion
 				}));
-		
+
+		final Double[] latitudeForDaylight = new Double[1];
+
 		contornoMap.keySet().stream().forEach((c)->{
 			XYChart.Series<Number,Number> sr = new XYChart.Series<Number,Number>(); 
 			sr.setName(c );
@@ -104,16 +124,26 @@ public class NDVIChart extends VBox {
 			.sorted((n1,n2)->n1.compareTo(n2))
 			.forEachOrdered(lNdvi->{
 				try {
-				LocalDate fecha = lNdvi.getFecha();
-				long dias=5;//el minimo aporte que deberia tener una imagen es 5 dias
-				if(lastFecha[0]==null) {
-					lastFecha[0]=fecha;					
-				} else {					
-					dias = java.time.temporal.ChronoUnit.DAYS.between(lastFecha[0], fecha);
-					lastFecha[0]=fecha;
-				}
-				//acumulo el ndvi		
+					Position centerPosition = (Position) lNdvi.getLayer().getValue(ProcessMapTask.ZOOM_TO_KEY);
+					if (centerPosition != null && latitudeForDaylight[0] == null) {
+						latitudeForDaylight[0] = centerPosition.getLatitude().degrees;
+					}
 				if (acumulado == true) {
+					LocalDate fecha = lNdvi.getFecha();
+					double dias=5/2;//el minimo aporte que deberia tener una imagen es 5 dias
+					if(lastFecha[0]==null) {
+						lastFecha[0]=fecha;					
+					} else {										
+						if(centerPosition!=null) {	
+							DaylightCalculator daylightCalculator = new DaylightCalculator(centerPosition.getLatitude().degrees);
+							double daylightHours = daylightCalculator.getTotalDaylightHours(lastFecha[0], fecha);
+							dias = (daylightHours / 24);
+							lastFecha[0]=fecha;
+						}else{
+							dias = java.time.temporal.ChronoUnit.DAYS.between(lastFecha[0], fecha)/2;//12hs de luz por dia	
+						}
+					}
+					//acumulo el ndvi	
 					ndviAcumProp.set(ndviAcumProp.get()+lNdvi.getMeanNDVI().doubleValue()*dias);
 				}else {
 					ndviAcumProp.set( lNdvi.getMeanNDVI().doubleValue());
@@ -130,14 +160,80 @@ public class NDVIChart extends VBox {
 			});
 			data.add(sr);	
 		});
+
+		// Secondary axis: daylight hours per date (scaled to 0–24 for right axis)
+		Set<Long> uniqueEpochDays = new TreeSet<>();
+		for (XYChart.Series<Number, Number> s : data) {
+			for (XYChart.Data<Number, Number> d : s.getData()) {
+				uniqueEpochDays.add(d.getXValue().longValue());
+			}
+		}
+		double latitude = latitudeForDaylight[0] != null ? latitudeForDaylight[0] : 0.0;
+		DaylightCalculator daylightCalculator = new DaylightCalculator(latitude);
+		double maxPrimaryY = data.stream()
+				.flatMap(s -> s.getData().stream())
+				.mapToDouble(d -> d.getYValue().doubleValue())
+				.max().orElse(1.0);
+		if (maxPrimaryY <= 0) maxPrimaryY = 1.0;
+		XYChart.Series<Number, Number> daylightSeries = new XYChart.Series<>();
+		daylightSeries.setName(Messages.getString("NDVIHistoChart.Daylight")+" (h)");
+		for (Long epochDay : uniqueEpochDays) {
+			LocalDate date = LocalDate.ofEpochDay(epochDay);
+			double hours = daylightCalculator.getDaylightHours(date);
+			// Scale to primary Y range so right axis 0–24 aligns
+			daylightSeries.getData().add(new XYChart.Data<Number, Number>(epochDay, (hours / 24.0) * maxPrimaryY));
+		}
+		data.add(daylightSeries);
+
 		xAxis.setTickLabelRotation(90);
 		xAxis.setTickUnit(5);
 		
 		lineChart = new LineChart<Number, Number>(xAxis, yAxis,data);				
 		lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.X_AXIS);
-		
-		VBox vbox = new VBox(lineChart);
-		VBox.setVgrow(lineChart, Priority.ALWAYS);
+
+		NumberAxis rightAxis = new NumberAxis(0, 24, 2);
+		rightAxis.setSide(Side.RIGHT);
+		rightAxis.setLabel(Messages.getString("NDVIHistoChart.Daylight")+" (h)");
+		rightAxis.setAutoRanging(false);
+		rightAxis.setTickLabelFormatter(new StringConverter<Number>() {
+			@Override
+			public String toString(Number value) {
+				return value.intValue() + " h";
+			}
+			@Override
+			public Number fromString(String string) {
+				try {
+					return Integer.parseInt(string.replace(" h", "").trim());
+				} catch (Exception e) {
+					return 0;
+				}
+			}
+		});
+
+		// Wrap right axis so it aligns with the chart plot area (not full height including legend)
+		VBox rightAxisWrapper = new VBox(rightAxis);
+		rightAxisWrapper.setFillWidth(true);
+		rightAxisWrapper.setAlignment(Pos.CENTER_RIGHT);
+		Runnable alignAxisToPlot = () -> {
+			Node plot = lineChart.lookup(".chart-plot-background");
+			if (plot != null) {
+				Bounds bInChart = lineChart.sceneToLocal(plot.localToScene(plot.getBoundsInLocal()));
+				double topInset = bInChart.getMinY();
+				double bottomInset = lineChart.getHeight() - bInChart.getMaxY();
+				rightAxisWrapper.setPadding(new Insets(Math.max(0, topInset), 0, Math.max(0, bottomInset), 0));
+				rightAxis.setPrefHeight(Math.max(1, bInChart.getHeight()));
+			}
+		};
+		lineChart.layoutBoundsProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(alignAxisToPlot));
+		lineChart.boundsInLocalProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(alignAxisToPlot));
+		Platform.runLater(alignAxisToPlot);
+
+		BorderPane chartPane = new BorderPane();
+		chartPane.setCenter(lineChart);
+		chartPane.setRight(rightAxisWrapper);
+
+		VBox vbox = new VBox(chartPane);
+		VBox.setVgrow(chartPane, Priority.ALWAYS);
 		VBox.setVgrow(vbox, Priority.ALWAYS);
 		VBox right = new VBox();
 		Button exportButton = new Button(Messages.getString("CosechaHistoChart.16")); //$NON-NLS-1$
@@ -158,6 +254,7 @@ public class NDVIChart extends VBox {
 		// 		}
 		// 	""");
 		this.getChildren().add(vbox);
+		VBox.setVgrow(vbox, Priority.ALWAYS);
 		
 		/**
          * Browsing through the Data and applying ToolTip
@@ -165,14 +262,11 @@ public class NDVIChart extends VBox {
          */
         for (XYChart.Series<Number, Number> s : lineChart.getData()) {
             for (XYChart.Data<Number, Number> d : s.getData()) {
-                Tooltip.install(d.getNode(), 
-                		new Tooltip(
-                				s.getName()
-                				+"\nNDVI: " + d.getYValue()
-                				+ "\n" +
-                				Messages.getString("JFXMain.show_ndvi_chart.Fecha")+": " + toString(d.getXValue())                               
-                                )
-                		);
+                String tooltipText = s.getName()
+                        + "\n" + (s.getName().startsWith(Messages.getString("NDVIHistoChart.Daylight")) ? String.format("%.1f", d.getYValue().doubleValue() * 24.0 / maxPrimaryY) 
+						: Messages.getString("NDVIHistoChart.NDVI") + d.getYValue())
+                        + "\n" + Messages.getString("JFXMain.show_ndvi_chart.Fecha") + ": " + toString(d.getXValue());
+                Tooltip.install(d.getNode(), new Tooltip(tooltipText));
 
                 //Adding class on hover
                 d.getNode().setOnMouseEntered(event -> d.getNode().getStyleClass().add("onHover"));

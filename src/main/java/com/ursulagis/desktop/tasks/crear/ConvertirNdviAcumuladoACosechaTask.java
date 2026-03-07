@@ -10,15 +10,19 @@ import java.util.concurrent.ExecutionException;
 
 import org.locationtech.jts.geom.Geometry;
 
+
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.cosecha.CosechaItem;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
+
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.ExtrudedPolygon;
 import gov.nasa.worldwindx.examples.analytics.AnalyticSurface.GridPointAttributes;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.ShowNDVITifFileTask;
 import com.ursulagis.desktop.tasks.procesar.SumarCosechasMapTask;
+import com.ursulagis.desktop.utils.DaylightCalculator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 /**
@@ -57,15 +61,24 @@ public class ConvertirNdviAcumuladoACosechaTask extends ProcessMapTask<CosechaIt
 		LocalDate lastFecha =null;
 		updateProgress(0, ndvis.size());
 		List<CosechaLabor> cosechasASumar = new ArrayList<CosechaLabor>();
+		
 		int i=0;
 		//XXX esto da error si mezclo ndvi de diferentes lotes. podria agrupar por contorno antes.
 		ndvis.sort((n1,n2)->n1.compareTo(n2));
 		for(Ndvi ndvi : ndvis) {
 			if(ndvi.getMeanNDVI()<0.2)continue;//solo procesar los datos con el surco cerrado
 			LocalDate fecha = ndvi.getFecha();
-			long dias=5;//esto no asigna valor a la primera imagen porque multiplica por cero
+			double dias=5/2;//esto no asigna valor a la primera imagen porque multiplica por cero
 			if(lastFecha!=null) {								
-				dias = java.time.temporal.ChronoUnit.DAYS.between(lastFecha, fecha);				
+				
+				Position centerPosition = (Position)ndvi.getLayer().getValue(ProcessMapTask.ZOOM_TO_KEY);	
+				if(centerPosition!=null) {	
+				DaylightCalculator daylightCalculator = new DaylightCalculator(centerPosition.getLatitude().getDegrees());
+				double daylightHours = daylightCalculator.getTotalDaylightHours(lastFecha, fecha);
+				dias = (daylightHours / 24);
+				} else{
+					dias = java.time.temporal.ChronoUnit.DAYS.between(lastFecha, fecha)/2;//12hs de luz por dia	
+				}
 			}
 			lastFecha=fecha;
 		
