@@ -5,14 +5,17 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ListResourceBundle;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
+import com.ursulagis.desktop.tasks.GoogleTranslatorHelper;
 
 public class Messages {
 	private static final String LOCALE_NOT_SET = "LOCALE_NOT_SET";
@@ -67,13 +70,14 @@ public class Messages {
 		nf.setGroupingUsed(true);
 		nf.setMaximumFractionDigits(2);
 		
-		RESOURCE_BUNDLE_CONTAINER.set(BUNDLE_NAME, locale);
-		conf.loadProperties();
-		conf.setProperty(LOCALE_KEY, locale.getLanguage());
-		conf.save();
-		
-		localeChangeListeners.stream().forEach(f->f.accept(locale));
-		System.out.println("guardando el nuevo locale "+locale.getLanguage());
+		Runnable whenReady = () -> {
+			conf.loadProperties();
+			conf.setProperty(LOCALE_KEY, locale.getLanguage());
+			conf.save();
+			localeChangeListeners.stream().forEach(f->f.accept(locale));
+			System.out.println("guardando el nuevo locale "+locale.getLanguage());
+		};
+		RESOURCE_BUNDLE_CONTAINER.set(BUNDLE_NAME, locale, whenReady);
 	}
 	
 	public static Locale getLocale() {
@@ -100,13 +104,19 @@ public class Messages {
 	}
 	
 	public static List<Locale> getLocales(){
-		 List<Locale> locales = new ArrayList<Locale>();
-		 locales.add(new Locale("ES"));
-		 locales.add(new Locale("EN"));
-		 locales.add(new Locale("PT"));
-		 locales.add(new Locale("FR"));
-		 locales.add(new Locale("DE"));
+		Locale[] allLocales = Locale.getAvailableLocales();
+		List<Locale> locales = Arrays.stream(allLocales)
+				.filter(loc -> GoogleTranslatorHelper.getSupportedLanguageCodes().contains(loc.getLanguage().toLowerCase(Locale.ROOT))
+						|| loc.equals(getLocale()))
+				.collect(Collectors.toList());
 		return locales;
+//		 List<Locale> locales = new ArrayList<Locale>();
+//		 locales.add(new Locale("ES"));
+//		 locales.add(new Locale("EN"));
+//		 locales.add(new Locale("PT"));
+//		 locales.add(new Locale("FR"));
+//		 locales.add(new Locale("DE"));
+//		 return locales;
 	}
 	
 	public static NumberFormat getNumberFormat() {

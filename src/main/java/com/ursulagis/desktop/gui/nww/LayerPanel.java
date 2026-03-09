@@ -116,7 +116,8 @@ public class LayerPanel extends VBox {
 			public void accept(Locale t) {
 				rootItem=null;
 				constructRootItem();	
-				update(wwd);
+				fill(wwd);
+				//update(wwd);
 			}
 
 		};
@@ -124,6 +125,11 @@ public class LayerPanel extends VBox {
 
 	public void setMenuItems(Map<Class<?>,List<LayerAction>> actions){
 		this.actions= actions;
+		// Force tree refresh so context menus are rebuilt with new action labels (e.g. after locale change)
+		if (tree != null && rootItem != null) {
+			tree.setRoot(null);
+			tree.setRoot(rootItem);
+		}
 	}
 
 	protected void fill(WorldWindow wwd) {

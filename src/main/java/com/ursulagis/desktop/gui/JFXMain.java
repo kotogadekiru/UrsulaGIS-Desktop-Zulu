@@ -558,6 +558,7 @@ public class JFXMain extends Application {
 			menuBar.getMenus().clear();
 			configGUIController.addMenuesToMenuBar(menuBar);
 		});
+		Messages.registerLocaleChangeListener(loc-> setAccionesTreePanel());
 
 		return menuBar;
 	}

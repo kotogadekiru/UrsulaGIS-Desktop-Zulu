@@ -30,7 +30,11 @@ public class ResourceBoundleContainer {
 		return RESOURCE_BUNDLE;
 	}
 
-	public void set(String bUNDLE_NAME,Locale locale) {
+	/**
+	 * Sets the resource bundle for the given name and locale. If the bundle must be
+	 * translated (async), runs {@code whenReady} on the JavaFX thread when the bundle is ready.
+	 */
+	public void set(String bUNDLE_NAME, Locale locale, Runnable whenReady) {
 		// /gui/messages_en.properties
 		String resourceName = bUNDLE_NAME+"_"+locale.getLanguage().toLowerCase()+".properties";
 
@@ -45,6 +49,9 @@ public class ResourceBoundleContainer {
 			try {
 				RESOURCE_BUNDLE=new TxtResourceBundle(is);
 				//RESOURCE_BUNDLE = ResourceBundle.getBundle(bUNDLE_NAME,locale, Messages.class.getClassLoader());
+				if (whenReady != null) {
+					whenReady.run();
+				}
 			} catch (Exception e) {
 				//TODO si el recurso no existe traducir el espaniol al idioma deseado,
 				//guardarlo en el directorio local y devolver el boundle apuntando al nuevo recurso
@@ -71,12 +78,24 @@ public class ResourceBoundleContainer {
 					if (localBoundle != null) {
 						RESOURCE_BUNDLE = localBoundle;
 					}
+					if (whenReady != null) {
+						whenReady.run();
+					}
 				});
-				t.setOnFailed(ev -> t.uninstallProgressBar());
-				t.run();//bloquea la interfaz
+				t.setOnFailed(ev -> {
+					t.uninstallProgressBar();
+				});
+				// Run on background thread so the JavaFX thread can render the progress bar
+				new Thread(t).start();
+			} else {
+				TxtResourceBundle localBoundle = getLocalResourceBundle(fileName);
+				if (localBoundle != null) {
+					RESOURCE_BUNDLE = localBoundle;
+				}
+				if (whenReady != null) {
+					whenReady.run();
+				}
 			}
-			
-			
 		 }
 	}
 
