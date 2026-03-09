@@ -21,6 +21,9 @@ public class DaylightCalculator {
     /** Day-of-year offset so that sin curve matches equinox/solstice (approx. March 21). */
     private static final int DECLINATION_OFFSET = 81;
 
+    /** Solar constant in MJ/(m²·min) for daily extraterrestrial radiation formula. */
+    private static final double SOLAR_CONSTANT_MJ_M2_MIN = 0.0820;
+
     private final double latitudeDeg;
 
     /**
@@ -70,6 +73,88 @@ public class DaylightCalculator {
     }
 
     /**
+     * Maximum angular height of the sun (solar elevation at solar noon) for a given date
+     * at this latitude.
+     * <p>
+     * Uses the same declination model as daylight calculations. Result is in degrees
+     * above the horizon; may be negative when the sun does not rise (polar night).
+     *
+     * @param date the date (time zone is not used)
+     * @return maximum solar elevation in degrees (−90 to 90)
+     */
+    public double getMaxSolarElevationDeg(LocalDate date) {
+        int dayOfYear = date.getDayOfYear();
+        double declinationRad = solarDeclinationRad(dayOfYear);
+        double latRad = Math.toRadians(latitudeDeg);
+        // At solar noon: sin(altitude) = cos(lat - decl) => altitude = 90° - (lat - decl)
+        double altitudeRad = (Math.PI / 2) - (latRad - declinationRad);
+        return Math.toDegrees(altitudeRad);
+    }
+
+    /**
+     * Total solar radiation for a day at this latitude (extraterrestrial, top of atmosphere).
+     * <p>
+     * Uses the standard formula: daily integral of solar irradiance on a horizontal surface
+     * at the top of the atmosphere, including the Earth–Sun distance (eccentricity) factor.
+     * Same declination and sunset hour angle as daylight calculations.
+     *
+     * @param date the date (time zone is not used)
+     * @return daily extraterrestrial radiation in MJ/(m²·day); 0 on polar night
+     */
+    public double getTotalSolarRadiationMjPerM2(LocalDate date) {
+        int dayOfYear = date.getDayOfYear();
+        double declinationRad = solarDeclinationRad(dayOfYear);
+        double latRad = Math.toRadians(latitudeDeg);
+
+        double tanLat = Math.tan(latRad);
+        double tanDec = Math.tan(declinationRad);
+        double cosHourAngle = -tanLat * tanDec;
+
+        double omegaS; // sunset hour angle in radians
+        if (cosHourAngle >= 1) {
+            return 0; // polar night
+        }
+        if (cosHourAngle <= -1) {
+            omegaS = Math.PI; // polar day: sun never sets
+        } else {
+            omegaS = Math.acos(cosHourAngle);
+        }
+
+        // Inverse relative Earth–Sun distance (eccentricity correction)
+        double dr = 1 + 0.033 * Math.cos(2 * Math.PI * dayOfYear / 365);
+
+        // Ra = (24*60/π) * Gsc * dr * [ωs*sin(φ)*sin(δ) + cos(φ)*cos(δ)*sin(ωs)]
+        double sinLat = Math.sin(latRad);
+        double sinDec = Math.sin(declinationRad);
+        double cosLat = Math.cos(latRad);
+        double cosDec = Math.cos(declinationRad);
+        double bracket = omegaS * sinLat * sinDec + cosLat * cosDec * Math.sin(omegaS);
+
+        return (24 * 60 / Math.PI) * SOLAR_CONSTANT_MJ_M2_MIN * dr * bracket;
+    }
+
+    /**
+     * Total solar radiation (extraterrestrial) between two dates (inclusive) at this latitude.
+     * Sum of daily {@link #getTotalSolarRadiationMjPerM2(LocalDate)} for each day in the range.
+     *
+     * @param startInclusive start date (inclusive)
+     * @param endInclusive   end date (inclusive)
+     * @return total radiation in MJ/m²; 0 if end is before start
+     */
+    public double getTotalSolarRadiationMjBetween(LocalDate startInclusive, LocalDate endInclusive) {
+        if (endInclusive.isBefore(startInclusive)) {
+            return 0;
+        }
+        double total = 0;
+        LocalDate d = startInclusive;
+        while (!d.isAfter(endInclusive)) {
+            total += getTotalSolarRadiationMjPerM2(d);
+            d = d.plusDays(1);
+        }
+        return total;
+    }
+
+    /**
      * Total daylight in hours between two dates (inclusive) at this latitude.
      *
      * @param startInclusive start date (inclusive)
@@ -85,6 +170,7 @@ public class DaylightCalculator {
                 total += getDaylightHours(d);
                 d = d.plusDays(1);
             }
+
             return total;
         }
         return 0;

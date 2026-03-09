@@ -176,12 +176,14 @@ public class NDVIChart extends VBox {
 				.max().orElse(1.0);
 		if (maxPrimaryY <= 0) maxPrimaryY = 1.0;
 		XYChart.Series<Number, Number> daylightSeries = new XYChart.Series<>();
-		daylightSeries.setName(Messages.getString("NDVIHistoChart.Daylight")+" (h)");
+		String radiationSeriesName = Messages.getString("NDVIHistoChart.RadiationMj");
+		daylightSeries.setName(radiationSeriesName);
+		double maxRadiationMj = 50.0; // typical max for scaling right axis
 		for (Long epochDay : uniqueEpochDays) {
 			LocalDate date = LocalDate.ofEpochDay(epochDay);
-			double hours = daylightCalculator.getDaylightHours(date);
-			// Scale to primary Y range so right axis 0–24 aligns
-			daylightSeries.getData().add(new XYChart.Data<Number, Number>(epochDay, (hours / 24.0) * maxPrimaryY));
+			double radiationMj = daylightCalculator.getTotalSolarRadiationMjPerM2(date);
+			// Scale to primary Y range so right axis aligns
+			daylightSeries.getData().add(new XYChart.Data<Number, Number>(epochDay, (radiationMj / maxRadiationMj) * maxPrimaryY));
 		}
 		data.add(daylightSeries);
 
@@ -191,19 +193,19 @@ public class NDVIChart extends VBox {
 		lineChart = new LineChart<Number, Number>(xAxis, yAxis,data);				
 		lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.X_AXIS);
 
-		NumberAxis rightAxis = new NumberAxis(0, 24, 2);
+		NumberAxis rightAxis = new NumberAxis(0, maxRadiationMj, 10);
 		rightAxis.setSide(Side.RIGHT);
-		rightAxis.setLabel(Messages.getString("NDVIHistoChart.Daylight")+" (h)");
+		rightAxis.setLabel(radiationSeriesName);
 		rightAxis.setAutoRanging(false);
 		rightAxis.setTickLabelFormatter(new StringConverter<Number>() {
 			@Override
 			public String toString(Number value) {
-				return value.intValue() + " h";
+				return value.intValue() + "";
 			}
 			@Override
 			public Number fromString(String string) {
 				try {
-					return Integer.parseInt(string.replace(" h", "").trim());
+					return Integer.parseInt(string.trim());
 				} catch (Exception e) {
 					return 0;
 				}
@@ -263,7 +265,7 @@ public class NDVIChart extends VBox {
         for (XYChart.Series<Number, Number> s : lineChart.getData()) {
             for (XYChart.Data<Number, Number> d : s.getData()) {
                 String tooltipText = s.getName()
-                        + "\n" + (s.getName().startsWith(Messages.getString("NDVIHistoChart.Daylight")) ? String.format("%.1f", d.getYValue().doubleValue() * 24.0 / maxPrimaryY) 
+                        + "\n" + (s.getName().equals(radiationSeriesName) ? String.format("%.1f", d.getYValue().doubleValue() * maxRadiationMj / maxPrimaryY) 
 						: Messages.getString("NDVIHistoChart.NDVI") + d.getYValue())
                         + "\n" + Messages.getString("JFXMain.show_ndvi_chart.Fecha") + ": " + toString(d.getXValue());
                 Tooltip.install(d.getNode(), new Tooltip(tooltipText));

@@ -48,6 +48,10 @@ public class PulverizacionGUIController {
 							return "opened";	
 						},	Messages.getString("JFXMain.importar")
 						));
+		rootNodeP.add(new LayerAction(Messages.getString("JFXMain.grillarPulverizacion"), (layer)->{
+			doUnirPulverizaciones(null);
+			return "grilladas";
+		}, 1));
 		main.getLayerPanel().addAccionesClase(rootNodeP,PulverizacionLabor.class);
 	}
 	
@@ -63,6 +67,14 @@ public class PulverizacionGUIController {
 //			return "pulverizacion clonada" + layer.getName(); 
 //		}));
 		
+		/**
+		 * Accion que permite grillar una o más pulverizaciones
+		 */
+		pulverizacionesP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.grillarPulverizacion"), (layer)->{
+			doUnirPulverizaciones((PulverizacionLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+			return "pulverizacion grillada " + layer.getName(); //$NON-NLS-1$
+		}));
+
 		/**
 		 *Accion que permite editar una pulverizacion
 		 */

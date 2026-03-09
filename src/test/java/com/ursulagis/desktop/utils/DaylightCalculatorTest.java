@@ -179,7 +179,7 @@ class DaylightCalculatorTest {
     }
 
     @Test
-    @DisplayName("custom test")
+    @DisplayName("checkDaylightForLaMargarita")
     void checkDaylightForLaMargarita() {
         double latMargarita = -33.671404;//lat: -33.671404, lon: -61.915194
         LocalDate ini = LocalDate.of(2026,03,05);//05 Thu	sunrise: 04:59:08	sunset: 17:38:30	daylight: 12:39:22

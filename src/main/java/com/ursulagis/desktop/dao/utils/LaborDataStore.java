@@ -145,7 +145,11 @@ public class LaborDataStore<E> {
 	//	synchronized(labor){
 			if( labor.treeCache == null ) {
 				LaborDataStore.updateAllCachedEnvelopes(envelope,labor);			
-			} 
+			}
+			if (labor.treeCache == null) {
+				locked.remove(labor);
+				return objects;
+			}
 //			else {
 //				System.out.println("labor.treeCache != null "+labor.nombre);
 //			}
@@ -199,6 +203,8 @@ public class LaborDataStore<E> {
 		//System.out.println(labor.nombre+" empezando updateAllCachedEnvelopes en "+Thread.currentThread().getId());
 		if(labor.outCollection == null) {
 			System.err.println("No se puede iterar sobre outCollection porque es null en "+labor.getNombre());
+			labor.treeCache = new Quadtree();
+			labor.treeCacheEnvelope = new Envelope();
 			return;
 		}
 

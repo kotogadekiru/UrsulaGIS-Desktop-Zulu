@@ -74,8 +74,9 @@ public class ConvertirNdviAcumuladoACosechaTask extends ProcessMapTask<CosechaIt
 				Position centerPosition = (Position)ndvi.getLayer().getValue(ProcessMapTask.ZOOM_TO_KEY);	
 				if(centerPosition!=null) {	
 				DaylightCalculator daylightCalculator = new DaylightCalculator(centerPosition.getLatitude().getDegrees());
-				double daylightHours = daylightCalculator.getTotalDaylightHours(lastFecha, fecha);
-				dias = (daylightHours / 24);
+				double totalRadiationMj = daylightCalculator.getTotalSolarRadiationMjBetween(lastFecha, fecha);
+				// Reference radiation per day (MJ/m²) to express interval as equivalent days
+				dias = totalRadiationMj / 25.0;
 				} else{
 					dias = java.time.temporal.ChronoUnit.DAYS.between(lastFecha, fecha)/2;//12hs de luz por dia	
 				}

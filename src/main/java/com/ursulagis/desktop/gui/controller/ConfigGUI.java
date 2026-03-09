@@ -58,6 +58,7 @@ import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import gov.nasa.worldwind.geom.Position;
 import com.ursulagis.desktop.gui.CorrelacionarCapas;
 import com.ursulagis.desktop.gui.JFXMain;
+import com.ursulagis.desktop.tasks.GoogleTranslatorHelper;
 import com.ursulagis.desktop.gui.MargenConfigDialogController;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.PlagaAgroquimicosDialog;
@@ -74,6 +75,7 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -83,7 +85,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
@@ -1488,10 +1489,9 @@ public class ConfigGUI extends AbstractGUIController{
 	}
 
 	public static void doChangeLocale() {
-		//List<Locale> locales = Messages.getLocales();
-		//get a list of all locales
-		Locale[] allLocales = Locale.getAvailableLocales();
-		List<Locale> locales = Arrays.asList(allLocales);
+		// Only show locales supported by Google Translate (for translation of message files)
+		Locale current = Messages.getLocale();
+		List<Locale> locales = Messages.getLocales();
 		Function<Locale,String> capitalizeLocale = (Locale loc) ->{
 			// Use full display name to avoid duplicate keys (e.g., "Englisch" for en_NU and en_JM)
 			String key = loc.getDisplayLanguage(Messages.getLocale());
@@ -1505,19 +1505,40 @@ public class ConfigGUI extends AbstractGUIController{
 				locales.stream().collect(Collectors.toMap(capitalizeLocale,
 						(Locale loc) -> loc,
 						(existing, replacement) -> existing)); // Handle duplicates by keeping the first one
-		Locale actual = Messages.getLocale();
+		Locale actual = current;
 
-		ChoiceDialog<String> dialog = new ChoiceDialog<>(capitalizeLocale.apply(actual), displayLocales.keySet());
-		dialog.setTitle(Messages.getString("ConfigGUI.idioma")); //
-		dialog.setHeaderText(Messages.getString("ConfigGUI.idiomaDelSistema")); //
-		dialog.setContentText(Messages.getString("ConfigGUI.seleccioneSuIdioma")); //
+		ObservableList<String> allNames = FXCollections.observableArrayList(displayLocales.keySet());
+		FXCollections.sort(allNames, String.CASE_INSENSITIVE_ORDER);
+		FilteredList<String> filteredNames = new FilteredList<>(allNames, s -> true);
+		TextField searchField = new TextField();
+		searchField.setPromptText(Messages.getString("ConfigGUI.buscarIdioma"));
+		searchField.textProperty().addListener((obs, oldVal, newVal) ->
+				filteredNames.setPredicate(name -> name == null || newVal == null
+						|| newVal.isEmpty() || name.toLowerCase().contains(newVal.toLowerCase())));
+
+		ListView<String> listView = new ListView<>(filteredNames);
+		listView.setPrefSize(280, 220);
+		String currentName = capitalizeLocale.apply(actual);
+		listView.getSelectionModel().select(currentName);
+		listView.scrollTo(currentName);
+
+		VBox content = new VBox(8, new Label(Messages.getString("ConfigGUI.seleccioneSuIdioma")), searchField, listView);
+		content.setPadding(new Insets(10));
+
+		Dialog<String> dialog = new Dialog<>();
+		dialog.setTitle(Messages.getString("ConfigGUI.idioma"));
+		dialog.setHeaderText(Messages.getString("ConfigGUI.idiomaDelSistema"));
+		dialog.getDialogPane().setContent(content);
 		dialog.initOwner(JFXMain.stage);
+		dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+		dialog.setResultConverter(btn -> btn == ButtonType.OK ? listView.getSelectionModel().getSelectedItem() : null);
 
 		Optional<String> result = dialog.showAndWait();
-		// The Java 8 way to get the response value (with lambda expression).
 		result.ifPresent(newLocale -> {
 			Locale selected = displayLocales.get(newLocale);
-			Messages.setLocale(selected);	
+			if (selected != null) {
+				Messages.setLocale(selected);
+			}
 		});
 
 		//TODO redibujar la ventana principal con el nuevo locale

@@ -186,7 +186,7 @@ public class SiembraGUIController {
 		}
 		
 		String anchoDefaultString =JFXMain.config.getPropertyOrDefault(LaborConfig.ANCHO_GRILLA_KEY,
-				Messages.getString("CosechaGUIController.defaultGridWidth"));
+				Messages.getString("SiembraGUIController.defaultGridWidth"));
 		Double ancho = 10.0;
 		try {
 			ancho = PropertyHelper.parseDouble(anchoDefaultString).doubleValue();
@@ -194,11 +194,11 @@ public class SiembraGUIController {
 			e.printStackTrace();
 		}
 		ancho = NumberInputDialog.showAndWait(
-				Messages.getString("CosechaGUIController.configureAnchoGrilla"), 
-						Messages.getString("CosechaGUIController.configureAnchoGrilla"), //Configure el ancho de la grilla 
-						Messages.getString("CosechaGUIController.anchoGrilla"),//JFXMain.290
-						anchoDefaultString, 
-						Messages.getString("JFXMain.SeparatorWarningTooltip"));
+				Messages.getString("SiembraGUIController.configureAnchoGrilla"),
+				Messages.getString("SiembraGUIController.configureAnchoGrilla"),
+				Messages.getString("SiembraGUIController.anchoGrilla"),
+				anchoDefaultString,
+				Messages.getString("JFXMain.SeparatorWarningTooltip"));
 		if (ancho.isNaN()) {
 			//si ancho is NaN el usuario salio sin ingresar un valor
 			return;

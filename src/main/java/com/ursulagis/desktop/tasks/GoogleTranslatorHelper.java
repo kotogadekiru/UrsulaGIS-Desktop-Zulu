@@ -10,8 +10,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import com.google.api.client.http.GenericUrl;
@@ -39,6 +42,29 @@ public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 	private static String project = "UrsulaGIS";
 	private static String GEOCODE_API_GOOGLE_URL ="https://maps.googleapis.com/maps/api/geocode/json";//?address=";
 	private static String TRANSLATE_API_GOOGLE_URL = "https://translation.googleapis.com/language/translate/v2";
+
+	/** Locale codes not supported by Google Translate API -> fallback code to use for translation. */
+	private static final Map<String, String> UNSUPPORTED_TO_FALLBACK = new HashMap<>();
+	static {
+		UNSUPPORTED_TO_FALLBACK.put("ast", "es");  // Asturian -> Spanish
+		UNSUPPORTED_TO_FALLBACK.put("gv", "en");   // Manx -> English
+		UNSUPPORTED_TO_FALLBACK.put("kw", "en");   // Cornish -> English
+		UNSUPPORTED_TO_FALLBACK.put("sco", "en"); // Scots -> English
+	}
+
+	/** Language codes (ISO 639-1 or equivalent) supported by Google Cloud Translation API for UI locale selection. */
+	private static final Set<String> SUPPORTED_LANGUAGE_CODES = Set.of(
+			"af", "sq", "am", "ar", "hy", "az", "be", "bn", "bs", "bg", "my", "ca", "zh", "hr", "cs", "da", "nl", "en", "et",
+			"fil", "fi", "fr", "fy", "gl", "ka", "de", "el", "gn", "gu", "ha", "he", "iw", "hi", "hu", "is", "ig", "id", "ga",
+			"it", "ja", "kn", "km", "ko", "ky", "lo", "lv", "ln", "lt", "lb", "mk", "ms", "ml", "mt", "mr", "mn", "ne", "nb", "no",
+			"fa", "pl", "pt", "pa", "ro", "ru", "gd", "sr", "sk", "sl", "so", "es", "sw", "sv", "tl", "tg", "ta", "te", "th",
+			"tr", "uk", "ur", "uz", "vi", "cy", "zu"
+	);
+
+	/** Returns the set of language codes supported by Google Translate (for locale/language selection). */
+	public static Set<String> getSupportedLanguageCodes() {
+		return SUPPORTED_LANGUAGE_CODES;
+	}
 
 	private ResourceBundle baseBoundle=null;
 	private Locale outLocale=null;
@@ -128,10 +154,15 @@ public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 		
 		try {
 			// Use Google Cloud Translate REST API v2 with API key
+			String targetLang = outLocale.getLanguage();
+			String fallback = UNSUPPORTED_TO_FALLBACK.get(targetLang.toLowerCase(Locale.ROOT));
+			if (fallback != null) {
+				targetLang = fallback;
+			}
 			GenericUrl url = new GenericUrl(TRANSLATE_API_GOOGLE_URL);
 			url.put("key", key);
 			url.put("q", s);
-			url.put("target", outLocale.getLanguage());
+			url.put("target", targetLang);
 			url.put("format", "text");
 			
 			HttpResponse response = makeRequest(url);
@@ -169,22 +200,23 @@ public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 	@Override
 	protected File call() {
 		// TODO generate messages_[loc].properties File
-		Configuracion config = Configuracion.getInstance();
-		String fileName = config.ursulaGISFolder+"\\messages_"+outLocale.getLanguage()+".properties";
+		//Configuracion config = Configuracion.getInstance();
+		String fileName = Configuracion.ursulaGISFolder+"\\messages_"+outLocale.getLanguage()+".properties";
 		System.out.println("writing file "+fileName);
 		File ret = new File(fileName);
 		//todo recorrer outlocale 
 		Enumeration<String> keys = baseBoundle.getKeys();
 		List<String> keyList = Collections.list(keys);
-		
+		super.updateProgress(0, keyList.size());			
 		try (OutputStreamWriter writer = new OutputStreamWriter(
 				new FileOutputStream(ret), StandardCharsets.UTF_8)) {
 			// Use sequential stream since we're writing to a file
 			// Process each key and write the translated entry
 			for (String key : keyList) {
 				String value = baseBoundle.getString(key);
-				String translatedValue = traducir(value);
+				String translatedValue = traducir(value);	
 				writer.write(key + "=" + translatedValue + "\n");
+				super.updateProgress(keyList.indexOf(key)+1,keyList.size());
 			}
 		} catch (Exception e) {
 			System.err.println("Error writing translation file: " + e.getMessage());

@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Messages",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.gui.Messages",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
             "name": "GoogleTranslatorHelper",
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.tasks.GoogleTranslatorHelper",
