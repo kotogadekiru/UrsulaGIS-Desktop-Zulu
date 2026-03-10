@@ -998,14 +998,26 @@ public class JFXMain extends Application {
 	}
 
 	public void viewGoTo(Position position) {
-		if(position==null) return;
+		if (position == null) {
+			return;
+		}
+
+		WorldWindow wwd = getWwd();
+		if (wwd == null || wwd.getModel() == null || wwd.getModel().getGlobe() == null) {
+			System.err.println("viewGoTo aborted: WorldWindow or globe is not initialized.");
+			return;
+		}
+
 		config.loadProperties();//si viene de editar siembra se pisan los datos con los viejos
 		config.setProperty(GOV_NASA_WORLDWIND_AVKEY_INITIAL_LATITUDE, String.valueOf(position.getLatitude().degrees));		
 		config.setProperty(GOV_NASA_WORLDWIND_AVKEY_INITIAL_LONGITUDE,String.valueOf(position.getLongitude().degrees));	
 		config.setProperty(GOV_NASA_WORLDWIND_AVKEY_INITIAL_ALTITUDE, "64000"); 
 		config.save();
-		View view =getWwd().getView();
-		view.goTo(position, 3000d);
+
+		View view = wwd.getView();
+		if (view != null) {
+			view.goTo(position, 3000d);
+		}
 	}
 
 
