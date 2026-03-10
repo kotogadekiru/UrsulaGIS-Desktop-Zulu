@@ -469,10 +469,12 @@ public class CosechaGUIController extends AbstractGUIController {
 		}catch(Exception e ) {
 			e.printStackTrace();
 		}
+		String anchoGrillaLabel = Messages.getString("CosechaGUIController.anchoGrilla");
+		System.out.println("anchoGrillaLabel: " + anchoGrillaLabel);
 		ancho = NumberInputDialog.showAndWait(
 				Messages.getString("CosechaGUIController.configureAnchoGrilla"), 
 						Messages.getString("CosechaGUIController.configureAnchoGrilla"), //Configure el ancho de la grilla 
-						Messages.getString("CosechaGUIController.anchoGrilla"),//JFXMain.290
+						anchoGrillaLabel,//JFXMain.290
 						anchoDefaultString, 
 						Messages.getString("JFXMain.SeparatorWarningTooltip"));
 		if (ancho.isNaN()) {
