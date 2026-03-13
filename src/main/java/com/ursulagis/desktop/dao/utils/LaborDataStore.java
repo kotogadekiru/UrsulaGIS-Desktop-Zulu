@@ -154,6 +154,11 @@ public class LaborDataStore<E> {
 //				System.out.println("labor.treeCache != null "+labor.nombre);
 //			}
 			labor.cacheLastRead=LocalTime.now();
+			// Defensive check: another thread may have cleared cache (e.g. clearCache()) between the check above and here
+			if (labor.treeCache == null) {
+				locked.remove(labor);
+				return objects;
+			}
 			cachedObjects = labor.treeCache.query(envelope);// Exception in thread "pool-2-thread-5" java.util.ConcurrentModificationException
 
 			//			if(labor.treeCache.size()>CACHE_MAX_SIZE) {
