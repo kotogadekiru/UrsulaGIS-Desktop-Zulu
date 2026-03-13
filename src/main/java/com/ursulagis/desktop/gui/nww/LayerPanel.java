@@ -57,6 +57,8 @@ public class LayerPanel extends VBox {
 	private TreeView<Layer> tree=null;
 	private CheckBoxTreeItem<Layer> rootItem=null;
 	private Map<Class<?>,  CheckBoxTreeItem<Layer>> rootItems= new HashMap<Class<?>,  CheckBoxTreeItem<Layer>>();
+	// Mantiene el nombre del icono asociado a cada rama raíz para poder restaurarlo tras un refresco
+	private Map<Class<?>, String> rootItemIcons = new HashMap<Class<?>, String>();
 
 	private Map<Class<?>, List<LayerAction>> actions;
 	private Map<Class<?>, List<LayerAction>> layerActions= new HashMap<Class<?>, List<LayerAction>>();
@@ -114,15 +116,20 @@ public class LayerPanel extends VBox {
 		return new Consumer<Locale>(){
 			@Override
 			public void accept(Locale t) {
-				rootItem=null;
-				constructRootItem();	
+				// Clear cached root structures so they are recreated for the new locale.
+				// Otherwise, dynamically created branches (e.g. NDVI) keep referencing
+				// the old root item and do not appear under the refreshed tree.
+				rootItems.clear();
+				rootItemIcons.clear();
+				rootItem.getChildren().clear();
+				rootItem.setGraphic(null);
+				rootItem.setValue(null);
+				rootItem = null;
+				constructRootItem();
 				fill(wwd);
-				//update(wwd);
 			}
-
 		};
 	}
-
 	public void setMenuItems(Map<Class<?>,List<LayerAction>> actions){
 		this.actions= actions;
 		// Force tree refresh so context menus are rebuilt with new action labels (e.g. after locale change)
@@ -153,6 +160,10 @@ public class LayerPanel extends VBox {
 		}
 		String nombre =""; 
 		for (Layer layer : wwd.getModel().getLayers()) {
+			// No tratar como hoja una capa que es el valor de un nodo raíz (placeholder):
+			// evitar reutilizar nodos raíz como hojas y que queden desalineados.
+			if (isBranchPlaceholderLayer(layer)) continue;
+
 			//LayerAction action = new LayerAction(layer, wwd, layer.isEnabled());
 			nombre = layer.getName();
 			if("Stars".equalsIgnoreCase(nombre)|| 
@@ -179,8 +190,10 @@ public class LayerPanel extends VBox {
 				layerClass = (Class<?>) clazz;
 			}
 
-			//Obtengo los items para esa clase
-			CheckBoxTreeItem<Layer> branchItem = rootItems.get(layerClass);
+			// Resolver la clase al nodo raíz registrado (p. ej. CosechaLabor.class aunque value sea proxy/subclase)
+			// para que todas las capas del mismo tipo queden bajo el mismo nodo en el árbol.
+			Class<?> branchClass = layerClass;//resolveBranchClass(layerClass);
+			CheckBoxTreeItem<Layer> branchItem = branchClass != null ? rootItems.get(branchClass) : null;
 			if(branchItem!=null) {
 				branchItem.getChildren().add(checkBoxTreeItem);
 			}else if(layerClass != null){
@@ -198,6 +211,7 @@ public class LayerPanel extends VBox {
 
 				CheckBoxTreeItem<Layer> newBranchItem = new CheckBoxTreeItem<Layer>(rootLayer);
 				setGraphic(newBranchItem,"map.png");
+				rootItemIcons.put(layerClass, "map.png");
 				rootItems.put(layerClass,newBranchItem);
 				rootItem.getChildren().add(newBranchItem);
 				newBranchItem.getChildren().add(checkBoxTreeItem);
@@ -257,8 +271,54 @@ public class LayerPanel extends VBox {
 			tree.setRoot(rootItem);
 		}
 
+		// Asegura que todas las ramas raíz tengan su icono configurado,
+		// incluso después de refrescos del árbol que puedan haberlos perdido.
+		rootItems.forEach((clazz, item) -> {
+			if (item != null && item.getGraphic() == null) {
+				String iconName = rootItemIcons.getOrDefault(clazz, "map.png");
+				setGraphic(item, iconName);
+			}
+		});
+
+		// Fuerza a JavaFX a repintar las celdas del árbol para que
+		// se apliquen inmediatamente los gráficos sin necesidad de
+		// colapsar/expandir manualmente las ramas.
+		if (tree != null) {
+			Platform.runLater(() -> tree.refresh());
+		}
+
 	}
 
+
+	/**
+	 * Indica si la capa es la usada como valor de algún nodo raíz del árbol (placeholder).
+	 * Esas capas no deben tratarse como hojas para evitar reutilizar nodos raíz como hojas.
+	 */
+	private boolean isBranchPlaceholderLayer(Layer layer) {
+		if (layer == null) return false;
+		for (CheckBoxTreeItem<Layer> branch : rootItems.values()) {
+			if (branch != null && branch.getValue() == layer) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Resuelve la clase de la capa al tipo de rama registrado en rootItems.
+	 * Así, capas cuyo value es un proxy (p. ej. Hibernate) o una subclase se agrupan
+	 * bajo el mismo nodo raíz (p. ej. CosechaLabor) en lugar de crear ramas duplicadas.
+	 */
+	// private Class<?> resolveBranchClass(Class<?> layerClass) {
+	// 	if (layerClass == null) return null;
+	// 	if (rootItems.containsKey(layerClass)) return layerClass;
+	// 	Class<?> best = null;
+	// 	for (Class<?> key : rootItems.keySet()) {
+	// 		if (key.isAssignableFrom(layerClass)) {
+	// 			if (best == null || key.isAssignableFrom(best))
+	// 				best = key;
+	// 		}
+	// 	}
+	// 	return best;
+	// }
 
 	private void constructRootItem() {//construye el nodo capas con los nodos de las clases de labor
 		RenderableLayer rootLayer = createRenderableLayer();
@@ -270,6 +330,7 @@ public class LayerPanel extends VBox {
 		poliLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, Poligono.class);
 		CheckBoxTreeItem<Layer>poliItem = new CheckBoxTreeItem<Layer>(poliLayer);
 		setGraphic(poliItem,"map.png");
+		rootItemIcons.put(Poligono.class, "map.png");
 		rootItems.put(Poligono.class, poliItem);
 		rootItem.getChildren().add(poliItem);
 
@@ -279,6 +340,7 @@ public class LayerPanel extends VBox {
 		pulvLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, PulverizacionLabor.class);
 		CheckBoxTreeItem<Layer>pulverizacionesItem = new CheckBoxTreeItem<Layer>(pulvLayer);
 		setGraphic(pulverizacionesItem,"pulv.png");
+		rootItemIcons.put(PulverizacionLabor.class, "pulv.png");
 		rootItems.put(PulverizacionLabor.class, pulverizacionesItem);
 		rootItem.getChildren().add(pulverizacionesItem);
 
@@ -287,6 +349,7 @@ public class LayerPanel extends VBox {
 		fertLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, FertilizacionLabor.class);
 		CheckBoxTreeItem<Layer>fertilizacionestItem = new CheckBoxTreeItem<Layer>(fertLayer);
 		setGraphic(fertilizacionestItem,"ferti.png");
+		rootItemIcons.put(FertilizacionLabor.class, "ferti.png");
 		rootItems.put(FertilizacionLabor.class, fertilizacionestItem);
 		rootItem.getChildren().add(fertilizacionestItem);
 
@@ -295,6 +358,7 @@ public class LayerPanel extends VBox {
 		siembrLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, SiembraLabor.class);
 		CheckBoxTreeItem<Layer>siembrasItem = new CheckBoxTreeItem<Layer>(siembrLayer);	
 		setGraphic(siembrasItem,"siemb.png");
+		rootItemIcons.put(SiembraLabor.class, "siemb.png");
 		rootItems.put(SiembraLabor.class, siembrasItem);
 		rootItem.getChildren().add(siembrasItem);
 
@@ -303,6 +367,7 @@ public class LayerPanel extends VBox {
 		cosechLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, CosechaLabor.class);
 		CheckBoxTreeItem<Layer>cosechasItem = new CheckBoxTreeItem<Layer>(cosechLayer);
 		setGraphic(cosechasItem,"cose.png");
+		rootItemIcons.put(CosechaLabor.class, "cose.png");
 		rootItems.put(CosechaLabor.class, cosechasItem);
 		rootItem.getChildren().add(cosechasItem);
 
