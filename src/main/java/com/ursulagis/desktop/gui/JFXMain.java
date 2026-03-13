@@ -186,6 +186,7 @@ public class JFXMain extends Application {
 	public WWPanel wwjPanel=null;//contiene el world wind
 	protected LayerPanel layerPanel=null;//contriene el treeView con los layers
 	private SplitPane sp=null;//contiene el layerPanel y el wwjPanel
+	private Node mapSnapshotNode=null;//nodo del mapa (SwingNode) para captura en reportes
 	//private Node wwNode=null;//contiene el arbol con los layers y el swingnode con el world wind
 	public static VBox progressBox = new VBox();
 
@@ -458,6 +459,7 @@ public class JFXMain extends Application {
 		});
 
 		sp = new SplitPane(layerPanel, wwSwingNode);
+		this.mapSnapshotNode = wwSwingNode;
 	
 		
 
@@ -803,6 +805,20 @@ public class JFXMain extends Application {
 	}
 
 	/**
+	 * Returns the main SplitPane (layer panel + map). Used e.g. for full UI snapshot.
+	 */
+	public SplitPane getSplitPane() {
+		return sp;
+	}
+
+	/**
+	 * Returns the map node (right side of the split) for snapshot. Use this to capture only the map in reports.
+	 */
+	public Node getMapSnapshotNode() {
+		return mapSnapshotNode != null ? mapSnapshotNode : sp;
+	}
+
+	/**
 	 * Insert the layer into the layer list just before the compass.
 	 */	
 	public static void insertBeforeCompass(WorldWindow wwd, Layer layer) {
@@ -946,7 +962,7 @@ public class JFXMain extends Application {
  * @param clazz
  * @return devuelve los layers cuyo object es de clase clazz
  */
-	public List<?> getLayersOfClass(Class<?> clazz){
+	public List<Layer> getLayersOfClass(Class<?> clazz){
 		LayerList layers = this.getWwd().getModel().getLayers();
 		Stream<Layer> layersOfClazz = layers.stream().filter(l->{
 			
@@ -985,6 +1001,60 @@ public class JFXMain extends Application {
 
 	public void viewGoTo(Labor<?> labor) {
 		viewGoTo(labor.getLayer());
+	}
+
+	/**
+	 * Sets the view so the labor extent fits in the screen bounds (uses sector goTo).
+	 * Falls back to viewGoTo(labor) if the labor has no bounds or the view cannot be set.
+	 */
+	public void viewGoToFit(Labor<?> labor) {
+		WorldWindow wwd = getWwd();
+		if (wwd == null || wwd.getModel() == null || wwd.getModel().getGlobe() == null) {
+			viewGoTo(labor);
+			return;
+		}
+		if (labor == null || labor.outCollection == null || labor.outCollection.isEmpty()) {
+			viewGoTo(labor);
+			return;
+		}
+		try {
+			org.geotools.geometry.jts.ReferencedEnvelope bounds = labor.outCollection.getBounds();
+			if (bounds == null || (bounds.getWidth() == 0 && bounds.getHeight() == 0)) {
+				viewGoTo(labor);
+				return;
+			}
+
+			double minLat = bounds.getMinY();
+			double maxLat = bounds.getMaxY();
+			double minLon = bounds.getMinX();
+			double maxLon = bounds.getMaxX();
+
+			// add 10% margin around the sector (5% on each side)
+			double latSpan = maxLat - minLat;
+			double lonSpan = maxLon - minLon;
+			double marginFactor = 0.30;
+			double latMargin = latSpan * marginFactor;
+			double lonMargin = lonSpan * marginFactor;
+
+			double paddedMinLat = minLat - latMargin /2;
+			double paddedMaxLat = maxLat + latMargin /2;
+			double paddedMinLon = minLon - lonMargin /2;
+			double paddedMaxLon = maxLon + lonMargin /2;
+
+			// clamp to valid world limits
+			paddedMinLat = Math.max(-90.0, paddedMinLat);
+			paddedMaxLat = Math.min(90.0, paddedMaxLat);
+			paddedMinLon = Math.max(-180.0, paddedMinLon);
+			paddedMaxLon = Math.min(180.0, paddedMaxLon);
+
+			Sector sector = Sector.fromDegrees(
+					paddedMinLat, paddedMaxLat,
+					paddedMinLon, paddedMaxLon);
+			ExampleUtil.goTo(wwd, sector);
+		} catch (Exception e) {
+			System.err.println("viewGoToFit failed, falling back to viewGoTo: " + e.getMessage());
+			viewGoTo(labor);
+		}
 	}
 
 	public void viewGoTo(Layer layer) {

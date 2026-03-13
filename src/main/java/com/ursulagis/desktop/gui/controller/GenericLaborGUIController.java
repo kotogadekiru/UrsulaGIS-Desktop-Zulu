@@ -1,10 +1,14 @@
 package com.ursulagis.desktop.gui.controller;
 
+import java.awt.Desktop;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.geotools.api.data.FileDataStore;
 
@@ -19,6 +23,8 @@ import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.dao.suelo.Suelo;
 import gov.nasa.worldwind.layers.Layer;
+import gov.nasa.worldwind.layers.LayerList;
+
 //import gov.nasa.worldwind.util.measure.MeasureTool;
 import com.ursulagis.desktop.gui.CosechaHistoChart;
 import com.ursulagis.desktop.gui.JFXMain;
@@ -31,6 +37,7 @@ import com.ursulagis.desktop.gui.utils.SmartTableView;
 import com.ursulagis.desktop.gui.nww.MeasureTool;
 import com.ursulagis.desktop.gui.nww.MeasureToolForShape;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
+import com.ursulagis.desktop.tasks.GenerarReportePDFTask;
 import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.tasks.procesar.ClonarLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.JuntarShapefilesTask;
@@ -38,14 +45,18 @@ import com.ursulagis.desktop.tasks.procesar.OutliersLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.ResumirLaborMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
-
+import com.ursulagis.desktop.utils.PDFHelper;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 
@@ -117,6 +128,17 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		laboresP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.showHistogramaLaborAction"),(layer)->{//	this::applyHistogramaCosecha);//(layer)->applyHistogramaCosecha(layer));
 			showHistoLabor((Labor<?>) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
 			return "histograma mostrado" + layer.getName(); 
+		}));
+
+		/**
+		 * Accion que genera un reporte PDF con la vista del mapa centrada en la labor y el histograma.
+		 */
+		laboresP.add(LayerAction.constructPredicate(Messages.getString("GenericLaborGUIController.reportePDFAction"), (layer) -> {
+			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if (layerObject != null && Labor.class.isAssignableFrom(layerObject.getClass())) {
+				doGenerarReportePDF((Labor<?>) layerObject);
+			}
+			return "reporte PDF generado " + layer.getName();
 		}));
 
 		/**
@@ -411,6 +433,96 @@ public class GenericLaborGUIController extends AbstractGUIController {
 	 */
 	private void doShowDataTable(Labor<?> labor) {		   
 		SmartTableView.showLaborTable(labor);
+	}
+
+	/**
+	 * Centra la vista en la labor, captura el mapa y el histograma, y genera un PDF.
+	 */
+	private void doGenerarReportePDF(Labor<?> labor) {
+
+		LayerList layers = this.getWwd().getModel().getLayers();
+		layers.stream().filter(l->{
+			Object o = l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			return l.isEnabled() && o!=null;
+		}).forEach(l->l.setEnabled(false));
+
+
+		// Desactivar todas las capas de labores y NDVI (por valor en LABOR_LAYER_IDENTIFICATOR) para que no se superpongan
+		//Layer targetLayer = labor.getLayer();
+		labor.getLayer().setEnabled(true);
+		// Activar solo la labor del reporte y ajustar la vista para que quepa en pantalla
+		//targetLayer.setEnabled(true);
+		main.viewGoToFit(labor);
+		getWwd().redraw();
+		main.wwjPanel.repaint();
+
+		Platform.runLater(() -> {
+			// Dar tiempo al redibujado del mapa antes de capturar
+			try{Thread.sleep(2000);}catch(InterruptedException e){e.printStackTrace();}
+			Platform.runLater(() -> {
+				SnapshotParameters params = new SnapshotParameters();
+				params.setFill(Color.TRANSPARENT);
+				javafx.scene.Node mapNode = main.getMapSnapshotNode();
+				if (mapNode == null) {
+					mapNode = main.getSplitPane();
+				}
+				WritableImage mapWritable = mapNode.snapshot(params, null);
+				if (mapWritable == null) {
+					return;
+				}
+				BufferedImage mapBuf = SwingFXUtils.fromFXImage(mapWritable, null);
+
+				CosechaHistoChart histoChart = new CosechaHistoChart(labor);
+				new Scene(histoChart, 800, 450); // scene needed for proper layout
+				histoChart.applyCss();
+				histoChart.layout();
+				WritableImage histoWritable = histoChart.snapshot(params, null);
+				BufferedImage histoBuf = histoWritable != null ? SwingFXUtils.fromFXImage(histoWritable, null) : null;
+				java.util.List<Object[]> histogramTableData = histoChart.getHistogramTableData();
+
+				// Generar en carpeta temporal; el usuario puede guardarlo desde el visor si le sirve
+				String safeName = labor.getNombre().replaceAll("[^a-zA-Z0-9._-]", "_");
+				if (safeName.length() > 50) {
+					safeName = safeName.substring(0, 50);
+				}
+				File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+				File outputFile = new File(tmpDir, "reporte_" + safeName + "_" + System.currentTimeMillis() + ".pdf");
+				File finalOutput = outputFile;
+				BufferedImage finalMapBuf = mapBuf;
+				BufferedImage finalHistoBuf = histoBuf;
+				String laborName = labor.getNombre();
+
+				GenerarReportePDFTask pdfTask = new GenerarReportePDFTask(
+						finalOutput, finalMapBuf, finalHistoBuf, laborName, histogramTableData);
+				pdfTask.installProgressBar(progressBox);
+				pdfTask.setOnSucceeded(handler -> {
+					pdfTask.uninstallProgressBar();
+					playSound();
+					File result = pdfTask.getValue();
+					if (result != null && result.exists()) {
+						try {
+							Desktop.getDesktop().open(result);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				});
+				pdfTask.setOnFailed(handler -> {
+					pdfTask.uninstallProgressBar();
+					Throwable e = pdfTask.getException();
+					if (e != null) {
+						e.printStackTrace();
+					}
+					javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+					alert.setHeaderText(Messages.getString("GenericLaborGUIController.reportePDFError"));
+					alert.setContentText(e != null ? e.getMessage() : "");
+					alert.initOwner(JFXMain.stage);
+					alert.show();
+				});
+				executorPool.execute(pdfTask);
+				layers.forEach(l->l.setEnabled(true));
+			});
+		});
 	}
 
 }

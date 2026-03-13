@@ -1,6 +1,8 @@
 package com.ursulagis.desktop.gui;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.api.feature.simple.SimpleFeature;
@@ -145,6 +147,30 @@ public class CosechaHistoChart extends VBox {
 	private void doExportarExcell() {
 		ExcelHelper xHelper = new ExcelHelper();
 		xHelper.exportSeries(series);
+	}
+
+	/**
+	 * Returns the same table data that is exported to Excel (Rango, Superficie, Cantidad/Ha).
+	 * First row is header, following rows are data. Cell values are strings (numbers formatted).
+	 */
+	public List<Object[]> getHistogramTableData() {
+		List<Object[]> rows = new ArrayList<>();
+		rows.add(new Object[] { Messages.getString("CosechaHistoChart.12"), Messages.getString("CosechaHistoChart.11"), Messages.getString("CosechaHistoChart.10") }); // same as Excel export
+		if (series == null) {
+			return rows;
+		}
+		NumberFormat df = Messages.getNumberFormat();
+		for (XYChart.Data<String, Number> d : series.getData()) {
+			Number sup = d.getYValue();
+			Number prod = (Number) d.getExtraValue();
+			double rinde = (sup != null && prod != null && sup.doubleValue() > 0)
+					? prod.doubleValue() / sup.doubleValue() : 0.0;
+			rows.add(new Object[] {
+					d.getXValue(),
+					df.format(sup != null ? sup : 0),
+					df.format(rinde) });
+		}
+		return rows;
 	}
 
 	private XYChart.Series<String, Number> createSeries(Labor<?> labor) {	
