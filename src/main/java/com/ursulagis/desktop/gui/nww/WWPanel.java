@@ -145,7 +145,7 @@ public class WWPanel extends JPanel {
 		//		m.getLayers().add(	new BasicMercatorTiledImageLayer(WWXML.openDocumentFile("com/ursulagis/desktop/gui/nww/replacementLayers/GoogleTiledImage.xml", null),
 		//				null));//add roads and political boundaries
 
-		//m.getLayers().add(new CompassLayer());		
+		m.getLayers().add(new CompassLayer());		
 		this.wwd.setModel(m);
 
 
