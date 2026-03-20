@@ -115,6 +115,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import com.ursulagis.desktop.gui.onboarding.AchievementsOverviewDialog;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.tasks.CotizarOdenDeCompraOnlineTask;
 import com.ursulagis.desktop.tasks.GoogleGeocodingHelper;
 import com.ursulagis.desktop.tasks.UpdateTask;
@@ -224,6 +226,7 @@ public class ConfigGUI extends AbstractGUIController{
 		addMenuItem(Messages.getString("JFXMain.configConfigMI"),(a)->doShowConfiguracionTable(),menuConfiguracion); //
 
 		addMenuItem(Messages.getString("JFXMain.configIdiomaMI"),(a)->doChangeLocale(),menuConfiguracion); 
+		addMenuItem(Messages.getString("JFXMain.configAchievementsMI"),(a)->AchievementsOverviewDialog.show(JFXMain.stage),menuConfiguracion);
 		addMenuItem(Messages.getString("JFXMain.configHelpMI"),(a)->doShowAcercaDe(),menuConfiguracion);
 		addMenuItem(Messages.getString("JFXMain.configLogMI"),(a)->doShowLog(),menuConfiguracion);
 
@@ -278,13 +281,14 @@ public class ConfigGUI extends AbstractGUIController{
 		//SnakesLayer layer = new SnakesLayer(getWwd());	     
 		//insertBeforeCompass(getWwd(), layer);
 		System.out.println("cerrando snake");
-		List<SnakesLayer> snakes = (List<SnakesLayer>)main.getLayersOfClass(SnakesLayer.class);
-		if(snakes.size()==0) {
+		List<?> layers = main.getLayersOfClass(SnakesLayer.class);
+		if(layers.isEmpty()) {
 			System.out.println("No encontre snakesLayer");
 		}
-		for(SnakesLayer s:snakes) {
-			s.stop();
-
+		for(Object o : layers) {
+			if(o instanceof SnakesLayer) {
+				((SnakesLayer)o).stop();
+			}
 		}	  	
 	}
 
@@ -323,6 +327,7 @@ public class ConfigGUI extends AbstractGUIController{
 		gOCTask.setOnSucceeded(handler -> {
 			OrdenCompra ret = (OrdenCompra)handler.getSource().getValue();
 			gOCTask.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_PURCHASE_ORDER_GENERATED);
 			playSound();
 			doShowOrdenCompraItems(ret);
 			System.out.println("SiembraFertTask succeded"); 
@@ -369,6 +374,7 @@ public class ConfigGUI extends AbstractGUIController{
 			uMmTask.uninstallProgressBar();			
 			insertBeforeCompass(getWwd(), ret.getLayer());
 			this.getLayerPanel().update(this.getWwd());
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_MARGEN_CALCULATED_FROM_LABORS);
 			playSound();
 			viewGoTo(ret);
 			System.out.println("ProcessMarginTask succeeded"); 
@@ -399,6 +405,7 @@ public class ConfigGUI extends AbstractGUIController{
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
 					System.out.println("OpenSoilMapTask succeeded"); 
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_MARGEN_IMPORTED);
 					playSound();
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
@@ -415,6 +422,7 @@ public class ConfigGUI extends AbstractGUIController{
 		if(anchoOptional.isPresent()){
 			Position pos = GoogleGeocodingHelper.obtenerPositionDirect(anchoOptional.get());
 			if(pos!=null){
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_GO_TO_ADDRESS);
 				main.viewGoTo(pos);
 			}				
 		} else{
@@ -441,6 +449,7 @@ public class ConfigGUI extends AbstractGUIController{
 		if(f!=null && f.exists()) {
 			c.setProperty(DAH.PROJECT_URL_KEY, f.getAbsolutePath());
 			c.save();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_PROJECT_CHANGED);
 		}
 		Alert alert = new Alert(
 				AlertType.INFORMATION,
@@ -1051,6 +1060,7 @@ public class ConfigGUI extends AbstractGUIController{
 					if(url==null) {
 						url= "https://www.ursulagis.com/api/orden_compra/show/"+oc.getUuid()+"/";
 					}
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_PURCHASE_ORDER_QUOTED_ONLINE);
 					showQR(url);	
 				});
 
@@ -1536,8 +1546,9 @@ public class ConfigGUI extends AbstractGUIController{
 		Optional<String> result = dialog.showAndWait();
 		result.ifPresent(newLocale -> {
 			Locale selected = displayLocales.get(newLocale);
-			if (selected != null) {
+			if (selected != null && !selected.equals(current)) {
 				Messages.setLocale(selected);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_LANGUAGE_CHANGED);
 			}
 		});
 
@@ -1746,6 +1757,7 @@ public class ConfigGUI extends AbstractGUIController{
 			Scene scene = new Scene(histoChart, 1000, 600);
 			histoStage.setScene(scene);
 			histoStage.show();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_MULTI_LAYER_HISTOGRAM);
 		});
 	}
 
@@ -1804,6 +1816,7 @@ public class ConfigGUI extends AbstractGUIController{
 					error.initOwner(JFXMain.stage);
 					error.showAndWait();
 				} else{
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_APP_UPDATED);
 					Alert error = new Alert(Alert.AlertType.CONFIRMATION);
 					error.setContentText(Messages.getString("JFXMain.doUpdateSuccessText")); 
 					error.initOwner(JFXMain.stage);

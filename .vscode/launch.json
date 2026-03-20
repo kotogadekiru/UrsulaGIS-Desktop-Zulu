@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "PDFHelper",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.utils.PDFHelper",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
             "name": "Messages",
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.gui.Messages",

@@ -28,6 +28,7 @@ import com.ursulagis.desktop.gui.HarvestConfigDialogController;
 import com.ursulagis.desktop.gui.HarvestSelectDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.PulverizacionConfigDialogController;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
@@ -280,6 +281,7 @@ public class CosechaGUIController extends AbstractGUIController {
 					umTask.uninstallProgressBar();
 					System.out.println("OpenHarvestMapTask succeeded"); 
 					playSound();
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_IMPORTED);
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
 			}//fin del for stores
@@ -301,6 +303,7 @@ public class CosechaGUIController extends AbstractGUIController {
 
 				if(ret!=null) {
 					main.configGUIController.showQR(ret);
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_SHARED);
 				}
 				task.uninstallProgressBar();			
 			});
@@ -378,6 +381,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			viewGoTo(ret);
 			System.out.println("ProcessUniteFertMapsTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_SUMMED);
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -533,6 +537,7 @@ public class CosechaGUIController extends AbstractGUIController {
 
 			System.out.println("GrillarCosechasMapTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_GRIDDED);
 		});//fin del OnSucceeded		
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -677,6 +682,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			viewGoTo(ret);
 			System.out.println("RecomendFertNFromHarvestPotentialMapTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_N_FERTILIZATION_RECOMMENDED);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -759,6 +765,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			viewGoTo(ret);
 			System.out.println("RecomendFertNFromHarvestPotentialMapTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_P_BALANCE_FERTILIZATION_RECOMMENDED);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -822,6 +829,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			insertBeforeCompass(getWwd(), ret.getLayer());
 			this.getLayerPanel().update(this.getWwd());
 			umTask.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_P_FERTILIZATION_RECOMMENDED);
 			viewGoTo(ret);
 			System.out.println("RecomendFertFromHarvestPotentialMapTask succeeded"); 
 			playSound();
@@ -863,6 +871,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			csTask.uninstallProgressBar();
 			viewGoTo(ret);
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_SOIL_CREATED);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(csTask);
 	}
@@ -896,6 +905,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			csTask.uninstallProgressBar();
 			viewGoTo(ret);
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_FROM_HARVEST);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(csTask);
 	}
@@ -929,6 +939,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			csTask.uninstallProgressBar();
 			viewGoTo(ret);
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_FROM_HARVEST);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(csTask);
 	}
@@ -943,6 +954,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		ehTask.setOnSucceeded(handler -> {
 			playSound();
 			ehTask.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_POINTS_EXPORTED);
 		});
 		executorPool.execute(ehTask);
 		
@@ -977,6 +989,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			csTask.uninstallProgressBar();
 			viewGoTo(ret);
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_FROM_HARVEST);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(csTask);
 	}

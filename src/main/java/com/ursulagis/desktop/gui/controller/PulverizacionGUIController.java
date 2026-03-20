@@ -16,6 +16,7 @@ import gov.nasa.worldwind.WorldWindow;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.PulverizacionConfigDialogController;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.gui.nww.LayerPanel;
@@ -126,6 +127,7 @@ public class PulverizacionGUIController {
 
 				if(ret!=null) {
 					main.configGUIController.showQR(ret);
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_SHARED);
 				}
 				task.uninstallProgressBar();			
 			});
@@ -149,6 +151,7 @@ public class PulverizacionGUIController {
 				main.wwjPanel.repaint();
 				System.out.println("doEditPulverización succeeded"); //$NON-NLS-1$
 				main.playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_EDITED);
 			});//fin del OnSucceeded						
 			//umTask.start();
 			JFXMain.executorPool.execute(umTask);
@@ -172,6 +175,7 @@ public class PulverizacionGUIController {
 			ept.setOnSucceeded(handler -> {
 				File ret = (File)handler.getSource().getValue();
 				main.playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_EXPORTED);
 				ept.uninstallProgressBar();
 				doOpenPulvMap(Collections.singletonList(ret));
 			});
@@ -206,6 +210,7 @@ public class PulverizacionGUIController {
 			ept.setOnSucceeded(handler -> {
 				File ret = (File)handler.getSource().getValue();
 				main.playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_EXPORTED_JSON);
 				ept.uninstallProgressBar();
 				
 				Alert success = new Alert(Alert.AlertType.INFORMATION);
@@ -255,6 +260,7 @@ public class PulverizacionGUIController {
 
 						System.out.println("ProcessPulvMapTask succeeded"); //$NON-NLS-1$
 						main.playSound();
+						OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_IMPORTED);
 					});//fin del OnSucceeded
 					//umTask.start();
 					JFXMain.executorPool.execute(umTask);
@@ -271,6 +277,10 @@ public class PulverizacionGUIController {
 			} else {
 				pulverizacionesAUnir.add(pulverizacionLabor);
 			}
+
+			final boolean isJoin = pulverizacionesAUnir.stream()
+					.filter(p -> p != null && p.getLayer() != null && p.getLayer().isEnabled())
+					.count() > 1;
 			
 			UnirPulverizacionesMapTask umTask = new UnirPulverizacionesMapTask(pulverizacionesAUnir);
 			umTask.installProgressBar(progressBox);
@@ -284,6 +294,10 @@ public class PulverizacionGUIController {
 				viewGoTo(ret);
 				System.out.println("ProcessUniteFertMapsTask succeeded"); 
 				playSound();
+				OnboardingAchievements.getInstance().unlock(
+						JFXMain.stage,
+						isJoin ? OnboardingAchievements.FIRST_PULVERIZATION_JOINED : OnboardingAchievements.FIRST_PULVERIZATION_GRIDDED
+				);
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
 		}

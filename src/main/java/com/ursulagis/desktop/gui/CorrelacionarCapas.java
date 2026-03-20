@@ -9,6 +9,7 @@ import org.geotools.api.feature.type.AttributeDescriptor;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.utils.SkatterChartWithRegression;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -195,6 +196,7 @@ public class CorrelacionarCapas {
 			
 			try {
 				XYChart.Series<Number, Number> series = task.get();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_LAYERS_CORRELATED);
 				showSkatterSeries(laborX.getNombre()+"-"+columnX, laborY.getNombre()+"-"+columnY, series);
 			} catch (InterruptedException | ExecutionException e) {				
 				e.printStackTrace();

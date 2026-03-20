@@ -136,8 +136,9 @@ public class NDVIChart extends VBox {
 					} else {										
 						if(centerPosition!=null) {	
 							DaylightCalculator daylightCalculator = new DaylightCalculator(centerPosition.getLatitude().degrees);
-							double daylightHours = daylightCalculator.getTotalDaylightHours(lastFecha[0], fecha);
-							dias = (daylightHours / 24);
+							//double daylightHours = daylightCalculator.getTotalDaylightHours(lastFecha[0], fecha);
+							double totalRadiationMj = daylightCalculator.getTotalSolarRadiationMjBetween(lastFecha[0], fecha);
+							dias = totalRadiationMj;//(daylightHours / 24);
 							lastFecha[0]=fecha;
 						}else{
 							dias = java.time.temporal.ChronoUnit.DAYS.between(lastFecha[0], fecha)/2;//12hs de luz por dia	

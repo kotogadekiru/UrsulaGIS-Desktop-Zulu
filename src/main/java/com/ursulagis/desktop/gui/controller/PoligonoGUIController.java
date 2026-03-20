@@ -60,6 +60,7 @@ import gov.nasa.worldwind.util.Logging;
 import gov.nasa.worldwind.util.measure.MeasureTool;
 
 import com.ursulagis.desktop.gui.FertilizacionConfigDialogController;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.HarvestConfigDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
@@ -562,6 +563,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			System.out.println("CrearSiembraMapTask succeeded"); //-NLS-1$
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_SIEMBRA);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
 	}
@@ -603,6 +605,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_FERTILIZATION);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
 	}
@@ -644,6 +647,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_PULVERIZATION);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
 	}
@@ -715,6 +719,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_SOIL);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
 	}
@@ -791,6 +796,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				((Poligono)plo).getLayer().setEnabled(false);
 			}
 			task.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DOWNLOADED);
 			System.out.println("termine de descargar todos los ndvi de "+plo);
 		});
 		JFXMain.executorPool.submit(task);
@@ -855,6 +861,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			this.main.wwjPanel.repaint();
 			System.out.println("polígonos Extraídos succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_EXTRACTED);
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -863,9 +870,10 @@ public class PoligonoGUIController extends AbstractGUIController{
 	
 		JFXMain.executorPool.submit(()->{
 			Geometry contornoG = GeometryHelper.extractContornoGeometry(labor);
-			Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
-			GeometryHelper.simplificarPoligono(contornoP);
-			showPoligonos(Collections.singletonList(contornoP));
+			Poligono contornoPoligono = GeometryHelper.constructPoligono(contornoG);
+			GeometryHelper.simplificarPoligono(contornoPoligono);
+			showPoligonos(Collections.singletonList(contornoPoligono));
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_CONTOUR_EXTRACTED);
 		});
 
 	}
@@ -948,10 +956,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			measureTool.setShowControlPoints(false);
 			Poligono op = pd.getResult();
 			if(op!=null) {
-				//p = op.get();
-				//System.out.println("p created");
-				//measureTool.setArmed(false);
-
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_DRAWN);
 			} else {
 				this.getWwd().getModel().getLayers().remove(measureTool.getApplicationLayer());
 				//measureTool.getApplicationLayer().dispose();//custom iterable exception
@@ -1011,6 +1016,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		measureTool.setCreationMode(false);	
 		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 		this.getLayerPanel().update(this.getWwd());		
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_UNION);
 	}
 
 
@@ -1057,6 +1063,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		supDialog.setOnHidden((event)->{			
 			measureTool.setArmed(false);
 			this.getLayerPanel().update(this.getWwd());
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_DISTANCE_MEASURED);
 		});
 	}
 
@@ -1108,6 +1115,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				}
 
 				this.getLayerPanel().update(this.getWwd());
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_INTERSECTED);
 			}catch(Exception e) {
 				System.err.println("Error al intesectar los poligonos"); //-NLS-1$
 				e.printStackTrace();
@@ -1260,6 +1268,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_HARVEST);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
 	}
@@ -1467,6 +1476,9 @@ public class PoligonoGUIController extends AbstractGUIController{
 					e.printStackTrace();
 				}
 			}//fin del for stores
+			if (stores != null && !stores.isEmpty()) {
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_IMPORTED);
+			}
 			}//if stores != null
 		});
 	}

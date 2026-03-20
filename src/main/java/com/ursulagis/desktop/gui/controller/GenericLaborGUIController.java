@@ -31,6 +31,7 @@ import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.PoligonLayerFactory;
 import com.ursulagis.desktop.gui.nww.LayerAction;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
 import com.ursulagis.desktop.gui.utils.NombreTableColumn;
 import com.ursulagis.desktop.gui.utils.SmartTableView;
@@ -294,7 +295,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_CLONED);
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
@@ -353,6 +354,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			uMmTask.uninstallProgressBar();			
 
 			this.getLayerPanel().update(this.getWwd());
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_OUTLIERS_FILTERED);
 			playSound();
 			viewGoTo(ret);
 			System.out.println("hice outliers en la labor"); 
@@ -371,6 +373,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			uMmTask.uninstallProgressBar();			
 			insertBeforeCompass(getWwd(), ret.getLayer());
 			this.getLayerPanel().update(this.getWwd());
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_SUMMARIZED);
 			playSound();
 			viewGoTo(ret);
 			System.out.println("ProcessMarginTask succeeded"); 
@@ -383,6 +386,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		byte[] byteArray = FileHelper.fileToByteArray(zipFile);		
 		labor.setContent(byteArray);
 		DAH.save(labor);//No se guardan las labores porque no extienden de entidad
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_SAVED);
 	}
 
 	public void doJuntarShapefiles() {
@@ -393,6 +397,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		task.installProgressBar(progressBox);
 
 		task.setOnSucceeded(handler -> {
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_SHAPEFILES_JOINED);
 			playSound();
 			task.uninstallProgressBar();
 		});
@@ -421,6 +426,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		ehTask.installProgressBar(progressBox);
 
 		ehTask.setOnSucceeded(handler -> {
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_EXPORTED);
 			playSound();
 			ehTask.uninstallProgressBar();
 		});
@@ -497,6 +503,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 				pdfTask.installProgressBar(progressBox);
 				pdfTask.setOnSucceeded(handler -> {
 					pdfTask.uninstallProgressBar();
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_PDF_REPORTED);
 					playSound();
 					File result = pdfTask.getValue();
 					if (result != null && result.exists()) {

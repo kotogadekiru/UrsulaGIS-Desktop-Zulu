@@ -3,6 +3,7 @@ package com.ursulagis.desktop.gui;
 import javafx.application.Platform;
 import javafx.application.Preloader;
 import javafx.application.Preloader.StateChangeNotification.Type;
+import javafx.concurrent.Worker;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -25,6 +26,8 @@ import javafx.stage.StageStyle;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
+import java.io.IOException;
+
 import com.ursulagis.desktop.tasks.UpdateTask;
 
 /**
@@ -41,9 +44,16 @@ public class UrsulaGISPreloader extends Preloader {
     //private Label statusLabel;
     //private Label versionLabel;
     String message = "";
+
+ //   private Worker<Void> loadWorker;
+
+    private WebEngine engine;
+
     @Override
     public void init() throws Exception {
         message = UpdateTask.checkForUpdate();
+        if(message==null)message="<html><body><h>No Network!</h></body></html>";
+        System.out.println("UrsulaGISPreloader init message: " + message);
     }
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -60,7 +70,7 @@ public class UrsulaGISPreloader extends Preloader {
         progressBar.setPrefWidth(300);
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(webView);
-       // borderPane.setBottom(progressBar);
+        borderPane.setBottom(progressBar);
        
         Scene scene = new Scene(borderPane, width-500,height-100);
         
@@ -76,6 +86,14 @@ public class UrsulaGISPreloader extends Preloader {
         setApplicationIcon(primaryStage);
         
         primaryStage.setOnHiding((e)->{
+            engine.load("about:blank");
+            
+            if (this.engine.getLoadWorker().isRunning()) {
+                boolean cancelled = this.engine.getLoadWorker().cancel();
+                if (cancelled) {
+                    System.out.println("WebEngine load cancelled successfully.");
+                }
+            }
             System.out.println("preloaderStage onHiding");
         });
         // Show the preloader
@@ -86,8 +104,21 @@ public class UrsulaGISPreloader extends Preloader {
         
         WebView webView = new WebView();		
 		webView.autosize();
-		WebEngine engine = webView.getEngine();
+		this.engine = webView.getEngine();
+       // this.loadWorker = this.engine.getLoadWorker();
 		engine.loadContent(message);
+        // engine.locationProperty().addListener((obs, oldLoc, newLoc) -> {
+        //     if (newLoc != null && newLoc.contains("youtube.com")) {
+        //        // engine.getLoadWorker().cancel();
+        //       //  engine.load("about:blank");
+        //         try {
+        //             java.awt.Desktop.getDesktop().browse(java.net.URI.create(newLoc));
+        //         } catch (IOException e) {
+        //             // TODO Auto-generated catch block
+        //             e.printStackTrace();
+        //         }
+        //     }
+        // });
 
 		VBox v = new VBox(20);
 		VBox.setVgrow(webView, Priority.ALWAYS);

@@ -36,6 +36,7 @@ import com.ursulagis.desktop.gui.FertilizacionConfigDialogController;
 import com.ursulagis.desktop.gui.HarvestConfigDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.NDVIChart;
 import com.ursulagis.desktop.gui.NDVIDatePickerDialog;
 import com.ursulagis.desktop.gui.NDVIHistoChart;
@@ -88,17 +89,20 @@ public class NdviGUIController extends AbstractGUIController{
 		rootNodeNDVI.add(LayerAction.constructPredicate(Messages.getString("JFXMain.evoNDVI"),(layer)->{ 
 			ShowNDVIEvolution sEvo= new ShowNDVIEvolution(this.getWwd(),this.getLayerPanel());
 			sEvo.doShowNDVIEvolution();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_EVOLUTION_VIEWED);
 			return "mostre la evolucion del ndvi";
 		}));
 
 		rootNodeNDVI.add(LayerAction.constructPredicate(
 				Messages.getString("JFXMain.show_ndvi_chart"),
 				(layer)->{ 
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_CHART_VIEWED);
 					return doShowNdviChart();
 				}));
 
 		rootNodeNDVI.add(LayerAction.constructPredicate(Messages.getString("JFXMain.show_ndvi_acum_chart"),
 				(layer)->{
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_ACUM_CHART_VIEWED);
 					return doShowNdviAcumChart();
 				}));
 
@@ -111,6 +115,7 @@ public class NdviGUIController extends AbstractGUIController{
 		
 		//TODO agregar traduccion		
 		rootNodeNDVI.add(LayerAction.constructPredicate("Filtrar Fecha",(layer)->{ 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DATE_FILTERED);
 			return doFiltrarFecha(null);
 			//return "filtre por fecha";
 		}));
@@ -119,6 +124,7 @@ public class NdviGUIController extends AbstractGUIController{
 		rootNodeNDVI.add(LayerAction.constructPredicate(Messages.getString("JFXMain.expoNDVI"),(layer)->{ 
 			ExportNDVIToExcel sEvo= new ExportNDVIToExcel(this.getWwd(),getLayerPanel());
 			sEvo.exportToExcel();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_EXPORTED);
 			return "mostre la evolucion del ndvi";
 		}));
 
@@ -127,11 +133,12 @@ public class NdviGUIController extends AbstractGUIController{
 		 * guarda todos los ndvi activos en la rama de ndvi
 		 */
 		rootNodeNDVI.add(LayerAction.constructPredicate(Messages.getString("JFXMain.saveAction"),
-				(layer)->{	executorPool.submit(()->{
+				(layer)->{					executorPool.submit(()->{
 					try {
 						
 						List<Ndvi> ndviToSave = main.getNdviSeleccionados();
 						DAH.saveAll(ndviToSave);
+						OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_SAVED);
 						
 //						LayerList layers = this.getWwd().getModel().getLayers();
 //						for (Layer l : layers) {
@@ -234,6 +241,7 @@ public class NdviGUIController extends AbstractGUIController{
 			Object o =  layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 			if(o instanceof Ndvi){
 				showHistoNDVI((Ndvi)o);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_HISTOGRAM_VIEWED);
 			}
 			return "histograma ndvi mostrado" + layer.getName(); 
 		}));
@@ -253,6 +261,7 @@ public class NdviGUIController extends AbstractGUIController{
 			if(o instanceof Ndvi){
 				Ndvi ndvi = (Ndvi)o;
 				DAH.save(ndvi);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_SAVED);
 			}
 			return "guarde" + layer.getName(); 
 		}));
@@ -265,6 +274,7 @@ public class NdviGUIController extends AbstractGUIController{
 			if(o instanceof Ndvi){
 				Ndvi ndvi = (Ndvi)o;
 				doExportarTiffFile(ndvi);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_EXPORTED_TIFF);
 			}
 			return "exporte" + layer.getName(); 
 		}));
@@ -278,6 +288,7 @@ public class NdviGUIController extends AbstractGUIController{
 				Ndvi ndvi = (Ndvi)o;
 				ExportNDVIToKMZ toKMZ= new ExportNDVIToKMZ(this.getWwd(),this.getLayerPanel());				
 				toKMZ.exportToKMZ(ndvi);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_EXPORTED);
 			}
 			return "exporte" + layer.getName(); 
 		}));
@@ -382,6 +393,7 @@ public class NdviGUIController extends AbstractGUIController{
 			insertBeforeCompass(getWwd(), ret.getLayer());
 			umTask.uninstallProgressBar();
 			ndvi.getLayer().setEnabled(false);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONVERT_NDVI_TO_HARVEST);
 
 			ProcessHarvestMapTask pmtask = new ProcessHarvestMapTask(ret);
 			pmtask.installProgressBar(progressBox);
@@ -453,6 +465,7 @@ public class NdviGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			main.viewGoTo(ret);
 			umTask.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_ACUM_TO_HARVEST);
 			System.out.println("crear ndvis a cosecha acumulada exito"); 
 			playSound();
 	
@@ -659,6 +672,7 @@ public class NdviGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			main.viewGoTo(ret);
 			umTask.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_TO_FERTILIZATION);
 			System.out.println("convertir a fertiliacion tuvo exito"); 
 			playSound();
 			ndvi.getLayer().setEnabled(false);

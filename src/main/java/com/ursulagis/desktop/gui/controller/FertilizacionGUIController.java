@@ -18,6 +18,7 @@ import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.gui.FertilizacionConfigDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.SiembraConfigDialogController;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
@@ -232,6 +233,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			umTask2.uninstallProgressBar();
 			System.out.println("doEditFertilización succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_SPLIT);
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask2);
 		
@@ -323,6 +325,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			playSound();
 			viewGoTo(ret);
 			System.out.println("SiembraFertTask succeded"); 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_FROM_FERTILIZATION);
 		});
 		executorPool.execute(siembraFert);
 	}
@@ -340,6 +343,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			laborToExport.getLayer().setEnabled(false);
 			File ret = (File)handler.getSource().getValue();
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_EXPORTED);
 			ept.uninstallProgressBar();
 			this.doOpenFertMap(Collections.singletonList(ret));
 		});
@@ -361,6 +365,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 
 				if(ret!=null) {
 					main.configGUIController.showQR(ret);
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_SHARED);
 				}
 				task.uninstallProgressBar();			
 			});
@@ -396,6 +401,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 
 					System.out.println("OpenFertMapTask succeeded"); 
 					playSound();
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_IMPORTED);
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
 			}//fin del for stores
@@ -410,6 +416,14 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		} else {
 			fertilizacionesAUnir.add(fertilizacionLabor);
 		}
+
+		// The task always unions + grids; we award "joined" when the user actually combines multiple enabled layers.
+		final boolean isUnion = fertilizacionesAUnir.stream()
+				.filter(f -> f != null && f.getLayer() != null && f.getLayer().isEnabled())
+				.count() > 1;
+		final String achievementId = isUnion
+				? OnboardingAchievements.FIRST_FERTILIZATION_JOINED
+				: OnboardingAchievements.FIRST_FERTILIZATION_GRIDDED;
 		
 		UnirFertilizacionesMapTask umTask = new UnirFertilizacionesMapTask(fertilizacionesAUnir);
 		umTask.installProgressBar(progressBox);
@@ -424,6 +438,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			viewGoTo(ret);
 			System.out.println("ProcessUniteFertMapsTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, achievementId);
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
 	}

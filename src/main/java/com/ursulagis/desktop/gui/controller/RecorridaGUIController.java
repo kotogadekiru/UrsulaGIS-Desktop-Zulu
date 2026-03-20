@@ -32,6 +32,7 @@ import gov.nasa.worldwind.layers.RenderableLayer;
 import com.ursulagis.desktop.gui.FertilizacionConfigDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
@@ -90,6 +91,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 				//mostrar un dialogo para editar el nombre del poligono
 				Recorrida recorrida =(Recorrida)layerObject;
 				DAH.save(recorrida);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SAVED_LOCAL);
 			}
 			return "guarde recorrida"; 
 		}));
@@ -168,6 +170,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 
 			main.playSound();
 			main.viewGoTo(ret);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_INTERPOLATED_TO_SOIL);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(imTask);
 	}
@@ -183,6 +186,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 			umTask.uninstallProgressBar();
 			main.viewGoTo(ret);
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_GUIDED_SHOWN);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);	
 	}
@@ -208,6 +212,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 
 				umTask.setOnSucceeded(handler -> {
 					Recorrida ret = (Recorrida)handler.getSource().getValue();
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_IMPORTED);
 					doShowRecorrida(ret);
 					umTask.uninstallProgressBar();
 				});//fin del OnSucceeded
@@ -225,6 +230,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 	public void doCompartirRecorrida(Recorrida recorrida) {		
 		if(recorrida.getUrl()!=null && recorrida.getUrl().length()>0) {			
 			main.configGUIController.showQR(recorrida.getUrl());
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SHARED);
 			//XXX editar la recorrida remota con la informacion actualizada de la local?
 			//XXX recupero la recorrida remota?
 			return;
@@ -247,6 +253,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 			DAH.save(recorrida);
 			if(ret!=null) {
 				main.configGUIController.showQR(ret);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SHARED);
 			}
 			//XXX agregar boton de actualizar desde la nube?
 			task.uninstallProgressBar();			
@@ -277,7 +284,8 @@ public class RecorridaGUIController extends AbstractGUIController {
 //				main.configGUIController.showQR(ret);
 //			}
 			//XXX agregar boton de actualizar desde la nube?
-			task.uninstallProgressBar();			
+			task.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SYNCED_FROM_CLOUD);
 		});
 		System.out.println("ejecutando Compartir Recorrida"); 
 		executorPool.execute(task);
@@ -516,6 +524,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 				}
 			}
 		}
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SAMPLES_VALUES_ASSIGNED);
 	}
 
 	public void doExportRecorrida(Recorrida recorrida) {
@@ -526,6 +535,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 		task.setOnSucceeded(handler -> {
 			playSound();
 			task.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_EXPORTED);
 		});
 		executorPool.execute(task);
 	}

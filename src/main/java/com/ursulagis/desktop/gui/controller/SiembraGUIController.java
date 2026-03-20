@@ -20,6 +20,7 @@ import gov.nasa.worldwind.WorldWindow;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.SiembraConfigDialogController;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.gui.nww.LayerPanel;
@@ -144,6 +145,7 @@ public class SiembraGUIController {
 				main.wwjPanel.repaint();
 				System.out.println("doEditSiembra succeeded"); 
 				playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_EDITED);
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
 		}
@@ -159,6 +161,10 @@ public class SiembraGUIController {
 			siemrbasAUnir.add(siembraLabor);
 		}
 
+		final boolean isJoin = siemrbasAUnir.stream()
+				.filter(s -> s != null && s.getLayer() != null && s.getLayer().isEnabled())
+				.count() > 1;
+
 		UnirSiembrasMapTask umTask = new UnirSiembrasMapTask(siemrbasAUnir);
 		umTask.installProgressBar(progressBox);
 		umTask.setOnSucceeded(handler -> {
@@ -172,6 +178,9 @@ public class SiembraGUIController {
 
 			System.out.println("ProcessUniteHarvestMapsTask succeeded"); 
 			playSound();
+			if (isJoin) {
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_JOINED);
+			}
 		});//fin del OnSucceeded											
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -242,6 +251,7 @@ public class SiembraGUIController {
 
 			System.out.println("GrillarSiembrasMapTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_GRIDDED);
 		});//fin del OnSucceeded		
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -304,6 +314,7 @@ public class SiembraGUIController {
 			main.playSound();
 			main.viewGoTo(ret);
 			System.out.println("SiembraFertTask succeded"); 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZED_SEEDING_GENERATED);
 		});
 		this.executorPool.execute(siembraFertTask);
 	}
@@ -331,6 +342,7 @@ public class SiembraGUIController {
 
 					System.out.println("OpenFertMapTask succeeded"); 
 					playSound();
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_IMPORTED);
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
 			}//fin del for stores
@@ -392,6 +404,7 @@ public class SiembraGUIController {
 				laborToExport.getLayer().setEnabled(false);
 				File ret = (File)handler.getSource().getValue();
 				playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_EXPORTED);
 				ept.uninstallProgressBar();
 				this.doOpenSiembraMap(Collections.singletonList(ret));
 			});
@@ -419,6 +432,7 @@ public class SiembraGUIController {
 				System.out.println("showing qr for "+ret);
 				if(ret!=null && !ret.isEmpty() ) {
 					main.configGUIController.showQR(ret);
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_SHARED);
 				} else { 
 					System.out.println("ret es null asi que no hay url para mostrar qr");
 				}
@@ -480,6 +494,7 @@ public class SiembraGUIController {
 			csTask.uninstallProgressBar();
 			viewGoTo(ret);
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_FROM_HARVEST);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(csTask);
 	}

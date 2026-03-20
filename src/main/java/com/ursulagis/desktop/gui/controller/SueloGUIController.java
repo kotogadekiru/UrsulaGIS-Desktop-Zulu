@@ -20,6 +20,7 @@ import com.ursulagis.desktop.gui.HarvestConfigDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.SueloConfigDialogController;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
 import javafx.scene.control.Alert;
@@ -98,6 +99,7 @@ public class SueloGUIController extends AbstractGUIController{
 			playSound();
 			viewGoTo(ret);
 			System.out.println("balanceNutrientesTask succeeded"); 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SOIL_NUTRIENT_BALANCE);
 		});
 		JFXMain.executorPool.execute(balanceNutrientesTask);
 	}
@@ -114,6 +116,7 @@ public class SueloGUIController extends AbstractGUIController{
 				umTask.uninstallProgressBar();
 				main.wwjPanel.repaint();
 				main.playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SOIL_EDITED);
 			});//fin del OnSucceeded
 			JFXMain.executorPool.execute(umTask);
 		}
@@ -178,6 +181,7 @@ public class SueloGUIController extends AbstractGUIController{
 			viewGoTo(ret);
 			
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SOIL_YIELD_ESTIMATED);
 			
 			//wwjPanel.repaint();		
 
@@ -222,6 +226,7 @@ public class SueloGUIController extends AbstractGUIController{
 
 					System.out.println("OpenSoilMapTask succeeded"); 
 					main.playSound();
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SOIL_IMPORTED);
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
 			}//fin del for stores

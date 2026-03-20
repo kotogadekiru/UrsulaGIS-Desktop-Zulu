@@ -132,6 +132,10 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 			//			isValid=false;
 			labor.colElevacion.set(Labor.NONE_SELECTED);
 		}
+		if(comboFertilizante.getValue()==null){
+			message.append(Messages.getString("FertilizacionConfigDialogController.messageFertilizante")); //$NON-NLS-1$
+			isValid=false;
+		}
 
 		if(!isValid){
 			Alert alert = new Alert(AlertType.ERROR, message.toString(), ButtonType.OK);

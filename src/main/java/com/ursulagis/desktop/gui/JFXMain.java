@@ -36,9 +36,11 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.application.Preloader;
+import javafx.util.Duration;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -132,6 +134,8 @@ import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.TarjetaHelper;
 import com.ursulagis.desktop.gui.UrsulaGISPreloader;
+import com.ursulagis.desktop.gui.onboarding.AchievementsOverviewDialog;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 
 public class JFXMain extends Application {
 	private static final String PREFERED_TREE_WIDTH_KEY = "PREFERED_TREE_WIDTH";
@@ -227,7 +231,7 @@ public class JFXMain extends Application {
 			JFXMain.stage = primaryStage;
 			primaryStage.setTitle(TITLE_VERSION);
 			loadMainIcon(primaryStage); 
-
+			notifyPreloader(new Preloader.ProgressNotification(0.1));	
 			Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 			//double ratio = primaryScreenBounds.getHeight()/primaryScreenBounds.getWidth();//screen ratio
 			int canvasWidth = (int) (primaryScreenBounds.getWidth()*0.8);
@@ -331,6 +335,16 @@ public class JFXMain extends Application {
 			notifyPreloader(new Preloader.ProgressNotification(0.5));
 			loadActiveLayers();
 			notifyPreloader(new Preloader.ProgressNotification(0.9));
+
+			// Show achievements overview after main stage is visible (preloader shows it when progress > 0.8)
+			Platform.runLater(() -> {
+				if (OnboardingAchievements.getInstance().isShowAtStart()) {
+					PauseTransition delay = new PauseTransition(Duration.millis(600));
+					delay.setOnFinished(e -> AchievementsOverviewDialog.show(primaryStage));
+					delay.play();
+				}
+			});
+			notifyPreloader(new Preloader.ProgressNotification(1.0));
 	
 		}catch(Exception e) {
 			System.out.println("no se pudo hacer start de JFXMain.start(stage)");
@@ -1272,7 +1286,7 @@ public class JFXMain extends Application {
 	}
 
 	public Pane getProgressBox() {
-		return this.progressBox;
+		return JFXMain.progressBox;
 	}
 
 	public void playSound() {

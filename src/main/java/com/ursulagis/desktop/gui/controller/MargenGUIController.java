@@ -11,6 +11,7 @@ import gov.nasa.worldwind.layers.Layer;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.MargenConfigDialogController;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.tasks.procesar.SumarMargenesMapTask;
@@ -87,6 +88,7 @@ public class MargenGUIController extends AbstractGUIController {
 			uMmTask.uninstallProgressBar();
 			this.main.wwjPanel.repaint();
 			System.out.println("EditMarginTask succeeded"); 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_MARGEN_EDITED);
 			playSound();
 		});
 		executorPool.execute(uMmTask);
@@ -105,7 +107,7 @@ public class MargenGUIController extends AbstractGUIController {
 			uMmTask.uninstallProgressBar();
 			//this.wwjPanel.repaint();
 
-
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_MARGEN_SUMMED);
 			playSound();
 		});
 		executorPool.execute(uMmTask);
