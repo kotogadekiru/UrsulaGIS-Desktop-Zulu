@@ -3,9 +3,11 @@ package com.ursulagis.desktop.tasks;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+
+import java.awt.Desktop;
+import java.awt.HeadlessException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -50,8 +52,10 @@ import javafx.stage.Stage;
 
 
 public class UpdateTask  extends Task<File>{
-	private static final String UPDATE_URL ="https://www.ursulagis.com/update/";//TODO cambiar a https
-	//private static final String UPDATE_URL = "http://localhost:5000/update/";
+	private static final String DEFAULT_UPDATE_URL ="https://www.ursulagis.com/update/";//TODO cambiar a https
+	//private static final String DEFAULT_UPDATE_URL = "http://localhost:5000/update/";
+	/** Base URL for {@link #checkForUpdate()} (trailing slash). Overridden in tests via {@link #setUpdateUrlForTests}. */
+	private static volatile String updateUrl = DEFAULT_UPDATE_URL;
 	private static final String TASK_CLOSE_ICON = "/gui/event-close.png";
 	private ProgressBar progressBarTask;
 	private Pane progressPane;
@@ -136,31 +140,82 @@ public class UpdateTask  extends Task<File>{
 	}
 
 	private void instalarNuevaVersion(File fout) {
-		File bat = new File(fout.getParentFile().getPath()+File.separator+"install.bat");
+		String lowerName = fout.getName().toLowerCase(Locale.ROOT);
+		String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
 		try {
-			FileWriter fw = new FileWriter(bat);
-			String uninstall =  "msiexec.exe /x "+fout.getPath()+" /q \r\n";
-			fw.write(uninstall);
-			String install =  "msiexec.exe /i "+fout.getPath()+" \r\n";
-			fw.write(install);
-			fw.close();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
-		//opcion 1
-//fout es un msi entonces solo lo ejecuto
-
-		try {
-//		String uninstall = "msiexec.exe /x ";// UrsulaGIS-0.2.18.msi;
-//			String executar = uninstall+fout.getPath()+" /q";
-			System.out.println("ejecutando: "+bat.getAbsolutePath());
-			//XXX parece que no se instala bien sobre otras versiones o no tiene permiso por que no copia los exe
-			//TODO probar ejecutar con "Elevate.exe "+bat.getAbsolutePath();
-		 Runtime.getRuntime().exec(bat.getAbsolutePath());
-	
+			if (os.contains("win")) {
+				installWindows(fout, lowerName);
+			} else if (os.contains("mac") || os.contains("darwin")) {
+				installMacos(fout, lowerName);
+			} else if (os.contains("linux")) {
+				installLinux(fout, lowerName);
+			} else {
+				openWithDefaultApplication(fout);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		} 
+			openWithDefaultApplication(fout);
+		}
+	}
+
+	/**
+	 * Windows: MSI uses the same uninstall-then-install sequence as before (via {@code cmd /c});
+	 * self-extracting EXE installers are launched directly.
+	 */
+	private void installWindows(File fout, String lowerName) throws IOException {
+		if (lowerName.endsWith(".msi")) {
+			String p = fout.getAbsolutePath();
+			System.out.println("ejecutando instalador MSI: " + p);
+			ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c",
+					"msiexec.exe /x \"" + p + "\" /q /norestart && msiexec.exe /i \"" + p + "\"");
+			pb.start();
+		} else if (lowerName.endsWith(".exe")) {
+			System.out.println("ejecutando instalador: " + fout.getAbsolutePath());
+			ProcessBuilder pb = new ProcessBuilder(fout.getAbsolutePath());
+			pb.directory(fout.getParentFile());
+			pb.start();
+		} else {
+			openWithDefaultApplication(fout);
+		}
+	}
+
+	/** macOS: {@code open} runs .pkg / .dmg with the default handler; other types fall back to Desktop. */
+	private void installMacos(File fout, String lowerName) throws IOException {
+		if (lowerName.endsWith(".pkg") || lowerName.endsWith(".dmg") || lowerName.endsWith(".zip")) {
+			System.out.println("abriendo con open: " + fout.getAbsolutePath());
+			new ProcessBuilder("open", fout.getAbsolutePath()).start();
+		} else {
+			openWithDefaultApplication(fout);
+		}
+	}
+
+	/** Linux: AppImage is marked executable and run; packages are opened with the default handler (e.g. Software). */
+	private void installLinux(File fout, String lowerName) throws IOException {
+		if (lowerName.endsWith(".appimage")) {
+			if (!fout.setExecutable(true)) {
+				System.err.println("No se pudo marcar como ejecutable: " + fout);
+			}
+			System.out.println("ejecutando AppImage: " + fout.getAbsolutePath());
+			new ProcessBuilder(fout.getAbsolutePath()).start();
+			return;
+		}
+		try {
+			System.out.println("abriendo con xdg-open: " + fout.getAbsolutePath());
+			new ProcessBuilder("xdg-open", fout.getAbsolutePath()).start();
+		} catch (IOException e) {
+			openWithDefaultApplication(fout);
+		}
+	}
+
+	private void openWithDefaultApplication(File fout) {
+		try {
+			if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+				System.out.println("abriendo con Desktop: " + fout.getAbsolutePath());
+				Desktop.getDesktop().open(fout);
+			}
+		} catch (IOException | HeadlessException e) {
+			e.printStackTrace();
+		}
 	}
 
 
@@ -237,15 +292,53 @@ public class UpdateTask  extends Task<File>{
 		progressPane.getChildren().remove(progressContainer);
 	}
 
+	/**
+	 * Value for the {@code PLATFORM} update URL parameter: OS family and CPU word size
+	 * (e.g. {@code windows_x64}, {@code mac_aarch64}, {@code linux_x64}).
+	 */
+	private static String platformQueryValue() {
+		String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+		String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
+		if (osName.contains("windows")) {
+			if ("amd64".equals(arch) || "x86_64".equals(arch)) {
+				return "windows_x64";
+			}
+			if ("aarch64".equals(arch) || "arm64".equals(arch)) {
+				return "windows_aarch64";
+			}
+			return "windows_x86";
+		}
+		if (osName.contains("mac") || osName.contains("darwin")) {
+			if ("aarch64".equals(arch) || "arm64".equals(arch)) {
+				return "mac_aarch64";
+			}
+			return "mac_x64";
+		}
+		if (osName.contains("linux")) {
+			if ("aarch64".equals(arch) || "arm64".equals(arch)) {
+				return "linux_aarch64";
+			}
+			if ("amd64".equals(arch) || "x86_64".equals(arch)) {
+				return "linux_x64";
+			}
+			if ("i386".equals(arch) || "x86".equals(arch) || "i686".equals(arch)) {
+				return "linux_x86";
+			}
+			return "linux_" + arch;
+		}
+		return "unknown";
+	}
+
 	public static String checkForUpdate() {		
 		String message =null;
 		//TODO si ya se habia invocado no volver a llamar.
 		if(lastVersionNumber == null) {
-			GenericUrl url = new GenericUrl(UPDATE_URL);//"http://www.ursulagis.com/update");
+			GenericUrl url = new GenericUrl(updateUrl);//"http://www.ursulagis.com/update");
 			url.put("VERSION", JFXMain.VERSION);
 			
 			String usr = getUserNumber();
 			url.put("USER", usr);
+			url.put("PLATFORM", platformQueryValue());
 			
 			System.out.println("calling url=> "+url);
 			//http://localhost:5000/update?VERSION=0.2.26&USER=693,468
@@ -388,5 +481,17 @@ public class UpdateTask  extends Task<File>{
 			e.printStackTrace();
 			return -1.0;
 		}
+	}
+
+	/** Resets one-shot update-check state. Used by tests in the same package. */
+	static void resetUpdateCheckStateForTests() {
+		lastVersionNumber = null;
+		lastVersionURL = null;
+		isUpdateAvailable = false;
+	}
+
+	/** Points {@link #checkForUpdate()} at a URL (e.g. embedded test server). Pass null to restore default. */
+	static void setUpdateUrlForTests(String url) {
+		updateUrl = (url != null && !url.isEmpty()) ? url : DEFAULT_UPDATE_URL;
 	}
 }
