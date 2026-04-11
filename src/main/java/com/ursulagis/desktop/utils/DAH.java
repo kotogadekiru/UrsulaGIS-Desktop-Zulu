@@ -60,7 +60,6 @@ import javafx.application.Platform;
 public class DAH {
 	private static final String NO = "NO";
 	private static final String DAH_AGROQUIMICOS_INICIALIZADOS = "DAH.AgroquimicosInicializados";
-	private static final String APPDATA = "APPDATA";
 	private static final String OBJECTDB_DB_URSULAGIS_ODB = "$ursulaGIS.odb";
 	private static final String H2_URSULAGIS_DB = "ursulaGIS.h2";//mv.db
 	private static final String AUTO_SERVE=";AUTO_SERVER=TRUE";
@@ -97,9 +96,7 @@ public class DAH {
 
 	public static EntityManager emODB(){
 		if(emODB == null){
-			String currentUsersHomeDir =System.getenv(APPDATA);
-			//	System.out.println("obtuve la direccion de appData : "+currentUsersHomeDir);
-			//obtuve la direccion de appData : C:\Users\quero\AppData\Roaming
+			String currentUsersHomeDir = Configuracion.getApplicationDataRoot();
 			String ursulaGISFolder = currentUsersHomeDir + File.separator + Configuracion.URSULA_GIS_APPDATA_FOLDER;
 			String  db_url = ursulaGISFolder + File.separator + OBJECTDB_DB_URSULAGIS_ODB;		
 			System.out.println("abriendo la base de datos de: "+db_url);
@@ -127,16 +124,15 @@ public class DAH {
 
 			String db_url = JFXMain.config.getPropertyOrDefault(PROJECT_URL_KEY, "NOT_SET");
 			if("NOT_SET".equals(db_url)) {
-				String currentUsersHomeDir =System.getenv(APPDATA);
-				String ursulaGISFolder = currentUsersHomeDir + File.separator + Configuracion.URSULA_GIS_APPDATA_FOLDER;
+				String ursulaGISFolder = Configuracion.getApplicationDataRoot() + File.separator + Configuracion.URSULA_GIS_APPDATA_FOLDER;
 				//en ursulaGISFolder estan todos los tif temporales. borrarlos antes de cerrar el programa
 				db_url = ursulaGISFolder + File.separator + H2_URSULAGIS_DB;		
 			}
-			db_url+=AUTO_SERVE;
-			
-			
-			System.out.println("loading project "+db_url);
-			File sqliteDBFile=new File(db_url);
+			File sqliteDBFile = new File(db_url).getAbsoluteFile();
+			String absoluteDbPath = sqliteDBFile.getAbsolutePath();
+			String jdbcUrl = "jdbc:h2:" + absoluteDbPath + AUTO_SERVE;
+
+			System.out.println("loading project " + jdbcUrl);
 			
 			// Ensure the database directory exists
 			File dbDir = sqliteDBFile.getParentFile();
@@ -164,7 +160,7 @@ public class DAH {
 			properties.put(JDBC_DRIVER, "org.h2.Driver");
 			//properties.put(JDBC_URL, "jdbc:h2:~/test");
 
-			properties.put(JDBC_URL, "jdbc:h2:"+db_url);
+			properties.put(JDBC_URL, jdbcUrl);
 			properties.put(DDL_GENERATION, CREATE_OR_EXTEND);
 			properties.put(DDL_GENERATION_MODE, "database");
 			//  properties.put(JDBC_USER, "scott");

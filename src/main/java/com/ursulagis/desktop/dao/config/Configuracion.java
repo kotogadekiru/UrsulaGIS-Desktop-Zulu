@@ -27,6 +27,22 @@ import com.ursulagis.desktop.utils.CustomProperties;
 public class Configuracion{
 	public static final String URSULA_GIS_APPDATA_FOLDER = "UrsulaGIS";
 	public static final String APPDATA = "APPDATA";
+
+	/**
+	 * Windows: {@code %APPDATA%}. If unset (non-Windows launchers, minimal env), {@code user.home}
+	 * so paths are never built from a null prefix (which breaks H2 and config locations).
+	 */
+	public static String getApplicationDataRoot() {
+		String roaming = System.getenv(APPDATA);
+		if (roaming != null && !roaming.isEmpty()) {
+			return roaming;
+		}
+		String home = System.getProperty("user.home");
+		if (home == null || home.isEmpty()) {
+			throw new IllegalStateException("user.home is not set; cannot locate application data directory");
+		}
+		return home;
+	}
 	private static final String DEFAULT_CONFIG_PROPERTIES = "com/ursulagis/desktop/dao/config/config.properties";
 	private static final String FILE_CONFIG_PROPERTIES = "config.properties";
 	private final CustomProperties configProp = new CustomProperties();
@@ -46,17 +62,10 @@ public class Configuracion{
 	}
 
 	private static String getUrsulaGISFolder() {
-		String currentUsersHomeDir =System.getenv(APPDATA);
-		//System.out.println("obtuve la direccion de appData : "+currentUsersHomeDir);
-		//obtuve la direccion de appData : C:\Users\quero\AppData\Roaming
-		String ursulaGISFolder = currentUsersHomeDir + File.separator + URSULA_GIS_APPDATA_FOLDER;
-		 return ursulaGISFolder;
+		return getApplicationDataRoot() + File.separator + URSULA_GIS_APPDATA_FOLDER;
 	}
 	private Configuracion() {		
-		String currentUsersHomeDir =System.getenv(APPDATA);
-		//System.out.println("obtuve la direccion de appData : "+currentUsersHomeDir);
-		//obtuve la direccion de appData : C:\Users\quero\AppData\Roaming
-		 ursulaGISFolder = currentUsersHomeDir + File.separator + URSULA_GIS_APPDATA_FOLDER;
+		 ursulaGISFolder = getApplicationDataRoot() + File.separator + URSULA_GIS_APPDATA_FOLDER;
 		 //seteo el path para el log de objectdb
 		  System.setProperty("objectdb.home", ursulaGISFolder); //TODO remove. no se usa mas
 		this.propertiesFileUrl=ursulaGISFolder+ File.separator +FILE_CONFIG_PROPERTIES;
