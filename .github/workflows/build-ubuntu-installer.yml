@@ -15,6 +15,7 @@ permissions:
 env:
   PRIMARY_BUNDLE_ID: com.ursulagis.desktop.JFXMain
   APP_VERSION: 1.0.${{ github.run_number }}
+
 jobs:
   build-ubuntu-installer:
     runs-on: ubuntu-latest
@@ -30,23 +31,28 @@ jobs:
           java-package: jdk+fx
           cache: 'maven'
 
-      - name: Build Linux Installer with Maven
+      - name: Build Linux installer (Maven)
         run: mvn -B clean install --file pom.xml
         env:
           MAVEN_OPTS: "-Dos.detected.name=linux"
 
+      - name: Stage Linux DEB
+        run: |
+          mkdir -p installers
+          for f in target/*.deb; do
+            cp "$f" "installers/UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_Linux_x64.deb"
+          done
+
       - name: List build artifacts
         run: |
-          echo "Build artifacts in target directory:"
-          ls -la target/
-          echo "DEB files:"
-          ls -la target/*.deb
+          echo "Staged installers:"
+          ls -la installers/
 
       - name: Upload Linux Installer
         uses: actions/upload-artifact@v4
         with:
           name: UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_Linux_x64_Installer
-          path: target/*.deb
+          path: installers/*.deb
           retention-days: 30
 
       - name: Create Release
@@ -54,7 +60,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           tag_name: UrsulaGIS-Desktop_Zulu_Linux_x64_Installer-${{ env.APP_VERSION }}
-          name: Linux Installer Build -${{ env.APP_VERSION }}
+          name: Linux Installer Build - ${{ env.APP_VERSION }}
           body: |
             Linux DEB installer built from commit ${{ github.sha }}
 
@@ -64,6 +70,6 @@ jobs:
             - Run: ${{ github.run_number }}
             - Date: ${{ github.event.head_commit.timestamp }}
           files: |
-            target/*.deb
+            installers/*.deb
           prerelease: true
           draft: false
