@@ -114,7 +114,7 @@ public class NdviGUIController extends AbstractGUIController{
 		}));
 		
 		//TODO agregar traduccion		
-		rootNodeNDVI.add(LayerAction.constructPredicate("Filtrar Fecha",(layer)->{ 
+		rootNodeNDVI.add(LayerAction.constructPredicate(Messages.getString("NdviGUIController.filtrarFecha"),(layer)->{ 
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DATE_FILTERED);
 			return doFiltrarFecha(null);
 			//return "filtre por fecha";
