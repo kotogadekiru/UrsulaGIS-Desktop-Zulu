@@ -30,7 +30,6 @@
         <!-- cambiar el yml APP_VERSION si se cambia la version mayor-->
         <app.version.mayor>1.0.</app.version.mayor>
         <app.version>${app.version.mayor}1</app.version>
-        <app.version.local>${app.version.mayor}1</app.version.local>
         <app.icon>U_nueva_3_256x256_verde.ico</app.icon>
 
         <!-- This property is used to specify the modules included in the (custom) JVM image. -->
@@ -50,8 +49,12 @@
         to know that an installer is intended to replace/upgrade an earlier version. The easiest thing to do is
         grab a unique UUID via https://www.uuidgenerator.net -->
         <windows.upgrade.uuid>5d0f916c-2119-4996-9503-4da27d3609b9</windows.upgrade.uuid>
+        <!-- Separate upgrade GUID for 32-bit MSI so it does not collide with the x64 product line -->
+        <windows.upgrade.uuid.x86>8f3e2d1c-4b5a-6978-8c9d-0e1f2a3b4c5d</windows.upgrade.uuid.x86>
         <!-- This is used to set many user-visible fields in the Windows Installer. See windows-jpackage.txt -->
         <windows.vendor>'URSULA CORP S.A.'</windows.vendor>
+        <!-- jpackage response file; windows-natives-x86 profile switches to windows-x86-jpackage.txt -->
+        <jpackage.args.file>${os.detected.name}-jpackage.txt</jpackage.args.file>
 
         <!-- Empty properties to skip signing by default. Set with the macos-sign Maven profile -->
         <macos.sign></macos.sign>
@@ -281,14 +284,6 @@
         </dependency>
         
         <dependency>
-            <groupId>org.jogamp.gluegen</groupId>
-            <artifactId>gluegen-rt-natives-windows-amd64</artifactId>
-            <version>${worldwind.version}</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/gluegen-rt-natives-windows-amd64.jar</systemPath>
-        </dependency>
-        
-        <dependency>
             <groupId>org.jogamp.jogl</groupId>
             <artifactId>jogl-all</artifactId>
             <version>${worldwind.version}</version>
@@ -310,14 +305,6 @@
             <version>${worldwind.version}</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/jogl-all-natives-macosx-universal.jar</systemPath>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.jogamp.jogl</groupId>
-            <artifactId>jogl-all-natives-windows-amd64</artifactId>
-            <version>${worldwind.version}</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/jogl-all-natives-windows-amd64.jar</systemPath>
         </dependency>
         
     </dependencies>
@@ -428,16 +415,28 @@
                 <version>3.0.0</version>
                 <executions>
                     <execution>
+                        <id>default-buildtimestamp</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>create-timestamp</goal>
                         </goals>
+                        <configuration>
+                            <timestampFormat>yyyy-MM-dd'T'HH:mm:ss'Z'</timestampFormat>
+                            <timestampPropertyName>maven.build.timestamp</timestampPropertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>create-linux-deb-timestamp</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create-timestamp</goal>
+                        </goals>
+                        <configuration>
+                            <timestampFormat>yyyyMMddHHmmss</timestampFormat>
+                            <timestampPropertyName>linux.deb.timestamp</timestampPropertyName>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <timestampFormat>yyyy-MM-dd'T'HH:mm:ss'Z'</timestampFormat>
-                    <timestampPropertyName>maven.build.timestamp</timestampPropertyName>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -566,7 +565,7 @@
                             <writeErrorsToLog>true</writeErrorsToLog>
                             <failOnError>true</failOnError>
                             <removeDirectories>${project.build.directory}/installer-work</removeDirectories>
-                            <args>@${project.build.directory}/packaging/${os.detected.name}-jpackage.txt</args>
+                            <args>@${project.build.directory}/packaging/${jpackage.args.file}</args>
                         </configuration>
                     </execution>
                 </executions>
@@ -718,7 +717,8 @@
                 </property>
             </activation>
             <properties>
-                <app.version>${app.version.local}</app.version>
+                <!-- Same app.version as Windows/macOS/Linux: monotonic suffix for .deb upgrades and one visible version -->
+                <app.version>${app.version.mayor}${linux.deb.timestamp}</app.version>
             </properties>
         </profile>
 
@@ -727,6 +727,60 @@
         These properties are then use to build the directory paths to the platform specific resources.
         It would be great if Maven automatically added the os family as a property by default
          -->
+
+        <profile>
+            <id>windows-natives-amd64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jogamp.gluegen</groupId>
+                    <artifactId>gluegen-rt-natives-windows-amd64</artifactId>
+                    <version>${worldwind.version}</version>
+                    <scope>system</scope>
+                    <systemPath>${project.basedir}/libs/gluegen-rt-natives-windows-amd64.jar</systemPath>
+                </dependency>
+                <dependency>
+                    <groupId>org.jogamp.jogl</groupId>
+                    <artifactId>jogl-all-natives-windows-amd64</artifactId>
+                    <version>${worldwind.version}</version>
+                    <scope>system</scope>
+                    <systemPath>${project.basedir}/libs/jogl-all-natives-windows-amd64.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>windows-natives-x86</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>x86</arch>
+                </os>
+            </activation>
+            <properties>
+                <jpackage.args.file>windows-x86-jpackage.txt</jpackage.args.file>
+            </properties>
+            <dependencies>
+                <!-- Natives from Maven Central (classifier). Version 2.3.2 matches published win32 JARs; API JARs remain 2.4.0 from libs. -->
+                <dependency>
+                    <groupId>org.jogamp.gluegen</groupId>
+                    <artifactId>gluegen-rt</artifactId>
+                    <version>2.3.2</version>
+                    <classifier>natives-windows-i586</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.jogamp.jogl</groupId>
+                    <artifactId>jogl-all</artifactId>
+                    <version>2.3.2</version>
+                    <classifier>natives-windows-i586</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
 
         <profile>
             <id>macos-sign</id>
