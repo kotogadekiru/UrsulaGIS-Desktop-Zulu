@@ -621,7 +621,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 			SmartTableView<Fertilizante> table = new SmartTableView<Fertilizante>(dataLotes,
 					Arrays.asList("Id"),//rejected
-					Arrays.asList("Nombre","PorcN","PorcP","PorcK","PorcS")//order
+					Arrays.asList("Nombre","PorcN","PorcP","PorcK","PorcS","Densidad")//order
 					);//,dataLotes);
 			table.setEditable(true);
 			table.getSelectionModel().setSelectionMode(	SelectionMode.MULTIPLE	);

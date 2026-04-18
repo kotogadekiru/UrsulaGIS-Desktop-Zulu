@@ -81,7 +81,10 @@ import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
+import com.ursulagis.desktop.dao.fertilizacion.FertilizacionConfig;
+import com.ursulagis.desktop.dao.fertilizacion.FertilizacionConfig.UnidadPrecio;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
+import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
 import com.ursulagis.desktop.dao.recorrida.Camino;
 import com.ursulagis.desktop.dao.recorrida.Muestra;
@@ -581,16 +584,35 @@ public class PoligonoGUIController extends AbstractGUIController{
 			return;
 		}							
 
-		Double dosis = NumberInputDialog.showAndWait(Messages.getString("JFXMain.fertNumTitle"), 
-				Messages.getString("JFXMain.fertNumHeader"), 
-				Messages.getString("JFXMain.fertNumLabel"), 
-				Messages.getString("JFXMain.fertNumPrompt"), 
-				Messages.getString("JFXMain.SeparatorWarningTooltip"));
-		if (dosis.isNaN()) {
-			return;
+		UnidadPrecio unidadDosis = ((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().get();
+		String fertHeader;
+		String fertLabel;
+		String fertPrompt;
+		if (unidadDosis == UnidadPrecio.Tn) {
+			fertHeader = Messages.getString("JFXMain.fertNumHeaderTn"); //$NON-NLS-1$
+			fertLabel = Messages.getString("JFXMain.fertNumLabelTn"); //$NON-NLS-1$
+			fertPrompt = PropertyHelper.formatDouble(0.03);
+		} else if (unidadDosis == UnidadPrecio.Litros) {
+			fertHeader = Messages.getString("JFXMain.fertNumHeaderLitros"); //$NON-NLS-1$
+			fertLabel = Messages.getString("JFXMain.fertNumLabelLitros"); //$NON-NLS-1$
+			fertPrompt = Messages.getString("JFXMain.fertNumPrompt"); //$NON-NLS-1$
+		} else {
+			fertHeader = Messages.getString("JFXMain.fertNumHeader"); //$NON-NLS-1$
+			fertLabel = Messages.getString("JFXMain.fertNumLabelKg"); //$NON-NLS-1$
+			fertPrompt = Messages.getString("JFXMain.fertNumPrompt"); //$NON-NLS-1$
 		}
 
-		CrearFertilizacionMapTask umTask = new CrearFertilizacionMapTask(labor,polis,dosis);
+		Double dosisIngresada = NumberInputDialog.showAndWait(Messages.getString("JFXMain.fertNumTitle"), //$NON-NLS-1$
+				fertHeader,
+				fertLabel,
+				fertPrompt,
+				Messages.getString("JFXMain.SeparatorWarningTooltip")); //$NON-NLS-1$
+		if (dosisIngresada.isNaN()) {
+			return;
+		}
+		double dosisKgHa = FertilizacionConfig.doseFromUserUnitToKgHa(dosisIngresada, unidadDosis, labor.getFertilizante());
+
+		CrearFertilizacionMapTask umTask = new CrearFertilizacionMapTask(labor,polis,dosisKgHa);
 		umTask.installProgressBar(progressBox);
 
 		umTask.setOnSucceeded(handler -> {

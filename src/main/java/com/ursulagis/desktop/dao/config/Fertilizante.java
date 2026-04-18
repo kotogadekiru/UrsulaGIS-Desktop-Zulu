@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -69,6 +70,10 @@ public class Fertilizante extends Producto implements Comparable<Fertilizante>{
 	double porcP= 0.0;
 	double porcK= 0.0;
 	double porcS= 0.0;
+
+	/** kg de producto por litro: convierte L ↔ kg en precio y dosis (líquidos o venta por litro). Por defecto 1. */
+	@Column
+	private double densidad = 1.0;
 	double porcCa, porcMg, porcB, porcCl, porcCo, porcCu, porcFe, porcMn, porcMo, porcZn;
 	
 	@Transient

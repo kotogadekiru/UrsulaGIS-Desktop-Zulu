@@ -16,6 +16,7 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
@@ -63,7 +64,24 @@
                                     <Insets left="5.0" right="5.0" />
                                  </opaqueInsets>
                               </Label>
-                              <TextField id="textPrecioGrano" fx:id="textPrecioFert" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                              <VBox alignment="CENTER_LEFT" GridPane.columnIndex="3" GridPane.rowIndex="1">
+                                 <children>
+                                    <HBox alignment="CENTER_LEFT">
+                                       <children>
+                                          <TextField id="textPrecioGrano" fx:id="textPrecioFert" prefHeight="26.0" prefWidth="87.0" promptText="usd/kg">
+                                             <HBox.margin>
+                                                <Insets right="5.0" />
+                                             </HBox.margin>
+                                          </TextField>
+                                          <ComboBox fx:id="precioFertUnit" minWidth="20.0" prefHeight="26.0" prefWidth="118.0" promptText="unidad">
+                                             <HBox.margin>
+                                                <Insets left="10.0" />
+                                             </HBox.margin>
+                                          </ComboBox>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
                               <Label text="%FertilizacionConfigDialog.costoLabHaLabel" GridPane.columnIndex="2" GridPane.rowIndex="2" />
                               <TextField id="textCostoCosechaHa" fx:id="textCostoLaborHa" GridPane.columnIndex="3" GridPane.rowIndex="2" />
                               <Label text="%FertilizacionConfigDialog.fertilizanteLabel" GridPane.columnIndex="2" GridPane.rowIndex="3" />

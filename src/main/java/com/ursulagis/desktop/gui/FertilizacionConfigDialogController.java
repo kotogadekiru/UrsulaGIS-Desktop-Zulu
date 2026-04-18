@@ -1,13 +1,17 @@
 package com.ursulagis.desktop.gui;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.ursulagis.desktop.dao.Clasificador;
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.dao.config.Fertilizante;
+import com.ursulagis.desktop.dao.fertilizacion.FertilizacionConfig;
+import com.ursulagis.desktop.dao.fertilizacion.FertilizacionConfig.UnidadPrecio;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
 import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import javafx.beans.binding.Bindings;
@@ -28,7 +32,6 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import javafx.util.converter.NumberStringConverter;
 import com.ursulagis.desktop.utils.DAH;
 
 
@@ -49,6 +52,9 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 
 	@FXML
 	private TextField textPrecioFert;//ok
+
+	@FXML
+	private ComboBox<String> precioFertUnit;
 
 	@FXML
 	private ComboBox<String> comboElev;//ok
@@ -78,6 +84,8 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 
 	private FertilizacionLabor labor;
 
+	private boolean suppressPrecioFertApply;
+
 
 	public FertilizacionConfigDialogController() {
 		super();
@@ -100,7 +108,8 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 		});
 
 		this.setResultConverter(e -> {		
-			if(ButtonType.OK.equals(e)){					
+			if(ButtonType.OK.equals(e)){
+				applyNuevoPrecioFert(textPrecioFert.getText());
 				if(chkMakeDefault.selectedProperty().get()){
 					labor.getConfigLabor().save();//.getConfigProperties().save();
 				}				
@@ -118,6 +127,13 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 		List<String> cols = labor.getAvailableColumns();
 		StringBuilder message = new StringBuilder();
 		boolean isValid =true;
+
+		try {
+			PropertyHelper.parseDouble(textPrecioFert.getText());
+		} catch (Exception e) {
+			isValid = false;
+			message.append(Messages.getString("FertilizacionConfigDialogController.precioInvalido")); //$NON-NLS-1$
+		}
 
 		//		return 	(cols.indexOf(comboElev.getValue())>-1)&&
 		//				//	(cols.indexOf(comboPasa.getValue())>-1)&&
@@ -174,7 +190,7 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 		this.comboFertilizante.getSelectionModel().select(labor.getFertilizante());//viene inicializada con el default desde init()
 		this.comboFertilizante.valueProperty().addListener((obj,old,n)->{
 			labor.fertilizante=n;
-			//	if(n!=null)config.getConfigProperties().setProperty(FertilizacionLabor.f.CosechaLaborConstants.PRODUCTO_DEFAULT,n.getNombre());
+			refreshPrecioFertDisplayFromLabor();
 		});		
 		//this.comboFertilizante.setItems(FXCollections.observableArrayList(DAH.getAllFertilizantes()));
 		//this.comboFertilizante.valueProperty().bindBidirectional(labor.fertilizanteProperty);
@@ -183,15 +199,18 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 		
 
 		Configuracion properties = labor.getConfigLabor().getConfigProperties();
-		//textPrecioGrano
-		//Bindings.bindBidirectional(this.textPrecioFert.textProperty(), labor.precioInsumoProperty, converter);
-		this.textPrecioFert.textProperty().set(
-				properties.getPropertyOrDefault(FertilizacionLabor.COLUMNA_PRECIO_FERT, 
-						PropertyHelper.formatDouble(labor.getPrecioInsumo()))
-				);
-		this.textPrecioFert.textProperty().addListener((obj,old,n)->{
-			labor.setPrecioInsumo(PropertyHelper.parseDouble(n).doubleValue());
-			properties.setProperty(FertilizacionLabor.COLUMNA_PRECIO_FERT, n);
+		String precioInsumoStored = properties.getPropertyOrDefault(FertilizacionLabor.COLUMNA_PRECIO_FERT,
+				PropertyHelper.formatDouble(labor.getPrecioInsumo()));
+		labor.setPrecioInsumo(PropertyHelper.parseDouble(precioInsumoStored).doubleValue());
+
+		configPrecioFertUnit();
+		refreshPrecioFertDisplayFromLabor();
+
+		this.textPrecioFert.textProperty().addListener((obj, old, n) -> {
+			if (suppressPrecioFertApply) {
+				return;
+			}
+			applyNuevoPrecioFert(n);
 		});
 
 
@@ -238,6 +257,65 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 
 
 
+
+	private void applyNuevoPrecioFert(String n) {
+		Number nuevoPrecio = PropertyHelper.parseDouble(n);
+		double precioKg = nuevoPrecio.doubleValue();
+		UnidadPrecio u = ((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().get();
+		double kgPorL = FertilizacionConfig.kgPorLitroFertilizante(labor.getFertilizante());
+		if (u == UnidadPrecio.Tn) {
+			precioKg = nuevoPrecio.doubleValue() / 1000.0;
+		} else if (u == UnidadPrecio.Litros) {
+			precioKg = nuevoPrecio.doubleValue() * kgPorL;
+		}
+		labor.setPrecioInsumo(precioKg);
+		labor.getConfigLabor().getConfigProperties().setProperty(FertilizacionLabor.COLUMNA_PRECIO_FERT,
+				PropertyHelper.formatDouble(precioKg));
+	}
+
+	private void refreshPrecioFertDisplayFromLabor() {
+		suppressPrecioFertApply = true;
+		try {
+			double precioKg = labor.getPrecioInsumo();
+			UnidadPrecio u = ((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().get();
+			double kgPorL = FertilizacionConfig.kgPorLitroFertilizante(labor.getFertilizante());
+			if (u == UnidadPrecio.Tn) {
+				textPrecioFert.setText(PropertyHelper.formatDouble(precioKg * 1000.0));
+			} else if (u == UnidadPrecio.Litros) {
+				textPrecioFert.setText(PropertyHelper.formatDouble(precioKg / kgPorL));
+			} else {
+				textPrecioFert.setText(PropertyHelper.formatDouble(precioKg));
+			}
+		} finally {
+			suppressPrecioFertApply = false;
+		}
+	}
+
+	private void configPrecioFertUnit() {
+		Map<String, UnidadPrecio> unidades = new HashMap<>();
+		unidades.put(Messages.getString("FertilizacionConfigDialogController.precioUnitKg"), UnidadPrecio.Kg); //$NON-NLS-1$
+		unidades.put(Messages.getString("FertilizacionConfigDialogController.precioUnitTn"), UnidadPrecio.Tn); //$NON-NLS-1$
+		unidades.put(Messages.getString("FertilizacionConfigDialogController.precioUnitLitros"), UnidadPrecio.Litros); //$NON-NLS-1$
+
+		this.precioFertUnit.setItems(FXCollections.observableArrayList(unidades.keySet()));
+		this.precioFertUnit.valueProperty().addListener((ob, old, nv) -> {
+			if (nv == null) {
+				return;
+			}
+			UnidadPrecio sel = unidades.get(nv);
+			if (sel != null) {
+				((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().set(sel);
+				refreshPrecioFertDisplayFromLabor();
+			}
+		});
+
+		UnidadPrecio configured = ((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().get();
+		unidades.forEach((key, value) -> {
+			if (value.equals(configured)) {
+				precioFertUnit.getSelectionModel().select(key);
+			}
+		});
+	}
 
 	public void init() {
 		this.getDialogPane().setContent(content);
