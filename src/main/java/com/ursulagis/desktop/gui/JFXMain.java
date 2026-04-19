@@ -146,7 +146,7 @@ public class JFXMain extends Application {
 
 
 	public static String buildDate = "12/09/2025";
-	public static String VERSION = "1.0.1"; //XXX al cambiar la version cambiar el pom y el yml
+	public static String VERSION = "1.0.0"; //XXX al cambiar la version mayor cambiar el pom y el yml
 	static {//init build date and version
 		try {
 			Properties props = new Properties();

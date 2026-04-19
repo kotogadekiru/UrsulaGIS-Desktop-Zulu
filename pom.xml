@@ -27,10 +27,11 @@
          https://docs.oracle.com/en/java/javase/15/docs/api/java.base/java/text/SimpleDateFormat.html
          -->
 
-        <!-- cambiar el yml APP_VERSION si se cambia la version mayor-->
-        <app.version.mayor>1.0.</app.version.mayor>
-        <app.version>${app.version.mayor}1</app.version>
-        <app.version.local>${app.version.mayor}1</app.version.local>
+        <!-- Visible / installer version: 1.0.N (N = build number 0–999, no zero-padding). Override locally: -Dapp.build.number=42 -->
+        <!-- cambiar el yml APP_VERSION si se cambia la version mayor -->
+        <app.version.mayor>1.0</app.version.mayor>
+        <app.build.number>0</app.build.number>
+        <app.version>${app.version.mayor}.${app.build.number}</app.version>
         <app.icon>U_nueva_3_256x256_verde.ico</app.icon>
 
         <!-- This property is used to specify the modules included in the (custom) JVM image. -->
@@ -50,8 +51,12 @@
         to know that an installer is intended to replace/upgrade an earlier version. The easiest thing to do is
         grab a unique UUID via https://www.uuidgenerator.net -->
         <windows.upgrade.uuid>5d0f916c-2119-4996-9503-4da27d3609b9</windows.upgrade.uuid>
+        <!-- Separate upgrade GUID for 32-bit MSI so it does not collide with the x64 product line -->
+        <windows.upgrade.uuid.x86>8f3e2d1c-4b5a-6978-8c9d-0e1f2a3b4c5d</windows.upgrade.uuid.x86>
         <!-- This is used to set many user-visible fields in the Windows Installer. See windows-jpackage.txt -->
         <windows.vendor>'URSULA CORP S.A.'</windows.vendor>
+        <!-- jpackage response file; windows-natives-x86 profile switches to windows-x86-jpackage.txt -->
+        <jpackage.args.file>${os.detected.name}-jpackage.txt</jpackage.args.file>
 
         <!-- Empty properties to skip signing by default. Set with the macos-sign Maven profile -->
         <macos.sign></macos.sign>
@@ -281,14 +286,6 @@
         </dependency>
         
         <dependency>
-            <groupId>org.jogamp.gluegen</groupId>
-            <artifactId>gluegen-rt-natives-windows-amd64</artifactId>
-            <version>${worldwind.version}</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/gluegen-rt-natives-windows-amd64.jar</systemPath>
-        </dependency>
-        
-        <dependency>
             <groupId>org.jogamp.jogl</groupId>
             <artifactId>jogl-all</artifactId>
             <version>${worldwind.version}</version>
@@ -310,14 +307,6 @@
             <version>${worldwind.version}</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/libs/jogl-all-natives-macosx-universal.jar</systemPath>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.jogamp.jogl</groupId>
-            <artifactId>jogl-all-natives-windows-amd64</artifactId>
-            <version>${worldwind.version}</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/jogl-all-natives-windows-amd64.jar</systemPath>
         </dependency>
         
     </dependencies>
@@ -365,6 +354,9 @@
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
                 <filtering>false</filtering>
+                <excludes>
+                    <exclude>build-info/**</exclude>
+                </excludes>
 <!--                 <excludes>
                     <exclude>**/*.png</exclude>
                     <exclude>**/*.ico</exclude>
@@ -428,16 +420,53 @@
                 <version>3.0.0</version>
                 <executions>
                     <execution>
+                        <id>default-buildtimestamp</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>create-timestamp</goal>
                         </goals>
+                        <configuration>
+                            <timestampFormat>yyyy-MM-dd'T'HH:mm:ss'Z'</timestampFormat>
+                            <timestampPropertyName>maven.build.timestamp</timestampPropertyName>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <timestampFormat>yyyy-MM-dd'T'HH:mm:ss'Z'</timestampFormat>
-                    <timestampPropertyName>maven.build.timestamp</timestampPropertyName>
-                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <id>compute-app-build-number</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <scripts>
+                                <script><![CDATA[
+// GITHUB_RUN_NUMBER is set on GitHub Actions. Maven does not re-interpolate app.version when only app.build.number changes, so set app.version here too.
+def run = System.getenv('GITHUB_RUN_NUMBER')
+if (run != null && run.trim()) {
+  int n = Math.min(Math.max(Integer.parseInt(run.trim()), 0), 999)
+  def buildId = Integer.toString(n)
+  def mayor = project.properties.getProperty('app.version.mayor')
+  project.properties.setProperty('app.build.number', buildId)
+  project.properties.setProperty('app.version', mayor + '.' + buildId)
+}
+                                ]]></script>
+                            </scripts>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.groovy</groupId>
+                        <artifactId>groovy</artifactId>
+                        <version>4.0.15</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -566,7 +595,7 @@
                             <writeErrorsToLog>true</writeErrorsToLog>
                             <failOnError>true</failOnError>
                             <removeDirectories>${project.build.directory}/installer-work</removeDirectories>
-                            <args>@${project.build.directory}/packaging/${os.detected.name}-jpackage.txt</args>
+                            <args>@${project.build.directory}/packaging/${jpackage.args.file}</args>
                         </configuration>
                     </execution>
                 </executions>
@@ -698,35 +727,64 @@
         </plugins>
     </reporting>
     <profiles>
-        <profile>
-            <id>GitHub Run</id>
-            <activation>
-                <property>
-                    <name>env.GITHUB_ACTIONS</name>
-                </property>
-            </activation>
-            <properties>
-                <!--suppress UnresolvedMavenProperty -->
-                <app.version>${app.version.mayor}${env.GITHUB_RUN_NUMBER}</app.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>Local Development Run</id>
-            <activation>
-                <property>
-                    <name>!env.GITHUB_ACTIONS</name>
-                </property>
-            </activation>
-            <properties>
-                <app.version>${app.version.local}</app.version>
-            </properties>
-        </profile>
-
-
         <!-- We use the built-in Maven profile activation system to set the platform property.
         These properties are then use to build the directory paths to the platform specific resources.
         It would be great if Maven automatically added the os family as a property by default
          -->
+
+        <profile>
+            <id>windows-natives-amd64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.jogamp.gluegen</groupId>
+                    <artifactId>gluegen-rt-natives-windows-amd64</artifactId>
+                    <version>${worldwind.version}</version>
+                    <scope>system</scope>
+                    <systemPath>${project.basedir}/libs/gluegen-rt-natives-windows-amd64.jar</systemPath>
+                </dependency>
+                <dependency>
+                    <groupId>org.jogamp.jogl</groupId>
+                    <artifactId>jogl-all-natives-windows-amd64</artifactId>
+                    <version>${worldwind.version}</version>
+                    <scope>system</scope>
+                    <systemPath>${project.basedir}/libs/jogl-all-natives-windows-amd64.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>windows-natives-x86</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>x86</arch>
+                </os>
+            </activation>
+            <properties>
+                <jpackage.args.file>windows-x86-jpackage.txt</jpackage.args.file>
+            </properties>
+            <dependencies>
+                <!-- Natives from Maven Central (classifier). Version 2.3.2 matches published win32 JARs; API JARs remain 2.4.0 from libs. -->
+                <dependency>
+                    <groupId>org.jogamp.gluegen</groupId>
+                    <artifactId>gluegen-rt</artifactId>
+                    <version>2.3.2</version>
+                    <classifier>natives-windows-i586</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.jogamp.jogl</groupId>
+                    <artifactId>jogl-all</artifactId>
+                    <version>2.3.2</version>
+                    <classifier>natives-windows-i586</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
 
         <profile>
             <id>macos-sign</id>

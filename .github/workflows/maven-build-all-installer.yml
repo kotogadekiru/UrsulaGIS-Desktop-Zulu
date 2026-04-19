@@ -19,7 +19,8 @@ permissions:
 env:
   DEV_IDENTITY: BXPZTQZ35S # Your Apple Dev identity, something like BXPZTQZ35S
   PRIMARY_BUNDLE_ID: com.ursulagis.desktop.JFXMain # Unique to your app, often the launcher class
-  APP_VERSION: 1.0.${{ github.run_number }}
+  # Match pom app.version: 1.0 + build id (no zero-padding), max 999
+  APP_VERSION: 1.0.${{ github.run_number >= 1000 && '999' || github.run_number }}
 
 jobs:
   build:
