@@ -77,7 +77,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	
 
 	//"ursulaGIS.cosechaService";//"ursulaGISv23";	//Nov 13, 2022 
-	private static final String URSULA_GIS_TOKEN = "ursulaGISv30";//"ursulaGISv23";
+	private static final String URSULA_GIS_TOKEN = "ursulaGISv"+JFXMain.VERSION;//"ursulaGISv23";
 	private static final String TOKEN = "token";
 
 	//private static final String BASE_URL = "https://gee-api-helper-staging.herokuapp.com";
