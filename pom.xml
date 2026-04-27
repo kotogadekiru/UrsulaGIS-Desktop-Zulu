@@ -66,6 +66,7 @@
         <worldwind.version>2.4.0</worldwind.version>
         <lombok-version>1.18.38</lombok-version>
         <jts.version>1.19.0</jts.version>
+        <protobuf.version>3.25.3</protobuf.version>
 
     </properties>
 
@@ -105,6 +106,11 @@
 			<artifactId>gson</artifactId>
 			<version>2.8.4</version>
 		</dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protobuf.version}</version>
+        </dependency>
 
         
         <!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
@@ -607,6 +613,21 @@ if (run != null && run.trim()) {
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>0.6.1</version>
+                <configuration>
+                    <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

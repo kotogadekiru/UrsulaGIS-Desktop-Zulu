@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package com.ursulagis.jdl;
+
+// Inferred schema for John Deere .jdl binary logs (harvest), matching the subset
+// parsed by com.ursulagis.desktop.dao.utils.JdlProtobufReader. Payload may be
+// embedded in a ZIP entry or preceded by 5 bytes: 0D 13 00 00 00.
+//
+// This is not an official Deere .proto. Field semantics are best-effort;
+// the on-disk message may include additional tag numbers and wire types
+// (e.g. groups) not covered here. Logical types use standard proto3
+// encoding (string = LENGTH_DELIMITED UTF-8, double = 64-bit fixed, etc.).
+
+option java_package = "com.ursulagis.jdl";
+option java_multiple_files = true;
+option java_outer_classname = "JdlHarvestLogProto";
+
+// Root message after the optional 5-byte prefix and/or ZIP extraction.
+message JdlLogRoot {
+  // Header: channel metadata + time-series style samples.
+  JdlLogHeader header = 1;
+  // Devices / modules contributing to the log.
+  repeated JdlLogDevice devices = 7;
+  // Client / farm / field identity (each wrapped, see inner field 1).
+  JdlEntityWrapper client = 11;
+  JdlEntityWrapper farm = 12;
+  JdlEntityWrapper jdl_field = 13; // "field" (lote) in the app; not the protobuf keyword
+  uint32 year = 17;
+  JdlCropWrapper crop = 21;
+  string log_version = 24;
+}
+
+// Header block: channels (definitions) and samples.
+message JdlLogHeader {
+  repeated JdlLogChannelDefinition channels = 5;
+  repeated JdlLogSample samples = 10;
+}
+
+// One channel (SPN) definition.
+message JdlLogChannelDefinition {
+  uint32 channel_id = 1;
+  uint32 spn = 2;
+  // Physical value = raw * scale (interpretation is reader-specific).
+  double scale = 4;
+  string unit = 5;
+  uint32 max_raw = 7;
+}
+
+// One data sample; raw_value is read as 64-bit fixed (double bits on wire).
+message JdlLogSample {
+  uint32 sample_index = 1;
+  uint32 ref_spn = 2;
+  double raw_value = 8;
+}
+
+// Single nested record used for client, farm, and "field" (lote) names.
+message JdlEntityWrapper {
+  JdlNamedEntity entity = 1;
+}
+
+message JdlNamedEntity {
+  string name = 2;
+}
+
+// Crop: inner record at tag 1, optional yield / moisture targets.
+message JdlCropWrapper {
+  JdlCropInfo crop = 1;
+}
+
+message JdlCropInfo {
+  string crop_name = 2;
+  JdlValueWithUnit yield_target = 5;
+  JdlValueWithUnit moisture_target = 6;
+}
+
+message JdlValueWithUnit {
+  double value = 1;
+  string unit = 3;
+}
+
+message JdlLogDevice {
+  // Label or module name shown in the reader (tag 3).
+  string name = 3;
+}

@@ -6,6 +6,55 @@
     "configurations": [
         {
             "type": "java",
+            "name": "JdlProtobufFrameDiagnostic",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.dao.utils.JdlProtobufFrameDiagnostic",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
+            "name": "JdlProtobufFrameReader",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.dao.utils.JdlProtobufFrameReader",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
+            "name": "ProtobufJdlInspector",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.dao.utils.ProtobufJdlInspector",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
+            "name": "JdlHarvestLogUtil",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.dao.utils.JdlHarvestLogUtil",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
+            "name": "JdlProtobufReader",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.dao.utils.JdlProtobufReader",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
+            "name": "ProtobufInspector",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.dao.utils.ProtobufInspector",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
+            "name": "JdlInspector",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.dao.utils.JdlInspector",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
             "name": "PDFHelper",
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.utils.PDFHelper",
