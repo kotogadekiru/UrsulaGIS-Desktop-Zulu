@@ -96,10 +96,10 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 //			if(cultivo==null){
 //				cultivo=c.getCultivo();//.getValue();
 //			}
-			if(nombre == null){
-				nombre=labor.getNombre()+Messages.getString("GrillarCosechasMapTask.1")+c.getNombre();	 //$NON-NLS-1$
-			}else {
-				nombre+=Messages.getString("GrillarCosechasMapTask.2")+c.getNombre(); //$NON-NLS-1$
+			if (nombre == null) {
+				nombre = labor.getNombre() + Messages.getString("GrillarCosechasMapTask.1") + c.getNombre(); //$NON-NLS-1$
+			} else {
+				nombre += Messages.getString("GrillarCosechasMapTask.2") + c.getNombre(); //$NON-NLS-1$
 			}
 
 			ReferencedEnvelope b = c.outCollection.getBounds();

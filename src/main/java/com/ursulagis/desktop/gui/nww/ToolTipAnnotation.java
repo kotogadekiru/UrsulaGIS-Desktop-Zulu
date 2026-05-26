@@ -32,10 +32,6 @@ public class ToolTipAnnotation extends ScreenAnnotation {
 	}
 
 	protected void initializeAttributes() {
-		//this.attributes.setAdjustWidthToText(AVKey.SIZE_FIXED);
-		//this.attributes.setAdjustWidthToText(AVKey.SIZE_FIT_TEXT);
-		
-		
 		this.attributes.setFrameShape(AVKey.SHAPE_RECTANGLE);
 		this.attributes.setTextColor(Color.BLACK);
 		this.attributes.setBackgroundColor(new Color(1f, 1f, 1f, 0.8f));
@@ -43,17 +39,16 @@ public class ToolTipAnnotation extends ScreenAnnotation {
 		this.attributes.setBorderColor(new Color(0xababab));
 		
 		this.attributes.setTextAlign(AVKey.LEFT);
-	//	this.attributes.setTextAlign(AVKey.CENTER);
 		this.attributes.setInsets(new Insets(5, 5, 5, 5));
-		
-		if(HiDPIHelper.isHiDPI()){
+		// WorldWind wraps at (preferred width - insets). A small default width breaks lines too often.
+		// Very large width keeps each logical line together; explicit \n in tooltip text still breaks lines.
+		// See WorldWind LayerManagerLayer (setSize(MAX_VALUE, 0) + SIZE_FIT_TEXT).
+		Dimension maxLineWidth = new Dimension(Integer.MAX_VALUE, 0);
+		this.attributes.setSize(maxLineWidth);
+		this.attributes.setAdjustWidthToText(AVKey.SIZE_FIT_TEXT);
+		if (HiDPIHelper.isHiDPI()) {
 			this.attributes.setFont(Font.decode("Arial-PLAIN-48"));
-			this.attributes.setSize(new Dimension(576,432));
-			//this.attributes.setAdjustWidthToText(AVKey.SIZE_FIXED);
-			this.attributes.setAdjustWidthToText(AVKey.SIZE_FIT_TEXT);
-		} else{
-			this.attributes.setAdjustWidthToText(AVKey.SIZE_FIT_TEXT);
-			//this.attributes.setFont(Font.decode("Arial-PLAIN-12"));
+		} else {
 			this.attributes.setFont(Font.decode("Arial-PLAIN-18"));
 		}
 	}

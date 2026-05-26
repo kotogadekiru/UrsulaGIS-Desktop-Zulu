@@ -122,7 +122,7 @@ public class FileHelper {
 		File lastFile = null;
 		Configuracion config = JFXMain.config;
 		config.loadProperties();
-		String lastFileName =config.getPropertyOrDefault(Configuracion.LAST_FILE,Messages.getString("FileHelper.emptyString")); //$NON-NLS-1$
+		String lastFileName =config.getPropertyOrDefault(Configuracion.LAST_FILE,""); //$NON-NLS-1$
 		if(lastFileName != null){
 			lastFile = new File(lastFileName);
 		}
@@ -169,7 +169,7 @@ public class FileHelper {
 	public static List<FileDataStore> chooseShapeFileAndGetMultipleStores(List<File> files) {
 		if(files==null){
 			//	List<File> 
-			files =chooseFiles(Messages.getString("PlagaAgroquimicosDialog.errorGuardarConfiguracion"), Messages.getString("FileHelper.fileExtensionShp")); //$NON-NLS-1$ //$NON-NLS-2$
+			files =chooseFiles("SHP", "*.shp"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		List<FileDataStore> stores = new ArrayList<FileDataStore>();
 		if (files != null) {

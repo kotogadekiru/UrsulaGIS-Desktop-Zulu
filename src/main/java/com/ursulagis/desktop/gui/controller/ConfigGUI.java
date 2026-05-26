@@ -356,8 +356,9 @@ public class ConfigGUI extends AbstractGUIController{
 		margen.setCosechas(cosechasEnabled);
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(Messages.getString("ConfigGUI.renta")); //Rentabilidades
-		cosechasEnabled.forEach((c)->sb.append(c.getNombre()+Messages.getString("ConfigGUI.spaceSeparator"))); 
+		sb.append(Messages.getString("ConfigGUI.renta")); //$NON-NLS-1$
+		String sep = Messages.getString("ConfigGUI.spaceSeparator"); //$NON-NLS-1$
+		cosechasEnabled.forEach((c) -> sb.append(sep).append(c.getNombre()));
 		margen.setNombre(sb.toString());
 
 		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);

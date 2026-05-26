@@ -81,10 +81,10 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 			labor.setFertLinea(s.getFertLinea());
 			labor.setFertCostado(s.getFertCostado());
 			
-			if(nombre == null){
-				nombre=labor.getNombre()+Messages.getString("GrillarSiembrasMapTask.1")+s.getNombre();
-			}else {
-				nombre+=Messages.getString("GrillarSiembrasMapTask.2")+s.getNombre();
+			if (nombre == null) {
+				nombre = labor.getNombre() + Messages.getString("GrillarSiembrasMapTask.1") + s.getNombre();
+			} else {
+				nombre += Messages.getString("GrillarSiembrasMapTask.2") + s.getNombre();
 			}
 
 			ReferencedEnvelope b = s.outCollection.getBounds();
