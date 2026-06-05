@@ -46,6 +46,28 @@ jobs:
           distribution: 'liberica'
           java-package: jdk+fx
           cache: 'maven'
+
+      - name: Set up .NET 8 (Voyager 2 legacy runtime)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Verify Voyager 2 legacy bundle
+        shell: pwsh
+        run: |
+          $required = @(
+            'libs/voyager2/native/CNHVoyager2JNI.dll',
+            'libs/voyager2/native/CNHVoyager2Bridge.dll',
+            'libs/voyager2/native/nethost.dll',
+            'libs/voyager2/sdk/CNHVoyager2.dll'
+          )
+          foreach ($file in $required) {
+            if (-not (Test-Path $file)) {
+              Write-Error "Missing Voyager 2 legacy file: $file. See docs/voyager2-legacy.md"
+              exit 1
+            }
+          }
+          Write-Host "Voyager 2 legacy bundle OK"
       
       - name: Build Windows Installer with Maven
         run: mvn -B clean install --file pom.xml
@@ -53,12 +75,29 @@ jobs:
           # Activate Windows-specific profile
           MAVEN_OPTS: "-Dos.detected.name=windows"
       
+      - name: Verify Voyager 2 bundle in installer input
+        shell: pwsh
+        run: |
+          $bundled = @(
+            'target/dependency/voyager2/native/CNHVoyager2JNI.dll',
+            'target/dependency/voyager2/sdk/CNHVoyager2.dll'
+          )
+          foreach ($file in $bundled) {
+            if (-not (Test-Path $file)) {
+              Write-Error "Voyager 2 bundle was not copied into installer input: $file"
+              exit 1
+            }
+          }
+          Write-Host "Voyager 2 bundle present in target/dependency"
+
       - name: List build artifacts
         run: |
           echo "Build artifacts in target directory:"
           dir target
           echo "MSI files:"
           dir target\*.msi
+          echo "Voyager 2 legacy bundle:"
+          dir target\dependency\voyager2 /s
       
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
