@@ -148,7 +148,11 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 //			 labor.clasificador=co.clone();
 //			
 //		} else{
-			labor.constructClasificador();
+			if(elementosContiene > 0) {
+				labor.constructClasificador();
+			} else {
+				System.err.println("No se unieron cosechas: ninguna feature en las capas seleccionadas.");
+			}
 //		}
 
 		List<CosechaItem> itemsToShow = new ArrayList<CosechaItem>();
