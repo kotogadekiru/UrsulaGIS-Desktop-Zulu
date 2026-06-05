@@ -24,10 +24,19 @@ public class PropertyHelper {
 	private static DecimalFormat converter=getDoubleConverter();
 	
 	public static Number parseDouble(String s) {
-		s=fixDecimalSeparator(s);
+		if (s == null || s.trim().isEmpty()) {
+			return 0.0;
+		}
+		s = fixDecimalSeparator(s);
+		if (s.trim().isEmpty()) {
+			return 0.0;
+		}
 		Number ret = 0.0;
-		try {		ret = getDoubleConverter().parse(s);//Double.valueOf(ppmPOptional.get());
-		}catch(Exception e){e.printStackTrace();}
+		try {
+			ret = getDoubleConverter().parse(s);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return ret;
 	}
 	

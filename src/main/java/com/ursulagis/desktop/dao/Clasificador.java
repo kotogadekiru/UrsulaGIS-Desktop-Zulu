@@ -317,6 +317,13 @@ public class Clasificador {
 
 	private Double[] constructValoresHisto(Set<Double> valores) {
 		System.out.println("creando histograma para un set menor o igual a la cantidad de clases del sistema valores.size() "+ valores.size());
+		if(valores.isEmpty()) {
+			int numLimites = Math.max(0, getNumClasses() - 1);
+			histograma = new Double[numLimites];
+			this.clasesClasificadorProperty.set(numLimites + 1);
+			this.initialized = true;
+			return histograma;
+		}
 		if(valores.size()==1) {
 			histograma=new Double[1];
 			this.clasesClasificadorProperty.set(2);
@@ -558,7 +565,7 @@ public class Clasificador {
 				valores.add(round(i.getAmount(),5));
 			}
 			ocReader.close();
-			if(valores.size()<=getNumClasses()) {
+			if(!valores.isEmpty() && valores.size()<=getNumClasses()) {
 				constructValoresHisto(valores);
 			} else {
 				this.constructHistogram(items);

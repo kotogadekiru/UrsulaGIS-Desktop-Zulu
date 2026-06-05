@@ -219,14 +219,7 @@ public class Poligono implements Comparable<Poligono>{
 		try {
 			//System.out.println("readding geometry from text "+s);
 			Geometry g = reader.read(s);//org.locationtech.jts.io.ParseException: Expected word but found End-of-Stream (line 1)
-			this.setPositions(GeometryHelper.geometryToPositions(g.getGeometryN(0)));
-			if(huecos==null){
-				huecos = new ArrayList<List<Position>>();
-			}
-			huecos.clear();
-			for(int i=1;i<g.getNumGeometries();i++){
-				huecos.add(GeometryHelper.geometryToPositions(g.getGeometryN(i)));
-			}
+			setGeometry(g);
 			//TODO set holes
 		} catch (Exception e) {
 			System.out.println("error al leer el poligono desde el texto "+s);
