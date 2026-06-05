@@ -410,7 +410,10 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 	 */
 	private boolean outlayerCV(FertilizacionItem cosechaFeature, Polygon poly,	List<FertilizacionItem> features) {
 		boolean ret = false;
-		Geometry geo = cosechaFeature.getGeometry().getCentroid();
+		Point geo = GeometryHelper.centroidForDistanceWithinFilter(cosechaFeature.getGeometry(), poly);
+		if (geo == null) {
+			return ret;
+		}
 		double rindeCosechaFeature = cosechaFeature.getDosistHa();
 		double sumatoriaRinde = 0;			
 		double sumatoriaAltura = 0;				
@@ -421,16 +424,20 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		//en vez de tomar de 0 a inf, va de ancho*(10-2^1/2) a 0
 		ancho = Math.sqrt(2)*ancho;
 
-
-
+		ProyectionConstants.setLatitudCalculo(geo.getY());
 		for(FertilizacionItem cosecha : features){
 			double cantidadCosecha = cosecha.getDosistHa();	
 		//	System.out.println("cantidad gertilizante  es:" + cantidadCosecha );
-			Geometry geo2 = cosecha.getGeometry().getCentroid();
+			Point geo2 = GeometryHelper.centroidForDistanceWithinFilter(cosecha.getGeometry(), poly);
+			if (geo2 == null) {
+				continue;
+			}
 			double distancia =geo.distance(geo2)/ProyectionConstants.metersToLat();
 
 			double distanciaInvert = (ancho-distancia);
-			if(distanciaInvert<0)System.out.println("distancia-1 es menor a cero"+distanciaInvert); //$NON-NLS-1$
+			if (distanciaInvert < 0) {
+				distanciaInvert = 0;
+			}
 			//los pesos van de ~ancho^2 para los mas cercanos a 0 para los mas lejanos
 			double weight =  Math.pow(distanciaInvert,2);
 			//System.out.println("distancia="+distancia+" distanciaInvert="+distanciaInvert+" weight="+weight);

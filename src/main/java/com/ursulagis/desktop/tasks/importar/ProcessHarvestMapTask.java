@@ -33,6 +33,8 @@ import gov.nasa.worldwind.render.ExtrudedPolygon;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearCosechaMapTask;
+import com.ursulagis.desktop.utils.PolygonValidator;
+import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
@@ -604,7 +606,10 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 	 */
 	private boolean outlayerCV(CosechaItem cosechaFeature, Polygon poly,	List<CosechaItem> features) {
 		boolean ret = false;
-		Geometry geo = cosechaFeature.getGeometry().getCentroid();
+		Point geo = GeometryHelper.centroidForDistanceWithinFilter(cosechaFeature.getGeometry(), poly);
+		if (geo == null) {
+			return ret;
+		}
 		double rindeCosechaFeature = cosechaFeature.getAmount();
 		double sumatoriaRinde = 0;			
 		double sumatoriaAltura = 0;				
@@ -615,15 +620,19 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 		//en vez de tomar de 0 a inf, va de ancho*(10-2^1/2) a 0
 		ancho = Math.sqrt(2)*ancho;
 
-
-
+		ProyectionConstants.setLatitudCalculo(geo.getY());
 		for(CosechaItem cosecha : features){
 			double cantidadCosecha = cosecha.getAmount();	
-			Geometry geo2 = cosecha.getGeometry().getCentroid();
+			Point geo2 = GeometryHelper.centroidForDistanceWithinFilter(cosecha.getGeometry(), poly);
+			if (geo2 == null) {
+				continue;
+			}
 			double distancia =geo.distance(geo2)/ProyectionConstants.metersToLat();
 
 			double distanciaInvert = (ancho-distancia);
-			if(distanciaInvert<0)System.out.println("distancia-1 es menor a cero"+distanciaInvert); //$NON-NLS-1$
+			if (distanciaInvert < 0) {
+				distanciaInvert = 0;
+			}
 			//los pesos van de ~ancho^2 para los mas cercanos a 0 para los mas lejanos
 			double weight =  Math.pow(distanciaInvert,2);	
 			if(isBetweenMaxMin(cantidadCosecha)){
@@ -885,12 +894,23 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 						&& geometryUnion.isValid() ){
 					Geometry polyG =poly;
 					//creo que no puedo hacer la superposicion de 2 poligonos que no son coplanares
-					difGeom = polyG.difference(geometryUnion);// Computes a Geometry//found non-noded intersection between LINESTRING ( -61.9893807883
+					Geometry poly2d = PolygonValidator.force2D(polyG);
+					Geometry union2d = PolygonValidator.force2D(geometryUnion);
+					try {
+						difGeom = poly2d.difference(union2d);// Computes a Geometry//found non-noded intersection between LINESTRING ( -61.9893807883
+					} catch (RuntimeException te) {
+						difGeom = EnhancedPrecisionOp.difference(poly2d, union2d);
+					}
 				}
 				difGeom = makeGood(difGeom);
+				if (difGeom == null || difGeom.isEmpty()) {
+					difGeom = poly;
+				}
 			} catch (Exception te) {
 				try{
-					difGeom = EnhancedPrecisionOp.difference(poly, geometryUnion);
+					difGeom = EnhancedPrecisionOp.difference(
+							PolygonValidator.force2D(poly),
+							PolygonValidator.force2D(geometryUnion));
 				}catch(Exception e){
 					difGeom=poly;
 				}
