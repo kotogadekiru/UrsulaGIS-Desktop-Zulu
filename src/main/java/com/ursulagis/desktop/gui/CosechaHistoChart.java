@@ -129,9 +129,9 @@ public class CosechaHistoChart extends VBox {
 		BorderPane bottom = new BorderPane();
 		VBox left = new VBox();
 		left.getChildren().addAll(
-				new Label(Messages.getString("CosechaHistoChart.13")+df.format(superficieTotal)), //$NON-NLS-1$
-				new Label(Messages.getString("CosechaHistoChart.14")+df.format(produccionTotal)), //$NON-NLS-1$
-				new Label(Messages.getString("CosechaHistoChart.15")+df.format(produccionTotal/superficieTotal)) //$NON-NLS-1$
+				new Label(Messages.getString("CosechaHistoChart.13")+" "+df.format(superficieTotal)), //$NON-NLS-1$
+				new Label(Messages.getString("CosechaHistoChart.14")+" "+df.format(produccionTotal)), //$NON-NLS-1$
+				new Label(Messages.getString("CosechaHistoChart.15")+" "+df.format(produccionTotal/superficieTotal)) //$NON-NLS-1$
 				//,new Label("Entropia: "+df.format(entropia))
 				);
 		VBox right = new VBox();
