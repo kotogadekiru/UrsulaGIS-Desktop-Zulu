@@ -184,6 +184,9 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 			Geometry g = sPoly.getGeometry();
 			try{				
 				Geometry interseccion= GeometryHelper.getIntersection(poly, g);
+				if (interseccion == null || interseccion.isEmpty()) {
+					continue;
+				}
 				Double areaInterseccion = interseccion.getArea();
 				areaItersectadaTotal+=areaInterseccion;
 				areasIntersecciones.put(sPoly,areaInterseccion);

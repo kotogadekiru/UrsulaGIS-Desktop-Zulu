@@ -263,6 +263,9 @@ public class GrillarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLa
 			Geometry g = cPoly.getGeometry();
 			try{				
 				Geometry interseccion= GeometryHelper.getIntersection(poly, g);//EnhancedPrecisionOp.intersection(poly,g);
+				if (interseccion == null || interseccion.isEmpty()) {
+					continue;
+				}
 				Double areaInterseccion = interseccion.getArea();
 				areaItersectadaTotal+=areaInterseccion;
 				areasIntersecciones.put(cPoly,areaInterseccion);
