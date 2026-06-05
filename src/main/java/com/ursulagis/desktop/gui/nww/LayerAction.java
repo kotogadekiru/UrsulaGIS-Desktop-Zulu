@@ -1,5 +1,6 @@
 package com.ursulagis.desktop.gui.nww;
 
+import java.util.List;
 import java.util.function.Function;
 
 import gov.nasa.worldwind.layers.Layer;
@@ -7,6 +8,8 @@ import gov.nasa.worldwind.layers.Layer;
 public class LayerAction implements Function<Layer, String>, Comparable<LayerAction>{
 	public String name;
 	public Function<Layer, String> predicate;
+	/** Si no es null, se usa al ejecutar la acción sobre varios ítems seleccionados. */
+	public Function<List<Layer>, String> batchPredicate;
 	public int minElementsRequired = 0;
 
 	public LayerAction(Function<Layer, String> _predicate){

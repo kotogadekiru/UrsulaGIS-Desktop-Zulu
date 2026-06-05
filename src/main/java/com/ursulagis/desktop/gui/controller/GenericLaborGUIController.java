@@ -64,6 +64,7 @@ import javafx.stage.Stage;
 
 public class GenericLaborGUIController extends AbstractGUIController {
 
+	private boolean layerPanelUpdateScheduled = false;
 
 	public GenericLaborGUIController(JFXMain _main) {
 		super(_main);
@@ -206,7 +207,9 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		/**
 		 * Accion que permite quitar un item del arbol
 		 */
-		todosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.removeLayerAction"),l->doRemoveLayer(l)));
+		LayerAction removeAction = LayerAction.constructPredicate(Messages.getString("JFXMain.removeLayerAction"), this::doRemoveLayer);
+		removeAction.batchPredicate = this::doRemoveLayersBatch;
+		todosP.add(removeAction);
 
 		//editar opacidad
 		//JFXMain.layerTransparencia=Transparencia
@@ -242,45 +245,69 @@ public class GenericLaborGUIController extends AbstractGUIController {
 	}	
 
 	private String doRemoveLayer(Layer layer) {
-		
-			getWwd().getModel().getLayers().remove(layer);
-			Object layerObject =  layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-			if(layerObject!=null && Labor.class.isAssignableFrom(layerObject.getClass())){
-				Labor<?> l = (Labor<?>)layerObject;	
-				l.dispose();
-			}
-			if(layerObject instanceof Poligono){
-				Poligono poli = (Poligono) layerObject;
-				poli.setActivo(false);
-				if(poli.getId()!=null){
-					DAH.save(poli);
-				}
-			}
-			if(layerObject instanceof Ndvi){
-				Ndvi ndvi = (Ndvi) layerObject;
-				ndvi.setActivo(false);
-				if(ndvi.getId()!=null){
-					try {
-						DAH.save(ndvi);
-					}catch(Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}
-			Object mtObj = layer.getValue(PoligonLayerFactory.MEASURE_TOOL);		
-			if(mtObj!=null && mtObj instanceof MeasureToolForShape) {
-				MeasureToolForShape mt = (MeasureToolForShape)mtObj;
-				mt.setCreationMode(false);
-				mt.dispose();
-			} else if(mtObj!=null && mtObj instanceof MeasureTool) {
-				MeasureTool mt = (MeasureTool)mtObj;
-				mt.setArmed(false);
-				mt.dispose();
-			}
+		List<Object> toPersist = new ArrayList<>();
+		removeLayerFromMap(layer, toPersist);
+		persistRemovedEntitiesAsync(toPersist);
+		scheduleLayerPanelUpdate();
+		return "layer removido" + layer.getName();
+	}
 
-			layer.dispose();
-			getLayerPanel().update(getWwd());
-			return "layer removido" + layer.getName(); 
+	private String doRemoveLayersBatch(List<Layer> layers) {
+		List<Object> toPersist = new ArrayList<>();
+		for (Layer layer : layers) {
+			removeLayerFromMap(layer, toPersist);
+		}
+		persistRemovedEntitiesAsync(toPersist);
+		scheduleLayerPanelUpdate();
+		getWwd().redraw();
+		return "layers removidos";
+	}
+
+	private void removeLayerFromMap(Layer layer, List<Object> toPersist) {
+		getWwd().getModel().getLayers().remove(layer);
+		Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+		if (layerObject != null && Labor.class.isAssignableFrom(layerObject.getClass())) {
+			Labor<?> l = (Labor<?>) layerObject;
+			l.dispose();
+		}
+		if (layerObject instanceof Poligono poli) {
+			poli.setActivo(false);
+			if (poli.getId() != null) {
+				toPersist.add(poli);
+			}
+		}
+		if (layerObject instanceof Ndvi ndvi) {
+			ndvi.setActivo(false);
+			if (ndvi.getId() != null) {
+				toPersist.add(ndvi);
+			}
+		}
+		Object mtObj = layer.getValue(PoligonLayerFactory.MEASURE_TOOL);
+		if (mtObj instanceof MeasureToolForShape mt) {
+			mt.setCreationMode(false);
+			mt.dispose();
+		} else if (mtObj instanceof MeasureTool mt) {
+			mt.setArmed(false);
+			mt.dispose();
+		}
+		layer.dispose();
+	}
+
+	private void persistRemovedEntitiesAsync(List<Object> toPersist) {
+		if (toPersist.isEmpty()) {
+			return;
+		}
+		executorPool.submit(() -> DAH.saveAll(toPersist));
+	}
+
+	private void scheduleLayerPanelUpdate() {
+		if (!layerPanelUpdateScheduled) {
+			layerPanelUpdateScheduled = true;
+			Platform.runLater(() -> {
+				layerPanelUpdateScheduled = false;
+				getLayerPanel().update(getWwd());
+			});
+		}
 	}
 
 	private void doClonarLabor(Labor<?> labor) {

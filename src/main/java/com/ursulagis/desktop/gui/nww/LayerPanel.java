@@ -604,26 +604,37 @@ public class LayerPanel extends VBox {
 	//		}
 	//		return actTreeItem;
 	//	}
-	private LayerAction constructAllSelectedPredicate( Function<Layer, String> act, List<TreeItem<Layer>> children){
-		Function<Layer, String> removeSelected = (layer)->{//creo un predicado que devuelve "Remove Selected" como nombre y al ser ejecutado corre la accion de remover en todos los hijos de este nodo
-			if(layer==null){
-				//System.out.println("ejetutando una accion de un treeItem sin Layer viendo si tengo que aplicar "+act.apply(null)+ " en "+rootLayerName);
-
-				return act.apply(null) + Messages.getString("LayerPanel.23"); 
-			} else{
-				for(TreeItem<Layer> item: children){
-					Layer itemLayer = item.getValue();
-					if(itemLayer.isEnabled()){
-						act.apply(itemLayer);
-					}
+	private LayerAction constructAllSelectedPredicate(Function<Layer, String> act, List<TreeItem<Layer>> children) {
+		LayerAction sourceAction = act instanceof LayerAction la ? la : null;
+		Function<Layer, String> removeSelected = (layer) -> {
+			if (layer == null) {
+				return act.apply(null) + Messages.getString("LayerPanel.23");
+			}
+			List<Layer> selected = new ArrayList<>();
+			for (TreeItem<Layer> item : children) {
+				Layer itemLayer = item.getValue();
+				if (itemLayer != null && itemLayer.isEnabled()) {
+					selected.add(itemLayer);
 				}
-				return act.apply(null);	
-			}};
+			}
+			if (selected.isEmpty()) {
+				return act.apply(null);
+			}
+			if (sourceAction != null && sourceAction.batchPredicate != null) {
+				return sourceAction.batchPredicate.apply(selected);
+			}
+			for (Layer itemLayer : selected) {
+				act.apply(itemLayer);
+			}
+			return act.apply(null);
+		};
 
-			LayerAction lAction = new LayerAction(removeSelected);
-			lAction.name=removeSelected.apply(null);
-			return lAction;
-			//return removeSelected;
+		LayerAction lAction = new LayerAction(removeSelected);
+		lAction.name = removeSelected.apply(null);
+		if (sourceAction != null) {
+			lAction.batchPredicate = sourceAction.batchPredicate;
+		}
+		return lAction;
 	}
 
 	/**
