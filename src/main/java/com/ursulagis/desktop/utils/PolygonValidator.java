@@ -2,12 +2,12 @@ package com.ursulagis.desktop.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.locationtech.jts.geom.*;
-
+import org.locationtech.jts.geom.util.GeometryFixer;
 import org.locationtech.jts.operation.polygonize.Polygonizer;
+import org.locationtech.jts.precision.EnhancedPrecisionOp;
 
 public class PolygonValidator {
 
@@ -78,6 +78,41 @@ public class PolygonValidator {
 		return coordinates;
 	}
 
+	/** Strip Z/M so JTS overlay and validation run in 2D. */
+	public static Geometry force2D(Geometry geom) {
+		if (geom == null) {
+			return null;
+		}
+		if (geom instanceof Polygon) {
+			return polygonToFlatPolygon((Polygon) geom);
+		}
+		if (geom instanceof MultiPolygon) {
+			int n = geom.getNumGeometries();
+			Polygon[] polys = new Polygon[n];
+			for (int i = 0; i < n; i++) {
+				polys[i] = polygonToFlatPolygon((Polygon) geom.getGeometryN(i));
+			}
+			return geom.getFactory().createMultiPolygon(polys);
+		}
+		Geometry copy = geom.copy();
+		copy.apply(new CoordinateFilter() {
+			@Override
+			public void filter(Coordinate coord) {
+				try {
+					coord.setZ(Double.NaN);
+				} catch (IllegalArgumentException ignored) {
+					// XY-only coordinate
+				}
+				try {
+					coord.setM(Double.NaN);
+				} catch (IllegalArgumentException ignored) {
+					// no M ordinate
+				}
+			}
+		});
+		return copy;
+	}
+
 
 
 	/**
@@ -90,6 +125,18 @@ public class PolygonValidator {
 	@SuppressWarnings("unchecked")
 	public static Geometry validate(Geometry geom){
 		try {
+			geom = force2D(geom);
+			Geometry fixed = GeometryFixer.fix(geom);
+			if (fixed instanceof Polygon || fixed instanceof MultiPolygon) {
+				try {
+					if (fixed.isValid()) {
+						fixed.normalize();
+						return fixed;
+					}
+				} catch (Exception ignored) {
+					// fall through to polygonizer
+				}
+			}
 			if(geom instanceof Polygon){
 				try {
 				if(geom.isValid()){//exception por cannot compute quadrant for point (0.0, 0.0)
@@ -153,10 +200,13 @@ public class PolygonValidator {
 		}
 
 		// unioning the linestring with the point makes any self intersections explicit.
-		Point point = lineString.getFactory().createPoint(lineString.getCoordinateN(0));
-		Geometry toAdd = lineString.union(point); 
-
-		//Add result to polygonizer
+		Geometry toAdd;
+		try {
+			Point point = lineString.getFactory().createPoint(lineString.getCoordinateN(0));
+			toAdd = lineString.union(point);
+		} catch (RuntimeException e) {
+			toAdd = lineString;
+		}
 		polygonizer.add(toAdd);
 	}
 
@@ -172,15 +222,23 @@ public class PolygonValidator {
 		case 0:
 			return null; // No valid polygons!
 		case 1:
-			return polygons.iterator().next(); // single polygon - no need to wrap
+			return polygonToFlatPolygon(polygons.iterator().next());
 		default:
-			//polygons may still overlap! Need to sym difference them
-			Iterator<Polygon> iter = polygons.iterator();
-			Geometry ret = iter.next();
-			while(iter.hasNext()){
-				ret = ret.symDifference(iter.next());
+			Polygon[] flat = new Polygon[polygons.size()];
+			int i = 0;
+			for (Polygon p : polygons) {
+				flat[i++] = polygonToFlatPolygon(p);
 			}
-			return ret;
+			GeometryCollection collection = factory.createGeometryCollection(flat);
+			try {
+				return collection.union();
+			} catch (RuntimeException e) {
+				try {
+					return EnhancedPrecisionOp.buffer(collection, 0);
+				} catch (RuntimeException e2) {
+					return factory.createMultiPolygon(flat);
+				}
+			}
 		}
 	}
 }

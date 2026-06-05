@@ -663,43 +663,237 @@ public class GeometryHelper {
 	}
 
 	/**
+	 * Representative point for inverse-distance weighting relative to a filter area.
+	 * When the geometry extends outside the filter envelope, uses the centroid of
+	 * the intersection with that envelope.
+	 */
+	public static Point centroidForDistanceWithinFilter(Geometry geometry, Geometry filterArea) {
+		if (geometry == null || geometry.isEmpty()) {
+			return null;
+		}
+		if (filterArea == null || filterArea.isEmpty()) {
+			return geometry.getCentroid();
+		}
+		Envelope filterEnv = filterArea.getEnvelopeInternal();
+		if (filterEnv.covers(geometry.getEnvelopeInternal())) {
+			return geometry.getCentroid();
+		}
+		Geometry envelopeGeom = geometry.getFactory().toGeometry(filterEnv);
+		Geometry clipped = getIntersection(geometry, envelopeGeom);
+		if (clipped == null || clipped.isEmpty()) {
+			return null;// geometry.getCentroid();
+		}
+		return clipped.getCentroid();
+	}
+
+	/**
 	 * 
 	 * @param g1
 	 * @param g2
 	 * @return computes validated intersection. returns null if geometrys dont intersect
 	 * aumenta el tamanio de la geometria inicial
 	 */
+	/** Prepare once when intersecting the same geometry repeatedly (e.g. grid cell). */
+	public static Geometry prepareForIntersection(Geometry g) {
+		if (g == null) {
+			return null;
+		}
+		return quickPrepare(PolygonValidator.force2D(g));
+	}
+
 	//FIXME check thread safety
 	public static Geometry getIntersection(Geometry g1, Geometry g2){
+		return getIntersection(g1, g2, false);
+	}
+
+	/** Use when g1 was already prepared with {@link #prepareForIntersection}. */
+	public static Geometry getIntersection(Geometry g1, Geometry g2, boolean g1Prepared){
 		if(g1==null || g2 ==null) {
 			System.err.println("antes de validar geometrias devolviendo null porque una de las geometrias a intersectar es null. g1= "+g1+",g2= "+g2);
 			return null;
 		}
-		g1 = PolygonValidator.validate(g1);
-		g2 = PolygonValidator.validate(g2);
-		Geometry intersection = null;
-		if(g1==null || g2 ==null) {
-			System.err.println("devolviendo null porque una de las geometrias a intersectar es null. g1= "+g1+",g2= "+g2);
+		if (!g1Prepared) {
+			g1 = PolygonValidator.force2D(g1);
+		}
+		g2 = PolygonValidator.force2D(g2);
+		if(!g1.getEnvelopeInternal().intersects(g2.getEnvelopeInternal())) {
 			return null;
 		}
-		if (g1 != null && g2!=null && g1.intersects(g2)){
-			try {			
-				//intersection= EnhancedPrecisionOp.intersection(g1,g2);
-				intersection = g1.intersection(g2);// Computes a Geometry//found non-noded intersection between LINESTRING ( -61.9893807883
-				intersection = PolygonValidator.validate(intersection);
+		int parts1 = polygonPartCount(g1);
+		int parts2 = polygonPartCount(g2);
+		Geometry result;
+		if (parts1 == 1 && parts2 == 1) {
+			Geometry v1 = g1Prepared ? g1 : quickPrepare(g1);
+			Geometry v2 = quickPrepare(g2);
+			result = intersectPair(v1, v2);
+			if (result == null) {
+				result = intersectPair(
+						v1 != null ? v1 : PolygonValidator.validate(g1),
+						v2 != null ? v2 : PolygonValidator.validate(g2));
+			}
+		} else if (parts1 == 1) {
+			result = intersectWithParts(g1Prepared ? g1 : quickPrepare(g1), g2);
+			if (result == null && !g1Prepared) {
+				result = intersectWithParts(PolygonValidator.validate(g1), g2);
+			}
+		} else if (parts2 == 1) {
+			result = intersectWithParts(quickPrepare(g2), g1);
+			if (result == null) {
+				result = intersectWithParts(PolygonValidator.validate(g2), g1);
+			}
+		} else {
+			result = intersectManyParts(g1, g2);
+		}
+		return finalizeIntersection(result);
+	}
 
-			} catch (Exception te) {
-				System.err.println("error al hacer la interseccion de las geometrias "+g1+", "+g2);
-				System.err.println("EnhancedPrecisionOp.intersection");
-				te.printStackTrace();
-				try{
-					intersection = EnhancedPrecisionOp.intersection(g1, g2);
-				}catch(Exception e){
-					e.printStackTrace();
+	private static int polygonPartCount(Geometry g) {
+		if (g instanceof Polygon) {
+			return 1;
+		}
+		return g.getNumGeometries();
+	}
+
+	/** Use geometry as-is when already valid; full repair only when needed. */
+	private static Geometry quickPrepare(Geometry g) {
+		if (g == null || g.isEmpty()) {
+			return null;
+		}
+		try {
+			if (g.isValid()) {
+				return g;
+			}
+		} catch (RuntimeException ignored) {
+			// fall through to repair
+		}
+		return PolygonValidator.validate(g);
+	}
+
+	private static Geometry intersectWithParts(Geometry simple, Geometry multi) {
+		Geometry prepared = quickPrepare(simple);
+		if (prepared == null) {
+			return null;
+		}
+		Envelope env = prepared.getEnvelopeInternal();
+		List<Geometry> results = new ArrayList<>();
+		for (int i = 0; i < multi.getNumGeometries(); i++) {
+			Geometry part = multi.getGeometryN(i);
+			if (part == null || part.isEmpty() || !env.intersects(part.getEnvelopeInternal())) {
+				continue;
+			}
+			Geometry preparedPart = quickPrepare(part);
+			if (preparedPart == null) {
+				continue;
+			}
+			Geometry inter = intersectPair(prepared, preparedPart);
+			if (inter == null) {
+				inter = intersectPair(prepared, PolygonValidator.validate(part));
+			}
+			if (inter != null && !inter.isEmpty()) {
+				results.add(inter);
+			}
+		}
+		return mergeGeometries(results);
+	}
+
+	private static Geometry intersectManyParts(Geometry g1, Geometry g2) {
+		List<Geometry> results = new ArrayList<>();
+		for (int i = 0; i < g1.getNumGeometries(); i++) {
+			Geometry part1 = g1.getGeometryN(i);
+			if (part1 == null || part1.isEmpty()) {
+				continue;
+			}
+			Geometry prepared1 = quickPrepare(part1);
+			if (prepared1 == null) {
+				continue;
+			}
+			Envelope env1 = prepared1.getEnvelopeInternal();
+			for (int j = 0; j < g2.getNumGeometries(); j++) {
+				Geometry part2 = g2.getGeometryN(j);
+				if (part2 == null || part2.isEmpty() || !env1.intersects(part2.getEnvelopeInternal())) {
+					continue;
+				}
+				Geometry prepared2 = quickPrepare(part2);
+				if (prepared2 == null) {
+					continue;
+				}
+				Geometry inter = intersectPair(prepared1, prepared2);
+				if (inter == null) {
+					inter = intersectPair(
+							prepared1,
+							PolygonValidator.validate(part2));
+				}
+				if (inter != null && !inter.isEmpty()) {
+					results.add(inter);
 				}
 			}
 		}
+		return mergeGeometries(results);
+	}
+
+	private static Geometry intersectPair(Geometry g1, Geometry g2) {
+		if (g1 == null || g2 == null) {
+			return null;
+		}
+		try {
+			Geometry inter = g1.intersection(g2);
+			if (inter != null && !inter.isEmpty()) {
+				return inter;
+			}
+		} catch (RuntimeException ignored) {
+			// fall through to enhanced precision
+		}
+		try {
+			Geometry inter = EnhancedPrecisionOp.intersection(g1, g2);
+			if (inter != null && !inter.isEmpty()) {
+				return inter;
+			}
+		} catch (RuntimeException ignored) {
+			return null;
+		}
+		return null;
+	}
+
+	private static Geometry finalizeIntersection(Geometry intersection) {
+		if (intersection == null || intersection.isEmpty()) {
+			return null;
+		}
+		try {
+			if (intersection.isValid()) {
+				return intersection;
+			}
+		} catch (RuntimeException ignored) {
+			// fall through to repair
+		}
+		intersection = PolygonValidator.validate(intersection);
+		if (intersection == null || intersection.isEmpty()) {
+			return null;
+		}
 		return intersection;
+	}
+
+	private static Geometry mergeGeometries(List<Geometry> parts) {
+		if (parts.isEmpty()) {
+			return null;
+		}
+		if (parts.size() == 1) {
+			return parts.get(0);
+		}
+		GeometryFactory fact = parts.get(0).getFactory();
+		GeometryCollection collection = fact.createGeometryCollection(parts.toArray(new Geometry[0]));
+		try {
+			return collection.union();
+		} catch (RuntimeException e) {
+			try {
+				return EnhancedPrecisionOp.buffer(collection, 0);
+			} catch (RuntimeException e2) {
+				return collection;
+			}
+		}
+	}
+
+	private static Geometry validateNonEmptyIntersection(Geometry intersection) {
+		return finalizeIntersection(intersection);
 	}
 
 	public static Geometry getIntersectionSlow(Geometry g1, Geometry g2){
