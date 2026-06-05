@@ -121,6 +121,9 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 		//double elementos = grilla.size();
 		System.out.println("creando una grilla con "+grilla.size()+" elementos");
 		// 3 recorrer cada pixel de la grilla promediando los valores y generando los nuevos items de la cosecha
+		featureNumber = 0;
+		featureCount = grilla.size();
+		updateProgress(0, featureCount);
 		List<SimpleFeature> features = Collections.synchronizedList(new ArrayList<SimpleFeature>());
 		
 		ConcurrentMap<Polygon,CosechaItem > byPolygon =

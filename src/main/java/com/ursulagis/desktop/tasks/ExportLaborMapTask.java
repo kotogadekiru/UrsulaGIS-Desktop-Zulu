@@ -98,6 +98,8 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 			//	System.out.println("agregando features al store " +collection.size());
 			//	DefaultFeatureCollection colectionToSave = ;
 	
+			int progressMax = Math.max(laborToExport.outCollection.size(), 1);
+			updateProgress(0, progressMax);
 			try {
 				
 				featureStore.setFeatures(laborToExport.outCollection.reader());
@@ -113,6 +115,7 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 						e.printStackTrace();
 					}
 				}
+				updateProgress(progressMax, progressMax);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}

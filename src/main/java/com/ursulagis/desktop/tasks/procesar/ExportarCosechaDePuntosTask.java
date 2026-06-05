@@ -95,7 +95,12 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 			ReferencedEnvelope bounds = laborToExport.outCollection.getBounds();
 			List<CosechaItem> items = 
 					(List<CosechaItem>) laborToExport.cachedOutStoreQuery(bounds);
-			for(CosechaItem i: items){
+			int total = items.size();
+			int progressMax = Math.max(total, 1);
+			updateProgress(0, progressMax);
+			for (int idx = 0; idx < total; idx++) {
+				checkCancelled();
+				CosechaItem i = items.get(idx);
 				Object[] attributes = new Object[] {
 						i.getGeometry().getCentroid(),
 						i.getRindeTnHa(),
@@ -108,7 +113,8 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 				if(!res) {
 					System.out.println("no se pudo insertar point para "+i);
 				}
-			}			
+				updateProgress(idx + 1, progressMax);
+			}
 
 			String typeName = newDataStore.getTypeNames()[0];
 			SimpleFeatureSource featureSource = newDataStore.getFeatureSource(typeName);
@@ -140,6 +146,7 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 			config.setProperty(Configuracion.LAST_FILE, shapeFile.getAbsolutePath());
 			config.save();
 		}
+		updateProgress(1, 1);
 		return shapeFile;
 	}
 
