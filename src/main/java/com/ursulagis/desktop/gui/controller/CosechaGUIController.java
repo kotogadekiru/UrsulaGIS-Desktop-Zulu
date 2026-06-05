@@ -50,6 +50,7 @@ import com.ursulagis.desktop.tasks.crear.ConvertirACosechaTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirAFertilizacionTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirAPulverizacionTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirASueloTask;
+import com.ursulagis.desktop.tasks.importar.ImportarCosechaVoyagerTask;
 import com.ursulagis.desktop.tasks.importar.ProcessHarvestMapTask;
 import com.ursulagis.desktop.tasks.procesar.ExportarCosechaDePuntosTask;
 import com.ursulagis.desktop.tasks.procesar.GenerarRecorridaDirigidaTask;
@@ -76,6 +77,13 @@ public class CosechaGUIController extends AbstractGUIController {
 				(layer)->{	this.doOpenCosecha(null);
 				return "opened";	
 				},Messages.getString("JFXMain.importar")));
+
+		rootNodeP.add(new LayerAction(
+				(layer)->{
+					this.doOpenCosechaVoyager();
+					return "voyager opened";
+				},
+				Messages.getString("CosechaGUIController.importarVoyager")));
 
 		rootNodeP.add(new LayerAction(
 				Messages.getString("JFXMain.unirCosechas"),
@@ -257,6 +265,69 @@ public class CosechaGUIController extends AbstractGUIController {
 	 * accion ejecutada al presionar el boton openFile Despliega un file
 	 * selector e invoca la tarea que muestra el file en pantalla
 	 */
+	/**
+	 * Import harvest from a Case IH Voyager 2 card (.vy1) via the CNHVoyager2 Java wrapper.
+	 */
+	public void doOpenCosechaVoyager() {
+		File vy1File = FileHelper.chooseVoyagerCardFile();
+		if (vy1File == null) {
+			return;
+		}
+		File cardDirectory = vy1File.getParentFile();
+		CosechaLabor labor = new CosechaLabor();
+		labor.setNombre(vy1File.getName());
+		LaborLayer layer = new LaborLayer();
+		labor.setLayer(layer);
+
+		Optional<CosechaLabor> cosechaConfigured = HarvestConfigDialogController.config(labor);
+		if (!cosechaConfigured.isPresent()) {
+			labor.dispose();
+			return;
+		}
+		CosechaLabor configured = cosechaConfigured.get();
+
+		ImportarCosechaVoyagerTask importTask = new ImportarCosechaVoyagerTask(configured, cardDirectory, null);
+		importTask.installProgressBar(progressBox);
+		importTask.setOnSucceeded(importHandler -> {
+			try {
+				ProcessHarvestMapTask processTask = new ProcessHarvestMapTask(configured);
+				processTask.installProgressBar(progressBox);
+				processTask.setOnSucceeded(processHandler -> {
+					CosechaLabor ret = (CosechaLabor) processHandler.getSource().getValue();
+					insertBeforeCompass(getWwd(), ret.getLayer());
+					getLayerPanel().update(getWwd());
+					viewGoTo(ret);
+					processTask.uninstallProgressBar();
+					playSound();
+					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_IMPORTED);
+				});
+				processTask.setOnFailed(processHandler -> {
+					processTask.uninstallProgressBar();
+					showVoyagerImportError(processHandler.getSource().getException());
+				});
+				JFXMain.executorPool.execute(processTask);
+			} catch (Exception e) {
+				importTask.uninstallProgressBar();
+				showVoyagerImportError(e);
+			}
+		});
+		importTask.setOnFailed(importHandler -> {
+			importTask.uninstallProgressBar();
+			configured.dispose();
+			showVoyagerImportError(importHandler.getSource().getException());
+		});
+		JFXMain.executorPool.execute(importTask);
+	}
+
+	private void showVoyagerImportError(Throwable error) {
+		Alert alert = new Alert(AlertType.ERROR);
+		alert.setTitle(Messages.getString("CosechaGUIController.importarVoyager"));
+		alert.setHeaderText(Messages.getString("CosechaGUIController.importarVoyagerError"));
+		alert.setContentText(error != null ? error.getMessage() : "");
+		alert.initOwner(JFXMain.stage);
+		alert.showAndWait();
+	}
+
 	public void doOpenCosecha(List<File> files) {
 		List<FileDataStore> stores = FileHelper.chooseShapeFileAndGetMultipleStores(files);
 		if (stores != null) {

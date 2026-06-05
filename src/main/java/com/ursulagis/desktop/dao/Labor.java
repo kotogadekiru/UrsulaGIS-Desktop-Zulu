@@ -846,10 +846,13 @@ public abstract class Labor<E extends LaborItem>  {
 	 * @param newIDS
 	 */
 	public void constructFeatureContainer(LaborItem ci, SimpleFeature harvestFeature) {
-		ci.setId(getNextID());
-
 		String idString = LaborItem.getID(harvestFeature);
-		ci.setId(LaborItem.getDoubleFromObj(idString));
+		Double featureId = LaborItem.getDoubleFromObj(idString);
+		if (featureId != null && featureId != 0.0) {
+			ci.setId(featureId);
+		} else {
+			ci.setId(getNextID());
+		}
 
 		double toMetros = getConfigLabor().valorMetrosPorUnidadDistanciaProperty().doubleValue();
 

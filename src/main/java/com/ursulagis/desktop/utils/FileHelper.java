@@ -166,6 +166,32 @@ public class FileHelper {
 		return files;
 	}
 
+	/**
+	 * Select a Voyager 2 card file (*.vy1). The card directory is the parent folder of the file.
+	 */
+	public static File chooseVoyagerCardFile() {
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle(Messages.getString("FileHelper.selectFile"));
+		fileChooser.getExtensionFilters().add(
+				new FileChooser.ExtensionFilter("Voyager 2 Card", "*.vy1"));
+
+		Configuracion config = JFXMain.config;
+		config.loadProperties();
+		String lastFileName = config.getPropertyOrDefault(Configuracion.LAST_FILE, "");
+		if (lastFileName != null && !lastFileName.isEmpty()) {
+			File lastFile = new File(lastFileName);
+			if (lastFile.exists() && lastFile.getParentFile() != null) {
+				fileChooser.setInitialDirectory(lastFile.getParentFile());
+			}
+		}
+		File file = fileChooser.showOpenDialog(JFXMain.stage);
+		if (file != null) {
+			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
+			config.save();
+		}
+		return file;
+	}
+
 	public static List<FileDataStore> chooseShapeFileAndGetMultipleStores(List<File> files) {
 		if(files==null){
 			//	List<File> 

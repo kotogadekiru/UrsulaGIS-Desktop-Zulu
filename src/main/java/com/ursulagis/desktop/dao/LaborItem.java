@@ -180,14 +180,16 @@ public abstract class LaborItem implements Comparable<Object>{
 
 	public static String getID(SimpleFeature harvestFeature) {
 		String identifier = harvestFeature.getIdentifier().getID();
-		String[] split = identifier.split("\\.");
-		if (split.length > 1) {
-			String id = split[split.length - 1];
-			if(id==null)id="0.0";
-			return id;
+		if (identifier == null || identifier.isEmpty()) {
+			return "0.0";
 		}
-
-		return "0.0";
+		int lastDot = identifier.lastIndexOf('.');
+		if (lastDot >= 0 && lastDot < identifier.length() - 1) {
+			String id = identifier.substring(lastDot + 1);
+			return id.isEmpty() ? "0.0" : id;
+		}
+		// FIDs without a namespace prefix (e.g. Voyager import buildFeature("1"))
+		return identifier;
 	}
 
 	public static Double getDoubleFromObj(Object o){
