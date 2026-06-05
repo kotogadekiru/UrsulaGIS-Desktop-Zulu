@@ -8,7 +8,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.geotools.api.data.FeatureReader;
-import org.geotools.feature.simple.SimpleFeatureBuilder;
 import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.feature.simple.SimpleFeatureType;
 
@@ -70,6 +69,7 @@ public class CortarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem
 		List<String> nombres =this.poligonos.stream().map(p->p.getNombre()).collect(Collectors.toList());
 
 		labor.setNombre(_laborACortar.getNombre()+"-"+String.join("-", nombres));//este es el nombre que se muestra en el progressbar
+		this.taskName = labor.getNombre();
 	}
 
 	public static Map<Class, Function<Labor, Labor>> laborConstructor() {
@@ -165,10 +165,8 @@ public class CortarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem
 			 */
 			 List<Geometry> intersecciones = poligonos.stream().map(pol->{
 				 Geometry ret = GeometryHelper.getIntersection(pol.toGeometry(), g);
-				
-				//System.out.println("intersection is "+ret);
-				return ret;// ? pol.toGeometry().intersection(g):null;
-				}).filter(inter->inter!=null).collect(Collectors.toList());
+				return ret;
+				}).filter(inter->inter!=null && !inter.isEmpty()).collect(Collectors.toList());
 
 			if(intersecciones.size()>0) {
 				GeometryFactory fact = intersecciones.get(0).getFactory();
@@ -176,34 +174,35 @@ public class CortarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem
 				GeometryCollection colectionCat = fact.createGeometryCollection(intersecciones.toArray(geomArray));
 
 				Geometry buffered = null;
-				//double bufer= ProyectionConstants.metersToLongLat(0.25);//esto agranda la superficie. porque?
+				double bufer = ProyectionConstants.metersToLongLat(0.25);
 				try{
-				//	buffered = colectionCat.union();
-					buffered =colectionCat.buffer(0);
+					buffered = colectionCat.buffer(bufer);
 				}catch(Exception e){
 					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
-					//java.lang.IllegalArgumentException: Comparison method violates its general contract!
 					try{
-					buffered= EnhancedPrecisionOp.buffer(colectionCat, 0);//java.lang.IllegalArgumentException: Comparison method violates its general contract!
+					buffered= EnhancedPrecisionOp.buffer(colectionCat, bufer);
 					}catch(Exception e2){
 						e2.printStackTrace();
 					}
 				}
-				try{	
-					buffered = TopologyPreservingSimplifier.simplify(buffered, ProyectionConstants.metersToLongLat(0.25));
-					//g =g.buffer(0);		
-					
-				}catch(Exception e){
-					e.printStackTrace();
-				}				
-//				ci.setGeometry(buffered);
-//				SimpleFeature nf=ci.getFeature(labor.featureBuilder);
-				
-				SimpleFeature nf=SimpleFeatureBuilder.copy(f);
-				nf.setDefaultGeometry(buffered);
+				if(buffered != null && !buffered.isEmpty()) {
+					try{	
+						buffered = TopologyPreservingSimplifier.simplify(buffered, bufer);
+					}catch(Exception e){
+						e.printStackTrace();
+					}
+				}
+				if(buffered == null || buffered.isEmpty()) {
+					updateProgress(this.featureNumber++, featureCount);
+					continue;
+				}
 
-				boolean ret = labor.outCollection.add(nf);
-				//featuresInsertadas++;
+				LaborItem li = laborACortar.constructFeatureContainerStandar(f, false);
+				li.setGeometry(buffered);
+				li.setId(labor.getNextID());
+				SimpleFeature nf = li.getFeature(labor.getFeatureBuilder());
+
+				boolean ret = nf != null && labor.outCollection.add(nf);
 				if(!ret){
 					System.out.println("no se pudo agregar la feature "+f);
 				}
