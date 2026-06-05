@@ -1563,7 +1563,11 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		g.apply( new CoordinateFilter() {
 			@Override
 			public void filter(Coordinate c) {
-				c.z=cero.z;					
+				try {
+					c.z=cero.z;
+				} catch (IllegalArgumentException ignored) {
+					// XY-only coordinate
+				}
 			}});
 		return g;
 	}
@@ -1588,12 +1592,27 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			 */
 
 			int maxGeometries = 	labor.getConfigLabor().getMAXGeometries();//labor.getConfiguracion().getMAXGeometries();
+			Geometry query2d = PolygonValidator.force2D(query);
 			for (LaborItem o : objects) {			
 				Geometry g= o.getGeometry();
 				Geometry flatG =flatenGeometry(g,query);
 				try{
-					if (flatG.intersects(query)) {//acelera mucho el proceso //g.getEnvelopeInternal().intersects(query) 
-						boolean contains = flatG.touches(zero);
+					Geometry flat2d = PolygonValidator.force2D(flatG);
+					boolean intersects = flat2d.getEnvelopeInternal().intersects(query2d.getEnvelopeInternal());
+					if (intersects) {
+						try {
+							intersects = flat2d.intersects(query2d);
+						} catch (RuntimeException e) {
+							intersects = true;
+						}
+					}
+					if (intersects) {//acelera mucho el proceso //g.getEnvelopeInternal().intersects(query) 
+						boolean contains = false;
+						try {
+							contains = flat2d.touches(zero);
+						} catch (RuntimeException e) {
+							contains = false;
+						}
 						if(!contains
 								&&geomList.size()<maxGeometries
 								&& flatG.isValid()
