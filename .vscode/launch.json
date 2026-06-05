@@ -95,6 +95,7 @@
             "mainClass": "com.ursulagis.desktop.gui.JFXMain",
             "projectName": "UrsulaGIS-Desktop_Zulu",
             "vmArgs": [
+                "-Dcnh.voyager2.native.dir=D:\\worskpaces\\CN1SDK_4.1.2\\Voyager2SampleApp\\Voyager2SampleApp\\JavaWrapper\\build\\Release",
                 "-Djava.awt.headless=false",
                 "-Dprism.verbose=false",
                 "-Djavafx.verbose=false",
