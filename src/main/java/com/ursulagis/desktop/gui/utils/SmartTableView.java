@@ -271,7 +271,7 @@ public class SmartTableView<T> extends TableView<T> {
 		TableFilter<T> tableFilter = builder.lazy(true).apply();
 		tableFilter.setSearchStrategy((input,target) -> {
 			try {
-				return target.toLowerCase().startsWith(input.toLowerCase());
+				return target.toLowerCase().contains(input.toLowerCase());
 			} catch (Exception e) {
 				e.printStackTrace();
 				return false;
