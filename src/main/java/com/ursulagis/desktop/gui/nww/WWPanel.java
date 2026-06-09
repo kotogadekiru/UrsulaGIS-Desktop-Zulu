@@ -2,6 +2,8 @@ package com.ursulagis.desktop.gui.nww;
 
 import gov.nasa.worldwind.BasicModel;
 import gov.nasa.worldwind.Model;
+import gov.nasa.worldwind.View;
+import gov.nasa.worldwind.view.BasicView;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.WorldWindowGLDrawable;
@@ -51,6 +53,7 @@ public class WWPanel extends JPanel {
 		super(new BorderLayout());
 		this.main=jfxMain;
 		this.wwd =new WorldWindowGLJPanel(); // WorldWindowGLJPanel no esta disponible en 2.0.0
+		installSafeViewInputHandler();
 		// Try to create WorldWindow using the available configuration
 
 		// Check if WorldWindow was created successfully
@@ -191,5 +194,19 @@ public class WWPanel extends JPanel {
 
 	public StatusBar getStatusBar() {
 		return statusBar;
+	}
+
+	/**
+	 * Replaces the default orbit view handler so repaints before the first GL frame
+	 * do not step fly-to animators while {@code OrbitView.getGlobe()} is still null.
+	 */
+	private void installSafeViewInputHandler() {
+		View view = this.wwd.getView();
+		if (!(view instanceof BasicView)) {
+			return;
+		}
+		SafeOrbitViewInputHandler handler = new SafeOrbitViewInputHandler();
+		((BasicView) view).setViewInputHandler(handler);
+		handler.setWorldWindow(this.wwd);
 	}
 }//FIN DE AppPanel
