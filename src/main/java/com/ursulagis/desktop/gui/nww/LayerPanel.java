@@ -705,6 +705,17 @@ public class LayerPanel extends VBox {
 		this.getChildren().add(node);
 	}
 
+	/**
+	 * Returns the layer currently selected in the tree, if any.
+	 */
+	public Layer getSelectedLayer() {
+		if (tree == null) {
+			return null;
+		}
+		TreeItem<Layer> selected = tree.getSelectionModel().getSelectedItem();
+		return selected != null ? selected.getValue() : null;
+	}
+
 
 	public void addAccionesClase(List<LayerAction> cosechasP,Class<?> clazz) {
 		layerActions.put(clazz, cosechasP);

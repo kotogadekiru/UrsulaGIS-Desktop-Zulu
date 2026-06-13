@@ -115,6 +115,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import com.ursulagis.desktop.gui.chat.UrsulaChatWindow;
 import com.ursulagis.desktop.gui.onboarding.AchievementsOverviewDialog;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.tasks.CotizarOdenDeCompraOnlineTask;
@@ -227,6 +228,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 		addMenuItem(Messages.getString("JFXMain.configIdiomaMI"),(a)->doChangeLocale(),menuConfiguracion); 
 		addMenuItem(Messages.getString("JFXMain.configAchievementsMI"),(a)->AchievementsOverviewDialog.show(JFXMain.stage),menuConfiguracion);
+		addMenuItem(Messages.getString("JFXMain.configChatMI"),(a)->UrsulaChatWindow.show(main),menuConfiguracion);
 		addMenuItem(Messages.getString("JFXMain.configHelpMI"),(a)->doShowAcercaDe(),menuConfiguracion);
 		addMenuItem(Messages.getString("JFXMain.configLogMI"),(a)->doShowLog(),menuConfiguracion);
 

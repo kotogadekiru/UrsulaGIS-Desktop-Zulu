@@ -134,6 +134,8 @@ import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.TarjetaHelper;
 import com.ursulagis.desktop.gui.UrsulaGISPreloader;
+import com.ursulagis.desktop.gui.chat.ChatPreferences;
+import com.ursulagis.desktop.gui.chat.UrsulaChatWindow;
 import com.ursulagis.desktop.gui.onboarding.AchievementsOverviewDialog;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 
@@ -342,6 +344,11 @@ public class JFXMain extends Application {
 					PauseTransition delay = new PauseTransition(Duration.millis(600));
 					delay.setOnFinished(e -> AchievementsOverviewDialog.show(primaryStage));
 					delay.play();
+				}
+				if (ChatPreferences.getInstance().isShowAtStart()) {
+					PauseTransition chatDelay = new PauseTransition(Duration.millis(1200));
+					chatDelay.setOnFinished(e -> UrsulaChatWindow.show(this));
+					chatDelay.play();
 				}
 			});
 			notifyPreloader(new Preloader.ProgressNotification(1.0));
