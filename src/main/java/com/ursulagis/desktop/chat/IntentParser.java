@@ -12,18 +12,26 @@ import com.ursulagis.desktop.chat.ai.AiResponse;
  */
 public class IntentParser {
 
-	private static final Pattern ACTION_PATTERN = Pattern.compile("\"action\"\\s*:\\s*\"([^\"]+)\"");
-	private static final Pattern TARGET_PATTERN = Pattern.compile("\"targetName\"\\s*:\\s*\"([^\"]+)\"");
+	private static final Pattern JSON_STRING = Pattern.compile("\"((?:[^\"\\\\]|\\\\.)*)\"");
+
+	private static final Pattern ACTION_PATTERN = Pattern.compile("\"action\"\\s*:\\s*" + JSON_STRING.pattern());
+	private static final Pattern TARGET_PATTERN = Pattern.compile("\"targetName\"\\s*:\\s*" + JSON_STRING.pattern());
 	private static final Pattern CONFIDENCE_PATTERN = Pattern.compile("\"confidence\"\\s*:\\s*([0-9.]+)");
-	private static final Pattern MESSAGE_PATTERN = Pattern.compile("\"message\"\\s*:\\s*\"([^\"]+)\"");
+	private static final Pattern MESSAGE_PATTERN = Pattern.compile("\"message\"\\s*:\\s*" + JSON_STRING.pattern());
 
 	private final AiClient aiClient;
 	private final MapLayerContext layerContext;
+	private final String codeContext;
 	private AiResponse lastResponse;
 
 	public IntentParser(AiClient aiClient, MapLayerContext layerContext) {
+		this(aiClient, layerContext, "");
+	}
+
+	public IntentParser(AiClient aiClient, MapLayerContext layerContext, String codeContext) {
 		this.aiClient = aiClient;
 		this.layerContext = layerContext != null ? layerContext : MapLayerContext.empty();
+		this.codeContext = codeContext != null ? codeContext : "";
 	}
 
 	public AiClient getAiClient() {
@@ -44,14 +52,16 @@ public class IntentParser {
 		sb.append(UrsulaPersonality.systemPromptPreamble()).append('\n');
 		sb.append("Map user requests to one action id.\n");
 		sb.append("Respond ONLY with JSON: {\"action\":\"ACTION_ID\",\"targetName\":\"optional\",\"confidence\":0.0-1.0,\"message\":\"short reply in Ursula's voice\"}\n");
-		sb.append(layerContext.toPromptSection()).append('\n');
-		sb.append("Available actions:\n");
-		for (UrsulaAction action : UrsulaAction.values()) {
-			if (action == UrsulaAction.UNKNOWN) {
-				continue;
-			}
-			sb.append("- ").append(action.name()).append(": ").append(action.getDescription()).append('\n');
+		sb.append("Use the achievement hints below to choose the correct action. ");
+		sb.append("Converting polygons on the map is not the same as importing a shapefile.\n");
+		sb.append("If no action applies, respond with action UNKNOWN.\n");
+		sb.append(ChatUiKnowledge.marginMapSection()).append('\n');
+		if (!codeContext.isBlank()) {
+			sb.append("\nGitHub source context (").append(GitHubRepoConfig.OWNER).append('/')
+					.append(GitHubRepoConfig.REPO).append("):\n").append(codeContext).append('\n');
 		}
+		sb.append(layerContext.toPromptSection()).append('\n');
+		sb.append(AchievementIntentCatalog.buildActionCatalogForPrompt());
 		return sb.toString();
 	}
 

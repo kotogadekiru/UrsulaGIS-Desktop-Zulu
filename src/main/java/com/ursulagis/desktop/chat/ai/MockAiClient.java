@@ -1,13 +1,19 @@
 package com.ursulagis.desktop.chat.ai;
 
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.ursulagis.desktop.chat.AchievementIntentCatalog;
+import com.ursulagis.desktop.chat.AchievementIntentMatch;
+import com.ursulagis.desktop.chat.ChatGuidanceService;
+import com.ursulagis.desktop.chat.MapLayerContext;
 import com.ursulagis.desktop.chat.UrsulaPersonality;
 
 /**
  * Local rule-based client that simulates LLM intent parsing without network calls.
+ * Delegates action matching to {@link AchievementIntentCatalog} (onboarding logros).
  */
 public class MockAiClient implements AiClient {
 
@@ -18,6 +24,15 @@ public class MockAiClient implements AiClient {
 	@Override
 	public AiProvider getProvider() {
 		return AiProvider.MOCK;
+	}
+
+	@Override
+	public AiResponse completePlain(String systemPrompt, String userPrompt) {
+		long start = System.currentTimeMillis();
+		simulateLatency();
+		String text = ChatGuidanceService.guidanceWithoutAi(userPrompt, "", MapLayerContext.empty());
+		long elapsed = System.currentTimeMillis() - start;
+		return new AiResponse(text, "mock-local", getProvider(), elapsed, true);
 	}
 
 	@Override
@@ -55,17 +70,17 @@ public class MockAiClient implements AiClient {
 			return intentJson("HELP", target, 1.0,
 					"Con gusto te cuento todo lo que puedo hacer por vos hoy.");
 		}
-		if (containsAny(text, "importar cosecha", "abrir cosecha", "open harvest", "import harvest")) {
-			return intentJson("IMPORT_COSECHA", target, 0.95,
-					"¡Perfecto! Abrimos el diálogo para importar tu mapa de cosecha.");
+
+		Optional<AchievementIntentMatch> achievementMatch = AchievementIntentCatalog.match(userPrompt);
+		if (achievementMatch.isPresent()) {
+			AchievementIntentMatch match = achievementMatch.get();
+			double confidence = Math.min(0.98, 0.75 + (match.score() / 40.0));
+			return intentJson(match.action().name(), target, confidence, match.suggestedReply());
 		}
+
 		if (containsAny(text, "voyager")) {
 			return intentJson("IMPORT_COSECHA_VOYAGER", target, 0.95,
 					"Abriendo importación desde Voyager.");
-		}
-		if (containsAny(text, "importar recorrida", "abrir recorrida", "import recorrida")) {
-			return intentJson("IMPORT_RECORRIDA", target, 0.95,
-					"Abriendo diálogo para importar recorrida.");
 		}
 		if (containsAny(text, "importar ndvi", "abrir ndvi", "import ndvi")) {
 			return intentJson("IMPORT_NDVI", target, 0.9,
@@ -75,62 +90,13 @@ public class MockAiClient implements AiClient {
 			return intentJson("BULK_NDVI_DOWNLOAD", target, 0.9,
 					"Iniciando descarga masiva de NDVI.");
 		}
-		if (containsAny(text, "importar suelo", "abrir suelo", "import soil")) {
-			return intentJson("IMPORT_SUELO", target, 0.9,
-					"Abriendo diálogo para importar mapa de suelo.");
-		}
-		if (containsAny(text, "balance", "nutrientes")) {
-			return intentJson("BALANCE_NUTRIENTES", target, 0.85,
-					"Procesando balance de nutrientes.");
-		}
-		if (containsAny(text, "unir shape", "juntar shape", "merge shape")) {
-			return intentJson("JUNTAR_SHAPES", target, 0.9,
-					"Abriendo herramienta para unir shapefiles.");
-		}
-		if (containsAny(text, "medir distancia", "measure distance")) {
-			return intentJson("MEDIR_DISTANCIA", target, 0.9,
-					"Activando herramienta de medición de distancia.");
-		}
-		if (containsAny(text, "crear polígono", "crear poligono", "draw polygon",
-				"create a new polygon", "create a polygon", "create polygon")) {
-			return intentJson("CREAR_POLIGONO", target, 0.85,
-					"Activando herramienta para crear polígono.");
-		}
 		if (containsAny(text, "tabla de labores", "ver labores", "list labors", "show labors")) {
 			return intentJson("SHOW_LABORES_TABLE", target, 0.9,
 					"Mostrando tabla de labores.");
 		}
-		if (containsAny(text, "sincronizar recorrida", "actualizar recorrida", "update recorrida", "sync recorrida")) {
-			return intentJson("UPDATE_RECORRIDA", target, 0.9,
-					"Sincronizando recorrida desde la nube.");
-		}
-		if (containsAny(text, "exportar recorrida", "export recorrida")) {
-			return intentJson("EXPORT_RECORRIDA", target, 0.9,
-					"Exportando recorrida.");
-		}
-		if (containsAny(text, "compartir cosecha", "share harvest")) {
-			return intentJson("COMPARTIR_COSECHA", target, 0.9,
-					"Compartiendo mapa de cosecha.");
-		}
-		if (containsAny(text, "resumir", "simplify", "simplificar")) {
-			return intentJson("RESUMIR_LABOR", target, 0.88,
-					"Resumiendo labor seleccionada.");
-		}
-		if (containsAny(text, "exportar capa", "exportar labor", "export layer", "export shape")) {
-			return intentJson("EXPORT_LABOR", target, 0.88,
-					"Exportando capa a shapefile.");
-		}
-		if (containsAny(text, "clonar", "clone")) {
-			return intentJson("CLONAR_LABOR", target, 0.85,
-					"Clonando labor.");
-		}
 		if (containsAny(text, "ir a", "zoom", "go to", "centrar")) {
 			return intentJson("GO_TO_LAYER", target, 0.85,
 					"Centrando vista en la capa.");
-		}
-		if (containsAny(text, "descargar ndvi para", "ndvi para")) {
-			return intentJson("DOWNLOAD_NDVI", target, 0.85,
-					"Descargando NDVI para la capa indicada.");
 		}
 
 		return intentJson("UNKNOWN", target, 0.3, UrsulaPersonality.unknownReply());

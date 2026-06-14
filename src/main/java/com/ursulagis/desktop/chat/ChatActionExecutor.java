@@ -27,56 +27,84 @@ public class ChatActionExecutor {
 		this.main = main;
 	}
 
-	public String execute(ParsedIntent intent, MapLayerContext layerContext) {
+	public ActionExecutionResult execute(ParsedIntent intent, MapLayerContext layerContext) {
 		ActionContext ctx = new ActionContext(main, intent.getTargetName(), layerContext);
 		resolveTargets(ctx, intent.getAction());
 
 		return switch (intent.getAction()) {
-			case HELP -> helpText(ctx.getLayerContext());
-			case LIST_LAYERS -> ctx.getLayerContext().formatLayerList();
+			case HELP -> ActionExecutionResult.notLaunched(helpText(ctx.getLayerContext()));
+			case LIST_LAYERS -> ActionExecutionResult.notLaunched(ctx.getLayerContext().formatLayerList());
 			case IMPORT_COSECHA -> {
 				main.cosechaGUIController.doOpenCosecha(null);
-				yield "Diálogo de importación de cosecha abierto.";
+				yield ActionExecutionResult.launched("Diálogo de importación de cosecha abierto.");
 			}
 			case IMPORT_COSECHA_VOYAGER -> {
 				main.cosechaGUIController.doOpenCosechaVoyager();
-				yield "Importación Voyager iniciada.";
+				yield ActionExecutionResult.launched("Importación Voyager iniciada.");
 			}
 			case IMPORT_RECORRIDA -> {
 				main.recorridaGUIController.doOpenRecorridaMap(null);
-				yield "Diálogo de importación de recorrida abierto.";
+				yield ActionExecutionResult.launched("Diálogo de importación de recorrida abierto.");
 			}
 			case IMPORT_NDVI -> {
 				main.ndviGUIController.doOpenNDVITiffFiles();
-				yield "Diálogo de importación NDVI abierto.";
+				yield ActionExecutionResult.launched("Diálogo de importación NDVI abierto.");
 			}
 			case IMPORT_SUELO -> {
 				main.sueloGUIController.doOpenSoilMap(null);
-				yield "Diálogo de importación de suelo abierto.";
+				yield ActionExecutionResult.launched("Diálogo de importación de suelo abierto.");
+			}
+			case IMPORT_MARGEN -> {
+				main.configGUIController.doOpenMarginMap();
+				yield ActionExecutionResult.launched("Diálogo de importación de margen abierto.");
+			}
+			case GENERAR_MARGEN -> {
+				main.configGUIController.doProcessMargin();
+				yield ActionExecutionResult.launched("Rentabilidades iniciado con las capas activas.");
 			}
 			case BULK_NDVI_DOWNLOAD -> {
 				main.ndviGUIController.doBulkNDVIDownload();
-				yield "Descarga masiva de NDVI iniciada.";
+				yield ActionExecutionResult.launched("Descarga masiva de NDVI iniciada.");
 			}
 			case BALANCE_NUTRIENTES -> {
 				main.sueloGUIController.doProcesarBalanceNutrientes();
-				yield "Balance de nutrientes en proceso.";
+				yield ActionExecutionResult.launched("Balance de nutrientes en proceso.");
 			}
 			case JUNTAR_SHAPES -> {
 				main.genericGUIController.doJuntarShapefiles();
-				yield "Unión de shapefiles iniciada.";
+				yield ActionExecutionResult.launched("Unión de shapefiles iniciada.");
 			}
 			case MEDIR_DISTANCIA -> {
 				main.poligonoGUIController.doMedirDistancia();
-				yield "Herramienta de medición activada.";
+				yield ActionExecutionResult.launched("Herramienta de medición activada.");
 			}
 			case CREAR_POLIGONO -> {
 				main.poligonoGUIController.doCrearPoligono();
-				yield "Herramienta de polígono activada.";
+				yield ActionExecutionResult.launched("Herramienta de polígono activada.");
+			}
+			case CONVERTIR_POLIGONO_A_COSECHA -> {
+				main.poligonoGUIController.doConvertirPoligonosACosecha();
+				yield ActionExecutionResult.launched("Conversión de polígonos a cosecha iniciada.");
+			}
+			case CONVERTIR_POLIGONO_A_SIEMBRA -> {
+				main.poligonoGUIController.doConvertirPoligonosASiembra();
+				yield ActionExecutionResult.launched("Conversión de polígonos a siembra iniciada.");
+			}
+			case CONVERTIR_POLIGONO_A_FERTILIZACION -> {
+				main.poligonoGUIController.doConvertirPoligonosAFertilizacion();
+				yield ActionExecutionResult.launched("Conversión de polígonos a fertilización iniciada.");
+			}
+			case CONVERTIR_POLIGONO_A_PULVERIZACION -> {
+				main.poligonoGUIController.doConvertirPoligonosAPulverizacion();
+				yield ActionExecutionResult.launched("Conversión de polígonos a pulverización iniciada.");
+			}
+			case IMPORT_POLIGONO -> {
+				main.poligonoGUIController.doImportarPoligonos(null);
+				yield ActionExecutionResult.launched("Diálogo de importación de polígonos abierto.");
 			}
 			case SHOW_LABORES_TABLE -> {
 				main.configGUIController.doShowLaboresTable();
-				yield "Tabla de labores abierta.";
+				yield ActionExecutionResult.launched("Tabla de labores abierta.");
 			}
 			case GO_TO_LAYER -> goToLabor(ctx);
 			case RESUMIR_LABOR -> resumirLabor(ctx);
@@ -86,7 +114,7 @@ public class ChatActionExecutor {
 			case COMPARTIR_COSECHA -> compartirCosecha(ctx);
 			case UPDATE_RECORRIDA -> updateRecorrida(ctx);
 			case EXPORT_RECORRIDA -> exportRecorrida(ctx);
-			case UNKNOWN -> intent.getMessage();
+			case UNKNOWN -> ActionExecutionResult.notLaunched(intent.getMessage());
 		};
 	}
 
@@ -191,22 +219,23 @@ public class ChatActionExecutor {
 		return "Hay varias capas cargadas. Especifica el nombre o activa solo una: " + options;
 	}
 
-	private String goToLabor(ActionContext ctx) {
+	private ActionExecutionResult goToLabor(ActionContext ctx) {
 		if (ctx.getLabor() == null) {
-			return ambiguousLaborMessage(ctx, false);
+			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, false));
 		}
 		main.viewGoTo(ctx.getLabor());
-		return "Vista centrada en " + nameOf(ctx.getLabor()) + ".";
+		return ActionExecutionResult.launched("Vista centrada en " + nameOf(ctx.getLabor()) + ".");
 	}
 
 	@SuppressWarnings("unchecked")
-	private String resumirLabor(ActionContext ctx) {
+	private ActionExecutionResult resumirLabor(ActionContext ctx) {
 		Labor<?> labor = ctx.getLabor();
 		if (labor == null) {
-			return ambiguousLaborMessage(ctx, false);
+			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, false));
 		}
 		if (!isLayerActive(ctx, labor)) {
-			return "La capa \"" + nameOf(labor) + "\" está cargada pero inactiva. Actívala en el árbol de capas o especifica otra.";
+			return ActionExecutionResult.notLaunched(
+					"La capa \"" + nameOf(labor) + "\" está cargada pero inactiva. Actívala en el árbol de capas o especifica otra.");
 		}
 		ResumirLaborMapTask task = new ResumirLaborMapTask((Labor<LaborItem>) labor);
 		task.installProgressBar(JFXMain.progressBox);
@@ -221,13 +250,13 @@ public class ChatActionExecutor {
 			main.viewGoTo(ret);
 		});
 		JFXMain.executorPool.execute(task);
-		return "Resumiendo labor " + nameOf(labor) + "...";
+		return ActionExecutionResult.launched("Resumiendo labor " + nameOf(labor) + "...");
 	}
 
-	private String exportLabor(ActionContext ctx) {
+	private ActionExecutionResult exportLabor(ActionContext ctx) {
 		Labor<?> labor = ctx.getLabor();
 		if (labor == null) {
-			return ambiguousLaborMessage(ctx, false);
+			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, false));
 		}
 		File shapeFile = FileHelper.getNewShapeFile(labor.getNombre());
 		ExportLaborMapTask task = new ExportLaborMapTask(labor, shapeFile);
@@ -238,13 +267,13 @@ public class ChatActionExecutor {
 			task.uninstallProgressBar();
 		});
 		JFXMain.executorPool.execute(task);
-		return "Exportando " + nameOf(labor) + " a shapefile...";
+		return ActionExecutionResult.launched("Exportando " + nameOf(labor) + " a shapefile...");
 	}
 
-	private String clonarLabor(ActionContext ctx) {
+	private ActionExecutionResult clonarLabor(ActionContext ctx) {
 		Labor<?> labor = ctx.getLabor();
 		if (labor == null) {
-			return ambiguousLaborMessage(ctx, false);
+			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, false));
 		}
 		ClonarLaborMapTask task = new ClonarLaborMapTask(labor);
 		task.installProgressBar(JFXMain.progressBox);
@@ -259,49 +288,50 @@ public class ChatActionExecutor {
 			main.playSound();
 		});
 		JFXMain.executorPool.execute(task);
-		return "Clonando labor " + nameOf(labor) + "...";
+		return ActionExecutionResult.launched("Clonando labor " + nameOf(labor) + "...");
 	}
 
-	private String downloadNdvi(ActionContext ctx) {
+	private ActionExecutionResult downloadNdvi(ActionContext ctx) {
 		if (ctx.getLabor() == null) {
-			return ambiguousLaborMessage(ctx, false);
+			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, false));
 		}
 		main.ndviGUIController.doGetNdviTiffFile(ctx.getLabor());
-		return "Descarga de NDVI iniciada para " + nameOf(ctx.getLabor()) + ".";
+		return ActionExecutionResult.launched("Descarga de NDVI iniciada para " + nameOf(ctx.getLabor()) + ".");
 	}
 
-	private String compartirCosecha(ActionContext ctx) {
+	private ActionExecutionResult compartirCosecha(ActionContext ctx) {
 		if (ctx.getCosecha() == null) {
-			return ambiguousLaborMessage(ctx, true);
+			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, true));
 		}
 		main.cosechaGUIController.doCompartirCosecha(ctx.getCosecha());
-		return "Compartiendo cosecha " + nameOf(ctx.getCosecha()) + "...";
+		return ActionExecutionResult.launched("Compartiendo cosecha " + nameOf(ctx.getCosecha()) + "...");
 	}
 
-	private String updateRecorrida(ActionContext ctx) {
+	private ActionExecutionResult updateRecorrida(ActionContext ctx) {
 		if (ctx.getRecorrida() == null) {
 			List<LoadedLayerInfo> recorridas = ctx.getLayerContext().getRecorridas();
 			if (recorridas.isEmpty()) {
-				return "No hay recorridas cargadas en el mapa. Importa una primero.";
+				return ActionExecutionResult.notLaunched("No hay recorridas cargadas en el mapa. Importa una primero.");
 			}
 			String options = recorridas.stream().map(LoadedLayerInfo::describe).collect(Collectors.joining(", "));
-			return "Hay varias recorridas cargadas. Especifica el nombre o activa solo una: " + options;
+			return ActionExecutionResult.notLaunched(
+					"Hay varias recorridas cargadas. Especifica el nombre o activa solo una: " + options);
 		}
 		main.recorridaGUIController.doUpdateRecorrida(ctx.getRecorrida());
-		return "Sincronizando recorrida " + ctx.getRecorrida().getNombre() + "...";
+		return ActionExecutionResult.launched("Sincronizando recorrida " + ctx.getRecorrida().getNombre() + "...");
 	}
 
-	private String exportRecorrida(ActionContext ctx) {
+	private ActionExecutionResult exportRecorrida(ActionContext ctx) {
 		if (ctx.getRecorrida() == null) {
 			List<LoadedLayerInfo> recorridas = ctx.getLayerContext().getRecorridas();
 			if (recorridas.isEmpty()) {
-				return "No hay recorridas cargadas en el mapa.";
+				return ActionExecutionResult.notLaunched("No hay recorridas cargadas en el mapa.");
 			}
 			String options = recorridas.stream().map(LoadedLayerInfo::describe).collect(Collectors.joining(", "));
-			return "Especifica qué recorrida exportar: " + options;
+			return ActionExecutionResult.notLaunched("Especifica qué recorrida exportar: " + options);
 		}
 		main.recorridaGUIController.doExportRecorrida(ctx.getRecorrida());
-		return "Exportando recorrida " + ctx.getRecorrida().getNombre() + "...";
+		return ActionExecutionResult.launched("Exportando recorrida " + ctx.getRecorrida().getNombre() + "...");
 	}
 
 	private static boolean isLayerActive(ActionContext ctx, Labor<?> labor) {
@@ -316,12 +346,8 @@ public class ChatActionExecutor {
 
 	private static String helpText(MapLayerContext layerContext) {
 		return UrsulaPersonality.helpIntro() + "\n"
-				+ "• importar cosecha / importar recorrida / importar NDVI\n"
-				+ "• resumir capa activa / exportar capa [nombre]\n"
-				+ "• ir a capa [nombre] / clonar capa [nombre]\n"
-				+ "• sincronizar recorrida activa / capas cargadas\n"
-				+ "• balance de nutrientes / descargar NDVI masivo\n"
-				+ "• medir distancia / crear polígono\n\n"
+				+ AchievementIntentCatalog.buildHelpBullets()
+				+ "\n\n"
 				+ layerContext.formatLayerList();
 	}
 }

@@ -1,0 +1,4 @@
+# Copy to %APPDATA%/UrsulaGIS/ai-keys.properties and fill in your keys.
+# This file is never committed to git.
+deepseek.api.key=
+github.token=

@@ -1147,7 +1147,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 
 
-	private void doConvertirPoligonosACosecha() {
+	public void doConvertirPoligonosACosecha() {
 		List<Poligono> geometriasActivas = new ArrayList<Poligono>();
 		LayerList layers = this.getWwd().getModel().getLayers();
 		for (Layer l : layers) {
@@ -1161,7 +1161,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		doCrearCosecha(geometriasActivas);
 	}
 	
-	private void doConvertirPoligonosAPulverizacion() {
+	public void doConvertirPoligonosAPulverizacion() {
 //		List<Poligono> geometriasActivas = new ArrayList<Poligono>();
 //		LayerList layers = this.getWwd().getModel().getLayers();
 //		for (Layer l : layers) {
@@ -1175,7 +1175,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		doCrearPulverizacion(polis);
 	}
 
-	private void doConvertirPoligonosASiembra() {
+	public void doConvertirPoligonosASiembra() {
 		List<Poligono> geometriasActivas = new ArrayList<Poligono>();
 		//1 obtener los poligonos activos
 		//String nombre = Messages.getString("JFXMain.poligonIntersectionNamePrefix");
@@ -1212,7 +1212,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 	}
 
-	private void doConvertirPoligonosAFertilizacion() {
+	public void doConvertirPoligonosAFertilizacion() {
 		List<Poligono> geometriasActivas = new ArrayList<Poligono>();
 		//1 obtener los poligonos activos
 		//String nombre = Messages.getString("JFXMain.poligonIntersectionNamePrefix");

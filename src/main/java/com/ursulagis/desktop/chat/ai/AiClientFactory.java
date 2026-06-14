@@ -12,7 +12,12 @@ public final class AiClientFactory {
 		return switch (provider) {
 			case OPENAI -> new OpenAiClient();
 			case CLAUDE -> new ClaudeAiClient();
+			case DEEPSEEK -> new DeepSeekAiClient();
 			case MOCK -> new MockAiClient();
 		};
+	}
+
+	public static AiClient createConfigured() {
+		return create(ChatAiSettings.resolveProvider());
 	}
 }

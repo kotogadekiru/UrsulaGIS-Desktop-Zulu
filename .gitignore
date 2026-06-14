@@ -24,6 +24,9 @@ hs_err_pid*
 # Maven 
 target/
 
+# Local API keys (use %APPDATA%/UrsulaGIS/ai-keys.properties instead)
+config/ai-keys.local.properties
+
 # IntelliJ project files 
 *.iml
 *.iws

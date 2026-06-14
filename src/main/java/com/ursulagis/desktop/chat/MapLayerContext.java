@@ -137,7 +137,8 @@ public class MapLayerContext {
 			sb.append("Selected in layer tree: ").append(selectedLayerName).append('\n');
 		}
 		sb.append("When the user refers to \"active layer\" or \"capa activa\", use an active layer name as targetName.");
-		sb.append(" Prefer active layers over inactive ones when resolving targets.");
+		sb.append(" Prefer active layers over inactive ones when resolving targets.\n");
+		sb.append(ChatUiKnowledge.layerPanelSection());
 		return sb.toString();
 	}
 

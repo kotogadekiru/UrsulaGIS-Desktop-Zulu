@@ -11,12 +11,12 @@ public final class UrsulaPersonality {
 	}
 
 	public static String roleName() {
-		return msg("Chat.roleUrsula", "Ursula");
+		return msg("Chat.roleUrsula", "Ursula IA");
 	}
 
 	public static String greeting() {
 		return msg("Chat.greeting",
-				"Hi! I'm Ursula, your GIS assistant. What would you like to do today?");
+				"Hi! What shall we do today?");
 	}
 
 	public static String systemPromptPreamble() {

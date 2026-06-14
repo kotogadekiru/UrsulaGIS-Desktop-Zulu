@@ -212,8 +212,12 @@ public class JFXMain extends Application {
 	public MargenGUIController margenGUIController = new MargenGUIController(this);
 	public GenericLaborGUIController genericGUIController = new GenericLaborGUIController(this);
 
+	private static volatile JFXMain appInstance;
+
 	@Override
     public void init() throws Exception {
+		appInstance = this;
+		Runtime.getRuntime().addShutdownHook(new Thread(JFXMain::shutdownOnDebugStop, "ursula-shutdown"));
 		notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_INIT));
         // Perform non-GUI initialization tasks here
         System.out.println("Application init() called. Loading configurations...");
@@ -231,6 +235,7 @@ public class JFXMain extends Application {
 		notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_START));
 		try {
 			JFXMain.stage = primaryStage;
+			appInstance = this;
 			primaryStage.setTitle(TITLE_VERSION);
 			loadMainIcon(primaryStage); 
 			notifyPreloader(new Preloader.ProgressNotification(0.1));	
@@ -815,6 +820,21 @@ public class JFXMain extends Application {
 
 	public WorldWindow getWwd() {
 		return this.wwjPanel.getWwd();
+	}
+
+	private static void shutdownOnDebugStop() {
+		JFXMain app = appInstance;
+		if (app == null || app.wwjPanel == null) {
+			return;
+		}
+		try {
+			WorldWindow wwd = app.wwjPanel.getWwd();
+			if (wwd != null) {
+				wwd.shutdown();
+			}
+		} catch (Exception ex) {
+			System.err.println("Shutdown hook error: " + ex.getMessage());
+		}
 	}
 
 	public StatusBar getStatusBar() {
