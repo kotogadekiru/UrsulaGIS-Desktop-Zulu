@@ -31,6 +31,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     public static final String EVENT_POSITION_REPLACE = "MeasureToolForShape.ReplacePosition";
     public static final String EVENT_METRIC_CHANGED = "MeasureToolForShape.MetricChanged";
     public static final String EVENT_ARMED = "MeasureToolForShape.Armed";
+    public static final String SURFACE_SHAPE_GROUP = "MeasureToolForShape.SurfaceShapeGroup";
     //public static final String EVENT_INNER_BOUNDARY_ADD = "MeasureToolForShape.AddInnerBoundary";
     //public static final String EVENT_INNER_BOUNDARY_REMOVE = "MeasureToolForShape.RemoveInnerBoundary";
 
@@ -48,6 +49,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     protected WorldWindow wwd;
     protected MeasureToolForShapeController controller;
     protected SurfacePolygon surfaceShape;//the shape to be edited
+    protected ArrayList<SurfacePolygon> surfaceShapes = new ArrayList<>();
     protected ScreenAnnotation annotation;
 
     // Shape data
@@ -222,24 +224,42 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
             System.err.println(msg);
             throw new IllegalArgumentException(msg);
         }
+        setSurfaceShapes(Collections.singletonList(surfaceShape));
+    }
+
+    /**
+     * Set one or more surface shapes (e.g. disconnected parts of a multipolygon).
+     */
+    public void setSurfaceShapes(List<SurfacePolygon> surfaceShapes) {
+        if (surfaceShapes == null || surfaceShapes.isEmpty()) {
+            String msg = Logging.getMessage("nullValue.Shape");
+            System.err.println(msg);
+            throw new IllegalArgumentException(msg);
+        }
 
         // Don't disarm the tool when setting surface shape - let the caller decide
         // setArmed(false);
         this.clear();
 
-        this.surfaceShape = surfaceShape;
+        this.surfaceShape = surfaceShapes.get(0);
+        this.surfaceShapes.clear();
+        this.surfaceShapes.addAll(surfaceShapes);
         
         // Set tooltip properties for hover functionality
         //shape.setValue("NAME", poli.getNombre());
         
         
-        this.shapeLayer.addRenderable(surfaceShape);
+        for (SurfacePolygon shape : surfaceShapes) {
+            shape.setValue(SURFACE_SHAPE_GROUP, this);
+            this.shapeLayer.addRenderable(shape);
+        }
         this.shapeLayer.setPickEnabled(true);
         this.shapeLayer.setEnabled(true);
         // this.updatePositionsFromShape();
         this.createControlPoints();
        // this.updateShape();
        // this.updateAnnotation();
+        this.updateTooltipProperties();
     }
 
     /**
@@ -249,6 +269,10 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
      */
     public SurfacePolygon getSurfaceShape() {
         return this.surfaceShape;
+    }
+
+    public List<SurfacePolygon> getSurfaceShapes() {
+        return Collections.unmodifiableList(this.surfaceShapes);
     }
 
     /**
@@ -461,7 +485,11 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
         }
 
         Globe globe = this.wwd.getModel().getGlobe();
-        return this.surfaceShape.getArea(globe);
+        double area = 0;
+        for (SurfacePolygon shape : this.surfaceShapes) {
+            area += shape.getArea(globe);
+        }
+        return area;
     }
 
     /**
@@ -475,7 +503,11 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
         }
 
         Globe globe = this.wwd.getModel().getGlobe();
-        return this.surfaceShape.getPerimeter(globe);
+        double perimeter = 0;
+        for (SurfacePolygon shape : this.surfaceShapes) {
+            perimeter += shape.getPerimeter(globe);
+        }
+        return perimeter;
     }
 
     /**
@@ -652,9 +684,13 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
             double area =this.getArea()/ ProyectionConstants.METROS2_POR_HA;
             //double area = this.getArea();
             double perimeter = this.getPerimeter();
+            String areaText = String.format("%.2f Has", area);
+            String perimeterText = String.format("%.2f m", perimeter);
             
-            this.surfaceShape.setValue("AREA", String.format("%.2f Has", area));
-            this.surfaceShape.setValue("PERIMETER", String.format("%.2f m", perimeter));
+            for (SurfacePolygon shape : this.surfaceShapes) {
+                shape.setValue("AREA", areaText);
+                shape.setValue("PERIMETER", perimeterText);
+            }
             
             // Update display name if not set
   
@@ -703,6 +739,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
         this.shapeLayer.removeAllRenderables();
         this.controlPoints.clear();
         this.surfaceShape = null;
+        this.surfaceShapes.clear();
         
         // Remove annotation if it exists
         if (this.annotation != null) {

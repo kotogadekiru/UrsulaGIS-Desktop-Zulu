@@ -102,11 +102,13 @@ public class PoligonLayerFactory {
 		surfaceLayer.setValue(MEASURE_TOOL, measureTool);
 		
 		// Create SurfacePolygon with positions and inner boundaries
-		SurfacePolygon shape = GeometryHelper.createSurfacePolygonFromPoligono(poli);
-		shape.setAttributes(measureTool.getBasicShapeAttributes());
-		shape.setValue("NAME", poli.getNombre());
-		shape.setValue(AVKey.DISPLAY_NAME, poli.getNombre());	
-		measureTool.setSurfaceShape(shape);
+		List<SurfacePolygon> shapes = GeometryHelper.createSurfacePolygonsFromPoligono(poli);
+		for (SurfacePolygon shape : shapes) {
+			shape.setAttributes(measureTool.getBasicShapeAttributes());
+			shape.setValue("NAME", poli.getNombre());
+			shape.setValue(AVKey.DISPLAY_NAME, poli.getNombre());
+		}
+		measureTool.setSurfaceShapes(shapes);
 		
 		// Configure control points visibility (set to true for editing)
 		measureTool.setShowControlPoints(false);//start on false, set to true when editing

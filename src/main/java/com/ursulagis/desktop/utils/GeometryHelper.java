@@ -54,11 +54,11 @@ public class GeometryHelper {
 		StringJoiner joiner = new StringJoiner("-");
 		//joiner.add(Messages.getString("JFXMain.poligonUnionNamePrefixText"));
 
-		List<Geometry> gActivas = pActivos.stream().map(p->{
-			//p.getLayer().setEnabled(false);
-			joiner.add(p.getNombre());
-			return p.toGeometry();
-		}).collect(Collectors.toList());
+		List<Geometry> gActivas = pActivos.stream()
+			.flatMap(p -> {
+				joiner.add(p.getNombre());
+				return geometriesFromPoligono(p).stream();
+			}).collect(Collectors.toList());
 
 
 		Geometry union = GeometryHelper.unirGeometrias(gActivas);
@@ -1508,6 +1508,17 @@ public class GeometryHelper {
 	}
 
 	/**
+	 * Devuelve todas las partes de un poligono (incluye multipoligonos) para operaciones geometricas.
+	 */
+	public static List<Geometry> geometriesFromPoligono(Poligono poli) {
+		Geometry g = poli.getGeometry();
+		if(g == null || g.isEmpty()) {
+			return new ArrayList<>();
+		}
+		return new ArrayList<>(PolygonValidator.geometryToFlatPolygons(g));
+	}
+
+	/**
 	 * metodo que convierte un poligono a una geometria es el que se usa en Poligono.toGeometry()
 	 * @param poli
 	 * @return
@@ -1581,6 +1592,29 @@ public class GeometryHelper {
 			return null;
 		}       
     }
+
+	public static SurfacePolygon createSurfacePolygonFromPolygon(Polygon pol) {
+		SurfacePolygon shape = new SurfacePolygon();
+		shape.setLocations(geometryToPositions(pol.getExteriorRing()));
+		for(int i = 0; i < pol.getNumInteriorRing(); i++) {
+			shape.addInnerBoundary(geometryToPositions(pol.getInteriorRingN(i)));
+		}
+		return shape;
+	}
+
+	public static List<SurfacePolygon> createSurfacePolygonsFromPoligono(Poligono poli) {
+		Geometry g = poli.getGeometry();
+		if(g != null && !g.isEmpty() && g.getNumGeometries() > 1) {
+			List<SurfacePolygon> shapes = new ArrayList<>();
+			for(Polygon part : PolygonValidator.geometryToFlatPolygons(g)) {
+				shapes.add(createSurfacePolygonFromPolygon(part));
+			}
+			return shapes;
+		}
+		List<SurfacePolygon> shapes = new ArrayList<>();
+		shapes.add(createSurfacePolygonFromPoligono(poli));
+		return shapes;
+	}
 
 	public static SurfacePolygon createSurfacePolygonFromPoligono(Poligono poli) {
 		List<Position> positions = poli.getPositions();

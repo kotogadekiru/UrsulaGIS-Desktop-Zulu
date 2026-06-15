@@ -21,6 +21,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.WKTReader;
 
@@ -288,6 +289,20 @@ public class Poligono implements Comparable<Poligono>{
 				for(int i=0; i<pol.getNumInteriorRing(); i++){
 					huecos.add(GeometryHelper.geometryToPositions(pol.getInteriorRingN(i)));
 				}
+			} else if(g instanceof MultiPolygon) {
+				MultiPolygon mp = (MultiPolygon) g;
+				if(mp.getNumGeometries() > 0) {
+					Polygon first = (Polygon) mp.getGeometryN(0);
+					this.setPositions(GeometryHelper.geometryToPositions(first.getExteriorRing()));
+					if(huecos==null){
+						huecos = new ArrayList<List<Position>>();
+					}else{
+						huecos.clear();
+					}
+					for(int i=0; i<first.getNumInteriorRing(); i++){
+						huecos.add(GeometryHelper.geometryToPositions(first.getInteriorRingN(i)));
+					}
+				}
 			} else {
 				// For MultiPolygon or other geometry types, use boundary approach
 				Geometry mainBoundary = g.getBoundary();
@@ -327,6 +342,9 @@ public class Poligono implements Comparable<Poligono>{
 	}
 
 	public Geometry toGeometry(){
+		if(this.geometry != null && this.geometry.getNumGeometries() > 1) {
+			return this.geometry;
+		}
 		return GeometryHelper.poligonotoGeometry(this);
 	}
 

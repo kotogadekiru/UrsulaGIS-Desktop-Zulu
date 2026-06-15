@@ -1019,11 +1019,12 @@ public class PoligonoGUIController extends AbstractGUIController{
 		StringJoiner joiner = new StringJoiner("-");
 		//joiner.add(Messages.getString("JFXMain.poligonUnionNamePrefixText"));
 
-		List<Geometry> gActivas = pActivos.stream().map(p->{
-			p.getLayer().setEnabled(false);
-			joiner.add(p.getNombre());
-			return p.toGeometry();
-		}).collect(Collectors.toList());
+		List<Geometry> gActivas = pActivos.stream()
+			.flatMap(p -> {
+				p.getLayer().setEnabled(false);
+				joiner.add(p.getNombre());
+				return GeometryHelper.geometriesFromPoligono(p).stream();
+			}).collect(Collectors.toList());
 
 
 		Geometry union = GeometryHelper.unirGeometrias(gActivas);
@@ -1108,7 +1109,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 					Object o = l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 					if (l.isEnabled() && o instanceof Poligono){
 						Poligono p = (Poligono)o;
-						geometriasActivas.add(p.toGeometry());
+						geometriasActivas.addAll(GeometryHelper.geometriesFromPoligono(p));
 						l.setEnabled(false);
 						p.setActivo(false);
 						nombre=nombre+" "+p.getNombre();

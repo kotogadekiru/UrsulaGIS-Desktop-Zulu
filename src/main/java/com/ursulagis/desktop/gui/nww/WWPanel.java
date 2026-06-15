@@ -24,7 +24,6 @@ import gov.nasa.worldwind.util.StatusBar;
 import gov.nasa.worldwind.util.WWXML;
 import gov.nasa.worldwind.wms.WMSTiledImageLayer;
 import gov.nasa.worldwindx.examples.ClickAndGoSelectListener;
-import gov.nasa.worldwindx.examples.util.HighlightController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.nww.replacementLayers.GIBS_PlaceLabels;
 import com.ursulagis.desktop.gui.nww.replacementLayers.GoogleLayer;
@@ -46,7 +45,7 @@ public class WWPanel extends JPanel {
 	protected WorldWindow wwd;
 	protected StatusBar statusBar;
 	protected ToolTipController toolTipController;
-	protected HighlightController highlightController;
+	protected MultiPartHighlightController highlightController;
 	protected JFXMain main;
 
 	public WWPanel(boolean includeStatusBar, JFXMain jfxMain) {
@@ -169,7 +168,7 @@ public class WWPanel extends JPanel {
 		// Add controllers to manage highlighting and tool tips.
 		this.toolTipController = new ToolTipController(this.getWwd(),
 				AVKey.DISPLAY_NAME, null,this.main);
-		this.highlightController = new HighlightController(this.getWwd(),
+		this.highlightController = new MultiPartHighlightController(this.getWwd(),
 				SelectEvent.ROLLOVER);
 	}
 
