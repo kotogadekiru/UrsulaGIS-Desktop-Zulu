@@ -86,7 +86,7 @@ public class PoligonLayerFactory {
 	 * @param layerPanel the layer panel
 	 * @return a configured MeasureToolForShape instance
 	 */
-	static public MeasureToolForShape createPoligonMeasureToolForShape(Poligono poli, WorldWindow wwd,LayerPanel layerPanel){	
+	static public MeasureToolForShape createPoligonMeasureToolForShape(Poligono poli, WorldWindow wwd,LayerPanel layerPanel){
 		RenderableLayer surfaceLayer = new RenderableLayer();		
 		surfaceLayer.setValue(Labor.LABOR_LAYER_IDENTIFICATOR, poli);
 		surfaceLayer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, poli.getClass());
@@ -130,17 +130,34 @@ public class PoligonLayerFactory {
 			else if(event.getPropertyName().equals(MeasureToolForShape.EVENT_POSITION_REPLACE) ||
 					event.getPropertyName().equals(MeasureToolForShape.EVENT_POSITION_ADD) ||
 					event.getPropertyName().equals(MeasureToolForShape.EVENT_POSITION_REMOVE)){								
-				Geometry geometry = GeometryHelper.getGeometryFromSurfacePolygon(measureTool.getSurfaceShape());
-				if(geometry!=null){
-					poli.setGeometry(geometry);
-					double area = measureTool.getArea()/ProyectionConstants.METROS2_POR_HA;
-					poli.setArea(area);
-					valueProperty.setValue(area);
-				}			
+				syncPoligonoFromMeasureTool(poli, measureTool);
+				valueProperty.setValue(poli.getArea());
 			}		
 		});
 
 		return measureTool;
+	}
+
+	public static void syncPoligonoFromMeasureTool(Poligono poli, MeasureToolForShape measureTool) {
+		if (poli == null || measureTool == null) {
+			return;
+		}
+		Geometry geometry = GeometryHelper.getGeometryFromSurfacePolygons(measureTool.getSurfaceShapes());
+		if (geometry != null) {
+			poli.setGeometry(geometry);
+			double area = measureTool.getArea() / ProyectionConstants.METROS2_POR_HA;
+			poli.setArea(area);
+		}
+	}
+
+	public static void syncPoligonoFromMeasureTool(Poligono poli) {
+		if (poli == null || poli.getLayer() == null) {
+			return;
+		}
+		Object measureTool = poli.getLayer().getValue(MEASURE_TOOL);
+		if (measureTool instanceof MeasureToolForShape mt) {
+			syncPoligonoFromMeasureTool(poli, mt);
+		}
 	}
 
 	@SuppressWarnings("unchecked")

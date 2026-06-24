@@ -399,7 +399,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
             if (index == 0) {
 				list.set(list.size() - 1, position);
             }
-       refreshChangedSurfaceShape();
+       refreshChangedSurfaceShape(list);
         //this.setSurfaceShape(this.surfaceShape);//force update shape
         // Update the specific control point position
         this.updateControlPointPosition(list,index, position);
@@ -412,11 +412,21 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
         //     System.out.println("redrawing wwd on setPositionAtIndex");
         //     this.wwd.redraw();
         // }
+        this.firePropertyChange(EVENT_POSITION_REPLACE, null, position);
     }
 
-    private void refreshChangedSurfaceShape() {
-        Iterable<? extends LatLon> outerBoundary = surfaceShape.getOuterBoundary();       
-           this.surfaceShape.setOuterBoundary(outerBoundary);
+    private void refreshChangedSurfaceShape(List<Position> editedList) {
+        for (SurfacePolygon shape : this.surfaceShapes) {
+            List<Iterable<? extends LatLon>> boundaries = shape.getBoundaries();
+            for (int i = 0; i < boundaries.size(); i++) {
+                if (boundaries.get(i) == editedList) {
+                    if (i == 0) {
+                        shape.setOuterBoundary(editedList);
+                    }
+                    return;
+                }
+            }
+        }
     }
 
     /**
@@ -432,8 +442,8 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
             if (renderable instanceof ControlPoint) {
                 ControlPoint controlPoint = (ControlPoint) renderable;
                 Integer controlIndex = (Integer) controlPoint.getValue("INDEX");
-				//List<Position> positions = (List<Position>) controlPoint.getValue("LIST");
-                if (controlIndex != null && controlIndex == index) {
+				List<Position> controlList = (List<Position>) controlPoint.getValue("LIST");
+                if (controlIndex != null && controlIndex == index && controlList == list) {
                     controlPoint.setPosition(position);
                     //found = true;
                     break;
@@ -617,11 +627,13 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
             return;
         }
 
-        this.surfaceShape.getBoundaries().forEach(boundary -> {
-            @SuppressWarnings("unchecked")
-            List<Position> list = (List<Position>) boundary;//TODO: boundary puede cambiar de orden por lo que necesito mantener una copia local
-            createControlPointsForList(list);
-        });
+        for (SurfacePolygon shape : this.surfaceShapes) {
+            shape.getBoundaries().forEach(boundary -> {
+                @SuppressWarnings("unchecked")
+                List<Position> list = (List<Position>) boundary;
+                createControlPointsForList(list);
+            });
+        }
 
         // createControlPointsForList(this.positions);
 
