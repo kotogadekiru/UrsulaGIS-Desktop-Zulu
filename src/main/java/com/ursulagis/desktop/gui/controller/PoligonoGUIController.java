@@ -70,6 +70,7 @@ import com.ursulagis.desktop.gui.PoligonLayerFactory;
 import com.ursulagis.desktop.gui.PoligonoDialog;
 import com.ursulagis.desktop.gui.PulverizacionConfigDialogController;
 import com.ursulagis.desktop.gui.SiembraConfigDialogController;
+import com.ursulagis.desktop.gui.SiembraConfigPrefill;
 import com.ursulagis.desktop.gui.SiembraDosisObjetivoDialog;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.nww.LayerAction;
@@ -227,7 +228,10 @@ public class PoligonoGUIController extends AbstractGUIController{
 		rootNodeP.add(new LayerAction((layer)->{
 			List<Poligono> poligonos = main.getPoligonosSeleccionados();
 			executorPool.submit(()->{			
-				poligonos.stream().forEach(p->p.setActivo(true));
+				poligonos.stream().forEach(p -> {
+					PoligonLayerFactory.syncPoligonoFromMeasureTool(p);
+					p.setActivo(true);
+				});
 				DAH.saveAll(poligonos);
 //				try {
 //					LayerList layers = this.getWwd().getModel().getLayers();
@@ -315,6 +319,14 @@ public class PoligonoGUIController extends AbstractGUIController{
 				doSimplificarPoligono((Poligono)layerObject);
 			}
 			return "simplifique poligono"; //-NLS-1$
+		}));
+
+		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.explotarPoligono"),(layer)->{
+			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
+				doExplotarPoligono((Poligono)layerObject);
+			}
+			return "explotar poligono"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.poligonToSiembraAction"),(layer)->{
@@ -523,11 +535,17 @@ public class PoligonoGUIController extends AbstractGUIController{
 		// }
 	}
 	private void doCrearSiembra(List<Poligono> polis) {
+		doCrearSiembra(polis, null, null);
+	}
+
+	private void doCrearSiembra(List<Poligono> polis, SiembraConfigPrefill prefill, Runnable onComplete) {
 		SiembraLabor labor = new SiembraLabor();
 		LaborLayer layer = new LaborLayer();
 		labor.setLayer(layer);
 		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("CosechaGUIController.siembra")); //-NLS-1$ //-NLS-2$
-		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(labor);
+		Optional<SiembraLabor> siembraConfigured = prefill != null
+				? SiembraConfigDialogController.config(labor, prefill)
+				: SiembraConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
 			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
@@ -567,6 +585,9 @@ public class PoligonoGUIController extends AbstractGUIController{
 			System.out.println("CrearSiembraMapTask succeeded"); //-NLS-1$
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_SIEMBRA);
+			if (onComplete != null) {
+				onComplete.run();
+			}
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
 	}
@@ -747,6 +768,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 	}
 
 	private void doGuardarPoligono(Poligono p){
+		PoligonLayerFactory.syncPoligonoFromMeasureTool(p);
 		p.setActivo(true);
 		DAH.save(p);
 	}
@@ -900,6 +922,28 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 	}
 	
+	/**
+	 * Crea un poligono independiente por cada parte del multipoligono original.
+	 */
+	private void doExplotarPoligono(Poligono p) {
+		List<Poligono> partes = GeometryHelper.explotarPoligono(p);
+		if(partes.isEmpty()) {
+			Platform.runLater(()->{
+				Alert alert = new Alert(Alert.AlertType.INFORMATION);
+				alert.initOwner(JFXMain.stage);
+				alert.setTitle(Messages.getString("JFXMain.explotarPoligono"));
+				alert.setHeaderText(Messages.getString("JFXMain.explotarPoligonoSinglePart"));
+				alert.showAndWait();
+			});
+			return;
+		}
+		if(p.getLayer() != null) {
+			p.getLayer().setEnabled(false);
+		}
+		showPoligonos(partes);
+		playSound();
+	}
+
 	/**
 	 * metodo que reemplaza los puntos por una version interpolada
 	 */
@@ -1177,6 +1221,11 @@ public class PoligonoGUIController extends AbstractGUIController{
 	}
 
 	public void doConvertirPoligonosASiembra() {
+		doConvertirPoligonosASiembra(null, null);
+	}
+
+	/** Opens seeding dialog with optional pre-fill; {@code onComplete} runs after the map task succeeds. */
+	public void doConvertirPoligonosASiembra(SiembraConfigPrefill prefill, Runnable onComplete) {
 		List<Poligono> geometriasActivas = new ArrayList<Poligono>();
 		//1 obtener los poligonos activos
 		//String nombre = Messages.getString("JFXMain.poligonIntersectionNamePrefix");
@@ -1192,7 +1241,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			}
 		}
 		System.out.println("generando siembra para "+geometriasActivas.size()+" poligonos");
-		doCrearSiembra(geometriasActivas);
+		doCrearSiembra(geometriasActivas, prefill, onComplete);
 		//		Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 		//		if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
 		//			//
@@ -1541,5 +1590,76 @@ public class PoligonoGUIController extends AbstractGUIController{
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Downloads NDVI for a polygon between dates without showing the date picker (chat workflow).
+	 */
+	@SuppressWarnings("unchecked")
+	public void downloadNdviForPoligono(Poligono poligono, java.time.LocalDate begin, java.time.LocalDate end, Runnable onComplete) {
+		if (poligono == null) {
+			return;
+		}
+		ObservableList<Ndvi> observableList = FXCollections.observableArrayList(new ArrayList<Ndvi>());
+		observableList.addListener((ListChangeListener<Ndvi>) c -> {
+			if (c.next()) {
+				c.getAddedSubList().forEach(ndvi -> main.ndviGUIController.showNdvi(poligono, ndvi, false));
+			}
+		});
+
+		GetNdviForLaborTask4 task = new GetNdviForLaborTask4(poligono, observableList);
+		task.setBeginDate(begin);
+		task.setFinDate(end);
+		task.setIgnoreNDVI((List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class));
+		task.installProgressBar(progressBox);
+		task.setOnSucceeded(handler -> {
+			poligono.getLayer().setEnabled(false);
+			task.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DOWNLOADED);
+			if (onComplete != null) {
+				onComplete.run();
+			}
+		});
+		JFXMain.executorPool.submit(task);
+	}
+
+	/**
+	 * Enables polygons with area &gt; {@code minAreaHa} and disables the rest (chat).
+	 */
+	@SuppressWarnings("unchecked")
+	public int activarPoligonosConSuperficieMayorA(double minAreaHa) {
+		List<Poligono> poligonos = (List<Poligono>) (List<?>) main.getObjectFromLayersOfClass(Poligono.class);
+		int enabled = 0;
+		for (Poligono p : poligonos) {
+			if (p.getLayer() == null) {
+				continue;
+			}
+			double areaHa = areaHa(p);
+			boolean on = areaHa > minAreaHa;
+			p.getLayer().setEnabled(on);
+			p.setActivo(on);
+			if (on) {
+				enabled++;
+			}
+		}
+		if (getLayerPanel() != null && getWwd() != null) {
+			getLayerPanel().update(getWwd());
+		}
+		return enabled;
+	}
+
+	private static double areaHa(Poligono p) {
+		if (p.getArea() > 0) {
+			return p.getArea();
+		}
+		try {
+			var g = p.toGeometry();
+			if (g != null && !g.isEmpty()) {
+				return ProyectionConstants.A_HAS(g.getArea());
+			}
+		} catch (Exception ignored) {
+			// geometry unavailable
+		}
+		return 0;
 	}
 }
