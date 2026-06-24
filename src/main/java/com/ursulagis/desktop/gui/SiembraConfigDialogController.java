@@ -259,7 +259,10 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 		
 		//textPrecioGrano
 		configPrecioInsumoUnit();
-		String precioInsumoLaborUsdKg = props.getPropertyOrDefault(SiembraLabor.COLUMNA_PRECIO_SEMILLA, PropertyHelper.formatDouble(labor.getPrecioInsumo()));
+		String precioInsumoLaborUsdKg =PropertyHelper.formatDouble(labor.getPrecioInsumo());
+		if(precioInsumoLaborUsdKg==null) {
+			precioInsumoLaborUsdKg = props.getPropertyOrDefault(SiembraLabor.COLUMNA_PRECIO_SEMILLA, PropertyHelper.formatDouble(0.0));
+		}
 		SiembraConfig.Unidad unidadPrecioInsumo = labor.getConfiguracion().precioInsumoUnitProperty().get();
 		String precioDialog =precioInsumoLaborUsdKg;
 		if(unidadPrecioInsumo == SiembraConfig.Unidad.Bolsa) {
@@ -289,8 +292,11 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 		//textCostoCosechaHa
 		//Bindings.bindBidirectional(this.textCostoLaborHa.textProperty(), labor.precioLaborProperty, converter);
 		//TODO tomar el valor de la labor y si es null levantar la configuracion. sino tomar el valor de la labor.
-		this.textCostoLaborHa.textProperty().set(props.getPropertyOrDefault(SiembraLabor.COSTO_LABOR_SIEMBRA, labor.getPrecioLabor().toString()));
-
+		if(labor.getPrecioLabor()==null) {
+		this.textCostoLaborHa.textProperty().set(props.getPropertyOrDefault(SiembraLabor.COSTO_LABOR_SIEMBRA, PropertyHelper.formatDouble(0.0)));
+		}else{
+			this.textCostoLaborHa.textProperty().set(PropertyHelper.formatDouble(labor.getPrecioLabor()));
+		}
 
 		labor.setPrecioLabor(
 				PropertyHelper.parseDouble(this.textCostoLaborHa.textProperty().get()).doubleValue()
@@ -310,9 +316,24 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 
 		//System.out.println("valor entresurco Labor = "+converter.toString(labor.getEntreSurco()));
 		//System.out.println("valor entresurco default = "+labor.config.getConfigProperties().getPropertyOrDefault(SiembraLabor.ENTRE_SURCO_DEFAULT_KEY,null));
-		this.textEntresurco.textProperty().set(props.getPropertyOrDefault(SiembraLabor.ENTRE_SURCO_DEFAULT_KEY, PropertyHelper.formatDouble(labor.getEntreSurco())));
 
-		labor.setEntreSurco(PropertyHelper.parseDouble(this.textEntresurco.textProperty().get()).doubleValue());
+		if(labor.getEntreSurco()==null) {
+
+			String defaultEntresurco = props.getPropertyOrDefault(SiembraLabor.ENTRE_SURCO_DEFAULT_KEY,
+				PropertyHelper.formatDouble(0.42));//localized default value
+			this.textEntresurco.textProperty().set(
+				props.getPropertyOrDefault(SiembraLabor.ENTRE_SURCO_DEFAULT_KEY,
+					defaultEntresurco)
+					);//localized default value
+					
+			labor.setEntreSurco(
+				PropertyHelper.parseDouble(
+					this.textEntresurco.textProperty().get()).doubleValue());
+		}
+		this.textEntresurco.textProperty().set(
+			PropertyHelper.formatDouble(labor.getEntreSurco())
+				);//localized default value
+				
 		//inicializo el entresurco de la labor con lo del texProperty
 		//this.textEntresurco.textProperty().set(converter.toString(labor.getEntreSurco()));
 		this.textEntresurco.textProperty().addListener((obj,old,n)->{
@@ -423,9 +444,48 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 
 	}
 
+	/** Pre-selects seed and row spacing before the user confirms the dialog. */
+	public void applyPrefill(SiembraConfigPrefill prefill) {
+		if (prefill == null || labor == null) {
+			return;
+		}
+		if (prefill.rowSpacingM() > 0) {
+			textEntresurco.setText(PropertyHelper.formatDouble(prefill.rowSpacingM()));
+			labor.setEntreSurco(prefill.rowSpacingM());
+			labor.getConfiguracion().getConfigProperties().setProperty(
+					SiembraLabor.ENTRE_SURCO_DEFAULT_KEY, PropertyHelper.formatDouble(prefill.rowSpacingM()));
+		}
+		if (prefill.seedNameHint() != null && !prefill.seedNameHint().isBlank()) {
+			selectSeedByHint(prefill.seedNameHint());
+		}
+	}
+
+	private void selectSeedByHint(String hint) {
+		String normalized = hint.toLowerCase(java.util.Locale.ROOT);
+		String primary = normalized.split("\\s+")[0];
+		comboInsumo.getItems().stream()
+				.filter(s -> seedMatchesHint(s.getNombre(), normalized, primary))
+				.findFirst()
+				.ifPresent(s -> comboInsumo.getSelectionModel().select(s));
+	}
+
+	private static boolean seedMatchesHint(String seedName, String fullHint, String primaryToken) {
+		if (seedName == null) {
+			return false;
+		}
+		String n = seedName.toLowerCase(java.util.Locale.ROOT);
+		return n.contains(primaryToken)
+				|| (fullHint.contains("baguet") && n.contains("baguet"))
+				|| (fullHint.contains("pehuen") && n.contains("pehuen"));
+	}
+
 
 
 	public static Optional<SiembraLabor> config(SiembraLabor labor2) {
+		return config(labor2, null);
+	}
+
+	public static Optional<SiembraLabor> config(SiembraLabor labor2, SiembraConfigPrefill prefill) {
 		Optional<SiembraLabor> ret = Optional.empty();
 		try{
 			FXMLLoader myLoader = new FXMLLoader(SiembraConfigDialogController.class.getResource(
@@ -434,6 +494,9 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 			myLoader.load();//aca se crea el constructor
 			SiembraConfigDialogController controller = ((SiembraConfigDialogController) myLoader.getController());
 			controller.setLabor(labor2);
+			if (prefill != null) {
+				controller.applyPrefill(prefill);
+			}
 			controller.init();
 			ret = controller.showAndWait();
 		} catch (IOException e1) {

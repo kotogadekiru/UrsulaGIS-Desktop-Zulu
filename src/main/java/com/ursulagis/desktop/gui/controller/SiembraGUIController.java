@@ -7,9 +7,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.concurrent.Executor;
 
 import org.geotools.api.data.FileDataStore;
+import org.geotools.api.data.FileDataStoreFinder;
 
 import com.ursulagis.desktop.api.OrdenSiembra;
 import com.ursulagis.desktop.dao.Labor;
@@ -305,6 +307,7 @@ public class SiembraGUIController {
 		siembraFertTask.installProgressBar(main.progressBox);
 		siembraFertTask.setOnSucceeded(handler -> {
 			SiembraLabor ret = (SiembraLabor)handler.getSource().getValue();
+			System.out.println("el entresurco de la siembra fertilizada es: " + ret.getEntreSurco());
 			siembraFertTask.uninstallProgressBar();
 			siembraEnabled.getLayer().setEnabled(false);
 			fertEnabled.getLayer().setEnabled(false);
@@ -320,6 +323,10 @@ public class SiembraGUIController {
 	}
 	
 	private void doOpenSiembraMap(List<File> files) {
+		doOpenSiembraMap(files, null);
+	}
+
+	public void doOpenSiembraMap(List<File> files, Consumer<SiembraLabor> onImported) {
 		List<FileDataStore> stores = FileHelper.chooseShapeFileAndGetMultipleStores(files);
 		if (stores != null) {
 			for(FileDataStore store : stores){//abro cada store y lo dibujo en el harvestMap individualmente
@@ -343,6 +350,9 @@ public class SiembraGUIController {
 					System.out.println("OpenFertMapTask succeeded"); 
 					playSound();
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_IMPORTED);
+					if (onImported != null) {
+						onImported.accept(ret);
+					}
 				});//fin del OnSucceeded
 				JFXMain.executorPool.execute(umTask);
 			}//fin del for stores
@@ -406,7 +416,25 @@ public class SiembraGUIController {
 				playSound();
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_EXPORTED);
 				ept.uninstallProgressBar();
-				this.doOpenSiembraMap(Collections.singletonList(ret));
+				try{
+					FileDataStore store = FileDataStoreFinder.getDataStore(ret);
+					SiembraLabor labor = new SiembraLabor(store);
+					labor.setLayer(new LaborLayer());
+					labor.setNombre(nombre + "presc");			
+					labor.setEntreSurco(laborToExport.getEntreSurco());	
+					labor.setPlantasPorMetro(laborToExport.getPlantasPorMetro());
+					labor.setSemilla(laborToExport.getSemilla());
+					labor.setFertLinea(laborToExport.getFertLinea());
+					labor.setFertCostado(laborToExport.getFertCostado());
+					//labor.setClasificador(laborToExport.getClasificador().clone());
+					labor.setFecha(laborToExport.getFecha());
+					labor.setPrecioInsumo(laborToExport.getPrecioInsumo());
+					labor.setPrecioLabor(laborToExport.getPrecioLabor());
+					insertBeforeCompass(getWwd(), labor.getLayer());
+					this.doEditSiembra(labor);
+				} catch(Exception e) {
+					e.printStackTrace();
+				}
 			});
 			executorPool.execute(ept);	
 		}
@@ -518,5 +546,56 @@ public class SiembraGUIController {
 	private void playSound() {
 		main.playSound();
 		
+	}
+
+	/**
+	 * Generates fertilized seeding from active siembra + fertilización (chat workflow).
+	 */
+	public void generarSiembraFertilizadaProgrammatic(boolean fertilizacionEnLinea) {
+		generarSiembraFertilizadaProgrammatic(fertilizacionEnLinea, null);
+	}
+
+	public void generarSiembraFertilizadaProgrammatic(boolean fertilizacionEnLinea, Runnable onComplete) {
+		try {
+			main.getFertilizacionesSeleccionadas().get(0);
+		} catch (Exception e) {
+			Alert noFertAlert = new Alert(Alert.AlertType.INFORMATION);
+			noFertAlert.initOwner(JFXMain.stage);
+			noFertAlert.setTitle("No hay ninguna fertilizacion seleccionada");
+			noFertAlert.setContentText("Seleccione una fertilizacion o cree una nueva para continuar");
+			noFertAlert.show();
+			return;
+		}
+		try {
+			main.getSiembrasSeleccionadas().get(0);
+		} catch (Exception e) {
+			Alert noSiemAlert = new Alert(Alert.AlertType.INFORMATION);
+			noSiemAlert.initOwner(JFXMain.stage);
+			noSiemAlert.setTitle("No hay ninguna siembra seleccionada");
+			noSiemAlert.setContentText("Seleccione una siembra para continuar");
+			noSiemAlert.show();
+			return;
+		}
+
+		SiembraLabor siembraEnabled = main.getSiembrasSeleccionadas().get(0);
+		FertilizacionLabor fertEnabled = main.getFertilizacionesSeleccionadas().get(0);
+
+		SiembraFertTask siembraFertTask = new SiembraFertTask(siembraEnabled, fertEnabled, fertilizacionEnLinea);
+		siembraFertTask.installProgressBar(main.progressBox);
+		siembraFertTask.setOnSucceeded(handler -> {
+			SiembraLabor ret = (SiembraLabor) handler.getSource().getValue();
+			siembraFertTask.uninstallProgressBar();
+			siembraEnabled.getLayer().setEnabled(false);
+			fertEnabled.getLayer().setEnabled(false);
+			this.insertBeforeCompass(main.getWwd(), ret.getLayer());
+			main.getLayerPanel().update(main.getWwd());
+			main.playSound();
+			main.viewGoTo(ret);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZED_SEEDING_GENERATED);
+			if (onComplete != null) {
+				onComplete.run();
+			}
+		});
+		this.executorPool.execute(siembraFertTask);
 	}
 }

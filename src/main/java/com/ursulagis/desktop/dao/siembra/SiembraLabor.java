@@ -76,7 +76,7 @@ public class SiembraLabor extends Labor<SiembraItem> {
 	private Fertilizante fertCostado=null;
 	//private Double cantidadFertilizanteCostado=0.0;
 	
-	private Double entreSurco = Double.valueOf(0.42);
+	private Double entreSurco = null;// Double.valueOf(0.42);
 	private Double plantasPorMetro = Double.valueOf(300);
 	
 	
