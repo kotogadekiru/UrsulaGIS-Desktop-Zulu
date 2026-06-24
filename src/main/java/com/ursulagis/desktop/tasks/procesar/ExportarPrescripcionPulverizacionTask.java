@@ -37,6 +37,7 @@ import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.tasks.ProgresibleTask;
 import com.ursulagis.desktop.utils.FileHelper;
+import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
@@ -107,8 +108,9 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 		Integer id =0;
 		for(LaborItem i:items) {//(it.hasNext()){
 			PulverizacionItem fi=(PulverizacionItem) i;
-			Geometry itemGeometry=fi.getGeometry();
-			List<Polygon> flatPolygons = PolygonValidator.geometryToFlatPolygons(itemGeometry);
+			Geometry itemGeometry=GeometryHelper.limitPrescriptionGeometryParts(fi.getGeometry());
+			List<Polygon> flatPolygons = GeometryHelper.limitPrescriptionFlatPolygons(
+					PolygonValidator.geometryToFlatPolygons(itemGeometry));
 			
 			for(Polygon p : flatPolygons){
 				//fb.add(p);

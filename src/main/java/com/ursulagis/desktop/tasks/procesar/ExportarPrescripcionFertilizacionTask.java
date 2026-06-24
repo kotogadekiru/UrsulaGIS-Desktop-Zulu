@@ -90,23 +90,20 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 		int exportSize=0;
 		for(LaborItem i:items) {
 			FertilizacionItem fi=(FertilizacionItem) i;
-			Geometry itemGeometry=fi.getGeometry();
+			Geometry itemGeometry=GeometryHelper.limitPrescriptionGeometryParts(fi.getGeometry());
 			
 			if(itemGeometry == null) {
 				System.err.println("Saltando item con geometría nula: " + i.getId());
 				continue;
 			}
 
-			List<Polygon> flatPolygons = PolygonValidator.geometryToFlatPolygons(itemGeometry);
+			List<Polygon> flatPolygons = GeometryHelper.limitPrescriptionFlatPolygons(
+					PolygonValidator.geometryToFlatPolygons(itemGeometry));
 			if(flatPolygons.size()>1) {
 				System.out.println("flatPoligons es mas de 1 deberia ser 1 "+flatPolygons.size());
 			}
 
 			for(Polygon p : flatPolygons){
-				//				if(p.getNumGeometries()>50) {
-				//					//quedarse con las 50 mas grandes
-				//				}
-
 				Geometry simplifiedGeometry=GeometryHelper.douglassPeuckerSimplify(p);//esto hace que sea mas liviano
 				Double dosisHa = fi.getDosistHa();
 				SimpleFeature exportFeature = fb.buildFeature(null, new Object[]{simplifiedGeometry,dosisHa,0,0});
