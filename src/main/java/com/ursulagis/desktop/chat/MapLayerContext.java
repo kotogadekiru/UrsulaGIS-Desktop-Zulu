@@ -1,5 +1,6 @@
 package com.ursulagis.desktop.chat;
 
+import java.util.Comparator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,6 +9,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ursulagis.desktop.dao.Labor;
+import com.ursulagis.desktop.dao.Ndvi;
+import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
 
@@ -113,6 +116,61 @@ public class MapLayerContext {
 			return Optional.of(active.get(0));
 		}
 		return Optional.empty();
+	}
+
+	public List<LoadedLayerInfo> findPolygons() {
+		return layers.stream()
+				.filter(info -> info.getEntity() instanceof Poligono)
+				.collect(Collectors.toList());
+	}
+
+	public List<LoadedLayerInfo> findPolygonsMatching(String nameHint) {
+		if (nameHint == null || nameHint.isBlank()) {
+			return findPolygons();
+		}
+		String needle = nameHint.toLowerCase(Locale.ROOT);
+		List<LoadedLayerInfo> matches = layers.stream()
+				.filter(info -> info.getEntity() instanceof Poligono)
+				.filter(info -> info.getName() != null
+						&& info.getName().toLowerCase(Locale.ROOT).contains(needle))
+				.collect(Collectors.toList());
+		if (!matches.isEmpty()) {
+			return matches;
+		}
+		return findPolygons().stream()
+				.sorted(Comparator.comparingInt(info -> nameSimilarity(needle, info.getName())))
+				.limit(3)
+				.collect(Collectors.toList());
+	}
+
+	public List<LoadedLayerInfo> findNdviLayers() {
+		return layers.stream()
+				.filter(info -> info.getEntity() instanceof Ndvi)
+				.collect(Collectors.toList());
+	}
+
+	public Optional<LoadedLayerInfo> findNdviWithHighestMean() {
+		return findNdviLayers().stream()
+				.filter(info -> info.getEntity() instanceof Ndvi ndvi && ndvi.getMeanNDVI() != null)
+				.max(Comparator.comparingDouble(info -> ((Ndvi) info.getEntity()).getMeanNDVI()));
+	}
+
+	private double ndviMean(LoadedLayerInfo info) {
+		if (info.getEntity() instanceof Ndvi ndvi && ndvi.getMeanNDVI() != null) {
+			return ndvi.getMeanNDVI();
+		}
+		return Double.NEGATIVE_INFINITY;
+	}
+
+	private static int nameSimilarity(String needle, String name) {
+		if (name == null) {
+			return Integer.MAX_VALUE;
+		}
+		String lower = name.toLowerCase(Locale.ROOT);
+		if (lower.contains(needle)) {
+			return 0;
+		}
+		return Math.abs(lower.length() - needle.length());
 	}
 
 	public String toPromptSection() {
