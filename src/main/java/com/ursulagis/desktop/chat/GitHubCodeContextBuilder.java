@@ -59,9 +59,11 @@ public final class GitHubCodeContextBuilder {
 			Map.entry("soil", List.of(
 					"src/main/java/com/ursulagis/desktop/gui/controller/SueloGUIController.java")),
 			Map.entry("siembra", List.of(
-					"src/main/java/com/ursulagis/desktop/gui/controller/SiembraGUIController.java")),
+					"src/main/java/com/ursulagis/desktop/gui/controller/SiembraGUIController.java",
+					"src/main/java/com/ursulagis/desktop/chat/SiembraFertilizadaWorkflowGuide.java")),
 			Map.entry("fertiliz", List.of(
-					"src/main/java/com/ursulagis/desktop/gui/controller/FertilizacionGUIController.java")),
+					"src/main/java/com/ursulagis/desktop/gui/controller/FertilizacionGUIController.java",
+					"src/main/java/com/ursulagis/desktop/gui/controller/CosechaGUIController.java")),
 			Map.entry("pulveriz", List.of(
 					"src/main/java/com/ursulagis/desktop/gui/controller/PulverizacionGUIController.java")),
 			Map.entry("margen", List.of(
