@@ -19,7 +19,7 @@ echo.
 
 REM Run the application with development profile
 echo Starting application in development mode...
-call mvn javafx:run -Djavafx.options="-Dprism.verbose=true -Xmx2g -XX:+UseG1GC"
+call mvn javafx:run -Djavafx.options="-Dprism.verbose=true -Xms2g -Xmx20g -XX:+UseG1GC"
 
 if %ERRORLEVEL% neq 0 (
     echo.

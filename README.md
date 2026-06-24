@@ -93,19 +93,19 @@ mvn javafx:run
 #### Development Mode
 ```bash
 # Run with verbose logging and optimized JVM settings
-mvn javafx:run -Djavafx.options="-Dprism.verbose=true -Xmx2g -XX:+UseG1GC"
+mvn javafx:run -Djavafx.options="-Dprism.verbose=true -Xms2g -Xmx20g -XX:+UseG1GC"
 ```
 
 #### Debug Mode
 ```bash
 # Run with remote debugging on port 5005
-mvn javafx:run -Djavafx.options="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -Xmx2g -XX:+UseG1GC"
+mvn javafx:run -Djavafx.options="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -Xms2g -Xmx20g -XX:+UseG1GC"
 ```
 
 #### Custom JVM Options
 ```bash
 # Run with custom memory settings
-mvn javafx:run -Djavafx.options="-Xmx4g -XX:+UseG1GC"
+mvn javafx:run -Djavafx.options="-Xms2g -Xmx20g -XX:+UseG1GC"
 ```
 
 ### Available Maven Profiles
@@ -166,7 +166,7 @@ mvn javafx:run -Djavafx.options="-Dprism.order=es2"
 **Memory issues:**
 ```bash
 # Increase heap size
-mvn javafx:run -Djavafx.options="-Xmx4g -XX:+UseG1GC"
+mvn javafx:run -Djavafx.options="-Xms2g -Xmx20g -XX:+UseG1GC"
 ```
 
 **Debug connection issues:**

@@ -7,3 +7,4 @@ encoding//src/packaging=UTF-8
 encoding//src/test/java=UTF-8
 encoding//target/generated-sources/protobuf/java=UTF-8
 encoding/<project>=UTF-8
+encoding/docs=UTF-8

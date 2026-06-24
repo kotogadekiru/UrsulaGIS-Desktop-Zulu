@@ -22,7 +22,7 @@ echo Starting application in debug mode...
 echo Debug port: 5005
 echo Connect your IDE debugger to localhost:5005
 echo.
-call mvn javafx:run -Djavafx.options="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -Xmx2g -XX:+UseG1GC"
+call mvn javafx:run -Djavafx.options="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -Xms2g -Xmx20g -XX:+UseG1GC"
 
 if %ERRORLEVEL% neq 0 (
     echo.

@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "java: compile workspace",
+            "type": "java",
+            "command": "compile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "maven-compile",
+            "type": "shell",
+            "command": "mvn",
+            "args": [
+                "compile",
+                "-q",
+                "-DskipTests"
+            ],
+            "group": "build",
+            "problemMatcher": []
+        }
+    ]
+}

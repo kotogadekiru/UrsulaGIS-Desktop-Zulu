@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "GeometryHelper",
+            "request": "launch",
+            "mainClass": "com.ursulagis.desktop.utils.GeometryHelper",
+            "projectName": "UrsulaGIS-Desktop_Zulu"
+        },
+        {
+            "type": "java",
             "name": "JdlProtobufFrameDiagnostic",
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.dao.utils.JdlProtobufFrameDiagnostic",
@@ -76,13 +83,6 @@
         },
         {
             "type": "java",
-            "name": "JFXMain",
-            "request": "launch",
-            "mainClass": "com.ursulagis.desktop/com.ursulagis.desktop.gui.JFXMain",
-            "projectName": "UrsulaGIS-Desktop_Zulu"
-        },
-        {
-            "type": "java",
             "name": "OpenBrowserUrl",
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.gui.utils.OpenBrowserUrl",
@@ -94,6 +94,9 @@
             "request": "launch",
             "mainClass": "com.ursulagis.desktop.gui.JFXMain",
             "projectName": "UrsulaGIS-Desktop_Zulu",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "shortenCommandLine": "argfile",
             "vmArgs": [
                 "-Dcnh.voyager2.native.dir=D:\\worskpaces\\CN1SDK_4.1.2\\Voyager2SampleApp\\Voyager2SampleApp\\JavaWrapper\\build\\Release",
                 "-Djava.awt.headless=false",
@@ -106,8 +109,6 @@
                 "-Xmx20G",
                 "-XX:+UseZGC",
                 "-XX:MaxGCPauseMillis=200",
-                "-XX:+UseStringDeduplication",
-                "-Xdebug",
                 "--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED",
                 "--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED",
                 "--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED",
