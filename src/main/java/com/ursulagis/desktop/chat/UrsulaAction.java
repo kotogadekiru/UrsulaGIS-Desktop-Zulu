@@ -14,6 +14,7 @@ public enum UrsulaAction {
 	UNKNOWN(false, false, false, "Unrecognized request"),
 
 	IMPORT_COSECHA(false, false, false, "Import harvest map from shapefile"),
+	IMPORT_SIEMBRA(false, false, false, "Import seeding map from shapefile"),
 	IMPORT_COSECHA_VOYAGER(false, false, false, "Import harvest from Voyager"),
 	IMPORT_RECORRIDA(false, false, false, "Import scouting route map"),
 	IMPORT_NDVI(false, false, false, "Import NDVI raster"),
@@ -26,11 +27,13 @@ public enum UrsulaAction {
 	MEDIR_DISTANCIA(false, false, false, "Measure distance on map"),
 	CREAR_POLIGONO(false, false, false, "Draw polygon / measure area"),
 	IMPORT_POLIGONO(false, false, false, "Import polygon layers from KML or SHP"),
+	ACTIVAR_POLIGONOS_SUPERFICIE(false, false, false, "Enable polygon layers with area greater than zero"),
 	CONVERTIR_POLIGONO_A_COSECHA(false, false, false, "Convert enabled polygon layers on the map into a harvest map"),
 	CONVERTIR_POLIGONO_A_SIEMBRA(false, false, false, "Convert enabled polygon layers into a seeding map"),
 	CONVERTIR_POLIGONO_A_FERTILIZACION(false, false, false, "Convert enabled polygon layers into a fertilization map"),
 	CONVERTIR_POLIGONO_A_PULVERIZACION(false, false, false, "Convert enabled polygon layers into a spray map"),
-	SHOW_LABORES_TABLE(false, false, false, "Show labors table"),
+	SHOW_LABORES_TABLE(false, false, false, "Show labores table"),
+	COMPARE_ACTIVE_LAYERS(false, false, false, "Compare active layers (multi-layer histogram)"),
 
 	GO_TO_LAYER(true, false, false, "Zoom to a labor layer"),
 	RESUMIR_LABOR(true, false, false, "Summarize / simplify a labor map"),
@@ -38,6 +41,7 @@ public enum UrsulaAction {
 	CLONAR_LABOR(true, false, false, "Clone a labor map"),
 	DOWNLOAD_NDVI(true, false, false, "Download NDVI for a labor"),
 	COMPARTIR_COSECHA(true, true, false, "Share harvest map"),
+	COMPARTIR_SIEMBRA(true, false, false, "Share seeding prescription (QR)"),
 
 	UPDATE_RECORRIDA(false, false, true, "Sync scouting route from cloud"),
 	EXPORT_RECORRIDA(false, false, true, "Export scouting route");

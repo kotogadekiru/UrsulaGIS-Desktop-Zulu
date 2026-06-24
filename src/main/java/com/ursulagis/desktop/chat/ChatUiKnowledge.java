@@ -17,6 +17,9 @@ public final class ChatUiKnowledge {
 				- Las capas habilitadas (marcadas) son las activas en el mapa; las deshabilitadas quedan ocultas.
 				- Clic derecho en un nodo de rama muestra acciones que aplican a las capas hijas seleccionadas/activas.
 				When the user asks to enable/disable/show/hide all layers of a type, tell them to use the branch checkbox in the layer tree.
+				When the user asks to activate polygons with area/superficie greater than zero, use action ACTIVAR_POLIGONOS_SUPERFICIE (not CREAR_POLIGONO).
+				When the user asks to load/import and share a seeding map (siembra), use IMPORT_SIEMBRA and/or COMPARTIR_SIEMBRA — not GENERAR_MARGEN/Rentabilidades.
+				The chat may include excerpts from official PDF manuals and video-tutorial transcripts (.txt) in docs/; transcript filenames describe the workflow (e.g. importar_cosecha.txt).
 				""";
 	}
 
@@ -28,6 +31,20 @@ public final class ChatUiKnowledge {
 				- EDIT existing margin: right-click a margin layer → Editar margen.
 				- SUM multiple margins: select two or more margin maps, right-click the Margen branch root → Sumar seleccionados.
 				When the user says generar, crear or calcular a margin map, do NOT answer with import steps first.
+				""";
+	}
+
+	public static String siembraFertilizadaWorkflowSection() {
+		return """
+				Fertilized seeding workflow (siembra fertilizada por ambientes):
+				1. Select polygon by name (e.g. Regalada) — match loaded polygons or offer closest names.
+				2. Download NDVI for the soybean campaign (e.g. 25/26): Polígonos → Obtener NDVI or Herramientas → bulk NDVI.
+				3. Convert the NDVI layer with the highest mean NDVI to harvest: right-click NDVI → Convertir NDVI a Cosecha; crop soja; yield in t/ha (4600 kg/ha = 4.6 t/ha).
+				4. On that harvest: Recomendar Fert. P Reposición; choose monoammonium phosphate (fosfato monoamónico) as P source.
+				5. Convert lomas polygon to seeding: wheat, row spacing 0.19 m, seed Baguette 620 2627.
+				6. Convert other environment polygons (non-lomas): seed Pehuen (confirm variety).
+				7. For each seeding + P fertilization pair: Siembras → Generar Siembra Fertilizada (confirm in-line fert).
+				Ask user to confirm polygon, seed variety, or fert source when ambiguous.
 				""";
 	}
 }

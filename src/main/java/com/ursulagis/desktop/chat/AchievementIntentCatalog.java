@@ -29,6 +29,10 @@ public final class AchievementIntentCatalog {
 					"crear poligono", "crear polígono", "dibujar poligono", "dibujar polígono", "draw polygon", "new polygon"),
 			new ChatMapping(OnboardingAchievements.FIRST_POLYGON_IMPORTED, UrsulaAction.IMPORT_POLIGONO,
 					"importar poligono", "importar polígonos", "importar poligonos", "import polygon"),
+			new ChatMapping(OnboardingAchievements.FIRST_POLYGON_IMPORTED, UrsulaAction.ACTIVAR_POLIGONOS_SUPERFICIE,
+					"activa poligonos superficie", "activar poligonos superficie",
+					"activa los poligonos con superficie", "poligonos superficie mayor cero",
+					"enable polygons area"),
 			new ChatMapping(OnboardingAchievements.FIRST_DISTANCE_MEASURED, UrsulaAction.MEDIR_DISTANCIA,
 					"medir distancia", "measure distance"),
 			new ChatMapping(OnboardingAchievements.FIRST_POLYGON_TO_HARVEST, UrsulaAction.CONVERTIR_POLIGONO_A_COSECHA,
@@ -44,6 +48,10 @@ public final class AchievementIntentCatalog {
 					"convertir a pulverización"),
 			new ChatMapping(OnboardingAchievements.FIRST_HARVEST_IMPORTED, UrsulaAction.IMPORT_COSECHA,
 					"importar cosecha", "abrir cosecha", "import harvest", "open harvest"),
+			new ChatMapping(OnboardingAchievements.FIRST_SEEDING_IMPORTED, UrsulaAction.IMPORT_SIEMBRA,
+					"importar siembra", "cargar siembra", "abrir siembra", "import seeding", "open seeding"),
+			new ChatMapping(OnboardingAchievements.FIRST_SEEDING_SHARED, UrsulaAction.COMPARTIR_SIEMBRA,
+					"compartir siembra", "share seeding", "cargar siembra compartir", "cargar una siembra y compartirla"),
 			new ChatMapping(OnboardingAchievements.FIRST_RECORRIDA_IMPORTED, UrsulaAction.IMPORT_RECORRIDA,
 					"importar recorrida", "abrir recorrida", "import recorrida"),
 			new ChatMapping(OnboardingAchievements.FIRST_SOIL_IMPORTED, UrsulaAction.IMPORT_SUELO,
@@ -52,8 +60,12 @@ public final class AchievementIntentCatalog {
 					"balance nutrientes", "balance de nutrientes", "nutrient balance"),
 			new ChatMapping(OnboardingAchievements.FIRST_GENERIC_SHAPEFILES_JOINED, UrsulaAction.JUNTAR_SHAPES,
 					"unir shape", "juntar shape", "merge shape", "unir shapefiles"),
+			new ChatMapping(OnboardingAchievements.FIRST_CONFIG_MULTI_LAYER_HISTOGRAM, UrsulaAction.COMPARE_ACTIVE_LAYERS,
+					"comparar capas activas", "comparacion capas activas", "comparación capas activas",
+					"histograma multilayer", "comparar capas", "compare active layers"),
 			new ChatMapping(OnboardingAchievements.FIRST_GENERIC_LABOR_SUMMARIZED, UrsulaAction.RESUMIR_LABOR,
-					"resumir labor", "resumir capa", "simplificar", "simplify"),
+					"resumir labor", "resumir capa", "resumir cosecha", "resumir la cosecha",
+					"resumir cosecha activa", "simplificar", "simplify"),
 			new ChatMapping(OnboardingAchievements.FIRST_GENERIC_LABOR_EXPORTED, UrsulaAction.EXPORT_LABOR,
 					"exportar labor", "exportar capa", "export layer", "export shape"),
 			new ChatMapping(OnboardingAchievements.FIRST_GENERIC_LABOR_CLONED, UrsulaAction.CLONAR_LABOR,
@@ -161,6 +173,28 @@ public final class AchievementIntentCatalog {
 				&& !containsAnyToken(normalized, IMPORT_VERBS);
 	}
 
+	public static boolean isActivatePolygonsWithAreaQuery(String userQuery) {
+		if (userQuery == null || userQuery.isBlank()) {
+			return false;
+		}
+		String n = normalize(userQuery);
+		boolean activate = n.contains("activa") || n.contains("activar");
+		boolean polygon = n.contains("poligono");
+		boolean area = n.contains("superficie") || n.contains("area") || n.contains("mayor") || n.contains("cero");
+		return activate && polygon && area;
+	}
+
+	public static boolean isSiembraShareOrImportQuery(String userQuery) {
+		if (userQuery == null || userQuery.isBlank()) {
+			return false;
+		}
+		String n = normalize(userQuery);
+		boolean siembra = n.contains("siembra");
+		boolean share = n.contains("compartir");
+		boolean load = n.contains("cargar") || n.contains("importar") || n.contains("abrir");
+		return siembra && (share || load);
+	}
+
 	private record ScoredHint(String achievementId, double score) {
 	}
 
@@ -219,7 +253,10 @@ public final class AchievementIntentCatalog {
 		}
 		score = Math.max(score, tokenOverlapScore(normalizedUser, achievementLabel(mapping.achievementId())));
 		score = Math.max(score, tokenOverlapScore(normalizedUser, achievementHint(mapping.achievementId())));
-		return adjustMarginScore(normalizedUser, mapping.achievementId(), score);
+		score = adjustMarginScore(normalizedUser, mapping.achievementId(), score);
+		score = adjustPolygonActivateScore(normalizedUser, mapping.action(), score);
+		score = adjustSiembraQueryScore(normalizedUser, mapping.action(), score);
+		return score;
 	}
 
 	private static double scoreHintForQuery(String normalizedUser, String achievementId) {
@@ -243,6 +280,35 @@ public final class AchievementIntentCatalog {
 			} else if (containsAnyToken(normalizedUser, IMPORT_VERBS)) {
 				score = Math.max(score, 12.0);
 			}
+		}
+		return score;
+	}
+
+	private static double adjustPolygonActivateScore(String normalizedUser, UrsulaAction action, double score) {
+		if (!isActivatePolygonsWithAreaQuery(normalizedUser)) {
+			return score;
+		}
+		if (action == UrsulaAction.ACTIVAR_POLIGONOS_SUPERFICIE) {
+			return Math.max(score, 15.0);
+		}
+		if (action == UrsulaAction.CREAR_POLIGONO) {
+			return score * 0.05;
+		}
+		return score;
+	}
+
+	private static double adjustSiembraQueryScore(String normalizedUser, UrsulaAction action, double score) {
+		if (!isSiembraShareOrImportQuery(normalizedUser) || mentionsMargin(normalizedUser)) {
+			return score;
+		}
+		if (action == UrsulaAction.GENERAR_MARGEN) {
+			return score * 0.05;
+		}
+		if (action == UrsulaAction.COMPARTIR_SIEMBRA) {
+			return Math.max(score, 15.0);
+		}
+		if (action == UrsulaAction.IMPORT_SIEMBRA) {
+			return Math.max(score, 13.0);
 		}
 		return score;
 	}
@@ -297,6 +363,15 @@ public final class AchievementIntentCatalog {
 	}
 
 	static String suggestReply(String achievementId, UrsulaAction action) {
+		if (action == UrsulaAction.ACTIVAR_POLIGONOS_SUPERFICIE) {
+			return "¡Dale! Activo los polígonos con superficie mayor a cero.";
+		}
+		if (action == UrsulaAction.IMPORT_SIEMBRA) {
+			return "¡Dale! Abrí el importador de siembra (SHP).";
+		}
+		if (action == UrsulaAction.COMPARTIR_SIEMBRA) {
+			return "¡Dale! Comparto la siembra activa (prescripción en línea con QR).";
+		}
 		String hint = achievementHint(achievementId);
 		if (!hint.isBlank()) {
 			return "¡Dale! " + phraseFromHint(hint);
@@ -313,7 +388,7 @@ public final class AchievementIntentCatalog {
 		return trimmed;
 	}
 
-	static String normalize(String text) {
+	public static String normalize(String text) {
 		String lower = text.toLowerCase(Locale.ROOT);
 		String stripped = Normalizer.normalize(lower, Normalizer.Form.NFD)
 				.replaceAll("\\p{M}+", "");

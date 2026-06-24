@@ -9,6 +9,7 @@ import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
+import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
@@ -38,6 +39,7 @@ public class ChatActionExecutor {
 				main.cosechaGUIController.doOpenCosecha(null);
 				yield ActionExecutionResult.launched("Diálogo de importación de cosecha abierto.");
 			}
+			case IMPORT_SIEMBRA -> importSiembra(ctx, false);
 			case IMPORT_COSECHA_VOYAGER -> {
 				main.cosechaGUIController.doOpenCosechaVoyager();
 				yield ActionExecutionResult.launched("Importación Voyager iniciada.");
@@ -102,9 +104,19 @@ public class ChatActionExecutor {
 				main.poligonoGUIController.doImportarPoligonos(null);
 				yield ActionExecutionResult.launched("Diálogo de importación de polígonos abierto.");
 			}
+			case ACTIVAR_POLIGONOS_SUPERFICIE -> {
+				int count = main.poligonoGUIController.activarPoligonosConSuperficieMayorA(0);
+				yield ActionExecutionResult.launched(count > 0
+						? "Activé **" + count + "** polígono(s) con superficie mayor a 0 ha."
+						: "No hay polígonos con superficie mayor a 0 ha cargados en el mapa.");
+			}
 			case SHOW_LABORES_TABLE -> {
 				main.configGUIController.doShowLaboresTable();
 				yield ActionExecutionResult.launched("Tabla de labores abierta.");
+			}
+			case COMPARE_ACTIVE_LAYERS -> {
+				main.configGUIController.showMultiLayerHistoChart();
+				yield ActionExecutionResult.launched("Abriendo comparación de capas activas (histograma multilayer).");
 			}
 			case GO_TO_LAYER -> goToLabor(ctx);
 			case RESUMIR_LABOR -> resumirLabor(ctx);
@@ -112,6 +124,7 @@ public class ChatActionExecutor {
 			case CLONAR_LABOR -> clonarLabor(ctx);
 			case DOWNLOAD_NDVI -> downloadNdvi(ctx);
 			case COMPARTIR_COSECHA -> compartirCosecha(ctx);
+			case COMPARTIR_SIEMBRA -> compartirSiembra(ctx);
 			case UPDATE_RECORRIDA -> updateRecorrida(ctx);
 			case EXPORT_RECORRIDA -> exportRecorrida(ctx);
 			case UNKNOWN -> ActionExecutionResult.notLaunched(intent.getMessage());
@@ -119,12 +132,22 @@ public class ChatActionExecutor {
 	}
 
 	private void resolveTargets(ActionContext ctx, UrsulaAction action) {
-		if (action.requiresLabor() || action.requiresCosecha()) {
+		if (action == UrsulaAction.COMPARTIR_SIEMBRA) {
+			resolveSiembra(ctx);
+		} else if (action.requiresLabor() || action.requiresCosecha()) {
 			resolveLabor(ctx, action.requiresCosecha());
 		}
 		if (action.requiresRecorrida()) {
 			resolveRecorrida(ctx);
 		}
+	}
+
+	private void resolveSiembra(ActionContext ctx) {
+		LaborTargetResolver.resolveActiveSiembra(ctx.getLayerContext())
+				.or(() -> LaborTargetResolver.resolve(ctx.getLayerContext(), ctx.getTargetName(), false)
+						.filter(SiembraLabor.class::isInstance)
+						.map(SiembraLabor.class::cast))
+				.ifPresent(ctx::setLabor);
 	}
 
 	private void resolveLabor(ActionContext ctx, boolean cosechaOnly) {
@@ -141,34 +164,7 @@ public class ChatActionExecutor {
 	}
 
 	private Optional<Labor<?>> findLoadedLabor(ActionContext ctx, boolean cosechaOnly) {
-		MapLayerContext mapCtx = ctx.getLayerContext();
-		String targetName = ctx.getTargetName();
-
-		if (targetName != null && !targetName.isBlank()) {
-			Optional<LoadedLayerInfo> byName = mapCtx.findByName(targetName, true);
-			if (byName.isPresent()) {
-				return toLabor(byName.get(), cosechaOnly);
-			}
-		}
-
-		Optional<LoadedLayerInfo> selected = mapCtx.getSelectedLayer();
-		if (selected.isPresent()) {
-			Optional<Labor<?>> fromSelected = toLabor(selected.get(), cosechaOnly);
-			if (fromSelected.isPresent()) {
-				return fromSelected;
-			}
-		}
-
-		Optional<LoadedLayerInfo> singleActive = mapCtx.getSingleActiveLabor(cosechaOnly);
-		if (singleActive.isPresent()) {
-			return toLabor(singleActive.get(), cosechaOnly);
-		}
-
-		List<LoadedLayerInfo> loaded = mapCtx.getLabors(cosechaOnly);
-		if (loaded.size() == 1) {
-			return toLabor(loaded.get(0), cosechaOnly);
-		}
-		return Optional.empty();
+		return LaborTargetResolver.resolve(ctx.getLayerContext(), ctx.getTargetName(), cosechaOnly);
 	}
 
 	private Optional<Recorrida> findLoadedRecorrida(ActionContext ctx) {
@@ -211,12 +207,7 @@ public class ChatActionExecutor {
 	}
 
 	private static String ambiguousLaborMessage(ActionContext ctx, boolean cosechaOnly) {
-		List<LoadedLayerInfo> loaded = ctx.getLayerContext().getLabors(cosechaOnly);
-		if (loaded.isEmpty()) {
-			return "No hay capas de ese tipo cargadas en el mapa.";
-		}
-		String options = loaded.stream().map(LoadedLayerInfo::describe).collect(Collectors.joining(", "));
-		return "Hay varias capas cargadas. Especifica el nombre o activa solo una: " + options;
+		return LaborTargetResolver.ambiguousLaborMessage(ctx.getLayerContext(), ctx.getTargetName(), cosechaOnly);
 	}
 
 	private ActionExecutionResult goToLabor(ActionContext ctx) {
@@ -305,6 +296,36 @@ public class ChatActionExecutor {
 		}
 		main.cosechaGUIController.doCompartirCosecha(ctx.getCosecha());
 		return ActionExecutionResult.launched("Compartiendo cosecha " + nameOf(ctx.getCosecha()) + "...");
+	}
+
+	private ActionExecutionResult importSiembra(ActionContext ctx, boolean shareAfterImport) {
+		if (shareAfterImport) {
+			main.siembraGUIController.doOpenSiembraMap(null, imported ->
+					main.siembraGUIController.doCompartirSiembra(imported));
+			return ActionExecutionResult.launched(
+					"Seleccioná el SHP de siembra. Al terminar la importación la comparto automáticamente (QR).");
+		}
+		main.siembraGUIController.doOpenSiembraMap(null, null);
+		return ActionExecutionResult.launched("Diálogo de importación de siembra abierto.");
+	}
+
+	private ActionExecutionResult compartirSiembra(ActionContext ctx) {
+		if (!(ctx.getLabor() instanceof SiembraLabor siembra)) {
+			return ActionExecutionResult.notLaunched(LaborTargetResolver.ambiguousSiembraMessage(ctx.getLayerContext()));
+		}
+		main.siembraGUIController.doCompartirSiembra(siembra);
+		return ActionExecutionResult.launched("Compartiendo siembra **" + nameOf(siembra) + "**...");
+	}
+
+	public ActionExecutionResult importYCompartirSiembra(MapLayerContext layerContext) {
+		Optional<SiembraLabor> active = LaborTargetResolver.resolveActiveSiembra(layerContext);
+		if (active.isPresent()) {
+			ActionContext ctx = new ActionContext(main, null, layerContext);
+			ctx.setLabor(active.get());
+			return compartirSiembra(ctx);
+		}
+		ActionContext ctx = new ActionContext(main, null, layerContext);
+		return importSiembra(ctx, true);
 	}
 
 	private ActionExecutionResult updateRecorrida(ActionContext ctx) {

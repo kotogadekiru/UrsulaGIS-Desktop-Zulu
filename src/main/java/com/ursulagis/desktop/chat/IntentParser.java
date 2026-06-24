@@ -22,16 +22,22 @@ public class IntentParser {
 	private final AiClient aiClient;
 	private final MapLayerContext layerContext;
 	private final String codeContext;
+	private final String manualContext;
 	private AiResponse lastResponse;
 
 	public IntentParser(AiClient aiClient, MapLayerContext layerContext) {
-		this(aiClient, layerContext, "");
+		this(aiClient, layerContext, "", "");
 	}
 
 	public IntentParser(AiClient aiClient, MapLayerContext layerContext, String codeContext) {
+		this(aiClient, layerContext, codeContext, "");
+	}
+
+	public IntentParser(AiClient aiClient, MapLayerContext layerContext, String codeContext, String manualContext) {
 		this.aiClient = aiClient;
 		this.layerContext = layerContext != null ? layerContext : MapLayerContext.empty();
 		this.codeContext = codeContext != null ? codeContext : "";
+		this.manualContext = manualContext != null ? manualContext : "";
 	}
 
 	public AiClient getAiClient() {
@@ -56,6 +62,10 @@ public class IntentParser {
 		sb.append("Converting polygons on the map is not the same as importing a shapefile.\n");
 		sb.append("If no action applies, respond with action UNKNOWN.\n");
 		sb.append(ChatUiKnowledge.marginMapSection()).append('\n');
+		sb.append(ChatUiKnowledge.siembraFertilizadaWorkflowSection()).append('\n');
+		if (!manualContext.isBlank()) {
+			sb.append("\n").append(manualContext).append('\n');
+		}
 		if (!codeContext.isBlank()) {
 			sb.append("\nGitHub source context (").append(GitHubRepoConfig.OWNER).append('/')
 					.append(GitHubRepoConfig.REPO).append("):\n").append(codeContext).append('\n');

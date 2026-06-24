@@ -3,6 +3,8 @@ package com.ursulagis.desktop.chat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -61,6 +63,38 @@ class AchievementIntentCatalogTest {
 		if (imported >= 0) {
 			assertTrue(calculated < imported);
 		}
+	}
+
+	@Test
+	@DisplayName("\"activa los poligonos con superficie mayor a cero\" maps to ACTIVAR_POLIGONOS_SUPERFICIE not CREAR_POLIGONO")
+	void mapsActivatePolygonsByArea() {
+		String query = "activa los poligonos con superficie mayor a cero";
+		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
+
+		assertEquals(UrsulaAction.ACTIVAR_POLIGONOS_SUPERFICIE, match.action());
+		Optional<AchievementIntentMatch> crear = AchievementIntentCatalog.match("crear poligono");
+		assertTrue(crear.isPresent());
+		assertEquals(UrsulaAction.CREAR_POLIGONO, crear.get().action());
+	}
+
+	@Test
+	@DisplayName("\"cargar una siembra y compartirla\" maps to siembra actions not GENERAR_MARGEN")
+	void mapsLoadAndShareSiembra() {
+		String query = "cargar una siembra y compartirla";
+		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
+
+		assertEquals(UrsulaAction.COMPARTIR_SIEMBRA, match.action());
+		assertTrue(AchievementIntentCatalog.isSiembraShareOrImportQuery(query));
+	}
+
+	@Test
+	@DisplayName("\"comparar capas activas\" maps to COMPARE_ACTIVE_LAYERS")
+	void mapsCompareActiveLayers() {
+		AchievementIntentMatch match = AchievementIntentCatalog.match("comparar capas activas")
+				.orElseThrow();
+
+		assertEquals(UrsulaAction.COMPARE_ACTIVE_LAYERS, match.action());
+		assertEquals(OnboardingAchievements.FIRST_CONFIG_MULTI_LAYER_HISTOGRAM, match.achievementId());
 	}
 
 	@Test
