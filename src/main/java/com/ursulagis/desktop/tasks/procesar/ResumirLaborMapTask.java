@@ -61,7 +61,19 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 	}
 	
 	public void doProcess() throws IOException {
-		List<LaborItem> resumidas = resumirPorCategoria(this.labor);
+		int inputCount = aResumir.outCollection.size();
+		int numClasses = labor.clasificador.getNumClasses();
+		featureCount = inputCount + numClasses;
+		featureNumber = 0;
+		updateProgress(0, featureCount);
+
+		List<LaborItem> resumidas;
+		try {
+			resumidas = resumirPorCategoria(this.labor);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return;
+		}
 		if(labor.outCollection!=null)labor.outCollection.clear();
 		labor.treeCache=null;
 		labor.treeCacheEnvelope=null;
@@ -71,7 +83,7 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 		
 		labor.constructClasificador();
 		runLater(resumidas);//FIXME al resumir una siembra layer es null y da null pointer 
-		updateProgress(0, featureCount);
+		updateProgress(featureCount, featureCount);
 
 	}
 
@@ -81,12 +93,11 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 	 * @param labor
 	 * @return
 	 */
-	private List<LaborItem> resumirPorCategoria(Labor<?> labor) {
+	private List<LaborItem> resumirPorCategoria(Labor<?> labor) throws InterruptedException {
 		//TODO antes de proceder a dibujar las features
 		//agruparlas por clase y hacer un buffer cero
 		//luego crear un feature promedio para cada poligono individual
 		super.updateTitle("resumir geometrias");
-		updateProgress(0, 100);
 
 		//XXX inicializo la lista de las features por categoria
 		List<List<LaborItem>> itemsByCat = new ArrayList<List<LaborItem>>();
@@ -98,15 +109,17 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 		SimpleFeatureIterator it = aResumir.outCollection.features();
 
 		while(it.hasNext()){
+			checkCancelled();
 			SimpleFeature f = it.next();
 			LaborItem ci = aResumir.constructFeatureContainerStandar(f, false);
 		
 			int cat = labor.getClasificador().getCategoryFor(ci.getAmount());//LaborItem.getDoubleFromObj(f.getAttribute(labor.colRendimiento.get())));
 			System.out.println("cat for "+ci.getAmount()+" es "+cat);
 			itemsByCat.get(cat).add(ci);
+			featureNumber++;
+			updateProgress(featureNumber, featureCount);
 		}
 		it.close();
-		updateProgress(1, 100);
 		
 		
 		// ahora que tenemos las colecciones con las categorias solo hace falta juntar las geometrias y sacar los promedios	
@@ -114,10 +127,13 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 		//XXX por cada categoria 
 		
 			for(List<LaborItem> catItems : itemsByCat) {
+				checkCancelled();
 				System.out.println("resumiendo "+catItems.size());
 				if(catItems.size()>0) {
 					itemsCategoria.add(resumirItems(catItems));
-				}				
+				}
+				featureNumber++;
+				updateProgress(featureNumber, featureCount);
 			}
 			
 		System.out.println("items resumidos "+itemsCategoria.size());

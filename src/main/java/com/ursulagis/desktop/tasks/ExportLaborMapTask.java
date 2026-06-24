@@ -11,9 +11,12 @@ import org.geotools.data.DefaultTransaction;
 import org.geotools.api.data.Transaction;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
+import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.feature.DefaultFeatureCollection;
 
 import org.geotools.api.data.SimpleFeatureSource;
 import org.geotools.api.data.SimpleFeatureStore;
+import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 
 import com.ursulagis.desktop.dao.Labor;
@@ -34,6 +37,15 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 	
 	
 	public File call()  {
+		try {
+			return doExport();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return null;
+		}
+	}
+
+	private File doExport() throws InterruptedException {
 		System.out.println("llamando a call en ExportHarvestMap");
 		Map<String, Serializable> params = new HashMap<String, Serializable>();
 		try {
@@ -42,7 +54,6 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 			e.printStackTrace();
 		}
 		params.put("create spatial index", Boolean.TRUE);
-
 
 		ShapefileDataStore newDataStore=null;
 		try {
@@ -66,6 +77,14 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 			//java.io.FileNotFoundException: D:\Dropbox\hackatonAgro\EmengareGis\MapasCrudos\shp\sup\out\grid\amb\Girszol_lote_19_s0limano_-_Harvesting.shp (Access is denied)
 		}
 
+		DefaultFeatureCollection exportCollection;
+		try {
+			exportCollection = snapshotOutCollection();
+		} catch (InterruptedException e) {
+			disposeDataStore(newDataStore);
+			throw e;
+		}
+
 		String typeName = null;
 		try {
 			if(newDataStore==null)return null;
@@ -87,39 +106,34 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 			SimpleFeatureStore featureStore = (SimpleFeatureStore) featureSource;
 			
 			Transaction transaction = new DefaultTransaction("create");
-			featureStore.setTransaction(transaction);
-
-			/*
-			 * SimpleFeatureStore has a method to add features from a
-			 * SimpleFeatureCollection object, so we use the
-			 * ListFeatureCollection class to wrap our list of features.
-			 */
-			//	SimpleFeatureCollection collection = new ListFeatureCollection(CosechaItem.getType(), features);
-			//	System.out.println("agregando features al store " +collection.size());
-			//	DefaultFeatureCollection colectionToSave = ;
-	
-			int progressMax = Math.max(laborToExport.outCollection.size(), 1);
-			updateProgress(0, progressMax);
 			try {
-				
-				featureStore.setFeatures(laborToExport.outCollection.reader());
-				try {
-					transaction.commit();
-				} catch (Exception e1) {
-					e1.printStackTrace();
-				}finally {
-					try {
-						transaction.close();
-						//System.out.println("closing transaction");
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				updateProgress(progressMax, progressMax);
+				featureStore.setTransaction(transaction);
+
+				/*
+				 * SimpleFeatureStore has a method to add features from a
+				 * SimpleFeatureCollection object, so we use the
+				 * ListFeatureCollection class to wrap our list of features.
+				 */
+				//	SimpleFeatureCollection collection = new ListFeatureCollection(CosechaItem.getType(), features);
+				//	System.out.println("agregando features al store " +collection.size());
+				//	DefaultFeatureCollection colectionToSave = ;
+
+				checkCancelled();
+				featureStore.setFeatures(exportCollection.reader());
+				transaction.commit();
+			} catch (InterruptedException e) {
+				rollbackQuietly(transaction);
+				disposeDataStore(newDataStore);
+				throw e;
 			} catch (Exception e1) {
+				rollbackQuietly(transaction);
 				e1.printStackTrace();
+				return null;
+			} finally {
+				closeQuietly(transaction);
 			}
-		}		
+		}
+
 		if(guardarConfig) {
 		//TODO guardar un archivo txt con la configuracion de la labor para que quede como registro de las operaciones
 		 Configuracion config = Configuracion.getInstance();
@@ -128,6 +142,45 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 			config.save();
 		}
 		return shapeFile;
+	}
+
+	private DefaultFeatureCollection snapshotOutCollection() throws InterruptedException {
+		int progressMax = Math.max(laborToExport.outCollection.size(), 1);
+		updateProgress(0, progressMax);
+		DefaultFeatureCollection exportCollection = new DefaultFeatureCollection("export", laborToExport.getType());
+		try (SimpleFeatureIterator it = laborToExport.outCollection.features()) {
+			int idx = 0;
+			while (it.hasNext()) {
+				checkCancelled();
+				SimpleFeature f = it.next();
+				exportCollection.add(f);
+				updateProgress(++idx, progressMax);
+			}
+		}
+		return exportCollection;
+	}
+
+	private static void rollbackQuietly(Transaction transaction) {
+		try {
+			transaction.rollback();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void closeQuietly(Transaction transaction) {
+		try {
+			transaction.close();
+			//System.out.println("closing transaction");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static void disposeDataStore(ShapefileDataStore dataStore) {
+		if (dataStore != null) {
+			dataStore.dispose();
+		}
 	}
 
 
