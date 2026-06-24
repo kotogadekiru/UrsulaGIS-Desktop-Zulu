@@ -1,6 +1,7 @@
 package com.ursulagis.desktop.gui.chat;
 
 import com.ursulagis.desktop.chat.UrsulaPersonality;
+import com.ursulagis.desktop.chat.ai.AiApiKeys;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
 
@@ -50,6 +51,12 @@ public final class UrsulaChatWindow {
 		chatStage.setMinWidth(400);
 		chatStage.setMinHeight(320);
 		chatStage.setOnHidden(e -> chatStage = null);
+		if (DeepSeekApiKeyHelper.isDeepSeekProvider()
+				&& !AiApiKeys.hasDeepSeekKey()
+				&& !DeepSeekApiKeyHelper.ensureConfigured(owner)) {
+			panel.appendMessage(UrsulaPersonality.roleName(),
+					msg("Chat.apiKeyRequired", "Necesito la API key de DeepSeek para continuar."));
+		}
 		chatStage.show();
 	}
 

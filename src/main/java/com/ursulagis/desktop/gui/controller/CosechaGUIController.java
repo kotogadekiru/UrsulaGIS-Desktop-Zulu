@@ -289,6 +289,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		ImportarCosechaVoyagerTask importTask = new ImportarCosechaVoyagerTask(configured, cardDirectory, null);
 		importTask.installProgressBar(progressBox);
 		importTask.setOnSucceeded(importHandler -> {
+			importTask.uninstallProgressBar();
 			try {
 				ProcessHarvestMapTask processTask = new ProcessHarvestMapTask(configured);
 				processTask.installProgressBar(progressBox);
@@ -307,7 +308,6 @@ public class CosechaGUIController extends AbstractGUIController {
 				});
 				JFXMain.executorPool.execute(processTask);
 			} catch (Exception e) {
-				importTask.uninstallProgressBar();
 				showVoyagerImportError(e);
 			}
 		});
@@ -1088,4 +1088,39 @@ public class CosechaGUIController extends AbstractGUIController {
 //		main.playSound();
 //
 //	}
+
+	/**
+	 * Recommends P fertilization from harvest without config/min-max dialogs (chat workflow).
+	 */
+	public void recommendFertPRepProgrammatic(CosechaLabor cosecha, String fertilizanteKey, Runnable onSuccess) {
+		if (cosecha == null) {
+			return;
+		}
+		FertilizacionLabor labor = new FertilizacionLabor();
+		labor.setLayer(new LaborLayer());
+		labor.setNombre(cosecha.getNombre() + Messages.getString("CosechaGUIController.prescripcionP"));
+		com.ursulagis.desktop.dao.config.Fertilizante fert =
+				com.ursulagis.desktop.dao.config.Fertilizante.getFertilizantesDefault().get(fertilizanteKey);
+		if (fert == null) {
+			fert = com.ursulagis.desktop.dao.config.Fertilizante.getFertilizantesDefault().get("Fosfato monoamonico");
+		}
+		labor.fertilizante = fert;
+
+		RecomendFertPFromHarvestMapTask umTask = new RecomendFertPFromHarvestMapTask(labor, cosecha);
+		umTask.installProgressBar(progressBox);
+		umTask.setOnSucceeded(handler -> {
+			cosecha.getLayer().setEnabled(false);
+			FertilizacionLabor ret = (FertilizacionLabor) handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			umTask.uninstallProgressBar();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_P_FERTILIZATION_RECOMMENDED);
+			viewGoTo(ret);
+			playSound();
+			if (onSuccess != null) {
+				onSuccess.run();
+			}
+		});
+		JFXMain.executorPool.execute(umTask);
+	}
 }

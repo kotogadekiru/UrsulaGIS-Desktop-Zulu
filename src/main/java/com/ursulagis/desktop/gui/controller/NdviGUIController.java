@@ -849,4 +849,59 @@ public class NdviGUIController extends AbstractGUIController{
 	//		main.playSound();
 	//		
 	//	}
+
+	/**
+	 * Converts NDVI to harvest without configuration dialogs (chat workflow).
+	 */
+	public void convertNdviToCosechaProgrammatic(Ndvi ndvi, double rindeTn, String cropKey, Runnable onSuccess) {
+		if (ndvi == null) {
+			return;
+		}
+		CosechaLabor labor = new CosechaLabor();
+		labor.setNombre(ndvi.getNombre());
+		try {
+			Date date = java.util.Date.from(ndvi.getFecha().atStartOfDay()
+					.atZone(ZoneId.systemDefault())
+					.toInstant());
+			labor.setFecha(date);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		labor.getConfiguracion().correccionFlowToRindeProperty().setValue(false);
+		LaborLayer layer = new LaborLayer();
+		labor.setLayer(layer);
+		var cultivos = com.ursulagis.desktop.utils.CultivoHelper.getCultivosDefault();
+		String key = cropKey != null ? cropKey.toLowerCase() : "soja";
+		com.ursulagis.desktop.dao.config.Cultivo cultivo = cultivos.get(
+				key.contains("trigo") ? com.ursulagis.desktop.utils.CultivoHelper.TRIGO
+						: com.ursulagis.desktop.utils.CultivoHelper.SOJA);
+		if (cultivo != null) {
+			labor.setCultivo(cultivo);
+		}
+
+		ConvertirNdviACosechaTask umTask = new ConvertirNdviACosechaTask(labor, ndvi, rindeTn);
+		umTask.installProgressBar(progressBox);
+		umTask.setOnSucceeded(handler -> {
+			CosechaLabor ret = (CosechaLabor) handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			umTask.uninstallProgressBar();
+			ndvi.getLayer().setEnabled(false);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONVERT_NDVI_TO_HARVEST);
+
+			ProcessHarvestMapTask pmtask = new ProcessHarvestMapTask(ret);
+			pmtask.installProgressBar(progressBox);
+			pmtask.setOnSucceeded(handler2 -> {
+				this.getLayerPanel().update(this.getWwd());
+				pmtask.uninstallProgressBar();
+				main.wwjPanel.repaint();
+				playSound();
+				main.viewGoTo(ret);
+				if (onSuccess != null) {
+					onSuccess.run();
+				}
+			});
+			pmtask.run();
+		});
+		JFXMain.executorPool.execute(umTask);
+	}
 }
