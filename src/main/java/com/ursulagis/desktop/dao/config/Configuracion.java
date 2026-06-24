@@ -151,6 +151,11 @@ public class Configuracion{
 		return ret;
 	}
 
+	public String getProperty(String key) {
+		String ret = configProp.getProperty(key);
+		return ret == null ? "" : ret;
+	}
+
 	public Set<String> getAllPropertyNames() {
 		return configProp.stringPropertyNames();
 	}

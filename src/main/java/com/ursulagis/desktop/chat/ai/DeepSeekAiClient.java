@@ -35,7 +35,7 @@ public class DeepSeekAiClient implements AiClient {
 		String apiKey = AiApiKeys.deepSeek();
 		if (apiKey.isBlank()) {
 			throw new IllegalStateException(
-					"DeepSeek API key not set. Set DEEPSEEK_API_KEY or the deepseek.api.key system property.");
+					"DeepSeek API key not set. Configure it in Ursula IA or set DEEPSEEK_API_KEY / ai-keys.properties.");
 		}
 
 		long start = System.currentTimeMillis();
@@ -72,7 +72,7 @@ public class DeepSeekAiClient implements AiClient {
 		String apiKey = AiApiKeys.deepSeek();
 		if (apiKey.isBlank()) {
 			throw new IllegalStateException(
-					"DeepSeek API key not set. Set DEEPSEEK_API_KEY or the deepseek.api.key system property.");
+					"DeepSeek API key not set. Configure it in Ursula IA or set DEEPSEEK_API_KEY / ai-keys.properties.");
 		}
 
 		long start = System.currentTimeMillis();

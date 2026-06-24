@@ -1,4 +1,5 @@
 # Copy to %APPDATA%/UrsulaGIS/ai-keys.properties and fill in your keys.
+# Alternatively, Ursula IA can ask for the DeepSeek key on first use and save it in config.properties.
 # This file is never committed to git.
 deepseek.api.key=
 github.token=
