@@ -3,6 +3,7 @@ package com.ursulagis.desktop.utils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -1508,6 +1509,14 @@ public class GeometryHelper {
 	}
 
 	/**
+	 * Une los anillos exteriores de un multipoligono en un solo contorno
+	 * conectando las partes en los puntos mas cercanos.
+	 */
+	public static Poligono unirAnillosExteriores(Geometry g) {
+		return ExtraerPoligonosDeLaborTask.geometryToPoligonoOLD(g);
+	}
+
+	/**
 	 * Devuelve todas las partes de un poligono (incluye multipoligonos) para operaciones geometricas.
 	 */
 	public static List<Geometry> geometriesFromPoligono(Poligono poli) {
@@ -1516,6 +1525,29 @@ public class GeometryHelper {
 			return new ArrayList<>();
 		}
 		return new ArrayList<>(PolygonValidator.geometryToFlatPolygons(g));
+	}
+
+	/**
+	 * Crea un poligono por cada parte desconectada del poligono original.
+	 * @return lista vacia si el poligono tiene una sola parte
+	 */
+	public static List<Poligono> explotarPoligono(Poligono original) {
+		if(original == null) {
+			return Collections.emptyList();
+		}
+		List<Polygon> parts = PolygonValidator.geometryToFlatPolygons(original.getGeometry());
+		if(parts.size() <= 1) {
+			return Collections.emptyList();
+		}
+		String baseName = original.getNombre();
+		List<Poligono> result = new ArrayList<>(parts.size());
+		for(int i = 0; i < parts.size(); i++) {
+			Poligono partPoli = ExtraerPoligonosDeLaborTask.geometryToPoligono(parts.get(i));
+			partPoli.setNombre(baseName + " (" + (i + 1) + ")");
+			partPoli.setLote(original.getLote());
+			result.add(partPoli);
+		}
+		return result;
 	}
 
 	/**
@@ -1579,7 +1611,7 @@ public class GeometryHelper {
 				for(int i=1;i<boundaries.size();i++){
 					List<? extends Position> hole = (List<Position>) boundaries.get(i);
 					Coordinate[] holeCoordinates = positionListToCoordinateArray(hole);
-					holes[i]=fact.createLinearRing(holeCoordinates);
+					holes[i - 1]=fact.createLinearRing(holeCoordinates);
 				}				
 			}
 			LinearRing shell = fact.createLinearRing(coordinates);
@@ -1592,6 +1624,33 @@ public class GeometryHelper {
 			return null;
 		}       
     }
+
+	public static Geometry getGeometryFromSurfacePolygons(List<SurfacePolygon> surfaceShapes) {
+		if (surfaceShapes == null || surfaceShapes.isEmpty()) {
+			return null;
+		}
+		if (surfaceShapes.size() == 1) {
+			return getGeometryFromSurfacePolygon(surfaceShapes.get(0));
+		}
+
+		GeometryFactory fact = ProyectionConstants.getGeometryFactory();
+		List<Polygon> polygons = new ArrayList<>();
+		for (SurfacePolygon shape : surfaceShapes) {
+			Geometry geometry = getGeometryFromSurfacePolygon(shape);
+			if (geometry instanceof Polygon polygon) {
+				polygons.add(polygon);
+			} else if (geometry != null) {
+				polygons.addAll(PolygonValidator.geometryToFlatPolygons(geometry));
+			}
+		}
+		if (polygons.isEmpty()) {
+			return null;
+		}
+		if (polygons.size() == 1) {
+			return polygons.get(0);
+		}
+		return fact.createMultiPolygon(polygons.toArray(Polygon[]::new));
+	}
 
 	public static SurfacePolygon createSurfacePolygonFromPolygon(Polygon pol) {
 		SurfacePolygon shape = new SurfacePolygon();
@@ -1624,5 +1683,239 @@ public class GeometryHelper {
 			shape.addInnerBoundary(hole);
 		}
 		return shape;
+	}
+
+	/**
+	 * Limite de partes por geometria al exportar prescripciones a monitores de campo.
+	 * Algunos equipos rechazan shapefiles cuyas geometrias tienen mas de 50 subpartes.
+	 */
+	public static final int MAX_PRESCRIPTION_GEOMETRY_PARTS = 50;
+
+	/**
+	 * Limite de anillos interiores (huecos) por poligono al exportar prescripciones.
+	 * Algunos monitores rechazan poligonos con demasiados huecos.
+	 */
+	public static final int MAX_PRESCRIPTION_INTERIOR_RINGS = 50;
+
+	/**
+	 * Buffer minimo para fusionar partes cercanas al exportar prescripciones.
+	 * Reduce cantidad de subpartes y peso del shapefile sin recortar zonas lejanas.
+	 */
+	public static final double PRESCRIPTION_EXPORT_MERGE_BUFFER_METERS = 0.25;
+
+	/**
+	 * Fusiona partes cercanas aplicando un buffer positivo minimo.
+	 * Solo actua cuando la geometria tiene mas de una parte; una sola parte se devuelve
+	 * sin modificar para no inflar artificialmente su contorno.
+	 *
+	 * @param geometry geometria de entrada; puede ser {@code null}
+	 * @param bufferMeters distancia del buffer en metros
+	 * @return geometria fusionada o la original si no habia nada que unir
+	 */
+	public static Geometry mergeNearbyGeometryParts(Geometry geometry, double bufferMeters) {
+		if (geometry == null || geometry.isEmpty() || geometry.getNumGeometries() <= 1) {
+			return geometry;
+		}
+		double bufferDistance = ProyectionConstants.metersToLongLat(bufferMeters);
+		try {
+			return geometry.buffer(bufferDistance);
+		} catch (RuntimeException e) {
+			try {
+				return EnhancedPrecisionOp.buffer(geometry, bufferDistance);
+			} catch (RuntimeException e2) {
+				return geometry;
+			}
+		}
+	}
+
+	/**
+	 * Atajo de exportacion: fusiona partes cercanas con
+	 * {@link #PRESCRIPTION_EXPORT_MERGE_BUFFER_METERS}.
+	 */
+	public static Geometry mergeNearbyPrescriptionGeometryParts(Geometry geometry) {
+		return mergeNearbyGeometryParts(geometry, PRESCRIPTION_EXPORT_MERGE_BUFFER_METERS);
+	}
+
+	/**
+	 * Reduce una geometria multiparte conservando como maximo {@code maxParts} partes.
+	 * Si hay mas partes, se descartan las de menor area para no perder las zonas
+	 * agronomicamente mas relevantes.
+	 * <p>
+	 * Este metodo no fusiona partes: solo recorta. Para exportacion usar
+	 * {@link #limitPrescriptionGeometryParts(Geometry)}, que primero intenta unir
+	 * fragmentos cercanos y recien despues aplica este limite.
+	 *
+	 * @param geometry geometria de entrada; puede ser {@code null}
+	 * @param maxParts cantidad maxima de partes a conservar
+	 * @return la geometria original si no supera el limite; una sola parte o un
+	 *         multipoligono con las partes mas grandes si fue necesario recortar
+	 */
+	public static Geometry limitGeometryParts(Geometry geometry, int maxParts) {
+		// Nada que recortar: geometria ausente, vacia o limite invalido.
+		if (geometry == null || geometry.isEmpty() || maxParts < 1) {
+			return geometry;
+		}
+		int partCount = geometry.getNumGeometries();
+		// Caso comun: la geometria ya cumple el limite del monitor.
+		if (partCount <= maxParts) {
+			return geometry;
+		}
+		// Descomponer en partes individuales para poder ordenarlas por importancia.
+		List<Geometry> parts = new ArrayList<>(partCount);
+		for (int i = 0; i < partCount; i++) {
+			parts.add(geometry.getGeometryN(i));
+		}
+		// Priorizar las partes mas grandes; las chicas suelen ser artefactos o islas menores.
+		parts.sort((g1, g2) -> Double.compare(g2.getArea(), g1.getArea()));
+		List<Geometry> kept = parts.subList(0, maxParts);
+		// Evitar envolver una sola parte en un multipoligono innecesario.
+		if (kept.size() == 1) {
+			return kept.get(0);
+		}
+		// Reconstruir una geometria valida con las partes conservadas.
+		return geometry.getFactory().buildGeometry(new ArrayList<>(kept));
+	}
+
+	/**
+	 * Reduce los huecos de un poligono conservando como maximo {@code maxInteriorRings}
+	 * anillos interiores. Si hay mas, se descartan los de menor area.
+	 *
+	 * @param polygon poligono de entrada; puede ser {@code null}
+	 * @param maxInteriorRings cantidad maxima de huecos a conservar
+	 * @return el poligono original si no supera el limite, o uno nuevo con los huecos mas grandes
+	 */
+	public static Polygon limitPolygonInteriorRings(Polygon polygon, int maxInteriorRings) {
+		if (polygon == null || maxInteriorRings < 0 || polygon.getNumInteriorRing() <= maxInteriorRings) {
+			return polygon;
+		}
+		LinearRing shell = polygon.getFactory().createLinearRing(polygon.getExteriorRing().getCoordinateSequence());
+		List<LinearRing> rings = new ArrayList<>(polygon.getNumInteriorRing());
+		for (int i = 0; i < polygon.getNumInteriorRing(); i++) {
+			LinearRing hole = polygon.getFactory().createLinearRing(
+					polygon.getInteriorRingN(i).getCoordinateSequence());
+			rings.add(hole);
+		}
+		rings.sort((r1, r2) -> Double.compare(interiorRingArea(r2), interiorRingArea(r1)));
+		LinearRing[] kept = rings.subList(0, maxInteriorRings).toArray(new LinearRing[0]);
+		return polygon.getFactory().createPolygon(shell, kept);
+	}
+
+	private static double interiorRingArea(LinearRing ring) {
+		return ring.getFactory().createPolygon(ring).getArea();
+	}
+
+	/**
+	 * Aplica {@link #limitPolygonInteriorRings(Polygon, int)} a cada poligono de una geometria.
+	 *
+	 * @param geometry geometria de entrada; puede ser {@code null}
+	 * @param maxInteriorRings cantidad maxima de huecos por poligono
+	 * @return geometria con huecos acotados
+	 */
+	public static Geometry limitGeometryInteriorRings(Geometry geometry, int maxInteriorRings) {
+		if (geometry == null || geometry.isEmpty() || maxInteriorRings < 0) {
+			return geometry;
+		}
+		if (geometry instanceof Polygon) {
+			return limitPolygonInteriorRings((Polygon) geometry, maxInteriorRings);
+		}
+		List<Geometry> parts = new ArrayList<>(geometry.getNumGeometries());
+		for (int i = 0; i < geometry.getNumGeometries(); i++) {
+			Geometry part = geometry.getGeometryN(i);
+			if (part instanceof Polygon) {
+				parts.add(limitPolygonInteriorRings((Polygon) part, maxInteriorRings));
+			} else {
+				parts.add(part);
+			}
+		}
+		if (parts.size() == 1) {
+			return parts.get(0);
+		}
+		return geometry.getFactory().buildGeometry(parts);
+	}
+
+	/**
+	 * Atajo de exportacion: acota huecos con {@link #MAX_PRESCRIPTION_INTERIOR_RINGS}.
+	 */
+	public static Geometry limitPrescriptionInteriorRings(Geometry geometry) {
+		return limitGeometryInteriorRings(geometry, MAX_PRESCRIPTION_INTERIOR_RINGS);
+	}
+
+	/**
+	 * Variante para listas ya aplanadas: acota huecos en cada poligono.
+	 */
+	public static List<Polygon> limitFlatPolygonsInteriorRings(List<Polygon> polygons, int maxInteriorRings) {
+		if (polygons == null || polygons.isEmpty() || maxInteriorRings < 0) {
+			return polygons;
+		}
+		boolean changed = false;
+		List<Polygon> limited = new ArrayList<>(polygons.size());
+		for (Polygon polygon : polygons) {
+			Polygon trimmed = limitPolygonInteriorRings(polygon, maxInteriorRings);
+			if (trimmed != polygon) {
+				changed = true;
+			}
+			limited.add(trimmed);
+		}
+		return changed ? limited : polygons;
+	}
+
+	/**
+	 * Prepara una geometria para exportar prescripciones en tres pasos:
+	 * <ol>
+	 *   <li>fusionar partes cercanas con buffer para achicar el shapefile</li>
+	 *   <li>si aun supera {@link #MAX_PRESCRIPTION_GEOMETRY_PARTS}, descartar las mas chicas</li>
+	 *   <li>si algun poligono supera {@link #MAX_PRESCRIPTION_INTERIOR_RINGS}, descartar huecos chicos</li>
+	 * </ol>
+	 *
+	 * @param geometry geometria de entrada; puede ser {@code null}
+	 * @return geometria apta para exportacion
+	 */
+	public static Geometry limitPrescriptionGeometryParts(Geometry geometry) {
+		Geometry merged = mergeNearbyPrescriptionGeometryParts(geometry);
+		Geometry partsLimited = limitGeometryParts(merged, MAX_PRESCRIPTION_GEOMETRY_PARTS);
+		return limitPrescriptionInteriorRings(partsLimited);
+	}
+
+	/**
+	 * Variante para listas ya aplanadas por {@link PolygonValidator#geometryToFlatPolygons}.
+	 * Cuando hay mas poligonos de los permitidos, primero intenta fusionar los cercanos
+	 * recomponiendo una geometria multiparte y aplicando buffer; solo si aun sobran
+	 * partes descarta las mas chicas.
+	 *
+	 * @param polygons lista de poligonos; puede ser {@code null}
+	 * @param maxParts cantidad maxima de poligonos a conservar
+	 * @return la lista original si no supera el limite, o una nueva lista con las
+	 *         partes mas grandes
+	 */
+	public static List<Polygon> limitFlatPolygons(List<Polygon> polygons, int maxParts) {
+		if (polygons == null || polygons.size() <= maxParts) {
+			return polygons;
+		}
+		GeometryFactory fact = ProyectionConstants.getGeometryFactory();
+		Geometry merged = mergeNearbyGeometryParts(
+				fact.createGeometryCollection(polygons.toArray(new Polygon[0])),
+				PRESCRIPTION_EXPORT_MERGE_BUFFER_METERS);
+		List<Polygon> mergedFlat = PolygonValidator.geometryToFlatPolygons(merged);
+		if (mergedFlat.size() <= maxParts) {
+			return mergedFlat;
+		}
+		// Copiar para no mutar la lista original del item exportado.
+		List<Polygon> sorted = new ArrayList<>(mergedFlat);
+		sorted.sort((p1, p2) -> Double.compare(p2.getArea(), p1.getArea()));
+		// Devolver una lista nueva: el caller puede seguir iterando sin sorpresas.
+		return new ArrayList<>(sorted.subList(0, maxParts));
+	}
+
+	/**
+	 * Atajo de exportacion: aplica {@link #limitFlatPolygons(List, int)} con el
+	 * limite estandar de prescripciones ({@link #MAX_PRESCRIPTION_GEOMETRY_PARTS}).
+	 *
+	 * @param polygons lista de poligonos; puede ser {@code null}
+	 * @return lista acotada al limite de exportacion de prescripciones
+	 */
+	public static List<Polygon> limitPrescriptionFlatPolygons(List<Polygon> polygons) {
+		return limitFlatPolygonsInteriorRings(
+				limitFlatPolygons(polygons, MAX_PRESCRIPTION_GEOMETRY_PARTS),
+				MAX_PRESCRIPTION_INTERIOR_RINGS);
 	}
 }
