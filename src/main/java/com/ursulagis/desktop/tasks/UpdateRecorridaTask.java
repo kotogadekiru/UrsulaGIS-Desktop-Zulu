@@ -7,8 +7,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -36,8 +39,11 @@ import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
+import com.ursulagis.desktop.dao.recorrida.Muestra;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
 import com.ursulagis.desktop.api.StandardResponse;
 import javafx.concurrent.Task;
@@ -77,7 +83,7 @@ public class UpdateRecorridaTask extends Task<String> {
 	public UpdateRecorridaTask(Recorrida recorrida) {
 		this.recorrida = recorrida;
 
-		System.out.println("actualizando recorrida "+recorrida);
+		System.out.println("actualizando recorrida "+recorrida.getNombre());
 		System.out.println("muestras "+recorrida.getMuestras().size());
 	}
 
@@ -94,29 +100,26 @@ public class UpdateRecorridaTask extends Task<String> {
 			Reader reader = new InputStreamReader(resContent);
 
 			StandardResponse standarResponse =  new Gson().fromJson(reader, StandardResponse.class);
-			System.out.println("standarResponse = "+standarResponse);
+			//System.out.println("standarResponse = "+standarResponse);
 
 			StandardResponse.StatusResponse status = standarResponse.getStatus();
-			System.out.println("response status = "+status);
+			//System.out.println("response status = "+status);
 			if(StandardResponse.StatusResponse.SUCCESS.equals(status)) {
 				//com.google.api.client.util.ArrayMap data =(ArrayMap) resContent.get("data");
 				JsonElement data = standarResponse.getData();
 
 				if(data !=null) {
 					Gson gson = new GsonBuilder().serializeNulls().setExclusionStrategies( getJSonStrategy()).create();
-					Recorrida dbRecorrida = gson.fromJson(data, Recorrida.class);
+					Recorrida remoteRecorrida = gson.fromJson(data, Recorrida.class);
 
-					String dbUrl = dbRecorrida.getUrl();
+					String dbUrl = remoteRecorrida.getUrl();
 					recorrida.setUrl(dbUrl);
-					recorrida.setNombre(dbRecorrida.getNombre());
-					recorrida.setJsonAmb(dbRecorrida.getJsonAmb());
-					recorrida.setLatitude(dbRecorrida.getLatitude());
-					recorrida.setLongitude(dbRecorrida.getLongitude());
-					recorrida.setObservacion(dbRecorrida.getObservacion());
-					//FIXME las muestras de dbRecorrida no estan en la base de datos
-					recorrida.setMuestras(dbRecorrida.getMuestras());
-					//TODO asignar dbRecorrida a this.recorrida
-					//DAH.save(this.recorrida);// se guarda en el controller
+					recorrida.setNombre(remoteRecorrida.getNombre());
+					recorrida.setJsonAmb(remoteRecorrida.getJsonAmb());
+					recorrida.setLatitude(remoteRecorrida.getLatitude());
+					recorrida.setLongitude(remoteRecorrida.getLongitude());
+					recorrida.setObservacion(remoteRecorrida.getObservacion());
+					applyRemoteMuestras(recorrida, extractRemoteMuestras(gson, data, remoteRecorrida));
 
 					String urlGoto =dbUrl;// GET_RECORRIDAS_BY_ID_URL+id+"/";
 					return urlGoto;
@@ -143,6 +146,54 @@ public class UpdateRecorridaTask extends Task<String> {
 			e.printStackTrace();
 		}
 		return baseUlr;
+	}
+
+	private static List<Muestra> extractRemoteMuestras(Gson gson, JsonElement data, Recorrida remoteRecorrida) {
+		List<Muestra> muestras = remoteRecorrida.getMuestras();
+		System.out.println("muestras remotas "+muestras);
+		if (muestras != null && !muestras.isEmpty()) {
+			return muestras;
+		}
+		if (data == null || !data.isJsonObject()) {
+			return muestras != null ? muestras : new ArrayList<>();
+		}
+		JsonObject obj = data.getAsJsonObject();
+		Type listType = new TypeToken<List<Muestra>>() {}.getType();
+		for (String key : new String[] { "muestras", "Muestras" }) {
+			if (obj.has(key) && obj.get(key).isJsonArray() && !obj.get(key).getAsJsonArray().isEmpty()) {
+				return gson.fromJson(obj.get(key), listType);
+			}
+		}
+		return muestras != null ? muestras : new ArrayList<>();
+	}
+
+	private static void applyRemoteMuestras(Recorrida recorrida, List<Muestra> remoteMuestras) {
+		if (remoteMuestras == null || remoteMuestras.isEmpty()) {
+			return;
+		}
+		Map<String, Muestra> localByKey = new LinkedHashMap<>();
+		for (Muestra m : recorrida.getMuestras()) {
+			localByKey.put(muestraKey(m), m);
+		}
+		recorrida.getMuestras().clear();
+		for (Muestra remote : remoteMuestras) {
+			Muestra muestra = localByKey.remove(muestraKey(remote));
+			if (muestra == null) {
+				muestra = new Muestra();
+			}
+			muestra.setNombre(remote.getNombre());
+			muestra.setSubNombre(remote.getSubNombre());
+			muestra.setObservacion(remote.getObservacion());
+			muestra.setLatitude(remote.getLatitude());
+			muestra.setLongitude(remote.getLongitude());
+			muestra.setRecorrida(recorrida);
+			recorrida.getMuestras().add(muestra);
+		}
+	}
+
+	private static String muestraKey(Muestra m) {
+		String subNombre = m.getSubNombre() == null ? "" : m.getSubNombre();
+		return m.getNombre() + "\0" + subNombre;
 	}
 
 	private ExclusionStrategy getJSonStrategy() {

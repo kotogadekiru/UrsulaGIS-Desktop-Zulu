@@ -70,6 +70,14 @@ public class RecorridaGUIController extends AbstractGUIController {
 		List<LayerAction> recorridasP = new ArrayList<LayerAction>();
 		predicates.put(Recorrida.class, recorridasP);
 
+		recorridasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.goToLayerAction"),(layer)->{
+			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if(layerObject!=null && Recorrida.class.isAssignableFrom(layerObject.getClass())){
+				doGoToRecorrida((Recorrida) layerObject);
+			}
+			return "went to recorrida";
+		}));
+
 		//editar Recorrida
 		recorridasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.editarLayer"),(layer)->{
 			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
@@ -191,6 +199,40 @@ public class RecorridaGUIController extends AbstractGUIController {
 		JFXMain.executorPool.execute(umTask);	
 	}
 
+	public void doGoToRecorrida(Recorrida recorrida) {
+		Layer layer = findLayerForRecorrida(recorrida);
+		if (layer != null) {
+			layer.setEnabled(true);
+			main.viewGoTo(layer);
+			getLayerPanel().update(getWwd());
+			return;
+		}
+		doShowRecorrida(recorrida);
+	}
+
+	private Layer findLayerForRecorrida(Recorrida recorrida) {
+		for (Layer l : getWwd().getModel().getLayers()) {
+			Object o = l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if (!(o instanceof Recorrida)) {
+				continue;
+			}
+			if (matchesRecorrida(recorrida, (Recorrida) o)) {
+				return l;
+			}
+		}
+		return null;
+	}
+
+	private boolean matchesRecorrida(Recorrida a, Recorrida b) {
+		if (a.getId() != null && a.getId().equals(b.getId())) {
+			return true;
+		}
+		if (a.getUuid() != null && a.getUuid().equals(b.getUuid())) {
+			return true;
+		}
+		return a == b;
+	}
+
 	/**
 	 * accion ejecutada al presionar el boton openFile Despliega un file
 	 * selector e invoca la tarea que muestra el file en pantalla
@@ -278,12 +320,11 @@ public class RecorridaGUIController extends AbstractGUIController {
 		task.installProgressBar(progressBox);
 		task.setOnSucceeded(handler -> {
 			String ret = (String)handler.getSource().getValue();
-			recorrida.setUrl(ret);
+			if (ret != null && ret.startsWith("http")) {
+				recorrida.setUrl(ret);
+			}
 			DAH.save(recorrida);
-//			if(ret!=null) {
-//				main.configGUIController.showQR(ret);
-//			}
-			//XXX agregar boton de actualizar desde la nube?
+			main.getLayerPanel().update(main.getWwd());
 			task.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SYNCED_FROM_CLOUD);
 		});
@@ -311,8 +352,11 @@ public class RecorridaGUIController extends AbstractGUIController {
 			table.setEditable(true);
 			//			table.setOnDoubleClick(()->new Poligono());
 			table.setOnShowClick((recorrida)->{
-				//poli.setActivo(true);
-				main.recorridaGUIController.doShowRecorrida(recorrida);
+				doGoToRecorrida(recorrida);
+			});
+			
+			table.addSecondaryClickConsumer(Messages.getString("JFXMain.goToLayerAction"),(r)-> {
+				doGoToRecorrida(r);
 			});
 			
 			table.addSecondaryClickConsumer(Messages.getString("JFXMain.editarLayer"),(r)-> {

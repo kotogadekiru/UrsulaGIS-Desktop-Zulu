@@ -255,15 +255,22 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 
 			layer.setValue(Labor.LABOR_LAYER_IDENTIFICATOR, recorrida);//usar esto para no tener el layer dentro de la cosecha
 			layer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, Recorrida.class);
-			layer.setValue(ProcessMapTask.ZOOM_TO_KEY,recorrida.muestras.get(0).getPosition());
+
+			List<Muestra> muestras = recorrida.getMuestras();
+			layer.removeAllRenderables();
+			if (muestras == null || muestras.isEmpty()) {
+				layer.setValue(ProcessMapTask.ZOOM_TO_KEY,
+						Position.fromDegrees(recorrida.getLatitude(), recorrida.getLongitude(), 10));
+				return;
+			}
+
+			layer.setValue(ProcessMapTask.ZOOM_TO_KEY, muestras.get(0).getPosition());
 			
-			List<String> categorias = recorrida.muestras.stream().map(Muestra::getNombre).distinct().collect(Collectors.toList());
+			List<String> categorias = muestras.stream().map(Muestra::getNombre).distinct().collect(Collectors.toList());
 			categorias.sort(Comparator.reverseOrder());
 			String first = categorias.get(0);
 			
-			layer.removeAllRenderables();
-			
-			recorrida.muestras.stream().forEach(m->{
+			muestras.stream().forEach(m->{
 			
 				Position pointPosition = m.getPosition();
 
@@ -300,7 +307,7 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 			attrs.setDrawOutline(true);
 			
 
-			Path path = new Path(recorrida.muestras.stream().map(m->m.getPosition()).collect(Collectors.toList()));
+			Path path = new Path(muestras.stream().map(m->m.getPosition()).collect(Collectors.toList()));
 			path.setAltitudeMode(WorldWind.CLAMP_TO_GROUND);
 			path.setFollowTerrain(true);
 			path.setNumSubsegments(1);
