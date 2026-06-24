@@ -1,0 +1,27 @@
+1. Preparación y Carga de Datos (0:30 - 1:16)
+Objetivo: Importar todas las capas necesarias para el análisis (siembra, fertilización, cosecha, pulverización, riego).
+Acción: Cargar las capas de labores. Identificar si son costos variables o si se deben aplicar costos fijos por tonelada, hectárea o fletes.
+2. Configuración de Costos por Labor
+Cosecha (1:36 - 3:35):
+Ingresar el precio de venta por tonelada.
+Calcular el costo de labor (ej. 7% de la cosecha). Restar este costo del precio de venta para obtener el ingreso neto.
+Siembra (3:38 - 6:44):
+Calcular el precio de la semilla por kg (Precio bolsa / kg por bolsa).
+Considerar el peso de 1000 semillas para la configuración técnica.
+Sumar el costo de la labor por hectárea.
+Fertilización (6:48 - 12:03):
+Cargar fertilizante por kg (Precio/tonelada / 1000).
+Asignar costo de labor: Si la labor ya está incluida en la siembra, establecer el costo de labor en fertilización en cero.
+Riego (12:20 - 13:26):
+Cargar como una labor de fertilización (costo por mm).
+Pulverización (13:32 - 18:00):
+Sumar todos los productos por hectárea para definir un "costo de caldo".
+Si son fijas, se recomienda sumarlas como un costo fijo global del lote.
+3. Cálculo del Mapa de Márgenes (18:06 - 20:32)
+Acción: Seleccionar todas las capas procesadas.
+Ruta: Ir a Herramientas > Rentabilidades.
+Inputs finales: Definir costo de flete por tonelada, costo fijo por tonelada (comercialización) y costo fijo por hectárea (estructura/pulverizaciones).
+4. Interpretación de Resultados (20:47 - 24:50)
+Mapa de Margen: Muestra el volumen total de dinero generado por hectárea.
+Mapa de Rentabilidad: Muestra la eficiencia del gasto (% del margen sobre el costo).
+Histogramas: Permiten comparar el rendimiento financiero entre zonas (ej. dentro vs. fuera del área de riego).

@@ -422,6 +422,24 @@
             </resource> -->
 
             <resource>
+                <directory>${project.basedir}/docs</directory>
+                <targetPath>com/ursulagis/desktop/docs</targetPath>
+                <filtering>false</filtering>
+                <includes>
+                    <include>*.pdf</include>
+                    <include>*.txt</include>
+                </includes>
+                <excludes>
+                    <exclude>tutorial-index.txt</exclude>
+                </excludes>
+            </resource>
+
+            <resource>
+                <directory>${project.build.directory}/generated-tutorial-index</directory>
+                <filtering>false</filtering>
+            </resource>
+
+            <resource>
                 <directory>${project.basedir}/src/main/resources/build-info/</directory>
                 <filtering>true</filtering>
             </resource>
@@ -555,6 +573,8 @@ if (run != null && run.trim()) {
                         <option>-Dprism.forceGPU=false</option>
                         <option>-Dorg.apache.commons.lang3.SystemUtils.JAVA_SPECIFICATION_VERSION=17</option>
                         <option>-Djogamp.gluegen.UseTempJarCache=true</option>
+                        <option>-Xms2g</option>
+                        <option>-Xmx20g</option>
                         <option>--add-opens=javafx.controls/javafx.scene.control.skin=ALL-UNNAMED</option>
                         <option>--add-opens=javafx.controls/javafx.scene.control=ALL-UNNAMED</option>
                         <option>--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED</option>
@@ -610,6 +630,30 @@ if (run != null && run.trim()) {
                             <failOnError>true</failOnError>
                             <removeDirectories>${project.build.directory}/installer-work</removeDirectories>
                             <args>@${project.build.directory}/packaging/${jpackage.args.file}</args>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-tutorial-index</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/generated-tutorial-index/com/ursulagis/desktop/docs"/>
+                                <fileset id="tutorial.txts" dir="${project.basedir}/docs" includes="*.txt" excludes="tutorial-index.txt"/>
+                                <pathconvert property="tutorial.txt.list" refid="tutorial.txts" pathsep="${line.separator}">
+                                    <mapper type="flatten"/>
+                                </pathconvert>
+                                <echo file="${project.build.directory}/generated-tutorial-index/com/ursulagis/desktop/docs/tutorial-index.txt" message="${tutorial.txt.list}"/>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>

@@ -1,0 +1,13 @@
+Para generar una recomendación de fertilización fosforada de reposición utilizando UrsulaGIS, sigue estos pasos detallados basados en el tutorial:
+
+Seleccionar mapa de cosecha: Comienza abriendo tu mapa de productividad del lote en cuestión (0:02 - 0:43).
+Configurar el cultivo: Cambia el tipo de cultivo en la herramienta y asegúrate de que el lote esté correctamente ambientado (0:45 - 0:54).
+Generar recomendación: Selecciona la opción "Generar recomendación de fertilización fosforada" (0:54 - 0:59).
+Definir fuente y parámetros:
+Elige tu fuente (por ejemplo, fosfato monoamónico) (0:59 - 1:03).
+Define la labor de fertilización: si la aplicarás en la siembra, puedes configurar este valor en 0 (1:05 - 1:11).
+Ajusta opciones adicionales como una "base de arrancado" (ej. 50 kg) o establece un límite máximo si es necesario (1:11 - 1:22).
+Análisis de resultados: El sistema calculará automáticamente la extracción por polígono y la cantidad de fertilizante necesaria para reponerla (1:24 - 1:33).
+Visualización y Costos:
+El sistema generará un mapa de reposición detallado (1:35 - 1:53).
+Podrás ver la estimación de costos por hectárea y la cantidad total de insumo necesaria para el programa de fertilización completo (1:53 - 2:16).

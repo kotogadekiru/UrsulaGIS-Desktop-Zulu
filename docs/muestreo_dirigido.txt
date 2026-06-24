@@ -1,0 +1,24 @@
+1. Preparación de la Ambientación (0:41 - 7:20)
+Objetivo: Separar el lote en ambientes productivos homogéneos.
+Pasos para el usuario:
+Cargar imagen de NDVI (o convertir a mapa de cosecha).
+Usar la herramienta Editor > Clasificador para crear 2 clases (alto y bajo rendimiento).
+Limpiar datos ruidosos: Usar Editar > Eliminar outliers (radio de 50m) para suavizar las zonas.
+Consolidar ambientes: Editar > Resumir ambientes para crear polígonos contiguos (Ambiente A y B).
+2. Generación de Muestreo Dirigido (7:38 - 14:18)
+Objetivo: Crear puntos de muestreo basados en los ambientes definidos.
+Pasos para el usuario:
+Seleccionar el polígono de ambiente.
+Clic derecho > Generar muestreo dirigido.
+Definir parámetros: Superficie mínima (ej. 1 ha) y densidad (ej. 1 muestra cada 5 ha).
+El sistema distribuirá los puntos automáticamente dentro de cada ambiente.
+3. Comparativa con Muestreo en Grilla (10:32 - 14:18)
+El bot debe explicar que, a diferencia del dirigido, el muestreo en grilla es geométrico (ej. cuadrícula de 223x223m para 5 ha), pero suele ser menos eficiente para caracterizar la variabilidad real del suelo comparado con la ambientación por NDVI.
+4. Interpolación y Análisis de Suelo (14:26 - 22:55)
+Asignación de valores: Ingresar resultados de laboratorio (Nitratos, Fósforo, Materia Orgánica, etc.) para cada ambiente.
+Interpolación:
+Para grilla: Clic derecho > Interpolar al suelo (usa ponderación por distancia al cuadrado).
+Para dirigido: Convertir a suelo desde la ambientación (mantiene la forma del ambiente, que es más fiel a la realidad).
+5. Funcionalidades adicionales (25:46 - 30:48)
+Compartir recorrida: Generar código QR para abrir el muestreo en el celular y navegar en campo (usando ubicación GPS en tiempo real).
+Gestión de dispositivos: Vincular la PC mediante el número de dispositivo en la web de ÚrsulaGIS para sincronizar labores y órdenes de aplicación.
