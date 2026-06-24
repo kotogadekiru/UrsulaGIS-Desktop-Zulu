@@ -39,6 +39,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import com.ursulagis.desktop.utils.GeometryHelper;
+import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 @Data
@@ -109,6 +110,21 @@ public class Poligono implements Comparable<Poligono>{
 		return this.imagenesPoligono;
 	}
 
+
+	/**
+	 * Serializa el contorno completo para compartir con el servidor.
+	 * Multipoligonos se unen en un solo anillo exterior antes de serializar.
+	 */
+	public String getPoligonoStringForSharing() {
+		Geometry g = getGeometry();
+		if (g != null && !g.isEmpty() && g.getNumGeometries() > 1) {
+			Poligono unido = GeometryHelper.unirAnillosExteriores(g);
+			if (unido != null) {
+				return unido.getPositionsString();
+			}
+		}
+		return getPositionsString();
+	}
 
 	/** 
 	 * construir positionsString a partir de las posiciones
@@ -382,39 +398,42 @@ public class Poligono implements Comparable<Poligono>{
 	}
 
 	public String getPoligonoToString() {
-		List<? extends Position> positions = this.getPositions();
+		Geometry g = toGeometry();
+		if (g == null || g.isEmpty()) {
+			return "[]";
+		}
 
+		List<Polygon> parts = PolygonValidator.geometryToFlatPolygons(g);
 		StringBuilder sb = new StringBuilder();
 		sb.append("[");//multi poligono; gee espera multipoligono ee.Geometry.MultiPolygon(paths);
-		sb.append("[");//poligon
-		sb.append("[");//shell
-		for(Position p:positions){	
-			Angle lon= p.getLongitude();
-			Angle lat = p.getLatitude();
-			sb.append("["+lon.degrees+","+lat.degrees+"],");
-		}	
-		sb.deleteCharAt(sb.length()-1);
-		sb.append("]");//close shell
-		if(huecos!=null||huecos.size()>0){
-			sb.append(",");//huecos
-			for(List<Position> hole:huecos){
-				sb.append("[");//hole
-				for(Position p:hole){
-					Angle lon= p.getLongitude();
-					Angle lat = p.getLatitude();
-					sb.append("["+lon.degrees+","+lat.degrees+"],");
-				}
-				sb.deleteCharAt(sb.length()-1);
-				sb.append("],");//close hole
+		for (int i = 0; i < parts.size(); i++) {
+			if (i > 0) {
+				sb.append(",");
 			}
-			sb.deleteCharAt(sb.length()-1);
-			//sb.append("]");//close huecos
+			appendPolygonForGee(sb, parts.get(i));
 		}
-		sb.append("]");//close poligon
-		sb.append("]");//close multi poligono
-//TODO agregar los huecos
-		
-		String polygons=sb.toString();
-		return polygons;
+		sb.append("]");
+		return sb.toString();
+	}
+
+	private static void appendPolygonForGee(StringBuilder sb, Polygon poly) {
+		sb.append("[");
+		appendRingForGee(sb, poly.getExteriorRing().getCoordinates());
+		for (int i = 0; i < poly.getNumInteriorRing(); i++) {
+			sb.append(",");
+			appendRingForGee(sb, poly.getInteriorRingN(i).getCoordinates());
+		}
+		sb.append("]");
+	}
+
+	private static void appendRingForGee(StringBuilder sb, Coordinate[] coords) {
+		sb.append("[");
+		for (int i = 0; i < coords.length; i++) {
+			if (i > 0) {
+				sb.append(",");
+			}
+			sb.append("[").append(coords[i].x).append(",").append(coords[i].y).append("]");
+		}
+		sb.append("]");
 	}
 }

@@ -223,7 +223,7 @@ public class CompartirCosechaLaborTask extends Task<String> {
 				Geometry contornoG = GeometryHelper.extractContornoGeometry(fl);
 				Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
 				if(contornoP!=null) {
-					ret.setPoligonoString(contornoP.getPositionsString());
+							ret.setPoligonoString(contornoP.getPoligonoStringForSharing());
 				} else {
 					System.out.println("no se pudo extraer el contorno de la cosecha");
 				}

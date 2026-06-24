@@ -206,7 +206,7 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 						Geometry contornoG = GeometryHelper.extractContornoGeometry(pl);
 						Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
 						if(contornoP!=null) {
-							ret.setPoligonoString(contornoP.getPositionsString());
+							ret.setPoligonoString(contornoP.getPoligonoStringForSharing());
 						} else {
 							System.out.println("no se pudo extraer el contorno de la cosecha");
 						}

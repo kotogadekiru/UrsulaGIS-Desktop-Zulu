@@ -104,7 +104,7 @@ public class CompartirSiembraLaborTask extends Task<String> {
 		//GeometryHelper.simplificarPoligono(contornoP);
 		System.out.println("contorno siembra es "+contornoG.toText());
 		if(contornoP!=null) {
-			ordenSiembra.setPoligonoString(contornoP.getPositionsString());
+			ordenSiembra.setPoligonoString(contornoP.getPoligonoStringForSharing());
 		} else {
 			System.out.println("no se pudo extraer el contorno de la cosecha");
 		}

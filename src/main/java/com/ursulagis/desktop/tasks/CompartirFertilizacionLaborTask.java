@@ -203,7 +203,7 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 						Geometry contornoG = GeometryHelper.extractContornoGeometry(fl);
 						Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
 						if(contornoP!=null) {
-							String posString = contornoP.getPositionsString();
+							String posString = contornoP.getPoligonoStringForSharing();
 							System.out.println("contorno: "+posString);
 							ret.setPoligonoString(posString);
 						} else {
