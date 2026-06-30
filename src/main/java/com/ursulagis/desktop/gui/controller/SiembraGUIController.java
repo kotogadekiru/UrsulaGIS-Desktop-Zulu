@@ -416,27 +416,37 @@ public class SiembraGUIController {
 				playSound();
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_EXPORTED);
 				ept.uninstallProgressBar();
-				try{
-					FileDataStore store = FileDataStoreFinder.getDataStore(ret);
-					SiembraLabor labor = new SiembraLabor(store);
-					labor.setLayer(new LaborLayer());
-					labor.setNombre(nombre + "presc");			
-					labor.setEntreSurco(laborToExport.getEntreSurco());	
-					labor.setPlantasPorMetro(laborToExport.getPlantasPorMetro());
-					labor.setSemilla(laborToExport.getSemilla());
-					labor.setFertLinea(laborToExport.getFertLinea());
-					labor.setFertCostado(laborToExport.getFertCostado());
-					//labor.setClasificador(laborToExport.getClasificador().clone());
-					labor.setFecha(laborToExport.getFecha());
-					labor.setPrecioInsumo(laborToExport.getPrecioInsumo());
-					labor.setPrecioLabor(laborToExport.getPrecioLabor());
-					insertBeforeCompass(getWwd(), labor.getLayer());
-					this.doEditSiembra(labor);
-				} catch(Exception e) {
-					e.printStackTrace();
-				}
+				cloneSiembraFromFile(laborToExport, ret);
 			});
 			executorPool.execute(ept);	
+		}
+	}
+
+
+/**
+ * Permite crear una siembra con los parametros de la siembra original pero sin los datos del shapefile
+ * @param original
+ * @param File con el shapefile de la siembra original
+ */
+	private void cloneSiembraFromFile(SiembraLabor original, File ret) {
+		try{
+			FileDataStore store = FileDataStoreFinder.getDataStore(ret);
+			SiembraLabor labor = new SiembraLabor(store);
+			labor.setLayer(new LaborLayer());
+			//labor.setNombre(nombre + "presc");			
+			labor.setEntreSurco(original.getEntreSurco());	
+			labor.setPlantasPorMetro(original.getPlantasPorMetro());
+			labor.setSemilla(original.getSemilla());
+			labor.setFertLinea(original.getFertLinea());
+			labor.setFertCostado(original.getFertCostado());
+			//labor.setClasificador(original.getClasificador().clone());
+			labor.setFecha(original.getFecha());
+			labor.setPrecioInsumo(original.getPrecioInsumo());
+			labor.setPrecioLabor(original.getPrecioLabor());
+			insertBeforeCompass(getWwd(), labor.getLayer());
+			this.doEditSiembra(labor);
+		} catch(Exception e) {
+			e.printStackTrace();
 		}
 	}
 
