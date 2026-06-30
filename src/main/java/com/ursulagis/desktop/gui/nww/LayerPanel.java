@@ -274,7 +274,7 @@ public class LayerPanel extends VBox {
 		// Asegura que todas las ramas raíz tengan su icono configurado,
 		// incluso después de refrescos del árbol que puedan haberlos perdido.
 		rootItems.forEach((clazz, item) -> {
-			if (item != null && item.getGraphic() == null) {
+			if (item != null) {
 				String iconName = rootItemIcons.getOrDefault(clazz, "map.png");
 				setGraphic(item, iconName);
 			}
@@ -408,7 +408,8 @@ public class LayerPanel extends VBox {
 
 	//TODO permitir agrupar por establecimiento campania y lote
 	private TreeView<Layer> constructTreeView(CheckBoxTreeItem<Layer> rootItem) {
-		final TreeView<Layer> tree = new TreeView<Layer>(rootItem);  
+		final TreeView<Layer> tree = new TreeView<Layer>(rootItem);
+		tree.addEventHandler(TreeItem.branchExpandedEvent(), e -> Platform.runLater(tree::refresh));
 		//tree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		//los puedo seleccionar pero no puedo actuar sobre mas de uno  a la vez por que set on action es del item en foco.
 		//tendria que poner acciones en los nodos y buscar los subitems seleccionados y ahi aplicar
