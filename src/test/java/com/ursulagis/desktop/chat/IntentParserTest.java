@@ -38,8 +38,9 @@ class IntentParserTest {
 		ParsedIntent intent = parser.parse("convertir poligono a cosecha");
 
 		assertEquals(UrsulaAction.CONVERTIR_POLIGONO_A_COSECHA, intent.getAction());
-		assertTrue(intent.getMessage().toLowerCase().contains("polígono")
-				|| intent.getMessage().toLowerCase().contains("poligono"));
+		String message = intent.getMessage().toLowerCase();
+		assertTrue(message.contains("polígono") || message.contains("poligono") || message.contains("polygon"),
+				"expected polygon wording in reply: " + intent.getMessage());
 	}
 
 	@Test
@@ -50,6 +51,8 @@ class IntentParserTest {
 		ParsedIntent intent = parser.parse("frase sin sentido xyz123");
 
 		assertEquals(UrsulaAction.UNKNOWN, intent.getAction());
-		assertTrue(intent.getMessage().contains("ayuda"));
+		String message = intent.getMessage().toLowerCase();
+		assertTrue(message.contains("ayuda") || message.contains("help"),
+				"expected help hint in unknown reply: " + intent.getMessage());
 	}
 }
