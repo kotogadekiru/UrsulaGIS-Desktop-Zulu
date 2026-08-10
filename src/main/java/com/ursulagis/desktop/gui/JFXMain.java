@@ -1284,32 +1284,86 @@ public class JFXMain extends Application {
 
 		WritableImage image = sp.snapshot(params, null);
 		FileChooser fileChooser = new FileChooser();
-		fileChooser.setTitle(Messages.getString("JFXMain.saveImageTitle")); 
+		fileChooser.setTitle(Messages.getString("JFXMain.saveImageTitle"));
 
 		File lastFile = null;
-		String lastFileName =  config.getPropertyOrDefault(Configuracion.LAST_FILE,Messages.getString("PlagaAgroquimicosDialog.agroquimicosRegistrados")); 
-		if(lastFileName != Messages.getString("PlagaAgroquimicosDialog.configurarAgroquimicos")){ 
+		String lastFileName = config.getProperty(Configuracion.LAST_FILE);
+		if (lastFileName != null && !lastFileName.isEmpty()) {
 			lastFile = new File(lastFileName);
 		}
-		if(lastFile ==null || ! lastFile.exists()) {
-			lastFile=File.listRoots()[0];
-		} 
+		if (lastFile != null && lastFile.exists()) {
+			File parent = lastFile.isDirectory() ? lastFile : lastFile.getParentFile();
+			if (parent != null && parent.exists()) {
+				fileChooser.setInitialDirectory(parent);
+			}
+		}
+		fileChooser.setInitialFileName("pantalla.png");
 
-		fileChooser.setInitialDirectory(lastFile.getParentFile());
-		fileChooser.setInitialFileName(lastFile.getName());
+		FileChooser.ExtensionFilter pngFilter = new FileChooser.ExtensionFilter(
+				Messages.getString("JFXMain.imageFilterPng"), "*.png");
+		FileChooser.ExtensionFilter jpgFilter = new FileChooser.ExtensionFilter(
+				Messages.getString("JFXMain.imageFilterJpg"), "*.jpg", "*.jpeg");
+		fileChooser.getExtensionFilters().addAll(pngFilter, jpgFilter);
+		fileChooser.setSelectedExtensionFilter(pngFilter);
 
-		// Set extension filter
-		FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(
-				Messages.getString("PlagaAgroquimicosDialog.seleccioneAgroquimicosRegistrados"), Messages.getString("PlagaAgroquimicosDialog.umbralDeDanio"));  
-		fileChooser.getExtensionFilters().add(extFilter);
-		// Show save file dialog
-		File snapsthotFile = fileChooser.showSaveDialog(JFXMain.stage);
+		File snapshotFile = fileChooser.showSaveDialog(JFXMain.stage);
+		if (snapshotFile == null) {
+			return;
+		}
+
+		String format = resolveImageFormat(snapshotFile, fileChooser.getSelectedExtensionFilter());
+		snapshotFile = ensureImageExtension(snapshotFile, format);
 
 		try {
-			ImageIO.write(SwingFXUtils.fromFXImage(image, null), Messages.getString("PlagaAgroquimicosDialog.agroquimicosDisponibles"), snapsthotFile); 
+			BufferedImage buffered = SwingFXUtils.fromFXImage(image, null);
+			if ("jpg".equals(format) || "jpeg".equals(format)) {
+				BufferedImage rgb = new BufferedImage(buffered.getWidth(), buffered.getHeight(), BufferedImage.TYPE_INT_RGB);
+				java.awt.Graphics2D g = rgb.createGraphics();
+				g.setColor(java.awt.Color.WHITE);
+				g.fillRect(0, 0, rgb.getWidth(), rgb.getHeight());
+				g.drawImage(buffered, 0, 0, null);
+				g.dispose();
+				buffered = rgb;
+				format = "jpg";
+			}
+			ImageIO.write(buffered, format, snapshotFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static String resolveImageFormat(File file, FileChooser.ExtensionFilter selectedFilter) {
+		String name = file.getName().toLowerCase();
+		if (name.endsWith(".png")) {
+			return "png";
+		}
+		if (name.endsWith(".jpg") || name.endsWith(".jpeg")) {
+			return "jpg";
+		}
+		if (selectedFilter != null) {
+			for (String ext : selectedFilter.getExtensions()) {
+				String normalized = ext.toLowerCase().replace("*", "").replace(".", "");
+				if ("png".equals(normalized)) {
+					return "png";
+				}
+				if ("jpg".equals(normalized) || "jpeg".equals(normalized)) {
+					return "jpg";
+				}
+			}
+		}
+		return "png";
+	}
+
+	private static File ensureImageExtension(File file, String format) {
+		String name = file.getName().toLowerCase();
+		if ("png".equals(format) && !name.endsWith(".png")) {
+			return new File(file.getParentFile(), file.getName() + ".png");
+		}
+		if (("jpg".equals(format) || "jpeg".equals(format))
+				&& !name.endsWith(".jpg") && !name.endsWith(".jpeg")) {
+			return new File(file.getParentFile(), file.getName() + ".jpg");
+		}
+		return file;
 	}
 
 	public Pane getProgressBox() {

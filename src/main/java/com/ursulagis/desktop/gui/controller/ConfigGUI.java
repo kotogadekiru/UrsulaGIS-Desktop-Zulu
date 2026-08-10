@@ -1706,7 +1706,7 @@ public class ConfigGUI extends AbstractGUIController{
 							DAH.getAllPlagas()
 							);
 			if(data.size()<1){
-				data.add(new Plaga(Messages.getString("JFXMain.saveImageTitle"))); //
+				data.add(new Plaga(Messages.getString("Plaga.nueva"))); //
 			}
 			SmartTableView<Plaga> table = new SmartTableView<Plaga>(data,
 					Arrays.asList("Id"),     //rejected
@@ -1739,7 +1739,7 @@ public class ConfigGUI extends AbstractGUIController{
 			});
 			
 			// Add double-click handler for empty space to create new plaga
-			table.setOnDoubleClick(()->new Plaga(Messages.getString("JFXMain.saveImageTitle")));
+			table.setOnDoubleClick(()->new Plaga(Messages.getString("Plaga.nueva")));
 			
 			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
