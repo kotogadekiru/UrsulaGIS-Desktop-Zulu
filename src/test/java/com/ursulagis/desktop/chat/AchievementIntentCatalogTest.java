@@ -53,6 +53,36 @@ class AchievementIntentCatalogTest {
 	}
 
 	@Test
+	@DisplayName("\"asignar actividades a lotes\" maps to CONFIG_ASIGNACION via logro")
+	void mapsAsignacionToLotes() {
+		AchievementIntentMatch match = AchievementIntentCatalog.match("asignar actividades a lotes")
+				.orElseThrow();
+
+		assertEquals(UrsulaAction.CONFIG_ASIGNACION, match.action());
+		assertEquals(OnboardingAchievements.FIRST_CONFIG_ASIGNACION_CREATED, match.achievementId());
+	}
+
+	@Test
+	@DisplayName("\"descargar ndvi de soja campaña 25/26\" maps to DOWNLOAD_NDVI_ASIGNACIONES")
+	void mapsNdviAsignaciones() {
+		String query = "descargar ndvi de soja campaña 25/26 desde 2025-11-01 hasta 2026-03-31";
+		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
+
+		assertEquals(UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES, match.action());
+		assertEquals(OnboardingAchievements.FIRST_NDVI_ASIGNACIONES_DOWNLOADED, match.achievementId());
+		assertTrue(AchievementIntentCatalog.isAsignacionNdviQuery(query));
+	}
+
+	@Test
+	@DisplayName("\"ultimas imagenes ndvi de lotes asignados a trigo\" maps to DOWNLOAD_NDVI_ASIGNACIONES")
+	void mapsLatestNdviAssignedWheat() {
+		String query = "descargar las ultimas imagenes ndvi de los lotes asignados a trigo";
+		assertTrue(AchievementIntentCatalog.isAsignacionNdviQuery(query));
+		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
+		assertEquals(UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES, match.action());
+	}
+
+	@Test
 	@DisplayName("margin generation hints rank calculated-from-labors above import")
 	void marginHintsPreferGeneration() {
 		String hints = AchievementIntentCatalog.buildRelevantHintsForQuery("como genero un mapa de margenes");

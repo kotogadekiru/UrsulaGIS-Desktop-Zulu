@@ -86,6 +86,12 @@ public class MockAiClient implements AiClient {
 			return intentJson("IMPORT_NDVI", target, 0.9,
 					"Abriendo diálogo para importar NDVI.");
 		}
+		if (containsAny(text, "ndvi asign", "ndvi campa", "ndvi de soja camp", "descargar ndvi campa",
+				"obtener ndvi campa", "ndvi contornos", "download ndvi campaign",
+				"lotes asignad", "imagenes ndvi", "últimas imagenes ndvi", "ultimas imagenes ndvi",
+				"ndvi de los lotes", "asignados a")) {
+			return intentJsonAsignacionNdvi(userPrompt, target);
+		}
 		if (containsAny(text, "descargar ndvi", "bulk ndvi", "ndvi masivo")) {
 			return intentJson("BULK_NDVI_DOWNLOAD", target, 0.9,
 					"Iniciando descarga masiva de NDVI.");
@@ -156,6 +162,32 @@ public class MockAiClient implements AiClient {
 		}
 		sb.append(",\"confidence\":").append(confidence);
 		sb.append(",\"message\":\"").append(escape(message)).append("\"}");
+		return sb.toString();
+	}
+
+	private static String intentJsonAsignacionNdvi(String userPrompt, String target) {
+		com.ursulagis.desktop.chat.AsignacionNdviRequest req =
+				com.ursulagis.desktop.chat.AsignacionNdviRequest.parse(userPrompt);
+		StringBuilder sb = new StringBuilder();
+		sb.append("{\"action\":\"DOWNLOAD_NDVI_ASIGNACIONES\"");
+		if (target != null && !target.isBlank()) {
+			sb.append(",\"targetName\":\"").append(escape(target)).append("\"");
+		}
+		if (req.campaniaName() != null) {
+			sb.append(",\"campaniaName\":\"").append(escape(req.campaniaName())).append("\"");
+		}
+		if (req.cultivoName() != null) {
+			sb.append(",\"cultivoName\":\"").append(escape(req.cultivoName())).append("\"");
+		}
+		if (req.begin() != null) {
+			sb.append(",\"beginDate\":\"").append(req.begin()).append("\"");
+		}
+		if (req.end() != null) {
+			sb.append(",\"endDate\":\"").append(req.end()).append("\"");
+		}
+		sb.append(",\"confidence\":0.95");
+		sb.append(",\"message\":\"").append(escape(
+				"Voy a buscar los contornos de las asignaciones y descargar el NDVI del período indicado.")).append("\"}");
 		return sb.toString();
 	}
 

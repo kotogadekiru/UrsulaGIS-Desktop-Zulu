@@ -22,6 +22,8 @@ public final class OnboardingAchievements {
     public static final String FIRST_POLYGON_DRAWN = "FIRST_POLYGON_DRAWN";
     /** First time the user downloads NDVI for a polygon. */
     public static final String FIRST_NDVI_DOWNLOADED = "FIRST_NDVI_DOWNLOADED";
+    /** First time the user downloads NDVI for assignment contours of a campaign. */
+    public static final String FIRST_NDVI_ASIGNACIONES_DOWNLOADED = "FIRST_NDVI_ASIGNACIONES_DOWNLOADED";
     /** First time the user converts NDVI to harvest (cosecha). */
     public static final String FIRST_CONVERT_NDVI_TO_HARVEST = "FIRST_CONVERT_NDVI_TO_HARVEST";
     /** First time the user recommends Phosphorous fertilization from harvest. */
@@ -202,6 +204,8 @@ public final class OnboardingAchievements {
     public static final String FIRST_CONFIG_LAYERS_CORRELATED = "FIRST_CONFIG_LAYERS_CORRELATED";
     /** First time the user changes the application language / locale. */
     public static final String FIRST_CONFIG_LANGUAGE_CHANGED = "FIRST_CONFIG_LANGUAGE_CHANGED";
+    /** First time the user assigns crop/campaign activities to a lot (Asignación). */
+    public static final String FIRST_CONFIG_ASIGNACION_CREATED = "FIRST_CONFIG_ASIGNACION_CREATED";
 
     // Generic labor tools related achievements
     /** First time the user saves a labor to local storage/database. */
@@ -240,6 +244,7 @@ public final class OnboardingAchievements {
     static {
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_POLYGON_DRAWN, CONTROLLER_POLIGONO);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_NDVI_DOWNLOADED, CONTROLLER_POLIGONO);
+        ACHIEVEMENT_TO_CONTROLLER.put(FIRST_NDVI_ASIGNACIONES_DOWNLOADED, CONTROLLER_NDVI);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_POLYGON_IMPORTED, CONTROLLER_POLIGONO);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_POLYGON_UNION, CONTROLLER_POLIGONO);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_POLYGON_INTERSECTED, CONTROLLER_POLIGONO);
@@ -327,6 +332,7 @@ public final class OnboardingAchievements {
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_APP_UPDATED, CONTROLLER_CONFIG);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_LAYERS_CORRELATED, CONTROLLER_CONFIG);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_LANGUAGE_CHANGED, CONTROLLER_CONFIG);
+        ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_ASIGNACION_CREATED, CONTROLLER_CONFIG);
 
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_GENERIC_LABOR_SAVED, CONTROLLER_GENERIC_LABOR);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_GENERIC_LABOR_CLONED, CONTROLLER_GENERIC_LABOR);
@@ -341,6 +347,7 @@ public final class OnboardingAchievements {
     private static final String[] ALL_ACHIEVEMENT_IDS = {
         FIRST_POLYGON_DRAWN,
         FIRST_NDVI_DOWNLOADED,
+        FIRST_NDVI_ASIGNACIONES_DOWNLOADED,
         FIRST_CONVERT_NDVI_TO_HARVEST,
         FIRST_P_FERTILIZATION_RECOMMENDED,
         FIRST_NDVI_TO_FERTILIZATION,
@@ -401,6 +408,7 @@ public final class OnboardingAchievements {
         FIRST_CONFIG_APP_UPDATED,
         FIRST_CONFIG_LAYERS_CORRELATED,
         FIRST_CONFIG_LANGUAGE_CHANGED,
+        FIRST_CONFIG_ASIGNACION_CREATED,
         FIRST_GENERIC_LABOR_SAVED,
         FIRST_GENERIC_LABOR_CLONED,
         FIRST_GENERIC_LABOR_SUMMARIZED,

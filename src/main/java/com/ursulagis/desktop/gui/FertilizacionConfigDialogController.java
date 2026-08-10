@@ -54,7 +54,7 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 	private TextField textPrecioFert;//ok
 
 	@FXML
-	private ComboBox<String> precioFertUnit;
+	private ComboBox<UnidadPrecio> precioFertUnit;
 
 	@FXML
 	private ComboBox<String> comboElev;//ok
@@ -181,11 +181,11 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 
 
 
-		// colRendimiento;
+		// colDosis
 		this.comboDosis.setItems(FXCollections.observableArrayList(availableColums));
 		this.comboDosis.valueProperty().bindBidirectional(labor.colKgHaProperty);
 
-		//col fertilizante
+		//combo fertilizante permite al usuario seleccionar el fertilizante
 		this.comboFertilizante.setItems(FXCollections.observableArrayList(DAH.getAllFertilizantes()));
 		this.comboFertilizante.getSelectionModel().select(labor.getFertilizante());//viene inicializada con el default desde init()
 		this.comboFertilizante.valueProperty().addListener((obj,old,n)->{
@@ -203,7 +203,7 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 				PropertyHelper.formatDouble(labor.getPrecioInsumo()));
 		labor.setPrecioInsumo(PropertyHelper.parseDouble(precioInsumoStored).doubleValue());
 
-		configPrecioFertUnit();
+		createPrecioFertUnitCombo();
 		refreshPrecioFertDisplayFromLabor();
 
 		this.textPrecioFert.textProperty().addListener((obj, old, n) -> {
@@ -257,7 +257,10 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 
 
 
-
+/**
+ * aplica el nuevo precio del fertilizante en el labor
+ * @param n
+ */
 	private void applyNuevoPrecioFert(String n) {
 		Number nuevoPrecio = PropertyHelper.parseDouble(n);
 		double precioKg = nuevoPrecio.doubleValue();
@@ -273,16 +276,22 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 				PropertyHelper.formatDouble(precioKg));
 	}
 
+	/**
+	 * Actualiza el display del precio del fertilizante en el dialogo
+	 * cuando se cambia el fertilizante cambia la densidad
+	 */
 	private void refreshPrecioFertDisplayFromLabor() {
 		suppressPrecioFertApply = true;
 		try {
 			double precioKg = labor.getPrecioInsumo();
-			UnidadPrecio u = ((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().get();
-			double kgPorL = FertilizacionConfig.kgPorLitroFertilizante(labor.getFertilizante());
-			if (u == UnidadPrecio.Tn) {
+			UnidadPrecio unidad = this.precioFertUnit.getSelectionModel().getSelectedItem();
+			//UnidadPrecio u = ((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().get();
+			
+			if (unidad == UnidadPrecio.Tn) {
 				textPrecioFert.setText(PropertyHelper.formatDouble(precioKg * 1000.0));
-			} else if (u == UnidadPrecio.Litros) {
-				textPrecioFert.setText(PropertyHelper.formatDouble(precioKg / kgPorL));
+			} else if (unidad == UnidadPrecio.Litros) {
+				double densidadFert = FertilizacionConfig.kgPorLitroFertilizante(labor.getFertilizante());
+				textPrecioFert.setText(PropertyHelper.formatDouble(precioKg / densidadFert));
 			} else {
 				textPrecioFert.setText(PropertyHelper.formatDouble(precioKg));
 			}
@@ -291,18 +300,37 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 		}
 	}
 
-	private void configPrecioFertUnit() {
+	/**
+	 * Configura el combo de unidades de precio del fertilizante
+	 * actualiza el valor de la unidad de fertilizante en FertilizacionConfig
+	 * y actualiza el display del precio del fertilizante en el dialogo
+	 */
+	private void createPrecioFertUnitCombo() {
 		Map<String, UnidadPrecio> unidades = new HashMap<>();
 		unidades.put(Messages.getString("FertilizacionConfigDialogController.precioUnitKg"), UnidadPrecio.Kg); //$NON-NLS-1$
 		unidades.put(Messages.getString("FertilizacionConfigDialogController.precioUnitTn"), UnidadPrecio.Tn); //$NON-NLS-1$
 		unidades.put(Messages.getString("FertilizacionConfigDialogController.precioUnitLitros"), UnidadPrecio.Litros); //$NON-NLS-1$
 
-		this.precioFertUnit.setItems(FXCollections.observableArrayList(unidades.keySet()));
+		this.precioFertUnit.setItems(FXCollections.observableArrayList(unidades.values()));
+		this.precioFertUnit.setConverter(new StringConverter<UnidadPrecio>() {
+			@Override
+			public String toString(UnidadPrecio unidad) {
+				return unidades.entrySet().stream()
+					.filter(entry -> entry.getValue().equals(unidad))
+					.map(Map.Entry::getKey)
+					.findFirst()
+					.orElse(null);
+			}
+			@Override
+			public UnidadPrecio fromString(String string) {
+				return unidades.get(string);
+			}
+		});
 		this.precioFertUnit.valueProperty().addListener((ob, old, nv) -> {
 			if (nv == null) {
 				return;
 			}
-			UnidadPrecio sel = unidades.get(nv);
+			UnidadPrecio sel =nv;// unidades.get(nv);
 			if (sel != null) {
 				((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().set(sel);
 				refreshPrecioFertDisplayFromLabor();
@@ -310,11 +338,7 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 		});
 
 		UnidadPrecio configured = ((FertilizacionConfig) labor.getConfigLabor()).precioFertilizanteUnitProperty().get();
-		unidades.forEach((key, value) -> {
-			if (value.equals(configured)) {
-				precioFertUnit.getSelectionModel().select(key);
-			}
-		});
+		precioFertUnit.getSelectionModel().select(configured);
 	}
 
 	public void init() {

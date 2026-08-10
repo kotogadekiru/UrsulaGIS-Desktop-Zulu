@@ -1631,9 +1631,22 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configAsignacionMI")); //
 			tablaStage.setScene(scene);
-			tablaStage.show();	 
-
+			tablaStage.setOnHiding(e -> unlockAsignacionAchievementIfComplete(data));
+			tablaStage.show();
+			unlockAsignacionAchievementIfComplete(data);
 		});	
+	}
+
+	/** Unlocks FIRST_CONFIG_ASIGNACION_CREATED when any row has lote + cultivo or campaña. */
+	private static void unlockAsignacionAchievementIfComplete(Iterable<Asignacion> asignaciones) {
+		for (Asignacion a : asignaciones) {
+			if (a != null && a.getLote() != null
+					&& (a.getCultivo() != null || a.getCampania() != null)) {
+				OnboardingAchievements.getInstance().unlock(
+						JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ASIGNACION_CREATED);
+				return;
+			}
+		}
 	}
 
 	public static void doConfigEmpresa() {

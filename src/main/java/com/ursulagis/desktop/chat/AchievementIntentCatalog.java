@@ -63,6 +63,10 @@ public final class AchievementIntentCatalog {
 			new ChatMapping(OnboardingAchievements.FIRST_CONFIG_MULTI_LAYER_HISTOGRAM, UrsulaAction.COMPARE_ACTIVE_LAYERS,
 					"comparar capas activas", "comparacion capas activas", "comparación capas activas",
 					"histograma multilayer", "comparar capas", "compare active layers"),
+			new ChatMapping(OnboardingAchievements.FIRST_CONFIG_ASIGNACION_CREATED, UrsulaAction.CONFIG_ASIGNACION,
+					"asignar actividades", "asignar actividad", "asignar a lote", "asignar a lotes",
+					"asignacion lotes", "asignación lotes", "asignar cultivo lote", "asignar campania lote",
+					"asignar campaña lote", "abrir asignacion", "abrir asignación"),
 			new ChatMapping(OnboardingAchievements.FIRST_GENERIC_LABOR_SUMMARIZED, UrsulaAction.RESUMIR_LABOR,
 					"resumir labor", "resumir capa", "resumir cosecha", "resumir la cosecha",
 					"resumir cosecha activa", "simplificar", "simplify"),
@@ -70,6 +74,14 @@ public final class AchievementIntentCatalog {
 					"exportar labor", "exportar capa", "export layer", "export shape"),
 			new ChatMapping(OnboardingAchievements.FIRST_GENERIC_LABOR_CLONED, UrsulaAction.CLONAR_LABOR,
 					"clonar labor", "clonar capa", "clone labor"),
+			new ChatMapping(OnboardingAchievements.FIRST_NDVI_ASIGNACIONES_DOWNLOADED, UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES,
+					"ndvi asignacion", "ndvi asignación", "ndvi campania", "ndvi campaña",
+					"descargar ndvi campania", "descargar ndvi campaña", "descargar ndvi asignacion",
+					"ndvi contornos asignacion", "ndvi de soja campania", "ndvi de soja campaña",
+					"obtener ndvi campania", "obtener ndvi campaña", "ndvi por asignacion",
+					"download ndvi campaign", "ndvi assignments",
+					"lotes asignados", "imagenes ndvi", "últimas imagenes ndvi", "ultimas imagenes ndvi",
+					"ndvi de los lotes", "ndvi trigo", "asignados a trigo"),
 			new ChatMapping(OnboardingAchievements.FIRST_NDVI_DOWNLOADED, UrsulaAction.DOWNLOAD_NDVI,
 					"descargar ndvi", "obtener ndvi", "download ndvi", "ndvi para"),
 			new ChatMapping(OnboardingAchievements.FIRST_HARVEST_SHARED, UrsulaAction.COMPARTIR_COSECHA,
@@ -194,6 +206,26 @@ public final class AchievementIntentCatalog {
 		boolean load = n.contains("cargar") || n.contains("importar") || n.contains("abrir");
 		return siembra && (share || load);
 	}
+
+	public static boolean isAsignacionNdviQuery(String userQuery) {
+		if (userQuery == null || userQuery.isBlank()) {
+			return false;
+		}
+		String n = normalize(userQuery);
+		boolean ndvi = n.contains("ndvi");
+		boolean asignacion = n.contains("asignacion") || n.contains("asignad")
+				|| n.contains("contorno") || (n.contains("lote") && n.contains("asign"));
+		boolean campania = n.contains("campania") || n.contains("campana") || CAMPAIGN_TOKEN.matcher(n).find();
+		boolean crop = n.contains("soja") || n.contains("maiz") || n.contains("trigo")
+				|| n.contains("girasol") || n.contains("cultivo");
+		boolean latestLots = (n.contains("ultima") || n.contains("ultimo") || n.contains("imagen"))
+				&& (n.contains("lote") || asignacion);
+		return ndvi && (asignacion || latestLots || (campania && crop) || (campania && n.contains("descargar"))
+				|| (crop && n.contains("lote")));
+	}
+
+	private static final java.util.regex.Pattern CAMPAIGN_TOKEN =
+			java.util.regex.Pattern.compile("\\b\\d{2}\\s*[/-]\\s*\\d{2}\\b");
 
 	private record ScoredHint(String achievementId, double score) {
 	}

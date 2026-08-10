@@ -609,15 +609,17 @@ public class PoligonoGUIController extends AbstractGUIController{
 		String fertHeader;
 		String fertLabel;
 		String fertPrompt;
-		if (unidadDosis == UnidadPrecio.Tn) {
-			fertHeader = Messages.getString("JFXMain.fertNumHeaderTn"); //$NON-NLS-1$
-			fertLabel = Messages.getString("JFXMain.fertNumLabelTn"); //$NON-NLS-1$
-			fertPrompt = PropertyHelper.formatDouble(0.03);
-		} else if (unidadDosis == UnidadPrecio.Litros) {
+		// if (unidadDosis == UnidadPrecio.Tn) {
+		// 	fertHeader = Messages.getString("JFXMain.fertNumHeaderTn"); //$NON-NLS-1$
+		// 	fertLabel = Messages.getString("JFXMain.fertNumLabelTn"); //$NON-NLS-1$
+		// 	fertPrompt = Messages.getString("JFXMain.fertNumPrompt"); //$NON-NLS-1$
+		// } else 
+		if (unidadDosis == UnidadPrecio.Litros) {
 			fertHeader = Messages.getString("JFXMain.fertNumHeaderLitros"); //$NON-NLS-1$
 			fertLabel = Messages.getString("JFXMain.fertNumLabelLitros"); //$NON-NLS-1$
 			fertPrompt = Messages.getString("JFXMain.fertNumPrompt"); //$NON-NLS-1$
-		} else {
+		} else {//si la unidad es de masa va en kg. si es de volumen va en litros.
+			unidadDosis = UnidadPrecio.Kg;
 			fertHeader = Messages.getString("JFXMain.fertNumHeader"); //$NON-NLS-1$
 			fertLabel = Messages.getString("JFXMain.fertNumLabelKg"); //$NON-NLS-1$
 			fertPrompt = Messages.getString("JFXMain.fertNumPrompt"); //$NON-NLS-1$
@@ -1418,16 +1420,23 @@ public class PoligonoGUIController extends AbstractGUIController{
 	}
 
 	public void showPoligonos(List<Poligono> poligonos) {
-
-		Platform.runLater(()->{
-			for(Poligono poli : poligonos){
-				MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
+		Runnable show = () -> {
+			for (Poligono poli : poligonos) {
+				if (poli.getLayer() != null) {
+					continue;
+				}
+				MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(
+						poli, this.getWwd(), this.getLayerPanel());
 				measureTool.setCreationMode(false);
 				insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
-				this.getLayerPanel().update(this.getWwd());//ponerlo fuera del for?
-
 			}
-		});
+			this.getLayerPanel().update(this.getWwd());
+		};
+		if (Platform.isFxApplicationThread()) {
+			show.run();
+		} else {
+			Platform.runLater(show);
+		}
 	}
 
 
@@ -1613,7 +1622,9 @@ public class PoligonoGUIController extends AbstractGUIController{
 		task.setIgnoreNDVI((List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class));
 		task.installProgressBar(progressBox);
 		task.setOnSucceeded(handler -> {
-			poligono.getLayer().setEnabled(false);
+			if (poligono.getLayer() != null) {
+				poligono.getLayer().setEnabled(false);
+			}
 			task.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DOWNLOADED);
 			if (onComplete != null) {

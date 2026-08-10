@@ -30,6 +30,7 @@ import com.ursulagis.desktop.dao.LaborItem;
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.dao.config.Agroquimico;
+import com.ursulagis.desktop.dao.config.Asignacion;
 import com.ursulagis.desktop.dao.config.Campania;
 import com.ursulagis.desktop.dao.config.Cultivo;
 import com.ursulagis.desktop.dao.config.Empresa;
@@ -41,6 +42,7 @@ import com.ursulagis.desktop.dao.ordenCompra.Producto;
 import com.ursulagis.desktop.dao.utils.JPAStringProperty;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
@@ -743,6 +745,7 @@ public class SmartTableView<T> extends TableView<T> {
 						setMethod.invoke(p,d);
 						DAH.save(p);
 						refresh();
+						maybeUnlockAsignacionAchievement(p);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -770,7 +773,8 @@ public class SmartTableView<T> extends TableView<T> {
 						setMethod.invoke(p,d);
 						// Platform.runLater(() -> {
 						 	DAH.save(p);
-						// });					
+						// });
+						maybeUnlockAsignacionAchievement(p);
 					} catch (Exception e) {
 
 						e.printStackTrace();
@@ -796,6 +800,7 @@ public class SmartTableView<T> extends TableView<T> {
 						setMethod.invoke(p,d);
 						DAH.save(p);
 						refresh();
+						maybeUnlockAsignacionAchievement(p);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -804,7 +809,17 @@ public class SmartTableView<T> extends TableView<T> {
 		dColumn.setId(propName);
 		this.getColumns().add(dColumn);
 	}
-	
+
+	private void maybeUnlockAsignacionAchievement(T p) {
+		if (!(p instanceof Asignacion a)) {
+			return;
+		}
+		if (a.getLote() != null && (a.getCultivo() != null || a.getCampania() != null)) {
+			OnboardingAchievements.getInstance().unlock(
+					JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ASIGNACION_CREATED);
+		}
+	}
+
 	private void getSemillaColumn(Class<?> clazz, Method method, String name, Class<?> fieldType,String setMethodName) {
 		String propName = name.replace("Property", "");
 		ChoiceTableColumn<T, Semilla> dColumn = new ChoiceTableColumn<T,Semilla>(propName,DAH.getAllSemillas(),

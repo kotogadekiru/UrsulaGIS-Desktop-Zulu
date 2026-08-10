@@ -1,5 +1,6 @@
 package com.ursulagis.desktop.gui.chat;
 
+import com.ursulagis.desktop.chat.ChatPendingFollowUp;
 import com.ursulagis.desktop.chat.AchievementIntentCatalog;
 import com.ursulagis.desktop.chat.AchievementIntentMatch;
 import com.ursulagis.desktop.chat.ActionExecutionResult;
@@ -97,6 +98,10 @@ public class ChatController {
 			return;
 		}
 
+		if (tryResumePendingFollowUp(text.trim(), layerContext)) {
+			return;
+		}
+
 		if (tryExecuteLocalIntent(text.trim(), layerContext)) {
 			return;
 		}
@@ -109,6 +114,17 @@ public class ChatController {
 				String manualContext = ManualContextBuilder.buildForQuery(text.trim());
 				IntentParser parser = new IntentParser(client, layerContext, codeContext, manualContext);
 				ParsedIntent intent = parser.parse(text.trim());
+				if (AchievementIntentCatalog.isAsignacionNdviQuery(text.trim())
+						&& (intent.getAction() == UrsulaAction.BULK_NDVI_DOWNLOAD
+								|| intent.getAction() == UrsulaAction.DOWNLOAD_NDVI
+								|| intent.getAction() == UrsulaAction.UNKNOWN)) {
+					intent = new ParsedIntent(
+							UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES,
+							intent.getTargetName(),
+							Math.max(intent.getConfidence(), 0.9),
+							"Voy a buscar los contornos de las asignaciones y descargar el NDVI del período indicado.")
+							.enrichFromUserText(text.trim());
+				}
 				if (intent.getAction() == UrsulaAction.GENERAR_MARGEN
 						&& AchievementIntentCatalog.isSiembraShareOrImportQuery(text.trim())) {
 					var override = AchievementIntentCatalog.match(text.trim());
@@ -133,8 +149,11 @@ public class ChatController {
 					if (catalogMatch.isPresent()) {
 						AchievementIntentMatch m = catalogMatch.get();
 						String target = LaborTargetResolver.sanitizeTargetName(intent.getTargetName());
-						intent = new ParsedIntent(m.action(), target, m.score(), m.suggestedReply());
+						intent = new ParsedIntent(m.action(), target, m.score(), m.suggestedReply())
+								.enrichFromUserText(text.trim());
 					}
+				} else {
+					intent = intent.enrichFromUserText(text.trim());
 				}
 				String guidance = null;
 				if (intent.getAction() == UrsulaAction.UNKNOWN) {
@@ -172,6 +191,21 @@ public class ChatController {
 		Thread t = new Thread(task, "ursula-chat");
 		t.setDaemon(true);
 		t.start();
+	}
+
+	private boolean tryResumePendingFollowUp(String userText, MapLayerContext layerContext) {
+		Optional<ParsedIntent> resumed = ChatPendingFollowUp.tryResume(userText);
+		if (resumed.isEmpty()) {
+			return false;
+		}
+		ParsedIntent intent = resumed.get();
+		ActionExecutionResult result = executor.execute(intent, layerContext);
+		panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
+		panel.setStatus(msg("Chat.statusReady", "Ready"));
+		if (result.launched()) {
+			UrsulaChatWindow.yieldToMainStage();
+		}
+		return true;
 	}
 
 	private boolean tryExecuteLocalIntent(String userText, MapLayerContext layerContext) {

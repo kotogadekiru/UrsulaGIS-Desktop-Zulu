@@ -1,16 +1,20 @@
 package com.ursulagis.desktop.chat;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
+import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.gui.JFXMain;
+import com.ursulagis.desktop.gui.controller.ConfigGUI;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.ClonarLaborMapTask;
@@ -68,6 +72,7 @@ public class ChatActionExecutor {
 				main.ndviGUIController.doBulkNDVIDownload();
 				yield ActionExecutionResult.launched("Descarga masiva de NDVI iniciada.");
 			}
+			case DOWNLOAD_NDVI_ASIGNACIONES -> downloadNdviAsignaciones(intent);
 			case BALANCE_NUTRIENTES -> {
 				main.sueloGUIController.doProcesarBalanceNutrientes();
 				yield ActionExecutionResult.launched("Balance de nutrientes en proceso.");
@@ -117,6 +122,10 @@ public class ChatActionExecutor {
 			case COMPARE_ACTIVE_LAYERS -> {
 				main.configGUIController.showMultiLayerHistoChart();
 				yield ActionExecutionResult.launched("Abriendo comparación de capas activas (histograma multilayer).");
+			}
+			case CONFIG_ASIGNACION -> {
+				ConfigGUI.doConfigAsignacion();
+				yield ActionExecutionResult.launched("Ventana de Asignación abierta para asignar actividades a lotes.");
 			}
 			case GO_TO_LAYER -> goToLabor(ctx);
 			case RESUMIR_LABOR -> resumirLabor(ctx);
@@ -288,6 +297,62 @@ public class ChatActionExecutor {
 		}
 		main.ndviGUIController.doGetNdviTiffFile(ctx.getLabor());
 		return ActionExecutionResult.launched("Descarga de NDVI iniciada para " + nameOf(ctx.getLabor()) + ".");
+	}
+
+	private ActionExecutionResult downloadNdviAsignaciones(ParsedIntent intent) {
+		String sourceText = intent.getSourceUserText() != null ? intent.getSourceUserText() : intent.getMessage();
+		AsignacionNdviRequest req = AsignacionNdviRequest.parse(
+				sourceText,
+				intent.getCampaniaName(),
+				intent.getCultivoName(),
+				intent.getBeginDate(),
+				intent.getEndDate());
+
+		if (req.campaniaName() == null || req.campaniaName().isBlank()) {
+			ChatPendingFollowUp.rememberNdviAsignacionNeedsCampania(req, sourceText);
+			return ActionExecutionResult.notLaunched(
+					"No encontré una campaña en el proyecto. ¿Cuál campaña querés usar? (ej. 26/27)");
+		}
+		if (!req.hasPeriod()) {
+			ChatPendingFollowUp.rememberNdviAsignacionNeedsCampania(req, sourceText);
+			return ActionExecutionResult.notLaunched(
+					"Indicá el período a descargar (ej. \"últimas imágenes\" o \"desde 2025-11-01 hasta 2026-03-31\").");
+		}
+
+		List<Poligono> contornos = req.findContornos();
+		if (contornos.isEmpty()) {
+			ChatPendingFollowUp.rememberNdviAsignacionNeedsCampania(req, sourceText);
+			String cultivoPart = req.cultivoName() != null ? " y cultivo " + req.cultivoName() : "";
+			return ActionExecutionResult.notLaunched(
+					"No encontré contornos en Asignación para campaña " + req.campaniaName() + cultivoPart
+							+ ". ¿Cuál campaña querés usar? (ej. 26/27)");
+		}
+
+		ChatPendingFollowUp.clear();
+
+		List<Poligono> missingLayer = new ArrayList<>();
+		for (Poligono p : contornos) {
+			if (p.getLayer() == null) {
+				missingLayer.add(p);
+			}
+		}
+		if (!missingLayer.isEmpty()) {
+			main.poligonoGUIController.showPoligonos(missingLayer);
+		}
+
+		LocalDate begin = req.begin();
+		LocalDate end = req.end();
+		for (Poligono contorno : contornos) {
+			main.poligonoGUIController.downloadNdviForPoligono(contorno, begin, end, null);
+		}
+		OnboardingAchievements.getInstance().unlock(
+				JFXMain.stage, OnboardingAchievements.FIRST_NDVI_ASIGNACIONES_DOWNLOADED);
+
+		String cultivoPart = req.cultivoName() != null ? ", cultivo " + req.cultivoName() : "";
+		return ActionExecutionResult.launched(
+				"Descargando NDVI de " + contornos.size() + " contorno(s) de campaña "
+						+ req.campaniaName() + cultivoPart
+						+ " (" + begin + " → " + end + ").");
 	}
 
 	private ActionExecutionResult compartirCosecha(ActionContext ctx) {

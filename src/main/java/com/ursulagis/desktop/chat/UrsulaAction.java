@@ -22,6 +22,7 @@ public enum UrsulaAction {
 	IMPORT_MARGEN(false, false, false, "Import margin map from shapefile"),
 	GENERAR_MARGEN(false, false, false, "Generate margin map from active harvest, seeding, fertilization and spray layers"),
 	BULK_NDVI_DOWNLOAD(false, false, false, "Bulk download NDVI imagery"),
+	DOWNLOAD_NDVI_ASIGNACIONES(false, false, false, "Download NDVI for assignment contours of a campaign/crop and period"),
 	BALANCE_NUTRIENTES(false, false, false, "Run nutrient balance"),
 	JUNTAR_SHAPES(false, false, false, "Merge shapefiles"),
 	MEDIR_DISTANCIA(false, false, false, "Measure distance on map"),
@@ -34,6 +35,7 @@ public enum UrsulaAction {
 	CONVERTIR_POLIGONO_A_PULVERIZACION(false, false, false, "Convert enabled polygon layers into a spray map"),
 	SHOW_LABORES_TABLE(false, false, false, "Show labores table"),
 	COMPARE_ACTIVE_LAYERS(false, false, false, "Compare active layers (multi-layer histogram)"),
+	CONFIG_ASIGNACION(false, false, false, "Open lot activity allocation (Asignación)"),
 
 	GO_TO_LAYER(true, false, false, "Zoom to a labor layer"),
 	RESUMIR_LABOR(true, false, false, "Summarize / simplify a labor map"),
