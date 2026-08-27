@@ -59,6 +59,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import com.ursulagis.desktop.tasks.GetNdviForLaborTask4;
+import com.ursulagis.desktop.tasks.UpdateTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.ExcelHelper;
 
@@ -68,6 +69,7 @@ public class BulkNdviDownloadGUI {
 	private static final String YYYY_MM_DD = "yyyy-MM-dd";
 	private static final String URSULA_GIS_TOKEN = "ursulaGIS"+JFXMain.VERSION;//"ursulaGISv23";
 	private static final String TOKEN = "token";
+	private static final String USER = "user";
 	private static final String END = "end";
 	private static final String BEGIN = "begin"; //Data availability (time)	Jun 23, 2015 - Apr 18, 2017
 	private static final String PATH2 = "path2";
@@ -411,6 +413,7 @@ public class BulkNdviDownloadGUI {
 		req_data.put(BEGIN, sBegin);
 		req_data.put(END, sEnd);
 		req_data.put(TOKEN, URSULA_GIS_TOKEN);
+		req_data.put(USER, UpdateTask.getUserNumber());
 
 		final HttpContent req_content = new JsonHttpContent(new JacksonFactory(), req_data);
 

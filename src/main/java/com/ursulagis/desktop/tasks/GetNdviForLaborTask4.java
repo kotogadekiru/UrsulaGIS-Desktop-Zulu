@@ -42,7 +42,6 @@ import com.google.api.client.util.ArrayMap;
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
-import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.gui.JFXMain;
 //import gov.nasa.worldwind.geom.Angle;
 //import gov.nasa.worldwind.geom.Position;
@@ -79,13 +78,14 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	//"ursulaGIS.cosechaService";//"ursulaGISv23";	//Nov 13, 2022 
 	private static final String URSULA_GIS_TOKEN = "ursulaGISv"+JFXMain.VERSION;//"ursulaGISv23";
 	private static final String TOKEN = "token";
+	private static final String USER = "user";
 
 	//private static final String BASE_URL = "https://gee-api-helper-staging.herokuapp.com";
 	private static final String BASE_URL = "https://gee-api-helper.herokuapp.com";
 	//private static final String BASE_URL = "http://0.0.0.0:5001";
 	
 	private static final String HTTP_GEE_API_HELPER_HEROKUAPP_COM_NDVI_V4_SR = BASE_URL+"/ndvi_v4_SR";//"/ndvi_v4";//+"/gndvi_v4_SR";//"/ndvi_v3";//ndvi_v5
-	private static final String HTTP_GEE_API_HELPER_HEROKUAPP_COM_NDVI_V3 = BASE_URL+"/ndvi_v4";//"/ndvi_v4";//+"/gndvi_v4_SR";//"/ndvi_v3";//ndvi_v5
+	private static final String HTTP_GEE_API_HELPER_HEROKUAPP_COM_NDVI_V3 = BASE_URL+"/ndvi_v4_batch";//"/ndvi_v4";//"/ndvi_v4";//+"/gndvi_v4_SR";//"/ndvi_v3";//ndvi_v5
 	private static final String HTTPS_GEE_API_HELPER_HEROKUAPP_COM_S2_PRODUCT_FINDER = BASE_URL+"/s2_product_finder_v4";
 	private static final String GEE_POLYGONS_GET_REQUEST_KEY = "polygons";
 
@@ -145,6 +145,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 		req_data.put(BEGIN, sBegin);
 		req_data.put(END, sEnd);
 		req_data.put(TOKEN, URSULA_GIS_TOKEN);
+		req_data.put(USER, UpdateTask.getUserNumber());
 
 		final HttpContent req_content = new JsonHttpContent(new JacksonFactory(), req_data);
 
@@ -393,6 +394,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 						req_data.put(BEGIN, sBegin);
 						req_data.put(END, sEnd);
 						req_data.put(TOKEN, URSULA_GIS_TOKEN);
+						req_data.put(USER, UpdateTask.getUserNumber());
 
 						final HttpContent req_content = new JsonHttpContent(new JacksonFactory(), req_data);
 
@@ -515,9 +517,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 				});
 		try {
 			HttpRequest request = requestFactory.buildPostRequest(url, req_content);//(url);
-			Configuracion conf = Configuracion.getInstance();
-			
-			String usr = conf.getPropertyOrDefault("USER", "number not set");//si no existia la clave se crea una nueva
+			String usr = UpdateTask.getUserNumber();
 			request.getHeaders().put("USER", usr);
 			response= request.execute();
 
