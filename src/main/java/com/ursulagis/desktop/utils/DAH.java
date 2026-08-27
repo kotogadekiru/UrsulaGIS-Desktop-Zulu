@@ -11,6 +11,7 @@ import static org.eclipse.persistence.config.PersistenceUnitProperties.TARGET_SE
 import static org.eclipse.persistence.config.PersistenceUnitProperties.TRANSACTION_TYPE;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,7 +77,26 @@ public class DAH {
 	private static EntityManager emODB = null;
 	private static EntityManager emLite = null;
 	static EntityTransaction transaction=null;
+	/** True while Persistence.createEntityManagerFactory is running (entity ctors must not call DAH). */
+	private static volatile boolean bootstrapping = false;
 
+	public static boolean isBootstrapping() {
+		return bootstrapping;
+	}
+
+	/** True when the shared EM already has an open transaction (nested DAH from entity ctors is unsafe). */
+	public static boolean isTransactionActive() {
+		try {
+			return emLite != null && emLite.isOpen() && emLite.getTransaction().isActive();
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/** Entity no-arg ctors must not touch DAH while EMF is starting or a tx is in progress. */
+	public static boolean shouldSkipEntityInit() {
+		return bootstrapping || isTransactionActive();
+	}
 
 	public static EntityManager em(){
 		return emLite();
@@ -117,6 +137,11 @@ public class DAH {
 	 */
 	public static EntityManager emLite(){
 		if(emLite == null){
+			if (bootstrapping) {
+				throw new IllegalStateException("DAH.emLite() re-entered while bootstrapping the persistence unit");
+			}
+			bootstrapping = true;
+			try {
 			/*
    <property name="javax.persistence.jdbc.driver" value="org.sqlite.JDBC" />
   <property name="javax.persistence.jdbc.url" value="jdbc:sqlite:ursulaGIS.db" />
@@ -197,6 +222,9 @@ public class DAH {
 			//				JFXMain.config.save();
 			//			}
 
+			} finally {
+				bootstrapping = false;
+			}
 		}
 		return emLite;
 	}
@@ -275,6 +303,33 @@ public class DAH {
 		}
 	}
 
+	/**
+	 * True when the entity already has a primary key and must be merged (update),
+	 * not persisted (insert). {@link EntityManager#contains} alone is not enough:
+	 * detached instances with an id still need merge.
+	 */
+	private static boolean hasPersistentId(Object entidad) {
+		try {
+			Method getId = entidad.getClass().getMethod("getId");
+			return getId.invoke(entidad) != null;
+		} catch (NoSuchMethodException e) {
+			return false;
+		} catch (Exception e) {
+			logger.fine(() -> "hasPersistentId failed for " + entidad.getClass().getSimpleName() + ": " + e);
+			return false;
+		}
+	}
+
+	private static void persistOrMerge(EntityManager em, Object entidad) {
+		if (em.contains(entidad) || hasPersistentId(entidad)) {
+			em.merge(entidad);
+			logger.fine(() -> "merging entidad " + entidad);
+		} else {
+			em.persist(entidad);
+			logger.fine(() -> "persistiendo entidad " + entidad);
+		}
+	}
+
 	public static void save(Object entidad) {	
 		if (entidad.getClass().getAnnotation(Entity.class) == null) {	
 			logger.fine("no se guardan las clases que no son entidades "+entidad);
@@ -299,14 +354,8 @@ public class DAH {
 				logger.warning("error al hacer rollback de la transaccion activa");
 			}
 			try{
-				em.getTransaction().begin();		
-				if(em.contains(entidad)) {
-					em.merge(entidad);
-					//System.out.println("merging entidad "+entidad);
-				}else {
-					//System.out.println("persistiendo entidad "+entidad);
-					em.persist(entidad);			
-				}
+				em.getTransaction().begin();
+				persistOrMerge(em, entidad);
 				em.getTransaction().commit();
 			}catch(javax.persistence.RollbackException rbe){
 				rbe.printStackTrace();
@@ -319,13 +368,7 @@ public class DAH {
 
 			}
 		} else{
-			if(em.contains(entidad)) {
-				em.merge(entidad);
-				logger.fine("merging entidad "+entidad);
-			}else {
-				logger.fine("persistiendo entidad "+entidad);
-				em.persist(entidad);			
-			}
+			persistOrMerge(em, entidad);
 		}
 	}
 
@@ -445,9 +488,18 @@ public class DAH {
 		return getAllLabores(em());
 	}
 	public static List<? extends Labor<?>> getAllLabores(EntityManager em) {
-		TypedQuery<CosechaLabor> query = em.createNamedQuery(
-				CosechaLabor.FIND_ALL, CosechaLabor.class);
-		List<? extends Labor<?>> results = (List<? extends Labor<?>>) query.getResultList();
+		TypedQuery<Labor> query = em.createNamedQuery(
+				Labor.FIND_ALL, Labor.class);
+		@SuppressWarnings("unchecked")
+		List<? extends Labor<?>> results = (List<? extends Labor<?>>) (List<?>) query.getResultList();
+		return results;
+	}
+
+	public static List<? extends Labor<?>> getLaboresActivos() {
+		TypedQuery<Labor> query =
+				em().createNamedQuery(Labor.FIND_ACTIVOS, Labor.class);
+		@SuppressWarnings("unchecked")
+		List<? extends Labor<?>> results = (List<? extends Labor<?>>) (List<?>) query.getResultList();
 		return results;
 	}
 	/**

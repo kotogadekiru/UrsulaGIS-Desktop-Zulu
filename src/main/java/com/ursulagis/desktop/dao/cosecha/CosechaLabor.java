@@ -3,6 +3,9 @@ package com.ursulagis.desktop.dao.cosecha;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -32,17 +35,21 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
-//@Entity @Access(AccessType.FIELD)//variable (el default depende de donde pongas el @Id)
+@Entity @Access(AccessType.FIELD)
 @NamedQueries({
-	@NamedQuery(name=CosechaLabor.CosechaLaborConstants.FIND_ALL, query="SELECT c FROM CosechaLabor c") ,
-	@NamedQuery(name=CosechaLabor.CosechaLaborConstants.FIND_NAME, query="SELECT o FROM CosechaLabor o where o.nombre = :name") ,
-	@NamedQuery(name=CosechaLabor.CosechaLaborConstants.FIND_ACTIVOS, query="SELECT o FROM CosechaLabor o where o.activo = true") ,
+	@NamedQuery(name=CosechaLabor.FIND_ALL, query="SELECT c FROM CosechaLabor c") ,
+	@NamedQuery(name=CosechaLabor.FIND_NAME, query="SELECT o FROM CosechaLabor o where o.nombre = :name") ,
+	@NamedQuery(name=CosechaLabor.FIND_ACTIVOS, query="SELECT o FROM CosechaLabor o where o.activo = true") ,
 }) 
-public class CosechaLabor extends Labor<CosechaItem> {	
+public class CosechaLabor extends Labor<CosechaItem> {
+	@Transient public static final String FIND_ALL="CosechaLabor.findAll";
+	@Transient public static final String FIND_NAME = "CosechaLabor.findName";
+	@Transient public static final String FIND_ACTIVOS = "CosechaLabor.findActivos";
+
 	public static class CosechaLaborConstants{
-	public static final String FIND_ALL="CosechaLabor.findAll";
-	public static final String FIND_NAME = "CosechaLabor.findName";
-	public static final String FIND_ACTIVOS = "CosechaLabor.findActivos";
+	public static final String FIND_ALL=CosechaLabor.FIND_ALL;
+	public static final String FIND_NAME = CosechaLabor.FIND_NAME;
+	public static final String FIND_ACTIVOS = CosechaLabor.FIND_ACTIVOS;
 	
 	public static final int KG_POR_TN = 1000;
 	public static final double FEET_TO_METERS = 0.3048;
@@ -70,19 +77,26 @@ public class CosechaLabor extends Labor<CosechaItem> {
 	public static final String COLUMNA_COSTO_LB_TN = "CostoLbHa";
 	}
 	
+	/** Persistable column name; mirrored by {@link #colRendimiento}. */
+	private String colRendimientoValue;
+	@Transient
 	public StringProperty colRendimiento= new SimpleStringProperty();
 	
-	
-	
-	public Cultivo cultivo= null;//FIXME producto no se puede guardar como una property
+	@ManyToOne
+	public Cultivo cultivo= null;
 	public Double costoCosechaTn = 0.0;
-	//public Double precioGrano = 0.0;
-	//public DoubleProperty precioGranoProperty= new SimpleDoubleProperty();	 
-	//public DoubleProperty costoCosechaTnProperty= new SimpleDoubleProperty();
 
-	//TODO mover a tasks separados de la cosecha	 
-	public DoubleProperty correccionCosechaProperty= new SimpleDoubleProperty();//es el porcentaje de 0-100 por que que hay que multiplicar el rinde 
+	/** Persistable correction % (0–100); mirrored by {@link #correccionCosechaProperty}. */
+	private Double correccionCosecha = 100.0;
+	@Transient
+	public DoubleProperty correccionCosechaProperty= new SimpleDoubleProperty();
+	/** Persistable max yield tn/ha; mirrored by {@link #maxRindeProperty}. */
+	private Double maxRinde = 20.0;
+	@Transient
 	public DoubleProperty maxRindeProperty= new SimpleDoubleProperty();
+	/** Persistable min yield tn/ha; mirrored by {@link #minRindeProperty}. */
+	private Double minRinde = 0.0;
+	@Transient
 	public DoubleProperty minRindeProperty= new SimpleDoubleProperty();
 
 
@@ -92,7 +106,10 @@ public class CosechaLabor extends Labor<CosechaItem> {
 	 */
 	public CosechaLabor() {
 		super();
-		initConfig();
+		// JPA uses this ctor while deploying/loading — must not call DAH then
+		if (!DAH.shouldSkipEntityInit()) {
+			initConfig();
+		}
 	}
 	
 	public CosechaLabor(CosechaLabor c) {
@@ -151,6 +168,59 @@ public class CosechaLabor extends Labor<CosechaItem> {
 //			//this.cultivo=bool2;
 //			if(bool2!=null)properties.setProperty(CosechaLabor.PRODUCTO_DEFAULT,bool2.getNombre());
 //		});
+		syncPropertiesToFields();
+	}
+
+	@Override
+	protected void onBeforePersist() {
+		syncPropertiesToFields();
+	}
+
+	private void syncPropertiesToFields() {
+		if (colRendimiento != null) {
+			colRendimientoValue = colRendimiento.get();
+		}
+		if (correccionCosechaProperty != null) {
+			correccionCosecha = correccionCosechaProperty.get();
+		}
+		if (maxRindeProperty != null) {
+			maxRinde = maxRindeProperty.get();
+		}
+		if (minRindeProperty != null) {
+			minRinde = minRindeProperty.get();
+		}
+	}
+
+	@Override
+	protected void onAfterLoad() {
+		syncFieldsToProperties();
+	}
+
+	private void syncFieldsToProperties() {
+		if (colRendimiento == null) {
+			colRendimiento = new SimpleStringProperty();
+		}
+		if (colRendimientoValue != null) {
+			colRendimiento.set(colRendimientoValue);
+		}
+		if (correccionCosechaProperty == null) {
+			correccionCosechaProperty = new SimpleDoubleProperty();
+		}
+		if (correccionCosecha != null) {
+			correccionCosechaProperty.set(correccionCosecha);
+		}
+		if (maxRindeProperty == null) {
+			maxRindeProperty = new SimpleDoubleProperty();
+		}
+		if (maxRinde != null) {
+			maxRindeProperty.set(maxRinde);
+		}
+		if (minRindeProperty == null) {
+			minRindeProperty = new SimpleDoubleProperty();
+		}
+		if (minRinde != null) {
+			minRindeProperty.set(minRinde);
+		}
 	}
 
 	@Override
@@ -306,19 +376,4 @@ public class CosechaLabor extends Labor<CosechaItem> {
 		return getConfiguracion();
 	}
 	
-	@ManyToOne
-	public Cultivo getCultivo() {
-		return this.cultivo;
-	}
-	
-	public void setCultivo(Cultivo c) {
-		//System.out.println("camniando el cultivo de "+getCultivo()+" a "+c);
-//		if(productoProperty==null) {
-//			productoProperty = new SimpleObjectProperty<Cultivo>();
-//		}
-		this.cultivo=c;
-		//System.out.println("el cultivo quedo en "+getCultivo());
-	}
-
-
 }

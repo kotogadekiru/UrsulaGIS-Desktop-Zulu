@@ -229,6 +229,7 @@ public class JFXMain extends Application {
 		TarjetaHelper.initTarjeta();
 		poligonoGUIController.poligonosActivos = DAH.getPoligonosActivos();
 		ndviGUIController.ndviActivos = DAH.getNdviActivos();
+		genericGUIController.laboresActivos = DAH.getLaboresActivos();
 
     }
 
@@ -1033,6 +1034,7 @@ public class JFXMain extends Application {
 			
 			this.poligonoGUIController.showPoligonosActivos();
 			this.ndviGUIController.showNdviActivos();
+			this.genericGUIController.showLaboresActivos();
 
 		//Al agregar los poligonos y ndvi se resetea el divider position
 	

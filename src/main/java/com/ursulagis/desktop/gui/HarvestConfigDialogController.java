@@ -197,7 +197,10 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 		});
 
 		this.setResultConverter(e -> {		
-			if(ButtonType.OK.equals(e)){					
+			if(ButtonType.OK.equals(e)){
+				if(textNombre != null && textNombre.getText() != null){
+					labor.setNombre(textNombre.getText().trim());
+				}
 				if(chkMakeDefault.selectedProperty().get()){
 					labor.getConfiguracion().save();
 				}				

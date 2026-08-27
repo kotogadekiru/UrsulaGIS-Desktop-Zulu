@@ -363,6 +363,49 @@ public class CosechaGUIController extends AbstractGUIController {
 	}
 
 	/**
+	 * Shows a persisted cosecha using the same {@link ProcessHarvestMapTask} path as import.
+	 */
+	public void showCosechaLabor(CosechaLabor labor) {
+		if (labor == null) {
+			return;
+		}
+		if (labor.getLayer() == null) {
+			labor.setLayer(new LaborLayer());
+		}
+		if (labor.getInStore() == null) {
+			FileHelper.expandLaborOutCollection(labor);
+		}
+		if (labor.getInStore() == null
+				&& (labor.outCollection == null || labor.outCollection.isEmpty())) {
+			byte[] content = labor.getContent();
+			logger.warning("No hay geometria para mostrar la cosecha " + labor.getNombre()
+					+ " (content=" + (content == null ? "null" : content.length + " bytes") + ")");
+			return;
+		}
+		// Packed content is already standard yield data
+		labor.getConfiguracion().correccionFlowToRindeProperty().setValue(false);
+		if (labor.colRendimiento == null || labor.colRendimiento.get() == null || labor.colRendimiento.get().isBlank()) {
+			labor.colRendimiento.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
+		}
+		if (labor.colAmount == null || labor.colAmount.get() == null || labor.colAmount.get().isBlank()) {
+			labor.colAmount.set(CosechaLabor.CosechaLaborConstants.COLUMNA_RENDIMIENTO);
+		}
+
+		ProcessHarvestMapTask umTask = new ProcessHarvestMapTask(labor);
+		umTask.installProgressBar(progressBox);
+		umTask.setOnSucceeded(handler -> {
+			CosechaLabor ret = (CosechaLabor) handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			viewGoTo(ret);
+			umTask.uninstallProgressBar();
+			logger.fine("showCosechaLabor ProcessHarvestMapTask succeeded");
+			playSound();
+		});
+		JFXMain.executorPool.execute(umTask);
+	}
+
+	/**
 	 *  updload cosecha to server and show url to access
 	 * @param cosecha
 	 */

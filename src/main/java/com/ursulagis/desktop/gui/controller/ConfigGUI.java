@@ -1152,40 +1152,44 @@ public class ConfigGUI extends AbstractGUIController{
 
 
 	public void doShowLaboresTable() {
-		List<? extends Labor<?>> recorridas = DAH.getAllLabores();
-		//		Platform.runLater(()->{
-		//			final ObservableList<? extends Labor<?>> data = FXCollections.observableArrayList(recorridas);
-		//
-		//			SmartTableView<? extends Labor<?>> table = new SmartTableView<Labor>(data,
-		//					Arrays.asList("Id","Posicion"),
-		//					Arrays.asList("Nombre","Observacion","Latitude","Longitude")
-		//					);
-		//			table.getSelectionModel().setSelectionMode(	SelectionMode.MULTIPLE	);
-		//			table.setEditable(true);
-		//			//			table.setOnDoubleClick(()->new Poligono());
-		//			table.setOnShowClick((recorrida)->{
-		//				//poli.setActivo(true);
-		//				//main.doShowRecorrida(recorrida);
-		//			});
-		//			
-		//			table.addSecondaryClickConsumer("Editar",(r)-> {
-		//				//doShowMuestrasTable(r.getMuestras());
-		//			});
-		//
-		//			Scene scene = new Scene(table, 800, 600);
-		//			Stage tablaStage = new Stage();
-		//			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
-		//			tablaStage.setTitle(Messages.getString("JFXMain.configRecorridaMI")); //
-		//			tablaStage.setScene(scene);
-		//
-		//			tablaStage.onHiddenProperty().addListener((o,old,n)->{
-		//				main.getLayerPanel().update(main.getWwd());
-		//				//getWwd().redraw();
-		//			});
-		//
-		//			tablaStage.show();	 
-		//		});	
+		Platform.runLater(()->{
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			final ObservableList<Labor<?>> data = FXCollections.observableArrayList(
+					(List) DAH.getAllLabores()
+					);
 
+			SmartTableView<Labor<?>> table = new SmartTableView<>(data,
+					Arrays.asList("Id","Content","AnchoDefault","Type","Layer","Clasificador",
+							"InStore","OutCollection","InCollection","Config","ConfigLabor",
+							"NextID","AvailableColumns","FeatureBuilder",
+							"MinX","MinY","MaxX","MaxY","TreeCache","TreeCacheEnvelope","CacheLastRead",
+							"ColAmount","ColElevacion","ColAncho","ColCurso","ColDistancia",
+							"ColRendimientoValue","CorreccionCosecha","MaxRinde","MinRinde",
+							"ColRendimiento","CorreccionCosechaProperty","MaxRindeProperty","MinRindeProperty",
+							"Cultivo","CostoCosechaTn","Configuracion","ProductoLabor"),
+					Arrays.asList("Activo","Tipo","Nombre","Fecha",
+							"PrecioLabor","PrecioInsumo","CantidadLabor","CantidadInsumo")
+					);
+			table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+			table.setEditable(true);
+			table.setOnShowClick((labor)->{
+				labor.setActivo(true);
+				main.genericGUIController.showLabor(labor);
+				Platform.runLater(()-> DAH.save(labor));
+			});
+
+			Scene scene = new Scene(table, 800, 600);
+			Stage tablaStage = new Stage();
+			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+			tablaStage.setTitle(Messages.getString("ConfigGUI.labores"));
+			tablaStage.setScene(scene);
+
+			tablaStage.onHiddenProperty().addListener((o,old,n)->{
+				main.getLayerPanel().update(main.getWwd());
+			});
+
+			tablaStage.show();
+		});
 	}
 
 

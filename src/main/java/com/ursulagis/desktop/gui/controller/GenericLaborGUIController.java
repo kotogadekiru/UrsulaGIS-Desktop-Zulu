@@ -31,6 +31,7 @@ import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.PoligonLayerFactory;
 import com.ursulagis.desktop.gui.nww.LayerAction;
+import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
 import com.ursulagis.desktop.gui.utils.NombreTableColumn;
@@ -39,6 +40,7 @@ import com.ursulagis.desktop.gui.nww.MeasureTool;
 import com.ursulagis.desktop.gui.nww.MeasureToolForShape;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
 import com.ursulagis.desktop.tasks.GenerarReportePDFTask;
+import com.ursulagis.desktop.tasks.ShowLaborMapTask;
 import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.tasks.procesar.ClonarLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.JuntarShapefilesTask;
@@ -68,6 +70,8 @@ public class GenericLaborGUIController extends AbstractGUIController {
 
 
 	private boolean layerPanelUpdateScheduled = false;
+	/** Loaded in {@link JFXMain#init()} for startup display. */
+	public List<? extends Labor<?>> laboresActivos = null;
 
 	public GenericLaborGUIController(JFXMain _main) {
 		super(_main);
@@ -85,7 +89,6 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		}));
 
 		laboresP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.GuardarLabor"),(layer)->{
-			main.enDesarrollo();
 			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 			if (layerObject==null){
 			}else if(Labor.class.isAssignableFrom(layerObject.getClass())){
@@ -271,6 +274,10 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 		if (layerObject != null && Labor.class.isAssignableFrom(layerObject.getClass())) {
 			Labor<?> l = (Labor<?>) layerObject;
+			l.setActivo(false);
+			if (l.getId() != null) {
+				toPersist.add(l);
+			}
 			l.dispose();
 		}
 		if (layerObject instanceof Poligono poli) {
@@ -412,11 +419,61 @@ public class GenericLaborGUIController extends AbstractGUIController {
 	}
 
 	private void doGuardarLabor(Labor<?> labor) {
-		File zipFile = FileHelper.zipLaborToTmpDir(labor);//ok funciona
-		byte[] byteArray = FileHelper.fileToByteArray(zipFile);		
-		labor.setContent(byteArray);
-		DAH.save(labor);//No se guardan las labores porque no extienden de entidad
+		// Layer tree shows the name the user identifies; keep entity in sync before persist
+		if (labor.getLayer() != null) {
+			String layerName = labor.getLayer().getName();
+			if (layerName != null && !layerName.isBlank()) {
+				labor.setNombre(layerName.trim());
+			}
+		}
+		labor.setActivo(true);
+		byte[] packed = FileHelper.packLaborOutCollection(labor);
+		if (packed != null) {
+			labor.setContent(packed);
+		} else if (labor.getContent() == null || labor.getContent().length == 0) {
+			logger.warning("Guardar labor sin geometria (outCollection vacia y content vacio): " + labor.getNombre());
+		}
+		DAH.save(labor);// PrePersist also packs if outCollection is present
 		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_SAVED);
+	}
+
+	public void showLaboresActivos() {
+		if (laboresActivos == null || laboresActivos.isEmpty()) {
+			return;
+		}
+		for (Labor<?> labor : laboresActivos) {
+			showLabor(labor);
+		}
+	}
+
+	public void showLabor(Labor<?> labor) {
+		if (labor == null) {
+			return;
+		}
+		if (labor instanceof CosechaLabor) {
+			main.cosechaGUIController.showCosechaLabor((CosechaLabor) labor);
+			return;
+		}
+		// Fallback for labor types not yet wired to their import task
+		if (labor.getLayer() == null) {
+			labor.setLayer(new LaborLayer());
+		}
+		if (labor.getInStore() == null
+				&& (labor.outCollection == null || labor.outCollection.isEmpty())) {
+			FileHelper.expandLaborOutCollection(labor);
+		}
+		ShowLaborMapTask task = new ShowLaborMapTask(labor);
+		task.installProgressBar(progressBox);
+		task.setOnSucceeded(handler -> {
+			Labor<?> ret = (Labor<?>) handler.getSource().getValue();
+			task.uninstallProgressBar();
+			if (ret != null && ret.getLayer() != null) {
+				insertBeforeCompass(getWwd(), ret.getLayer());
+				this.getLayerPanel().update(this.getWwd());
+				viewGoTo(ret);
+			}
+		});
+		executorPool.execute(task);
 	}
 
 	public void doJuntarShapefiles() {

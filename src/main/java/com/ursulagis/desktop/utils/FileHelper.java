@@ -19,9 +19,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.geotools.api.data.FileDataStore;
 import org.geotools.api.data.FileDataStoreFinder;
+import org.geotools.api.feature.simple.SimpleFeature;
+import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.data.DataUtilities;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.data.shapefile.ShapefileDataStoreFactory;
-import org.geotools.api.feature.simple.SimpleFeatureType;
+import org.geotools.data.simple.SimpleFeatureIterator;
+import org.geotools.feature.DefaultFeatureCollection;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.config.Configuracion;
@@ -409,7 +413,14 @@ public class FileHelper {
 		//1 crear un directorio temporal
 		Path dir = FileHelper.createTempDir("toUpload");
 		//2 crear un archivo shape dentro del directorio para subir
-		File shpFile = FileHelper.getNewShapeFileAt(dir,"labor.shp");
+		String baseName = "labor";
+		if (labor != null && labor.getNombre() != null && !labor.getNombre().isBlank()) {
+			baseName = labor.getNombre().trim().replaceAll("[^a-zA-Z0-9._-]", "_");
+			if (baseName.isBlank()) {
+				baseName = "labor";
+			}
+		}
+		File shpFile = FileHelper.getNewShapeFileAt(dir, baseName + ".shp");
 		//2 exportar la labor al directorio
 		ExportLaborMapTask export = new ExportLaborMapTask(labor,shpFile);
 		export.guardarConfig=false;//como es un temp dir no quiero guardar LAST_FILE
@@ -432,5 +443,78 @@ public class FileHelper {
 		}
 		return byteArray;
 
+	}
+
+	/**
+	 * Serializes {@link Labor#outCollection} to a zip shapefile byte array for the content blob.
+	 */
+	public static byte[] packLaborOutCollection(Labor<?> labor) {
+		if (labor == null || labor.outCollection == null || labor.outCollection.isEmpty()) {
+			return null;
+		}
+		try {
+			File zipFile = zipLaborToTmpDir(labor);
+			if (zipFile == null || !zipFile.exists()) {
+				return null;
+			}
+			return fileToByteArray(zipFile);
+		} catch (Exception e) {
+			logger.warning("Failed to pack labor outCollection: " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * Restores labor geometry from the content zip into {@link Labor#inStore}
+	 * (import path) and also into {@link Labor#outCollection}. Preserves nombre.
+	 */
+	public static void expandLaborOutCollection(Labor<?> labor) {
+		if (labor == null) {
+			return;
+		}
+		byte[] zipBytes = labor.getContent();
+		if (zipBytes == null || zipBytes.length == 0) {
+			logger.warning("Labor content blob is empty; cannot expand geometry for " + labor.getNombre());
+			return;
+		}
+		try {
+			Path dir = createTempDir("laborContent");
+			Path zipPath = dir.resolve("labor.zip");
+			Files.write(zipPath, zipBytes);
+			UnzipUtility.unzip(new FileInputStream(zipPath.toFile()), dir);
+
+			List<File> shpFiles = selectShpFiles(dir);
+			if (shpFiles.isEmpty()) {
+				logger.warning("No shapefile found when expanding labor content");
+				return;
+			}
+			FileDataStore store = FileDataStoreFinder.getDataStore(shpFiles.get(0));
+			if (store == null) {
+				return;
+			}
+			String savedNombre = labor.getNombre();
+			labor.setInStore(store);// import path reads from inStore
+			if (savedNombre != null && !savedNombre.isBlank()) {
+				labor.setNombre(savedNombre);
+			}
+			DefaultFeatureCollection collection = new DefaultFeatureCollection("internal", labor.getType());
+			try (SimpleFeatureIterator it = store.getFeatureSource().getFeatures().features()) {
+				while (it.hasNext()) {
+					SimpleFeature feature = it.next();
+					try {
+						collection.add(DataUtilities.reType(labor.getType(), feature, true));
+					} catch (Exception retypeEx) {
+						collection.add(feature);
+					}
+				}
+			}
+			labor.setOutCollection(collection);
+			labor.setInCollection(null);
+			logger.fine(() -> "Expanded labor content: inStore set, outCollection size=" + collection.size());
+		} catch (Exception e) {
+			logger.warning("Failed to expand labor content to inStore: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 }

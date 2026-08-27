@@ -20,6 +20,11 @@ import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostUpdate;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
@@ -63,6 +68,8 @@ import javafx.beans.property.StringProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import com.ursulagis.desktop.utils.DAH;
+import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
 import java.util.logging.Logger;
@@ -123,6 +130,9 @@ public abstract class Labor<E extends LaborItem>  {
 
 //	public Property<LocalDate> fechaProperty=new SimpleObjectProperty<LocalDate>();	
 
+	/** Persistable default width (m); mirrored by {@link #anchoDefaultProperty}. */
+	private Double anchoDefault = 8.0;
+	@Transient
 	public DoubleProperty anchoDefaultProperty= new SimpleDoubleProperty();
 
 	@Transient public FileDataStore inStore = null;
@@ -180,7 +190,10 @@ public abstract class Labor<E extends LaborItem>  {
 	public Labor(){
 		clasificador=new Clasificador();
 		outCollection = new DefaultFeatureCollection("internal",getType());
-		initConfigLabor();		
+		// Skip heavy config while EclipseLink instantiates entities (EMF bootstrap or active tx)
+		if (!DAH.shouldSkipEntityInit()) {
+			initConfigLabor();
+		}
 	}
 
 	public Labor(FileDataStore store) {
@@ -247,6 +260,9 @@ public abstract class Labor<E extends LaborItem>  {
 
 		// anchoDefaultProperty
 		anchoDefaultProperty = PropertyHelper.initDoubleProperty(ANCHO_DEFAULT, "8", properties);
+		if (anchoDefaultProperty != null) {
+			anchoDefault = anchoDefaultProperty.get();
+		}
 
 		clasificador.tipoClasificadorProperty.set(
 				properties.getPropertyOrDefault(Clasificador.TIPO_CLASIFICADOR,	Clasificador.clasficicadores[0]));
@@ -260,6 +276,83 @@ public abstract class Labor<E extends LaborItem>  {
 		clasificador.clasesClasificadorProperty.addListener((obs,bool1,bool2)->{
 			properties.setProperty(Clasificador.NUMERO_CLASES_CLASIFICACION, bool2.toString());
 		});
+	}
+
+	@PrePersist
+	@PreUpdate
+	private void syncBeforePersist() {
+		if (anchoDefaultProperty != null) {
+			anchoDefault = anchoDefaultProperty.get();
+		}
+		// Runtime sentinels (±Double.MAX_VALUE) do not fit H2 NUMBER(10,5)
+		minAmount = sanitizeDbDouble(minAmount, true);
+		maxAmount = sanitizeDbDouble(maxAmount, true);
+		minElev = sanitizeDbDouble(minElev, true);
+		maxElev = sanitizeDbDouble(maxElev, true);
+		cantidadInsumo = sanitizeDbDouble(cantidadInsumo, false);
+		cantidadLabor = sanitizeDbDouble(cantidadLabor, false);
+		if (outCollection == null) {
+			// disposed or not loaded — keep existing content blob
+		} else if (!outCollection.isEmpty()) {
+			byte[] packed = FileHelper.packLaborOutCollection(this);
+			if (packed != null) {
+				this.content = packed;
+			}
+		}
+		// empty outCollection: do not clear content (common after load before Process*MapTask)
+		onBeforePersist();
+	}
+
+	/**
+	 * Clears non-finite values and optional scan sentinels (±Double.MAX_VALUE)
+	 * so they fit DECIMAL columns (e.g. NUMBER(10,5)).
+	 */
+	private static Double sanitizeDbDouble(Double value, boolean clearScanSentinel) {
+		if (value == null || !Double.isFinite(value)) {
+			return null;
+		}
+		if (clearScanSentinel && (value >= Double.MAX_VALUE / 2 || value <= -Double.MAX_VALUE / 2)) {
+			return null;
+		}
+		return value;
+	}
+
+	/** Subclasses sync JavaFX property backing fields here (no JPA lifecycle annotations). */
+	protected void onBeforePersist() {
+	}
+
+	@PostLoad
+	private void syncAfterLoad() {
+		if (anchoDefaultProperty == null) {
+			anchoDefaultProperty = new SimpleDoubleProperty();
+		}
+		if (anchoDefault != null) {
+			anchoDefaultProperty.set(anchoDefault);
+		}
+		restoreAmountElevSentinels();
+		FileHelper.expandLaborOutCollection(this);
+		onAfterLoad();
+	}
+
+	@PostPersist
+	@PostUpdate
+	private void restoreAmountElevSentinels() {
+		if (minAmount == null) {
+			minAmount = Double.MAX_VALUE;
+		}
+		if (maxAmount == null) {
+			maxAmount = -Double.MAX_VALUE;
+		}
+		if (minElev == null) {
+			minElev = Double.MAX_VALUE;
+		}
+		if (maxElev == null) {
+			maxElev = -Double.MAX_VALUE;
+		}
+	}
+
+	/** Subclasses repopulate JavaFX properties from backing fields here (no JPA lifecycle annotations). */
+	protected void onAfterLoad() {
 	}
 
 	/**
@@ -376,12 +469,16 @@ public abstract class Labor<E extends LaborItem>  {
 				SimpleFeatureType schema = inStore.getSchema();
 				logger.fine("Prescription Type: "+DataUtilities.encodeType(schema));
 				logger.fine(String.valueOf(schema));
-				String title = schema.getName().toString();
-				//String title = inStore.getInfo().getTitle();
+				String title = null;
+				if (info != null && info.getTitle() != null && !info.getTitle().trim().isEmpty()) {
+					title = info.getTitle().trim();
+				}
+				if ((title == null || title.isEmpty()) && schema.getName() != null) {
+					title = schema.getName().getLocalPart();
+				}
 				if (title != null && !title.trim().isEmpty()) {
 					setNombre(title.replaceAll("%20", " "));
 				} else {
-					// Fallback to a default name if title is null or empty
 					setNombre("Labor_" + System.currentTimeMillis());
 				}
 			} catch (IOException e) {
@@ -681,6 +778,25 @@ public abstract class Labor<E extends LaborItem>  {
 	@Override
 	public String toString() {
 		return getNombre();//nombreProperty.get();
+	}
+
+	/**
+	 * Short labor kind for tables: Cosecha, Siembra, Fertilizacion, etc.
+	 */
+	public String getTipo() {
+		if (productoLabor != null && productoLabor.getNombre() != null && !productoLabor.getNombre().isBlank()) {
+			String n = productoLabor.getNombre();
+			final String prefix = "Labor de ";
+			if (n.startsWith(prefix)) {
+				return n.substring(prefix.length());
+			}
+			return n;
+		}
+		String simple = getClass().getSimpleName();
+		if (simple.endsWith("Labor")) {
+			return simple.substring(0, simple.length() - "Labor".length());
+		}
+		return simple;
 	}
 
 	/**
