@@ -3,13 +3,17 @@ package com.ursulagis.desktop.chat;
 import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
 import com.ursulagis.desktop.dao.Poligono;
+import com.ursulagis.desktop.dao.config.Asignacion;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
@@ -19,19 +23,30 @@ import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.ClonarLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.ResumirLaborMapTask;
+import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 
 /**
- * Resolves entities and delegates parsed intents to existing Ursula controllers and tasks.
+ * Executes a {@link ParsedIntent} by resolving map targets and calling the
+ * existing Ursula GUI controllers and background tasks. Returns an
+ * {@link ActionExecutionResult} with the chat message and whether UI was launched.
  */
 public class ChatActionExecutor {
 
 	private final JFXMain main;
 
+	/**
+	 * @param main application main window used to reach GUI controllers, the map,
+	 *             and layer panel while executing chat actions
+	 */
 	public ChatActionExecutor(JFXMain main) {
 		this.main = main;
 	}
 
+	/**
+	 * Dispatches {@code intent} to the matching controller/task path after
+	 * resolving labor/cosecha/recorrida when the action requires them.
+	 */
 	public ActionExecutionResult execute(ParsedIntent intent, MapLayerContext layerContext) {
 		ActionContext ctx = new ActionContext(main, intent.getTargetName(), layerContext);
 		resolveTargets(ctx, intent.getAction());
@@ -52,6 +67,7 @@ public class ChatActionExecutor {
 				main.recorridaGUIController.doOpenRecorridaMap(null);
 				yield ActionExecutionResult.launched("Diálogo de importación de recorrida abierto.");
 			}
+			case LOAD_RECORRIDAS -> loadRecorridas(intent);
 			case IMPORT_NDVI -> {
 				main.ndviGUIController.doOpenNDVITiffFiles();
 				yield ActionExecutionResult.launched("Diálogo de importación NDVI abierto.");
@@ -127,6 +143,10 @@ public class ChatActionExecutor {
 				ConfigGUI.doConfigAsignacion();
 				yield ActionExecutionResult.launched("Ventana de Asignación abierta para asignar actividades a lotes.");
 			}
+			case EXPORT_PANTALLA -> {
+				main.doSnapshot();
+				yield ActionExecutionResult.launched("Diálogo para exportar la pantalla abierto (Exportar → Pantalla).");
+			}
 			case GO_TO_LAYER -> goToLabor(ctx);
 			case RESUMIR_LABOR -> resumirLabor(ctx);
 			case EXPORT_LABOR -> exportLabor(ctx);
@@ -140,6 +160,7 @@ public class ChatActionExecutor {
 		};
 	}
 
+	/** Fills {@link ActionContext} with labor/cosecha/recorrida as required by {@code action}. */
 	private void resolveTargets(ActionContext ctx, UrsulaAction action) {
 		if (action == UrsulaAction.COMPARTIR_SIEMBRA) {
 			resolveSiembra(ctx);
@@ -151,6 +172,7 @@ public class ChatActionExecutor {
 		}
 	}
 
+	/** Resolves an active or named {@link SiembraLabor} for share-siembra. */
 	private void resolveSiembra(ActionContext ctx) {
 		LaborTargetResolver.resolveActiveSiembra(ctx.getLayerContext())
 				.or(() -> LaborTargetResolver.resolve(ctx.getLayerContext(), ctx.getTargetName(), false)
@@ -159,6 +181,7 @@ public class ChatActionExecutor {
 				.ifPresent(ctx::setLabor);
 	}
 
+	/** Resolves labor (and cosecha when applicable) via {@link LaborTargetResolver}. */
 	private void resolveLabor(ActionContext ctx, boolean cosechaOnly) {
 		findLoadedLabor(ctx, cosechaOnly).ifPresent(l -> {
 			ctx.setLabor(l);
@@ -168,14 +191,19 @@ public class ChatActionExecutor {
 		});
 	}
 
+	/** Resolves a scouting route by name, selection, or single active/loaded layer. */
 	private void resolveRecorrida(ActionContext ctx) {
 		findLoadedRecorrida(ctx).ifPresent(ctx::setRecorrida);
 	}
 
+	/** Labor matching the intent target via {@link LaborTargetResolver}. */
 	private Optional<Labor<?>> findLoadedLabor(ActionContext ctx, boolean cosechaOnly) {
 		return LaborTargetResolver.resolve(ctx.getLayerContext(), ctx.getTargetName(), cosechaOnly);
 	}
 
+	/**
+	 * Resolves a recorrida by target name, tree selection, single active, or sole loaded layer.
+	 */
 	private Optional<Recorrida> findLoadedRecorrida(ActionContext ctx) {
 		MapLayerContext mapCtx = ctx.getLayerContext();
 		String targetName = ctx.getTargetName();
@@ -204,6 +232,7 @@ public class ChatActionExecutor {
 		return Optional.empty();
 	}
 
+	/** Casts a layer entity to {@link Labor}, optionally requiring {@link CosechaLabor}. */
 	private static Optional<Labor<?>> toLabor(LoadedLayerInfo info, boolean cosechaOnly) {
 		Object entity = info.getEntity();
 		if (!(entity instanceof Labor<?> labor)) {
@@ -215,10 +244,12 @@ public class ChatActionExecutor {
 		return Optional.of(labor);
 	}
 
+	/** User-facing message when the requested labor cannot be uniquely resolved. */
 	private static String ambiguousLaborMessage(ActionContext ctx, boolean cosechaOnly) {
 		return LaborTargetResolver.ambiguousLaborMessage(ctx.getLayerContext(), ctx.getTargetName(), cosechaOnly);
 	}
 
+	/** Zooms the map to the resolved labor layer. */
 	private ActionExecutionResult goToLabor(ActionContext ctx) {
 		if (ctx.getLabor() == null) {
 			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, false));
@@ -227,6 +258,7 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Vista centrada en " + nameOf(ctx.getLabor()) + ".");
 	}
 
+	/** Runs {@link ResumirLaborMapTask} on the active resolved labor. */
 	@SuppressWarnings("unchecked")
 	private ActionExecutionResult resumirLabor(ActionContext ctx) {
 		Labor<?> labor = ctx.getLabor();
@@ -253,6 +285,7 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Resumiendo labor " + nameOf(labor) + "...");
 	}
 
+	/** Exports the resolved labor to a user-chosen shapefile. */
 	private ActionExecutionResult exportLabor(ActionContext ctx) {
 		Labor<?> labor = ctx.getLabor();
 		if (labor == null) {
@@ -270,6 +303,7 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Exportando " + nameOf(labor) + " a shapefile...");
 	}
 
+	/** Clones the resolved labor onto the map. */
 	private ActionExecutionResult clonarLabor(ActionContext ctx) {
 		Labor<?> labor = ctx.getLabor();
 		if (labor == null) {
@@ -291,6 +325,7 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Clonando labor " + nameOf(labor) + "...");
 	}
 
+	/** Starts NDVI download for the footprint of the resolved labor. */
 	private ActionExecutionResult downloadNdvi(ActionContext ctx) {
 		if (ctx.getLabor() == null) {
 			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, false));
@@ -299,6 +334,10 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Descarga de NDVI iniciada para " + nameOf(ctx.getLabor()) + ".");
 	}
 
+	/**
+	 * Downloads NDVI for assignment contours matching campaign/crop/period;
+	 * may ask for campaign via {@link ChatPendingFollowUp} when filters are incomplete.
+	 */
 	private ActionExecutionResult downloadNdviAsignaciones(ParsedIntent intent) {
 		String sourceText = intent.getSourceUserText() != null ? intent.getSourceUserText() : intent.getMessage();
 		AsignacionNdviRequest req = AsignacionNdviRequest.parse(
@@ -355,6 +394,141 @@ public class ChatActionExecutor {
 						+ " (" + begin + " → " + end + ").");
 	}
 
+	/**
+	 * Loads saved recorridas from the DB matching crop/lot keywords, or opens
+	 * the recorrida table when no filter keywords are found.
+	 */
+	private ActionExecutionResult loadRecorridas(ParsedIntent intent) {
+		String sourceText = intent.getSourceUserText() != null
+				? intent.getSourceUserText()
+				: (intent.getMessage() != null ? intent.getMessage() : "");
+		List<Recorrida> all;
+		try {
+			all = DAH.getAllRecorridas();
+		} catch (Exception e) {
+			return ActionExecutionResult.notLaunched(
+					"No pude leer las recorridas guardadas: " + e.getMessage());
+		}
+		if (all == null || all.isEmpty()) {
+			return ActionExecutionResult.notLaunched(
+					"No hay recorridas guardadas. Importá una primero (Herramientas → Recorrida).");
+		}
+
+		AsignacionNdviRequest filter = AsignacionNdviRequest.parse(
+				sourceText,
+				intent.getCampaniaName(),
+				intent.getCultivoName(),
+				null,
+				null);
+		Set<String> keywords = buildRecorridaKeywords(sourceText, filter, intent.getTargetName());
+		List<Recorrida> matched = filterRecorridas(all, keywords);
+
+		String normalized = AchievementIntentCatalog.normalize(sourceText);
+		boolean wantsLatest = normalized.contains("ultima") || normalized.contains("ultimo");
+
+		if (keywords.isEmpty()) {
+			main.configGUIController.doShowRecorridaTable();
+			return ActionExecutionResult.launched(
+					"Abrí la tabla de recorridas (" + all.size() + "). Elegí cuáles mostrar en el mapa.");
+		}
+
+		if (matched.isEmpty()) {
+			main.configGUIController.doShowRecorridaTable();
+			return ActionExecutionResult.notLaunched(
+					"No encontré recorridas que coincidan con "
+							+ String.join(", ", keywords)
+							+ ". Abrí la tabla de recorridas para que elijas.");
+		}
+
+		List<Recorrida> toLoad = matched;
+		toLoad.sort(Comparator
+				.comparing((Recorrida r) -> r.getId() == null ? 0L : r.getId())
+				.reversed());
+		if (wantsLatest && toLoad.size() > 5) {
+			toLoad = new ArrayList<>(toLoad.subList(0, 5));
+		}
+
+		for (Recorrida r : toLoad) {
+			main.recorridaGUIController.doGoToRecorrida(r);
+		}
+
+		String names = toLoad.stream()
+				.map(r -> r.getNombre() != null && !r.getNombre().isBlank() ? r.getNombre() : ("#" + r.getId()))
+				.collect(Collectors.joining(", "));
+		String filterPart = filter.cultivoName() != null ? " (cultivo " + filter.cultivoName() + ")" : "";
+		return ActionExecutionResult.launched(
+				"Cargando " + toLoad.size() + " recorrida(s)" + filterPart + ": " + names + ".");
+	}
+
+	/** Builds search keywords from target name, crop, assigned lots, and crop tokens in text. */
+	private static Set<String> buildRecorridaKeywords(
+			String sourceText, AsignacionNdviRequest filter, String targetName) {
+		Set<String> keywords = new LinkedHashSet<>();
+		if (targetName != null && !targetName.isBlank()) {
+			keywords.add(AchievementIntentCatalog.normalize(targetName));
+		}
+		if (filter.cultivoName() != null && !filter.cultivoName().isBlank()) {
+			keywords.add(AchievementIntentCatalog.normalize(filter.cultivoName()));
+		}
+		try {
+			List<Asignacion> asignaciones = DAH.getAllAsignaciones();
+			String wantCultivo = filter.cultivoName() != null
+					? AchievementIntentCatalog.normalize(filter.cultivoName()) : null;
+			for (Asignacion a : asignaciones) {
+				if (wantCultivo != null) {
+					if (a.getCultivo() == null || a.getCultivo().getNombre() == null) {
+						continue;
+					}
+					String have = AchievementIntentCatalog.normalize(a.getCultivo().getNombre());
+					if (!have.contains(wantCultivo) && !wantCultivo.contains(have)) {
+						continue;
+					}
+				}
+				if (a.getLote() != null && a.getLote().getNombre() != null) {
+					String lote = AchievementIntentCatalog.normalize(a.getLote().getNombre());
+					if (!lote.isBlank()) {
+						keywords.add(lote);
+					}
+				}
+			}
+		} catch (Exception ignored) {
+			// DB may be unavailable in tests / early startup
+		}
+		String n = AchievementIntentCatalog.normalize(sourceText == null ? "" : sourceText);
+		for (String crop : List.of("soja", "maiz", "trigo", "girasol", "cebada", "sorgo")) {
+			if (n.contains(crop)) {
+				keywords.add(crop);
+			}
+		}
+		keywords.removeIf(k -> k.length() < 3);
+		return keywords;
+	}
+
+	/** Filters recorridas whose name/observation/date contain any keyword. */
+	private static List<Recorrida> filterRecorridas(List<Recorrida> all, Set<String> keywords) {
+		if (keywords == null || keywords.isEmpty()) {
+			return List.of();
+		}
+		List<Recorrida> matched = new ArrayList<>();
+		for (Recorrida r : all) {
+			String haystack = AchievementIntentCatalog.normalize(
+					safe(r.getNombre()) + " " + safe(r.getObservacion()) + " " + safe(r.getFechaString()));
+			for (String kw : keywords) {
+				if (haystack.contains(kw)) {
+					matched.add(r);
+					break;
+				}
+			}
+		}
+		return matched;
+	}
+
+	/** Null-safe string for building searchable recorrida haystacks. */
+	private static String safe(String s) {
+		return s == null ? "" : s;
+	}
+
+	/** Shares the resolved harvest map online. */
 	private ActionExecutionResult compartirCosecha(ActionContext ctx) {
 		if (ctx.getCosecha() == null) {
 			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, true));
@@ -363,6 +537,10 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Compartiendo cosecha " + nameOf(ctx.getCosecha()) + "...");
 	}
 
+	/**
+	 * Opens siembra import; when {@code shareAfterImport} is true, shares the
+	 * imported map automatically after the dialog finishes.
+	 */
 	private ActionExecutionResult importSiembra(ActionContext ctx, boolean shareAfterImport) {
 		if (shareAfterImport) {
 			main.siembraGUIController.doOpenSiembraMap(null, imported ->
@@ -374,6 +552,7 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Diálogo de importación de siembra abierto.");
 	}
 
+	/** Shares the resolved seeding prescription (QR). */
 	private ActionExecutionResult compartirSiembra(ActionContext ctx) {
 		if (!(ctx.getLabor() instanceof SiembraLabor siembra)) {
 			return ActionExecutionResult.notLaunched(LaborTargetResolver.ambiguousSiembraMessage(ctx.getLayerContext()));
@@ -382,6 +561,10 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Compartiendo siembra **" + nameOf(siembra) + "**...");
 	}
 
+	/**
+	 * Shares the active siembra if one is unambiguous; otherwise opens import
+	 * and shares automatically after load.
+	 */
 	public ActionExecutionResult importYCompartirSiembra(MapLayerContext layerContext) {
 		Optional<SiembraLabor> active = LaborTargetResolver.resolveActiveSiembra(layerContext);
 		if (active.isPresent()) {
@@ -393,6 +576,7 @@ public class ChatActionExecutor {
 		return importSiembra(ctx, true);
 	}
 
+	/** Syncs the resolved scouting route from the cloud. */
 	private ActionExecutionResult updateRecorrida(ActionContext ctx) {
 		if (ctx.getRecorrida() == null) {
 			List<LoadedLayerInfo> recorridas = ctx.getLayerContext().getRecorridas();
@@ -407,6 +591,7 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Sincronizando recorrida " + ctx.getRecorrida().getNombre() + "...");
 	}
 
+	/** Exports the resolved scouting route. */
 	private ActionExecutionResult exportRecorrida(ActionContext ctx) {
 		if (ctx.getRecorrida() == null) {
 			List<LoadedLayerInfo> recorridas = ctx.getLayerContext().getRecorridas();
@@ -420,16 +605,19 @@ public class ChatActionExecutor {
 		return ActionExecutionResult.launched("Exportando recorrida " + ctx.getRecorrida().getNombre() + "...");
 	}
 
+	/** Whether {@code labor} is currently enabled in the layer snapshot. */
 	private static boolean isLayerActive(ActionContext ctx, Labor<?> labor) {
 		return ctx.getLayerContext().getLayers().stream()
 				.filter(info -> info.getEntity() == labor)
 				.anyMatch(LoadedLayerInfo::isActive);
 	}
 
+	/** Display name of the labor, or {@code "sin nombre"} when unset. */
 	private static String nameOf(Labor<?> labor) {
 		return labor.getNombre() != null ? labor.getNombre() : "sin nombre";
 	}
 
+	/** Help intro plus achievement-derived bullets and the current layer list. */
 	private static String helpText(MapLayerContext layerContext) {
 		return UrsulaPersonality.helpIntro() + "\n"
 				+ AchievementIntentCatalog.buildHelpBullets()

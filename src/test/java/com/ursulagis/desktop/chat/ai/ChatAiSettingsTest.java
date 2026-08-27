@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 class ChatAiSettingsTest {
 
 	@Test
-	@DisplayName("defaults to DEEPSEEK when Chat.AI_PROVIDER is not configured")
-	void defaultsToDeepSeek() {
-		assertEquals(AiProvider.DEEPSEEK, ChatAiSettings.resolveProvider());
+	@DisplayName("defaults to URSULA when Chat.AI_PROVIDER is not configured")
+	void defaultsToUrsula() {
+		assertEquals(AiProvider.URSULA, ChatAiSettings.resolveProvider());
 	}
 }

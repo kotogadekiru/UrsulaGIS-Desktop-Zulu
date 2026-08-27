@@ -19,7 +19,14 @@ import com.ursulagis.desktop.dao.config.Cultivo;
 import com.ursulagis.desktop.utils.DAH;
 
 /**
- * Resolves campaign/crop filters and NDVI date range from chat text or structured intent fields.
+ * Parses campaign, crop, and NDVI date-range filters from chat text (and optional
+ * structured intent fields), then finds matching {@link Asignacion} contours for
+ * bulk NDVI download. Also used to extract crop/campaign keywords for recorrida loads.
+ *
+ * @param campaniaName resolved campaign name (may come from text, intent, or latest DB campaign)
+ * @param cultivoName  resolved crop name, if any
+ * @param begin        inclusive start of the imagery window
+ * @param end          inclusive end of the imagery window
  */
 public record AsignacionNdviRequest(
 		String campaniaName,
@@ -47,10 +54,15 @@ public record AsignacionNdviRequest(
 			"soja", "maiz", "maíz", "trigo", "girasol", "cebada", "sorgo", "alfalfa", "colza", "avena"
 	};
 
+	/** Parses filters from free text only. */
 	public static AsignacionNdviRequest parse(String userText) {
 		return parse(userText, null, null, null, null);
 	}
 
+	/**
+	 * Merges structured intent fields with text extraction; fills missing period
+	 * from campaign entity, “últimas imágenes”, season tokens, or last-month default.
+	 */
 	public static AsignacionNdviRequest parse(
 			String userText,
 			String campaniaFromIntent,
@@ -137,6 +149,10 @@ public record AsignacionNdviRequest(
 		return new DateRange(begin, end);
 	}
 
+	/**
+	 * True when the period spans at least 7 days (rejects Campania defaults where
+	 * inicio/fin are both “today”).
+	 */
 	static boolean isMeaningfulPeriod(LocalDate begin, LocalDate end) {
 		if (begin == null || end == null || !end.isAfter(begin)) {
 			return false;
@@ -145,10 +161,14 @@ public record AsignacionNdviRequest(
 		return java.time.temporal.ChronoUnit.DAYS.between(begin, end) >= 7;
 	}
 
+	/** Whether begin/end form a usable open interval (end strictly after begin). */
 	public boolean hasPeriod() {
 		return begin != null && end != null && end.isAfter(begin);
 	}
 
+	/**
+	 * Assignments matching campaign/crop that have a resolvable polygon contour.
+	 */
 	public List<Asignacion> findAsignaciones() {
 		List<Asignacion> all = DAH.getAllAsignaciones();
 		return all.stream()
@@ -158,6 +178,7 @@ public record AsignacionNdviRequest(
 				.toList();
 	}
 
+	/** Distinct polygons (lot or assignment contornos) for the matched assignments. */
 	public List<Poligono> findContornos() {
 		return findAsignaciones().stream()
 				.map(AsignacionNdviRequest::resolveContorno)
@@ -165,6 +186,7 @@ public record AsignacionNdviRequest(
 				.toList();
 	}
 
+	/** Contorno on the assignment itself, or the lot's contorno as fallback. */
 	public static Poligono resolveContorno(Asignacion a) {
 		if (a == null) {
 			return null;
@@ -178,6 +200,7 @@ public record AsignacionNdviRequest(
 		return null;
 	}
 
+	/** True when the assignment's campaign matches {@code campaniaName} (or filter is blank). */
 	private static boolean matchesCampania(Asignacion a, String campaniaName) {
 		if (campaniaName == null || campaniaName.isBlank()) {
 			return true;
@@ -188,6 +211,9 @@ public record AsignacionNdviRequest(
 		return campaignNamesMatch(campaniaName, a.getCampania().getNombre());
 	}
 
+	/**
+	 * Loose campaign-name equality (substring or shared {@code YY/YY} / {@code YYYY} key).
+	 */
 	static boolean campaignNamesMatch(String a, String b) {
 		if (a == null || b == null) {
 			return false;
@@ -202,6 +228,7 @@ public record AsignacionNdviRequest(
 		return keyA != null && keyA.equals(keyB);
 	}
 
+	/** True when the assignment's crop matches {@code cultivoName} (or filter is blank). */
 	private static boolean matchesCultivo(Asignacion a, String cultivoName) {
 		if (cultivoName == null || cultivoName.isBlank()) {
 			return true;
@@ -214,6 +241,9 @@ public record AsignacionNdviRequest(
 		return have.equals(want) || have.contains(want) || want.contains(have);
 	}
 
+	/**
+	 * Pulls a campaign name from phrase, {@code YY/YY}, compact {@code YYXX}, or known DB names.
+	 */
 	private static String extractCampaniaName(String text, String lower) {
 		Matcher phrase = CAMPANIA_PHRASE.matcher(text);
 		if (phrase.find()) {
@@ -236,6 +266,7 @@ public record AsignacionNdviRequest(
 		return known.map(Campania::getNombre).orElse(null);
 	}
 
+	/** Rejects 4-digit calendar years (e.g. 2025) mistaken for campaign {@code 20/25}. */
 	private static boolean looksLikeCampaignCompact(String y1, String y2) {
 		try {
 			int a = Integer.parseInt(y1);
@@ -250,6 +281,7 @@ public record AsignacionNdviRequest(
 		}
 	}
 
+	/** Latest campaign name in the DB by year-token / start-date ranking. */
 	static Optional<String> resolveLatestCampaniaName() {
 		try {
 			return DAH.getAllCampanias().stream()
@@ -261,6 +293,7 @@ public record AsignacionNdviRequest(
 		}
 	}
 
+	/** Best DB campaign whose name loosely matches {@code token}, preferring the newest. */
 	private static Optional<String> resolveCampaniaNameForToken(String token) {
 		try {
 			return DAH.getAllCampanias().stream()
@@ -272,6 +305,7 @@ public record AsignacionNdviRequest(
 		}
 	}
 
+	/** Comparator for {@link java.util.stream.Stream#max}: older campaigns rank lower. */
 	static int compareCampaniaRecency(Campania a, Campania b) {
 		// Natural order: older < newer (so Stream.max picks the latest).
 		int byKey = Integer.compare(campaignYearRank(a.getNombre()), campaignYearRank(b.getNombre()));
@@ -304,6 +338,7 @@ public record AsignacionNdviRequest(
 		}
 	}
 
+	/** Four-digit sort key ({@code YY} + {@code YY}) extracted from a campaign name, or null. */
 	static String campaignSortKey(String name) {
 		if (name == null || name.isBlank()) {
 			return null;
@@ -323,12 +358,14 @@ public record AsignacionNdviRequest(
 		return null;
 	}
 
+	/** True for “últimas imágenes” / “latest” style phrasing in normalized text. */
 	private static boolean mentionsLatestImages(String lower) {
 		return lower.contains("ultima") || lower.contains("ultimo")
 				|| lower.contains("ultimas") || lower.contains("ultimos")
 				|| lower.contains("latest") || lower.contains("most recent");
 	}
 
+	/** Newest DB campaign whose normalized name appears as a substring of {@code lower}. */
 	private static Optional<Campania> matchKnownCampania(String lower) {
 		try {
 			return DAH.getAllCampanias().stream()
@@ -339,6 +376,7 @@ public record AsignacionNdviRequest(
 		}
 	}
 
+	/** Crop name from known crop tokens or a {@code cultivo …} phrase; otherwise null. */
 	private static String extractCultivoName(String lower) {
 		for (String crop : CROPS) {
 			if (lower.contains(normalize(crop))) {
@@ -361,6 +399,9 @@ public record AsignacionNdviRequest(
 		return null;
 	}
 
+	/**
+	 * Parses desde/hasta, Spanish month ranges, or the first two ISO/DMY dates in the text.
+	 */
 	private static DateRange extractDateRange(String text, String lower, String campaniaName) {
 		Matcher desdeHasta = DESDE_HASTA.matcher(text);
 		if (desdeHasta.find()) {
@@ -402,6 +443,7 @@ public record AsignacionNdviRequest(
 		return DateRange.empty();
 	}
 
+	/** Inclusive inicio/fin from the matching {@link Campania} entity when meaningful. */
 	private static DateRange datesFromCampaniaEntity(String campaniaName) {
 		try {
 			Optional<Campania> match = DAH.getAllCampanias().stream()
@@ -422,6 +464,7 @@ public record AsignacionNdviRequest(
 		return DateRange.empty();
 	}
 
+	/** Nov–Apr season window inferred from a {@code YY/YY} or compact campaign token. */
 	private static DateRange seasonFromCampaignToken(String lower) {
 		Matcher yy = CAMPAIGN_YY.matcher(lower);
 		if (yy.find()) {
@@ -456,6 +499,7 @@ public record AsignacionNdviRequest(
 		return DateRange.empty();
 	}
 
+	/** Calendar year for the start of a month-range when the user omitted an explicit year. */
 	private static int inferSeasonStartYear(String campaniaName, String lower) {
 		Matcher yy = CAMPAIGN_YY.matcher(campaniaName != null ? campaniaName : lower);
 		if (yy.find()) {
@@ -464,6 +508,7 @@ public record AsignacionNdviRequest(
 		return LocalDate.now().getMonthValue() >= 7 ? LocalDate.now().getYear() : LocalDate.now().getYear() - 1;
 	}
 
+	/** ISO, DMY, or Spanish month-name parse; null when unrecognized. */
 	private static LocalDate parseFlexibleDate(String raw) {
 		if (raw == null || raw.isBlank()) {
 			return null;
@@ -486,6 +531,7 @@ public record AsignacionNdviRequest(
 		return null;
 	}
 
+	/** Builds a {@link LocalDate} from day/month/year strings (2-digit years → 20xx). */
 	private static LocalDate toLocalDate(String day, String month, String year) {
 		try {
 			int y = Integer.parseInt(year);
@@ -498,6 +544,7 @@ public record AsignacionNdviRequest(
 		}
 	}
 
+	/** Converts a legacy {@link Calendar} field from {@link Campania} into {@link LocalDate}. */
 	private static LocalDate toLocalDate(Calendar cal) {
 		if (cal == null) {
 			return null;
@@ -505,6 +552,7 @@ public record AsignacionNdviRequest(
 		return LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH));
 	}
 
+	/** Maps Spanish month names (including setiembre) to {@link Month}. */
 	private static Month monthOf(String token) {
 		if (token == null) {
 			return null;
@@ -527,12 +575,14 @@ public record AsignacionNdviRequest(
 		};
 	}
 
+	/** Equality or mutual substring match after accent-stripping normalization. */
 	private static boolean matchesLoose(String a, String b) {
 		String na = normalize(a);
 		String nb = normalize(b);
 		return na.equals(nb) || na.contains(nb) || nb.contains(na);
 	}
 
+	/** Prefers the first non-blank trimmed value (intent fields before text extraction). */
 	private static String firstNonBlank(String a, String b) {
 		if (a != null && !a.isBlank()) {
 			return a.trim();
@@ -543,6 +593,7 @@ public record AsignacionNdviRequest(
 		return null;
 	}
 
+	/** Lowercases and strips accents/extra spaces for tolerant name matching. */
 	private static String normalize(String value) {
 		if (value == null) {
 			return "";
@@ -553,7 +604,9 @@ public record AsignacionNdviRequest(
 		return n.replaceAll("\\s+", " ").trim();
 	}
 
+	/** Inclusive date pair used while resolving periods from text or entities. */
 	private record DateRange(LocalDate begin, LocalDate end) {
+		/** Sentinel with both bounds unset (no period resolved yet). */
 		static DateRange empty() {
 			return new DateRange(null, null);
 		}

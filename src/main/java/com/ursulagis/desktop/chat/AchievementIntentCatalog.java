@@ -12,8 +12,9 @@ import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 
 /**
- * Maps onboarding achievements (logros) to chat actions and intent matching.
- * Achievement titles and hints from i18n are the single source for natural-language mapping.
+ * Bridges onboarding achievements (logros) to chat actions: phrase/hint scoring,
+ * specialized query detectors (margin, NDVI asignaciones, recorridas, …), and
+ * prompt/help text built from i18n achievement titles and hints.
  */
 public final class AchievementIntentCatalog {
 
@@ -21,6 +22,7 @@ public final class AchievementIntentCatalog {
 	private static final String HINT_KEY_PREFIX = "Onboarding.hint.";
 	private static final double MIN_MATCH_SCORE = 2.5;
 
+	/** One achievement → action mapping with extra natural-language phrases. */
 	private record ChatMapping(String achievementId, UrsulaAction action, String... phrases) {
 	}
 
@@ -53,7 +55,12 @@ public final class AchievementIntentCatalog {
 			new ChatMapping(OnboardingAchievements.FIRST_SEEDING_SHARED, UrsulaAction.COMPARTIR_SIEMBRA,
 					"compartir siembra", "share seeding", "cargar siembra compartir", "cargar una siembra y compartirla"),
 			new ChatMapping(OnboardingAchievements.FIRST_RECORRIDA_IMPORTED, UrsulaAction.IMPORT_RECORRIDA,
-					"importar recorrida", "abrir recorrida", "import recorrida"),
+					"importar recorrida", "import recorrida", "shapefile recorrida"),
+			new ChatMapping(OnboardingAchievements.FIRST_RECORRIDA_GUIDED_SHOWN, UrsulaAction.LOAD_RECORRIDAS,
+					"cargar recorrida", "cargar recorridas", "ultimas recorridas", "última recorrida",
+					"ultima recorrida", "mostrar recorridas", "abrir recorridas", "tabla recorridas",
+					"recorridas de los lotes", "recorridas maiz", "recorridas maíz", "recorridas soja",
+					"recorridas trigo", "load recorrida", "load scouting"),
 			new ChatMapping(OnboardingAchievements.FIRST_SOIL_IMPORTED, UrsulaAction.IMPORT_SUELO,
 					"importar suelo", "abrir suelo", "import soil"),
 			new ChatMapping(OnboardingAchievements.FIRST_SOIL_NUTRIENT_BALANCE, UrsulaAction.BALANCE_NUTRIENTES,
@@ -67,6 +74,10 @@ public final class AchievementIntentCatalog {
 					"asignar actividades", "asignar actividad", "asignar a lote", "asignar a lotes",
 					"asignacion lotes", "asignación lotes", "asignar cultivo lote", "asignar campania lote",
 					"asignar campaña lote", "abrir asignacion", "abrir asignación"),
+			new ChatMapping(OnboardingAchievements.FIRST_CONFIG_SCREEN_EXPORTED, UrsulaAction.EXPORT_PANTALLA,
+					"exportar pantalla", "exportar la pantalla", "guardar pantalla", "captura pantalla",
+					"capturar pantalla", "screenshot", "export screen", "save screen", "salvar tela",
+					"exportar tela", "guardar tela"),
 			new ChatMapping(OnboardingAchievements.FIRST_GENERIC_LABOR_SUMMARIZED, UrsulaAction.RESUMIR_LABOR,
 					"resumir labor", "resumir capa", "resumir cosecha", "resumir la cosecha",
 					"resumir cosecha activa", "simplificar", "simplify"),
@@ -97,9 +108,14 @@ public final class AchievementIntentCatalog {
 			new ChatMapping(OnboardingAchievements.FIRST_MARGEN_IMPORTED, UrsulaAction.IMPORT_MARGEN,
 					"importar margen", "importar margenes", "importar mapa margen", "abrir margen"));
 
+	/** Prevents instantiation. */
 	private AchievementIntentCatalog() {
 	}
 
+	/**
+	 * Best chat-action match from {@link #CHAT_MAPPINGS} when the score clears
+	 * {@link #MIN_MATCH_SCORE}; empty when the prompt is blank or too weak.
+	 */
 	public static Optional<AchievementIntentMatch> match(String userPrompt) {
 		if (userPrompt == null || userPrompt.isBlank()) {
 			return Optional.empty();
@@ -127,6 +143,10 @@ public final class AchievementIntentCatalog {
 		return Optional.of(best);
 	}
 
+	/**
+	 * Softest nearest achievement for guidance: mapped actions plus any logro
+	 * hint overlap (may return {@link UrsulaAction#UNKNOWN} with a hint only).
+	 */
 	public static Optional<AchievementIntentMatch> findNearest(String userPrompt) {
 		if (userPrompt == null || userPrompt.isBlank()) {
 			return Optional.empty();
@@ -160,6 +180,9 @@ public final class AchievementIntentCatalog {
 		return bestScore > 0 ? Optional.ofNullable(best) : Optional.empty();
 	}
 
+	/**
+	 * Top achievement hints (by token overlap) formatted for AI system prompts.
+	 */
 	public static String buildRelevantHintsForQuery(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return "";
@@ -175,6 +198,7 @@ public final class AchievementIntentCatalog {
 				.orElse("- (no close achievement match)");
 	}
 
+	/** True when the user wants to generate/calculate a margin map (not import). */
 	public static boolean isMarginGenerationQuery(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return false;
@@ -185,6 +209,7 @@ public final class AchievementIntentCatalog {
 				&& !containsAnyToken(normalized, IMPORT_VERBS);
 	}
 
+	/** True for “activar polígonos con superficie/área > 0” style requests. */
 	public static boolean isActivatePolygonsWithAreaQuery(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return false;
@@ -196,6 +221,7 @@ public final class AchievementIntentCatalog {
 		return activate && polygon && area;
 	}
 
+	/** True when the user asks to import/load and/or share a seeding map. */
 	public static boolean isSiembraShareOrImportQuery(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return false;
@@ -207,11 +233,18 @@ public final class AchievementIntentCatalog {
 		return siembra && (share || load);
 	}
 
+	/**
+	 * True for NDVI download by campaign/assignment/lots (excludes bare “recorrida”).
+	 */
 	public static boolean isAsignacionNdviQuery(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return false;
 		}
 		String n = normalize(userQuery);
+		// Recorridas (scouting) must never be treated as NDVI downloads.
+		if (n.contains("recorrida") && !n.contains("ndvi")) {
+			return false;
+		}
 		boolean ndvi = n.contains("ndvi");
 		boolean asignacion = n.contains("asignacion") || n.contains("asignad")
 				|| n.contains("contorno") || (n.contains("lote") && n.contains("asign"));
@@ -224,12 +257,39 @@ public final class AchievementIntentCatalog {
 				|| (crop && n.contains("lote")));
 	}
 
+	/**
+	 * Load/show saved recorridas from the DB (not shapefile import, not NDVI).
+	 */
+	public static boolean isRecorridaLoadQuery(String userQuery) {
+		if (userQuery == null || userQuery.isBlank()) {
+			return false;
+		}
+		String n = normalize(userQuery);
+		if (!n.contains("recorrida") || n.contains("ndvi")) {
+			return false;
+		}
+		if (n.contains("export") || n.contains("sincroniz") || n.contains("actualizar")
+				|| n.contains("sync") || n.contains("update") || n.contains("shapefile")
+				|| n.contains("importar")) {
+			return false;
+		}
+		boolean loadVerb = n.contains("cargar") || n.contains("mostrar") || n.contains("abrir")
+				|| n.contains("traer") || n.contains("ver") || n.contains("listar");
+		boolean latest = n.contains("ultima") || n.contains("ultimo");
+		boolean filterCtx = n.contains("lote") || n.contains("maiz") || n.contains("soja")
+				|| n.contains("trigo") || n.contains("girasol") || n.contains("cultivo")
+				|| n.contains("campania") || n.contains("campana") || n.contains("tabla");
+		return loadVerb || latest || filterCtx;
+	}
+
 	private static final java.util.regex.Pattern CAMPAIGN_TOKEN =
 			java.util.regex.Pattern.compile("\\b\\d{2}\\s*[/-]\\s*\\d{2}\\b");
 
+	/** Achievement id paired with a hint-overlap score for ranking. */
 	private record ScoredHint(String achievementId, double score) {
 	}
 
+	/** Lists mapped (and unmapped) actions for the intent-parser system prompt. */
 	public static String buildActionCatalogForPrompt() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Available actions (mapped from onboarding achievements):\n");
@@ -251,6 +311,7 @@ public final class AchievementIntentCatalog {
 		return sb.toString();
 	}
 
+	/** Spanish help bullets derived from achievement hints plus a few extras. */
 	public static String buildHelpBullets() {
 		List<String> bullets = new ArrayList<>();
 		for (ChatMapping mapping : CHAT_MAPPINGS) {
@@ -264,18 +325,25 @@ public final class AchievementIntentCatalog {
 		return String.join("\n", bullets);
 	}
 
+	/** Localized achievement title from i18n, or the raw id as fallback. */
 	public static String achievementLabel(String achievementId) {
 		return msg(ACHIEVEMENT_KEY_PREFIX + achievementId, achievementId);
 	}
 
+	/** Localized onboarding hint for the logro, or empty if missing. */
 	public static String achievementHint(String achievementId) {
 		return msg(HINT_KEY_PREFIX + achievementId, "");
 	}
 
+	/** Whether {@code action} already appears in {@link #CHAT_MAPPINGS}. */
 	private static boolean isMapped(UrsulaAction action) {
 		return CHAT_MAPPINGS.stream().anyMatch(m -> m.action() == action);
 	}
 
+	/**
+	 * Scores one mapping via phrase match, label/hint token overlap, and
+	 * domain-specific boosts/penalties (margin, NDVI, recorrida, …).
+	 */
 	private static double scoreMapping(String normalizedUser, ChatMapping mapping) {
 		double score = 0;
 		for (String phrase : mapping.phrases()) {
@@ -288,15 +356,21 @@ public final class AchievementIntentCatalog {
 		score = adjustMarginScore(normalizedUser, mapping.achievementId(), score);
 		score = adjustPolygonActivateScore(normalizedUser, mapping.action(), score);
 		score = adjustSiembraQueryScore(normalizedUser, mapping.action(), score);
+		score = adjustExportScreenScore(normalizedUser, mapping.action(), score);
+		score = adjustExportRecorridaScore(normalizedUser, mapping.action(), score);
+		score = adjustNdviAsignacionScore(normalizedUser, mapping.action(), score);
+		score = adjustRecorridaLoadScore(normalizedUser, mapping.action(), score);
 		return score;
 	}
 
+	/** Label/hint token overlap for an achievement, with margin generate-vs-import bias. */
 	private static double scoreHintForQuery(String normalizedUser, String achievementId) {
 		double score = tokenOverlapScore(normalizedUser, achievementLabel(achievementId))
 				+ tokenOverlapScore(normalizedUser, achievementHint(achievementId));
 		return adjustMarginScore(normalizedUser, achievementId, score);
 	}
 
+	/** Boosts generate-margin and dampens import-margin when the query is about calculating. */
 	private static double adjustMarginScore(String normalizedUser, String achievementId, double score) {
 		if (!mentionsMargin(normalizedUser)) {
 			return score;
@@ -316,6 +390,7 @@ public final class AchievementIntentCatalog {
 		return score;
 	}
 
+	/** Prefers {@link UrsulaAction#ACTIVAR_POLIGONOS_SUPERFICIE} over create-polygon for area queries. */
 	private static double adjustPolygonActivateScore(String normalizedUser, UrsulaAction action, double score) {
 		if (!isActivatePolygonsWithAreaQuery(normalizedUser)) {
 			return score;
@@ -329,6 +404,7 @@ public final class AchievementIntentCatalog {
 		return score;
 	}
 
+	/** Routes share/import-siembra away from margin generation when both keywords overlap. */
 	private static double adjustSiembraQueryScore(String normalizedUser, UrsulaAction action, double score) {
 		if (!isSiembraShareOrImportQuery(normalizedUser) || mentionsMargin(normalizedUser)) {
 			return score;
@@ -345,10 +421,92 @@ public final class AchievementIntentCatalog {
 		return score;
 	}
 
+	/** Prefers screen capture over labor/recorrida export when the user says pantalla/tela. */
+	private static double adjustExportScreenScore(String normalizedUser, UrsulaAction action, double score) {
+		if (!mentionsScreenExport(normalizedUser)) {
+			return score;
+		}
+		if (action == UrsulaAction.EXPORT_PANTALLA) {
+			return Math.max(score, 15.0);
+		}
+		if (action == UrsulaAction.EXPORT_LABOR || action == UrsulaAction.EXPORT_RECORRIDA) {
+			return score * 0.05;
+		}
+		return score;
+	}
+
+	/** Dampens bare “exportar” matches that only hit recorrida via hint token overlap. */
+	private static double adjustExportRecorridaScore(String normalizedUser, UrsulaAction action, double score) {
+		if (action != UrsulaAction.EXPORT_RECORRIDA) {
+			return score;
+		}
+		// Avoid matching bare "exportar …" to recorrida via hint token overlap.
+		if (!normalizedUser.contains("recorrida")) {
+			return score * 0.05;
+		}
+		return score;
+	}
+
+	/** Penalizes NDVI actions when the query is really about recorridas or lacks imagery words. */
+	private static double adjustNdviAsignacionScore(String normalizedUser, UrsulaAction action, double score) {
+		boolean ndviAction = action == UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES
+				|| action == UrsulaAction.DOWNLOAD_NDVI
+				|| action == UrsulaAction.BULK_NDVI_DOWNLOAD;
+		if (!ndviAction) {
+			return score;
+		}
+		// "últimas … lotes" overlaps the NDVI achievement hint; require explicit NDVI.
+		if (normalizedUser.contains("recorrida") && !normalizedUser.contains("ndvi")) {
+			return score * 0.02;
+		}
+		if (!normalizedUser.contains("ndvi") && !normalizedUser.contains("imagen")) {
+			return score * 0.15;
+		}
+		return score;
+	}
+
+	/** Boosts load-recorridas and suppresses import/NDVI when the query is a DB load request. */
+	private static double adjustRecorridaLoadScore(String normalizedUser, UrsulaAction action, double score) {
+		if (!isRecorridaLoadQuery(normalizedUser)) {
+			return score;
+		}
+		if (action == UrsulaAction.LOAD_RECORRIDAS) {
+			return Math.max(score, 15.0);
+		}
+		if (action == UrsulaAction.IMPORT_RECORRIDA) {
+			return score * 0.2;
+		}
+		if (action == UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES
+				|| action == UrsulaAction.DOWNLOAD_NDVI
+				|| action == UrsulaAction.BULK_NDVI_DOWNLOAD) {
+			return score * 0.02;
+		}
+		return score;
+	}
+
+	/** True when the user asks to export/save/capture the screen (not a labor SHP). */
+	public static boolean isExportScreenQuery(String userQuery) {
+		if (userQuery == null || userQuery.isBlank()) {
+			return false;
+		}
+		return mentionsScreenExport(normalize(userQuery));
+	}
+
+	/** True when both a screen word and an export/save/capture verb appear. */
+	private static boolean mentionsScreenExport(String text) {
+		boolean screen = text.contains("pantalla") || text.contains("tela") || text.contains("screen")
+				|| text.contains("screenshot");
+		boolean exportish = text.contains("export") || text.contains("guardar") || text.contains("salvar")
+				|| text.contains("save") || text.contains("captur") || text.contains("screenshot");
+		return screen && exportish;
+	}
+
+	/** True when the normalized text mentions margin or profitability. */
 	private static boolean mentionsMargin(String text) {
 		return text.contains("margen") || text.contains("margenes") || text.contains("rentabilidad");
 	}
 
+	/** Substring check against a fixed vocabulary set (verbs, stop lists, …). */
 	private static boolean containsAnyToken(String text, Set<String> tokens) {
 		for (String token : tokens) {
 			if (text.contains(token)) {
@@ -358,6 +516,7 @@ public final class AchievementIntentCatalog {
 		return false;
 	}
 
+	/** All significant words of {@code phrase} must appear as substrings of {@code user}. */
 	private static boolean matchesPhrase(String user, String phrase) {
 		if (phrase.isBlank()) {
 			return false;
@@ -373,6 +532,7 @@ public final class AchievementIntentCatalog {
 		return true;
 	}
 
+	/** Weighted sum of significant tokens from {@code text} found inside {@code user}. */
 	private static double tokenOverlapScore(String user, String text) {
 		if (text == null || text.isBlank()) {
 			return 0;
@@ -386,6 +546,7 @@ public final class AchievementIntentCatalog {
 		return score;
 	}
 
+	/** Distinct tokens of length ≥ 4 after stopword filtering. */
 	private static List<String> significantTokens(String text) {
 		return Arrays.stream(text.split("\\s+"))
 				.filter(t -> t.length() >= 4)
@@ -394,6 +555,7 @@ public final class AchievementIntentCatalog {
 				.toList();
 	}
 
+	/** Short Spanish acknowledgement used when a mapping is chosen. */
 	static String suggestReply(String achievementId, UrsulaAction action) {
 		if (action == UrsulaAction.ACTIVAR_POLIGONOS_SUPERFICIE) {
 			return "¡Dale! Activo los polígonos con superficie mayor a cero.";
@@ -404,6 +566,12 @@ public final class AchievementIntentCatalog {
 		if (action == UrsulaAction.COMPARTIR_SIEMBRA) {
 			return "¡Dale! Comparto la siembra activa (prescripción en línea con QR).";
 		}
+		if (action == UrsulaAction.EXPORT_PANTALLA) {
+			return "¡Dale! Abro Exportar → Pantalla para guardar la captura.";
+		}
+		if (action == UrsulaAction.LOAD_RECORRIDAS) {
+			return "¡Dale! Busco las recorridas guardadas que coincidan y las cargo en el mapa.";
+		}
 		String hint = achievementHint(achievementId);
 		if (!hint.isBlank()) {
 			return "¡Dale! " + phraseFromHint(hint);
@@ -411,6 +579,7 @@ public final class AchievementIntentCatalog {
 		return "¡Dale! " + action.getDescription();
 	}
 
+	/** First sentence of an onboarding hint, kept for short help bullets / replies. */
 	private static String phraseFromHint(String hint) {
 		String trimmed = hint.trim();
 		int end = trimmed.indexOf('.');
@@ -420,6 +589,10 @@ public final class AchievementIntentCatalog {
 		return trimmed;
 	}
 
+	/**
+	 * Lowercases, strips accents/punctuation, and collapses whitespace so phrase
+	 * matching is language-tolerant across Spanish/English chat.
+	 */
 	public static String normalize(String text) {
 		String lower = text.toLowerCase(Locale.ROOT);
 		String stripped = Normalizer.normalize(lower, Normalizer.Form.NFD)
@@ -429,6 +602,7 @@ public final class AchievementIntentCatalog {
 				.trim();
 	}
 
+	/** Localized string for {@code key}, or {@code fallback} when the bundle has no entry. */
 	private static String msg(String key, String fallback) {
 		String s = Messages.getString(key);
 		return (s != null && !s.equals(key)) ? s : fallback;

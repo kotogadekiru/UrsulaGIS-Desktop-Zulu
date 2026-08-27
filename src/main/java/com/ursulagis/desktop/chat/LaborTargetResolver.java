@@ -10,7 +10,9 @@ import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 
 /**
- * Resolves which loaded labor layer a chat intent refers to.
+ * Picks which loaded labor layer a chat intent refers to: by explicit name,
+ * selected/active layer, or type keywords (cosecha / siembra / fertilización).
+ * Also builds Spanish messages when the choice is ambiguous.
  */
 public final class LaborTargetResolver {
 
@@ -21,9 +23,14 @@ public final class LaborTargetResolver {
 			"labor", "la labor", "labor activa", "capa", "la capa", "capa activa",
 			"activa", "activo", "active layer", "capa activa del mapa");
 
+	/** Prevents instantiation. */
 	private LaborTargetResolver() {
 	}
 
+	/**
+	 * Treats generic phrases like “capa activa” as no name so resolution falls
+	 * back to selected/active layers; returns a trimmed concrete name otherwise.
+	 */
 	public static String sanitizeTargetName(String targetName) {
 		if (targetName == null || targetName.isBlank()) {
 			return null;
@@ -42,6 +49,7 @@ public final class LaborTargetResolver {
 		return targetName.trim();
 	}
 
+	/** Whether the text mentions harvest / cosecha. */
 	public static boolean mentionsCosecha(String text) {
 		if (text == null || text.isBlank()) {
 			return false;
@@ -50,6 +58,7 @@ public final class LaborTargetResolver {
 		return n.contains("cosecha") || n.contains("harvest");
 	}
 
+	/** Whether the text mentions seeding / siembra. */
 	public static boolean mentionsSiembra(String text) {
 		if (text == null || text.isBlank()) {
 			return false;
@@ -58,6 +67,7 @@ public final class LaborTargetResolver {
 		return n.contains("siembra") || n.contains("seeding");
 	}
 
+	/** Whether the text mentions fertilization. */
 	public static boolean mentionsFertilizacion(String text) {
 		if (text == null || text.isBlank()) {
 			return false;
@@ -66,12 +76,23 @@ public final class LaborTargetResolver {
 		return n.contains("fertiliz") || n.contains("fert ") || n.endsWith(" fert");
 	}
 
+	/**
+	 * Resolves a single active (or only) seeding layer when unambiguous.
+	 */
 	public static Optional<SiembraLabor> resolveActiveSiembra(MapLayerContext mapCtx) {
 		return resolveSingleOfType(mapCtx, SiembraLabor.class)
 				.filter(SiembraLabor.class::isInstance)
 				.map(SiembraLabor.class::cast);
 	}
 
+	/**
+	 * Resolves a labor for the intent: named match → selected → single active →
+	 * type keywords → sole loaded labor of the requested kind.
+	 *
+	 * @param mapCtx       current layers
+	 * @param targetName   optional name or generic phrase from the intent
+	 * @param cosechaOnly  when {@code true}, only {@link CosechaLabor} is accepted
+	 */
 	public static Optional<Labor<?>> resolve(MapLayerContext mapCtx, String targetName, boolean cosechaOnly) {
 		String effectiveTarget = sanitizeTargetName(targetName);
 		boolean preferCosecha = cosechaOnly || mentionsCosecha(targetName);
@@ -116,6 +137,7 @@ public final class LaborTargetResolver {
 		return Optional.empty();
 	}
 
+	/** Sole active labor of the requested kind, when exactly one is enabled. */
 	private static Optional<Labor<?>> resolveSingleActive(MapLayerContext mapCtx, boolean cosechaOnly) {
 		Optional<LoadedLayerInfo> singleActive = mapCtx.getSingleActiveLabor(cosechaOnly);
 		if (singleActive.isPresent()) {
@@ -124,6 +146,9 @@ public final class LaborTargetResolver {
 		return Optional.empty();
 	}
 
+	/**
+	 * Sole labor of {@code type}: prefers the single active match, else the sole loaded one.
+	 */
 	private static Optional<Labor<?>> resolveSingleOfType(MapLayerContext mapCtx, Class<?> type) {
 		List<LoadedLayerInfo> matches = mapCtx.getLabors(false).stream()
 				.filter(info -> type.isInstance(info.getEntity()))
@@ -138,6 +163,7 @@ public final class LaborTargetResolver {
 		return Optional.empty();
 	}
 
+	/** Casts the layer entity to {@link Labor}, optionally requiring {@link CosechaLabor}. */
 	private static Optional<Labor<?>> toLabor(LoadedLayerInfo info, boolean cosechaOnly) {
 		Object entity = info.getEntity();
 		if (!(entity instanceof Labor<?> labor)) {
@@ -149,6 +175,10 @@ public final class LaborTargetResolver {
 		return Optional.of(labor);
 	}
 
+	/**
+	 * Spanish clarification when more than one labor could be the target
+	 * (or none are loaded/active).
+	 */
 	public static String ambiguousLaborMessage(MapLayerContext mapCtx, String targetName, boolean cosechaOnly) {
 		boolean preferCosecha = cosechaOnly || mentionsCosecha(targetName);
 		List<LoadedLayerInfo> active = mapCtx.getLabors(preferCosecha).stream()
@@ -172,6 +202,7 @@ public final class LaborTargetResolver {
 		return "Hay varias capas cargadas. Activá solo una o indicá el nombre: " + options;
 	}
 
+	/** Spanish clarification when sharing/importing siembra needs a unique seeding layer. */
 	public static String ambiguousSiembraMessage(MapLayerContext mapCtx) {
 		List<LoadedLayerInfo> siembras = mapCtx.getLabors(false).stream()
 				.filter(info -> info.getEntity() instanceof SiembraLabor)

@@ -1,13 +1,20 @@
 package com.ursulagis.desktop.chat;
 
 /**
- * Existing Ursula GIS UI behaviors the chat model should know about.
+ * Static knowledge snippets about Ursula GIS UI behaviors that the chat model
+ * (and offline guidance) should follow — layer tree, margin workflows, and
+ * fertilized-seeding steps — injected into system prompts.
  */
 public final class ChatUiKnowledge {
 
+	/** Prevents instantiation. */
 	private ChatUiKnowledge() {
 	}
 
+	/**
+	 * How the layer tree branch checkboxes work, plus common action pitfalls
+	 * (activate polygons by area vs create; siembra share vs margin).
+	 */
 	public static String layerPanelSection() {
 		return """
 				Layer panel (árbol de capas):
@@ -23,6 +30,10 @@ public final class ChatUiKnowledge {
 				""";
 	}
 
+	/**
+	 * Distinguishes generating a margin map (Herramientas → Rentabilidades)
+	 * from importing a margin shapefile so the model does not mix the two.
+	 */
 	public static String marginMapSection() {
 		return """
 				Margin map (mapa de márgenes) — two different workflows:
@@ -34,6 +45,10 @@ public final class ChatUiKnowledge {
 				""";
 	}
 
+	/**
+	 * Ordered overview of the multi-step “siembra fertilizada por ambientes” flow
+	 * used when the chat cannot run the full orchestration automatically.
+	 */
 	public static String siembraFertilizadaWorkflowSection() {
 		return """
 				Fertilized seeding workflow (siembra fertilizada por ambientes):

@@ -206,6 +206,8 @@ public final class OnboardingAchievements {
     public static final String FIRST_CONFIG_LANGUAGE_CHANGED = "FIRST_CONFIG_LANGUAGE_CHANGED";
     /** First time the user assigns crop/campaign activities to a lot (Asignación). */
     public static final String FIRST_CONFIG_ASIGNACION_CREATED = "FIRST_CONFIG_ASIGNACION_CREATED";
+    /** First time the user exports a screen snapshot (Exportar → Pantalla). */
+    public static final String FIRST_CONFIG_SCREEN_EXPORTED = "FIRST_CONFIG_SCREEN_EXPORTED";
 
     // Generic labor tools related achievements
     /** First time the user saves a labor to local storage/database. */
@@ -333,6 +335,7 @@ public final class OnboardingAchievements {
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_LAYERS_CORRELATED, CONTROLLER_CONFIG);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_LANGUAGE_CHANGED, CONTROLLER_CONFIG);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_ASIGNACION_CREATED, CONTROLLER_CONFIG);
+        ACHIEVEMENT_TO_CONTROLLER.put(FIRST_CONFIG_SCREEN_EXPORTED, CONTROLLER_CONFIG);
 
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_GENERIC_LABOR_SAVED, CONTROLLER_GENERIC_LABOR);
         ACHIEVEMENT_TO_CONTROLLER.put(FIRST_GENERIC_LABOR_CLONED, CONTROLLER_GENERIC_LABOR);
@@ -409,6 +412,7 @@ public final class OnboardingAchievements {
         FIRST_CONFIG_LAYERS_CORRELATED,
         FIRST_CONFIG_LANGUAGE_CHANGED,
         FIRST_CONFIG_ASIGNACION_CREATED,
+        FIRST_CONFIG_SCREEN_EXPORTED,
         FIRST_GENERIC_LABOR_SAVED,
         FIRST_GENERIC_LABOR_CLONED,
         FIRST_GENERIC_LABOR_SUMMARIZED,

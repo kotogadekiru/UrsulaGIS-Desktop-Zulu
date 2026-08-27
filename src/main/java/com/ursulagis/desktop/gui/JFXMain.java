@@ -1327,6 +1327,7 @@ public class JFXMain extends Application {
 				format = "jpg";
 			}
 			ImageIO.write(buffered, format, snapshotFile);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_SCREEN_EXPORTED);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

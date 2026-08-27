@@ -46,6 +46,7 @@ import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.gui.nww.LayerPanel;
 import com.ursulagis.desktop.gui.utils.DateConverter;
 import com.ursulagis.desktop.gui.utils.DateRangeSlider;
+import com.ursulagis.desktop.gui.utils.DoubleRangeSlider;
 import com.ursulagis.desktop.gui.utils.NumberInputDialog;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -118,6 +119,10 @@ public class NdviGUIController extends AbstractGUIController{
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DATE_FILTERED);
 			return doFiltrarFecha(null);
 			//return "filtre por fecha";
+		}));
+
+		rootNodeNDVI.add(LayerAction.constructPredicate(Messages.getString("NdviGUIController.filtrarNublado"),(layer)->{
+			return doFiltrarNublado(null);
 		}));
 
 		//Exporta todos los ndvi cargados a un archivo excel donde las filas son las coordenadas y las columnas son los valores en esa fecha
@@ -535,6 +540,60 @@ public class NdviGUIController extends AbstractGUIController{
 		slider.showDateSlider();
 		return "filtre por fecha low "+low+" high "+high;
 		
+	}
+
+	//TODO obtener un rango de % nublado a activar y desactivar los layers fuera de ese rango
+	private String doFiltrarNublado(Layer layer) {
+
+		Double min = null,
+				max = null,
+				low = 0.0,
+				high = 100.0;
+		List<Ndvi> ndviCargados = (List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class);
+		System.out.println("ndvi cargados " + ndviCargados.size());
+		for (Ndvi n : ndviCargados) {
+
+			Double porcNubes = n.getPorcNubes() == null ? 0.0 : n.getPorcNubes() * 100.0;
+			System.out.println("revisando ndvi con porcNubes " + porcNubes);
+			if (max == null || max < porcNubes) {
+				max = porcNubes;
+			}
+			if (min == null || min > porcNubes) {
+				min = porcNubes;
+			}
+		}
+		System.out.println("creando filtro nublado min " + min + " max " + max);
+		if (min == null || max == null) {
+			min = 0.0;
+			max = 100.0;
+		}
+		if (min.equals(max)) {
+			min = 0.0;
+			max = Math.max(max, 100.0);
+		}
+		low = min;
+		high = max;
+		DoubleRangeSlider slider = new DoubleRangeSlider(min, max, low, high);
+
+		slider.setOnUpdate((Void) -> {
+			Double nlow = slider.getLow();
+			Double nhigh = slider.getHigh();
+			System.out.println("filtre por nublado low " + nlow + " high " + nhigh);
+			for (Ndvi n : ndviCargados) {
+				Double porcNubes = n.getPorcNubes() == null ? 0.0 : n.getPorcNubes() * 100.0;
+				n.getLayer().setEnabled(true);
+				if (nlow != null && nlow > porcNubes) {
+					n.getLayer().setEnabled(false);
+				}
+				if (nhigh != null && nhigh < porcNubes) {
+					n.getLayer().setEnabled(false);
+				}
+			}
+			this.getLayerPanel().update(this.getWwd());
+		});
+
+		slider.showSlider();
+		return "filtre por nublado low " + low + " high " + high;
 	}
 
 	private void doConvertirNdviAFertilizacion(Ndvi ndvi) {

@@ -11,50 +11,48 @@ import java.util.logging.Logger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.ursulagis.desktop.dao.config.Configuracion;
 
 /**
- * Live DeepSeek chat client for Ursula IA.
- * POSTs OpenAI-compatible payloads to {@code https://api.deepseek.com/chat/completions}
- * using the key from {@link AiApiKeys}. {@link #complete} strips JSON from the
- * assistant message for intent parsing; {@link #completePlain} returns raw text for guidance.
+ * Default Ursula GIS chat client. POSTs a DeepSeek-compatible payload to
+ * {@code https://www.ursulagis.com/chat/completions}, which proxies to DeepSeek
+ * with a server-side API key. Client auth uses the device {@code USER} from
+ * {@link Configuracion} as the Bearer token. {@link #complete} requests JSON mode
+ * and extracts intent JSON; {@link #completePlain} returns guidance text as-is.
  */
-public class DeepSeekAiClient implements AiClient {
+public class UrsulaAiClient implements AiClient {
 
-	private static final Logger LOG = Logger.getLogger(DeepSeekAiClient.class.getName());
-	private static final String API_URL = "https://api.deepseek.com/chat/completions";
+	private static final Logger LOG = Logger.getLogger(UrsulaAiClient.class.getName());
+	private static final String API_URL = "https://www.ursulagis.com/chat/completions";
 	private static final String DEFAULT_MODEL = "deepseek-chat";
+	private static final String USER_CONFIG_KEY = "USER";
 
 	private static final HttpClient HTTP = HttpClient.newBuilder()
 			.connectTimeout(Duration.ofSeconds(30))
 			.build();
 
-	/** Identifies this client as the live {@link AiProvider#DEEPSEEK} backend. */
+	/** Identifies this client as the {@link AiProvider#URSULA} cloud proxy backend. */
 	@Override
 	public AiProvider getProvider() {
-		return AiProvider.DEEPSEEK;
+		return AiProvider.URSULA;
 	}
 
 	/**
-	 * Requests free-form assistant text (guidance), without JSON extraction.
+	 * Requests free-form assistant text for step-by-step guidance (no JSON mode).
 	 *
-	 * @throws IllegalStateException if no DeepSeek API key is configured
+	 * @throws IllegalStateException if device {@code USER} is not configured
 	 * @throws RuntimeException      if the HTTP call fails or is interrupted
 	 */
 	@Override
 	public AiResponse completePlain(String systemPrompt, String userPrompt) {
-		String apiKey = AiApiKeys.deepSeek();
-		if (apiKey.isBlank()) {
-			throw new IllegalStateException(
-					"DeepSeek API key not set. Configure it in Ursula IA or set DEEPSEEK_API_KEY / ai-keys.properties.");
-		}
-
+		String userToken = resolveUserToken();
 		long start = System.currentTimeMillis();
 		try {
-			String jsonBody = buildRequestBody(systemPrompt, userPrompt);
+			String jsonBody = buildRequestBody(systemPrompt, userPrompt, userToken, false);
 			HttpRequest request = HttpRequest.newBuilder()
 					.uri(URI.create(API_URL))
 					.header("Content-Type", "application/json")
-					.header("Authorization", "Bearer " + apiKey)
+					.header("Authorization", "Bearer " + userToken)
 					.POST(HttpRequest.BodyPublishers.ofString(jsonBody))
 					.timeout(Duration.ofSeconds(90))
 					.build();
@@ -63,7 +61,7 @@ public class DeepSeekAiClient implements AiClient {
 			long elapsed = System.currentTimeMillis() - start;
 
 			if (response.statusCode() >= 400) {
-				throw new IOException("DeepSeek API error " + response.statusCode() + ": " + response.body());
+				throw new IOException("Ursula API error " + response.statusCode() + ": " + response.body());
 			}
 
 			String content = extractPlainAssistantContent(response.body());
@@ -71,65 +69,107 @@ public class DeepSeekAiClient implements AiClient {
 			return new AiResponse(content, model, getProvider(), elapsed, false);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			throw new RuntimeException("DeepSeek request interrupted.", e);
+			throw new RuntimeException("Ursula request interrupted.", e);
 		} catch (IOException e) {
-			throw new RuntimeException("DeepSeek request failed: " + e.getMessage(), e);
+			throw new RuntimeException("Ursula request failed: " + e.getMessage(), e);
 		}
 	}
 
 	/**
-	 * Requests a completion and returns the assistant message with JSON payload extracted
-	 * for {@link com.ursulagis.desktop.chat.IntentParser} consumption.
+	 * Requests intent JSON ({@code response_format: json_object}) and returns the
+	 * extracted object string for the chat intent parser.
 	 *
-	 * @throws IllegalStateException if no DeepSeek API key is configured
+	 * @throws IllegalStateException if device {@code USER} is not configured
 	 * @throws RuntimeException      if the HTTP call fails or is interrupted
 	 */
 	@Override
 	public AiResponse complete(String systemPrompt, String userPrompt) {
-		String apiKey = AiApiKeys.deepSeek();
-		if (apiKey.isBlank()) {
-			throw new IllegalStateException(
-					"DeepSeek API key not set. Configure it in Ursula IA or set DEEPSEEK_API_KEY / ai-keys.properties.");
-		}
-
+		String userToken = resolveUserToken();
 		long start = System.currentTimeMillis();
 		try {
-			String jsonBody = buildRequestBody(systemPrompt, userPrompt);
+			String jsonBody = buildRequestBody(systemPrompt, userPrompt, userToken, true);
 			HttpRequest request = HttpRequest.newBuilder()
 					.uri(URI.create(API_URL))
 					.header("Content-Type", "application/json")
-					.header("Authorization", "Bearer " + apiKey)
+					.header("Authorization", "Bearer " + userToken)
 					.POST(HttpRequest.BodyPublishers.ofString(jsonBody))
 					.timeout(Duration.ofSeconds(60))
 					.build();
 
-			LOG.info(() -> String.format("[DeepSeek] POST /chat/completions model=%s user=%d chars",
+			LOG.info(() -> String.format("[Ursula] POST /chat/completions model=%s user=%d chars",
 					DEFAULT_MODEL, userPrompt == null ? 0 : userPrompt.length()));
 
 			HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
 			long elapsed = System.currentTimeMillis() - start;
 
 			if (response.statusCode() >= 400) {
-				throw new IOException("DeepSeek API error " + response.statusCode() + ": " + response.body());
+				throw new IOException("Ursula API error " + response.statusCode() + ": " + response.body());
 			}
 
 			String content = extractAssistantContent(response.body());
 			String model = extractModel(response.body());
-			LOG.fine(() -> "[DeepSeek] response: " + content);
+			LOG.fine(() -> "[Ursula] response: " + content);
 			return new AiResponse(content, model, getProvider(), elapsed, false);
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
-			throw new RuntimeException("DeepSeek request interrupted.", e);
+			throw new RuntimeException("Ursula request interrupted.", e);
 		} catch (IOException e) {
-			throw new RuntimeException("DeepSeek request failed: " + e.getMessage(), e);
+			throw new RuntimeException("Ursula request failed: " + e.getMessage(), e);
 		}
 	}
 
-	/** Builds the OpenAI-compatible chat-completions JSON body (system + user messages). */
-	private static String buildRequestBody(String systemPrompt, String userPrompt) {
+	/**
+	 * Resolves the device USER token used as Bearer auth for ursulagis.com.
+	 *
+	 * @throws IllegalStateException when USER is missing or a placeholder value
+	 */
+	private static String resolveUserToken() {
+		Configuracion config = activeConfig();
+		String user = config == null ? "" : config.getPropertyOrDefault(USER_CONFIG_KEY, "").trim();
+		if (user.isBlank() || "nonefound".equalsIgnoreCase(user) || "number not set".equalsIgnoreCase(user)) {
+			throw new IllegalStateException(
+					"USER not set in configuration. Ursula GIS chat requires a configured device USER.");
+		}
+		return user;
+	}
+
+	/**
+	 * Prefers {@code JFXMain.config} when the UI is up; otherwise
+	 * {@link Configuracion#getInstance()}.
+	 */
+	private static Configuracion activeConfig() {
+		try {
+			if (com.ursulagis.desktop.gui.JFXMain.config != null) {
+				return com.ursulagis.desktop.gui.JFXMain.config;
+			}
+		} catch (Exception ignored) {
+			// JFXMain not initialized (tests, headless)
+		}
+		return Configuracion.getInstance();
+	}
+
+	/**
+	 * Builds a DeepSeek-compatible body for the ursulagis.com proxy.
+	 *
+	 * @param jsonMode when {@code true}, request {@code response_format: json_object} (intent parsing)
+	 */
+	private static String buildRequestBody(String systemPrompt, String userPrompt, String userToken,
+			boolean jsonMode) {
 		JsonObject body = new JsonObject();
 		body.addProperty("model", DEFAULT_MODEL);
+		body.addProperty("stream", false);
 		body.addProperty("temperature", 0.1);
+		body.addProperty("user", userToken);
+
+		JsonObject thinking = new JsonObject();
+		thinking.addProperty("type", "disabled");
+		body.add("thinking", thinking);
+
+		if (jsonMode) {
+			JsonObject responseFormat = new JsonObject();
+			responseFormat.addProperty("type", "json_object");
+			body.add("response_format", responseFormat);
+		}
 
 		JsonArray messages = new JsonArray();
 
@@ -152,7 +192,7 @@ public class DeepSeekAiClient implements AiClient {
 		JsonObject root = JsonParser.parseString(responseBody).getAsJsonObject();
 		JsonArray choices = root.getAsJsonArray("choices");
 		if (choices == null || choices.isEmpty()) {
-			throw new IOException("DeepSeek response missing choices.");
+			throw new IOException("Ursula response missing choices.");
 		}
 		return choices.get(0).getAsJsonObject()
 				.getAsJsonObject("message")
@@ -160,18 +200,18 @@ public class DeepSeekAiClient implements AiClient {
 				.getAsString();
 	}
 
-	/** Reads assistant content and normalizes it to a JSON object string. */
+	/** Reads assistant content and normalizes it via {@link DeepSeekAiClient#extractJsonPayload}. */
 	private static String extractAssistantContent(String responseBody) throws IOException {
 		JsonObject root = JsonParser.parseString(responseBody).getAsJsonObject();
 		JsonArray choices = root.getAsJsonArray("choices");
 		if (choices == null || choices.isEmpty()) {
-			throw new IOException("DeepSeek response missing choices.");
+			throw new IOException("Ursula response missing choices.");
 		}
 		String content = choices.get(0).getAsJsonObject()
 				.getAsJsonObject("message")
 				.get("content")
 				.getAsString();
-		return extractJsonPayload(content);
+		return DeepSeekAiClient.extractJsonPayload(content);
 	}
 
 	/** Model id from the API response, or {@link #DEFAULT_MODEL} if absent. */
@@ -181,32 +221,5 @@ public class DeepSeekAiClient implements AiClient {
 			return root.get("model").getAsString();
 		}
 		return DEFAULT_MODEL;
-	}
-
-	/**
-	 * Strips markdown fences and returns the outermost {@code {...}} object from model text.
-	 * Shared with {@link UrsulaAiClient} for consistent intent JSON cleanup.
-	 *
-	 * @param content raw assistant message
-	 * @return JSON object substring, or trimmed text if no braces found
-	 */
-	public static String extractJsonPayload(String content) {
-		if (content == null) {
-			return "";
-		}
-		String trimmed = content.trim();
-		if (trimmed.startsWith("```")) {
-			int firstNewline = trimmed.indexOf('\n');
-			int endFence = trimmed.lastIndexOf("```");
-			if (firstNewline > 0 && endFence > firstNewline) {
-				trimmed = trimmed.substring(firstNewline + 1, endFence).trim();
-			}
-		}
-		int start = trimmed.indexOf('{');
-		int end = trimmed.lastIndexOf('}');
-		if (start >= 0 && end > start) {
-			return trimmed.substring(start, end + 1);
-		}
-		return trimmed;
 	}
 }

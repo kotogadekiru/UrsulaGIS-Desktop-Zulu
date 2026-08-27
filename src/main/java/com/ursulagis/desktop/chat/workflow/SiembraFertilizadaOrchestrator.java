@@ -18,7 +18,11 @@ import com.ursulagis.desktop.gui.chat.WorkflowPolygonChoiceDialog;
 import javafx.application.Platform;
 
 /**
- * Executes the fertilized seeding workflow one step at a time on the FX thread.
+ * Step executor for the fertilized-seeding (siembra fertilizada) chat workflow.
+ * Runs one {@link SiembraFertilizadaWorkflowStep} at a time on the FX thread—selecting
+ * field polygons, downloading NDVI, converting to harvest, recommending P, creating
+ * environment seedings, and generating siembra fertilizada—while tracking async waits
+ * for {@link ChatWorkflowSession} to resume.
  */
 public final class SiembraFertilizadaOrchestrator {
 
@@ -31,18 +35,41 @@ public final class SiembraFertilizadaOrchestrator {
 	private int siembraFertPairIndex;
 	private boolean waitingAsync;
 
+	/**
+	 * Creates an orchestrator for the given parsed request (uses defaults if {@code null}).
+	 *
+	 * @param request field, crop, seed, and NDVI parameters from the user chat message
+	 */
 	public SiembraFertilizadaOrchestrator(SiembraFertilizadaWorkflowRequest request) {
 		this.request = request != null ? request : SiembraFertilizadaWorkflowRequest.parse("");
 	}
 
+	/**
+	 * Current workflow stage (may already point at the next step while async work finishes).
+	 *
+	 * @return the active {@link SiembraFertilizadaWorkflowStep}
+	 */
 	public SiembraFertilizadaWorkflowStep getCurrentStep() {
 		return step;
 	}
 
+	/**
+	 * Whether a background GUI task (download, conversion, recommendation, …) is still running.
+	 *
+	 * @return {@code true} until the corresponding async callback clears the flag
+	 */
 	public boolean isWaitingAsync() {
 		return waitingAsync;
 	}
 
+	/**
+	 * Executes the current step once and returns a result for the chat session loop.
+	 * Does not advance further while {@link #isWaitingAsync()} is true.
+	 *
+	 * @param main         application main window (controllers and layers)
+	 * @param layerContext optional snapshot of loaded layers for fallback lookups
+	 * @return status message and flags controlling auto-advance vs pause
+	 */
 	public WorkflowStepResult executeStep(JFXMain main, MapLayerContext layerContext) {
 		if (step == SiembraFertilizadaWorkflowStep.DONE) {
 			return WorkflowStepResult.done("El flujo de siembra fertilizada ya finalizó. Podés iniciar uno nuevo repitiendo el pedido.");
@@ -64,6 +91,10 @@ public final class SiembraFertilizadaOrchestrator {
 		};
 	}
 
+	/**
+	 * Resolves the field contour (and related lomas / good-zone polygons), enables it on the map,
+	 * and advances to NDVI download.
+	 */
 	private WorkflowStepResult selectFieldPolygon(JFXMain main, MapLayerContext layerContext) {
 		List<Poligono> candidates = WorkflowLayerHelper.findPolygonsStrict(main, request.fieldName());
 		if (candidates.isEmpty()) {
@@ -120,6 +151,9 @@ public final class SiembraFertilizadaOrchestrator {
 				true, false, false);
 	}
 
+	/**
+	 * Starts NDVI download for the field polygon, or skips ahead if a usable NDVI layer already exists.
+	 */
 	private WorkflowStepResult downloadNdvi(JFXMain main) {
 		if (fieldPolygon == null) {
 			step = SiembraFertilizadaWorkflowStep.SELECT_FIELD_POLYGON;
@@ -152,6 +186,9 @@ public final class SiembraFertilizadaOrchestrator {
 				true, true, false);
 	}
 
+	/**
+	 * Converts the best NDVI layer into a synthetic harvest map using request crop and yield.
+	 */
 	private WorkflowStepResult convertNdviToHarvest(JFXMain main, MapLayerContext layerContext) {
 		Optional<Ndvi> ndvi = WorkflowLayerHelper.findBestNdvi(main);
 		if (ndvi.isEmpty()) {
@@ -179,6 +216,9 @@ public final class SiembraFertilizadaOrchestrator {
 				true, true, false);
 	}
 
+	/**
+	 * Runs phosphorus reposición recommendation on the latest harvest to produce a fertilization layer.
+	 */
 	private WorkflowStepResult recommendFertP(JFXMain main) {
 		Optional<CosechaLabor> cosecha = WorkflowLayerHelper.findLatestCosecha(main);
 		if (cosecha.isEmpty()) {
@@ -201,6 +241,10 @@ public final class SiembraFertilizadaOrchestrator {
 				true, true, false);
 	}
 
+	/**
+	 * Opens "convert polygon to seeding" for the lomas environment with seed/spacing prefill;
+	 * skips to good zones if no lomas polygon is found.
+	 */
 	private WorkflowStepResult createSiembraLomas(JFXMain main, MapLayerContext layerContext) {
 		if (lomasPolygon == null) {
 			lomasPolygon = resolvePolygon(
@@ -233,6 +277,10 @@ public final class SiembraFertilizadaOrchestrator {
 				true, false, true);
 	}
 
+	/**
+	 * Converts the next good-zone environment polygon to a seeding labor (user confirms each dialog),
+	 * then advances to siembra fertilizada generation when all zones are done.
+	 */
 	private WorkflowStepResult createSiembraGoodZones(JFXMain main, MapLayerContext layerContext) {
 		if (goodZonePolygons.isEmpty()) {
 			goodZonePolygons.addAll(WorkflowLayerHelper.findPolygons(main, request.fieldName()).stream()
@@ -267,6 +315,10 @@ public final class SiembraFertilizadaOrchestrator {
 				true, false, true);
 	}
 
+	/**
+	 * Enables the next seeding (+ fertilization) pair and runs programmatic siembra fertilizada
+	 * with in-line fert until all environments are processed.
+	 */
 	private WorkflowStepResult generateSiembraFertilizada(JFXMain main) {
 		List<SiembraLabor> siembras = main.getSiembrasSeleccionadas();
 		if (siembras.isEmpty()) {
@@ -312,6 +364,10 @@ public final class SiembraFertilizadaOrchestrator {
 				true, true, nextStep != SiembraFertilizadaWorkflowStep.DONE);
 	}
 
+	/**
+	 * Clears the async wait flag, sets the next step, and asks {@link ChatWorkflowSession}
+	 * to continue on the FX thread.
+	 */
 	private void onAsyncComplete(SiembraFertilizadaWorkflowStep nextStep) {
 		Platform.runLater(() -> {
 			waitingAsync = false;
@@ -320,6 +376,9 @@ public final class SiembraFertilizadaOrchestrator {
 		});
 	}
 
+	/**
+	 * Picks a single polygon automatically, or opens a choice dialog when several candidates remain.
+	 */
 	private Optional<Poligono> resolvePolygon(List<Poligono> candidates, String hint) {
 		if (candidates.size() == 1) {
 			return Optional.of(candidates.get(0));
@@ -327,11 +386,13 @@ public final class SiembraFertilizadaOrchestrator {
 		return WorkflowPolygonChoiceDialog.choose(candidates, hint);
 	}
 
+	/** All fertilization labores currently on the map (fallback when none are selected). */
 	@SuppressWarnings("unchecked")
 	private static List<FertilizacionLabor> allFertilizaciones(JFXMain main) {
 		return (List<FertilizacionLabor>) (List<?>) main.getObjectFromLayersOfClass(FertilizacionLabor.class);
 	}
 
+	/** All seeding labores currently on the map (fallback when none are selected). */
 	@SuppressWarnings("unchecked")
 	private static List<SiembraLabor> allSiembras(JFXMain main) {
 		return (List<SiembraLabor>) (List<?>) main.getObjectFromLayersOfClass(SiembraLabor.class);

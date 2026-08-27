@@ -14,13 +14,20 @@ import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 
 /**
- * Builds a {@link MapLayerContext} from the current WorldWind layer stack.
+ * Snapshots Ursula entities from the current WorldWind layer stack into a
+ * {@link MapLayerContext} for chat intent resolution and prompt grounding.
+ * Skips base globe layers (stars, imagery, compass, …).
  */
 public final class MapLayerContextBuilder {
 
+	/** Prevents instantiation. */
 	private MapLayerContextBuilder() {
 	}
 
+	/**
+	 * Reads enabled/disabled Ursula layers from {@code main}'s WorldWind model
+	 * and the layer-panel selection.
+	 */
 	public static MapLayerContext from(JFXMain main) {
 		List<LoadedLayerInfo> layers = new ArrayList<>();
 		if (main.getWwd() != null) {
@@ -41,6 +48,7 @@ public final class MapLayerContextBuilder {
 		return new MapLayerContext(layers, selectedName);
 	}
 
+	/** Name of the layer-panel selection, preferring the DAO entity name when present. */
 	private static String resolveSelectedLayerName(JFXMain main) {
 		LayerPanel panel = main.getLayerPanel();
 		if (panel == null) {
@@ -57,6 +65,7 @@ public final class MapLayerContextBuilder {
 		return selected.getName();
 	}
 
+	/** Prefers the DAO entity name over the WorldWind layer title. */
 	private static String resolveName(Object entity, Layer layer) {
 		if (entity instanceof Labor<?> labor && labor.getNombre() != null && !labor.getNombre().isBlank()) {
 			return labor.getNombre();
@@ -74,6 +83,7 @@ public final class MapLayerContextBuilder {
 		return layerName != null ? layerName : "sin nombre";
 	}
 
+	/** Filters out non-Ursula globe chrome so chat only sees user data layers. */
 	private static boolean isWorldWindBaseLayer(String name) {
 		if (name == null) {
 			return true;

@@ -5,13 +5,20 @@ import com.ursulagis.desktop.chat.ai.AiProvider;
 import com.ursulagis.desktop.chat.ai.AiResponse;
 
 /**
- * Generates step-by-step UI guidance when no concrete chat action can be executed.
+ * Builds step-by-step UI guidance when chat cannot (or should not) launch a
+ * concrete action: specialized workflows first, then an LLM reply grounded in
+ * manuals/code/layers, with an offline template fallback for MOCK or empty AI.
  */
 public final class ChatGuidanceService {
 
+	/** Prevents instantiation. */
 	private ChatGuidanceService() {
 	}
 
+	/**
+	 * Same as {@link #generate(AiClient, String, String, String, MapLayerContext)}
+	 * with no manual/transcript context.
+	 */
 	public static String generate(
 			AiClient client,
 			String userQuery,
@@ -20,6 +27,17 @@ public final class ChatGuidanceService {
 		return generate(client, userQuery, codeContext, "", layerContext);
 	}
 
+	/**
+	 * Prefer hard-coded guides for siembra fertilizada / margin generation;
+	 * otherwise ask the AI (or {@link #guidanceWithoutAi}) for numbered steps.
+	 *
+	 * @param client        configured AI client (MOCK skips the network call)
+	 * @param userQuery     original user question
+	 * @param codeContext   GitHub/local source snippets for grounding
+	 * @param manualContext PDF/transcript excerpts for grounding
+	 * @param layerContext  current map layers to mention in the answer
+	 * @return guidance text ready to show in the chat panel
+	 */
 	public static String generate(
 			AiClient client,
 			String userQuery,
@@ -43,19 +61,29 @@ public final class ChatGuidanceService {
 				: text.trim();
 	}
 
+	/** Offline guidance without manual context. */
 	public static String guidanceWithoutAi(String userQuery, String codeContext, MapLayerContext layerContext) {
 		return guidanceWithoutAi(userQuery, codeContext, "", layerContext);
 	}
 
+	/**
+	 * Local numbered steps using achievement hints and optional manual/code
+	 * excerpts when no live AI answer is available.
+	 */
 	public static String guidanceWithoutAi(
 			String userQuery, String codeContext, String manualContext, MapLayerContext layerContext) {
 		return localGuidance(userQuery, codeContext, manualContext, layerContext);
 	}
 
+	/** System prompt without manual context (package tests / older call sites). */
 	static String buildSystemPrompt(String codeContext, MapLayerContext layerContext, String userQuery) {
 		return buildSystemPrompt(codeContext, "", layerContext, userQuery);
 	}
 
+	/**
+	 * Assembles the guidance system prompt: Ursula personality, manuals, code,
+	 * achievement hints, and loaded layers.
+	 */
 	static String buildSystemPrompt(
 			String codeContext, String manualContext, MapLayerContext layerContext, String userQuery) {
 		StringBuilder sb = new StringBuilder();
@@ -82,6 +110,7 @@ public final class ChatGuidanceService {
 		return sb.toString();
 	}
 
+	/** Template guidance when AI is unavailable or empty. */
 	private static String localGuidance(
 			String userQuery, String codeContext, String manualContext, MapLayerContext layerContext) {
 		if (AchievementIntentCatalog.isMarginGenerationQuery(userQuery)) {
@@ -118,6 +147,7 @@ public final class ChatGuidanceService {
 		return sb.toString();
 	}
 
+	/** Fixed Spanish steps for generating a margin map (not importing one). */
 	private static String marginGenerationGuidance(MapLayerContext layerContext) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Para generar un mapa de márgenes:\n\n");

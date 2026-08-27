@@ -3,19 +3,26 @@ package com.ursulagis.desktop.chat.ai;
 import java.util.logging.Logger;
 
 /**
- * Mocked Anthropic Claude client. Logs the request and delegates parsing to {@link MockAiClient}.
- * Replace {@link #complete(String, String)} body with a real HTTP call to api.anthropic.com when ready.
+ * Mocked Anthropic Claude client for the chat AI stack.
+ * Logs a stand-in {@code POST /v1/messages} and delegates intent parsing to
+ * {@link MockAiClient}; replace {@link #complete(String, String)} with a real
+ * call to {@code api.anthropic.com} when wiring the live API.
  */
 public class ClaudeAiClient extends MockAiClient {
 
 	private static final Logger LOG = Logger.getLogger(ClaudeAiClient.class.getName());
 	private static final String MODEL = "claude-sonnet-4 (mocked)";
 
+	/** Identifies this client as the mocked {@link AiProvider#CLAUDE} backend. */
 	@Override
 	public AiProvider getProvider() {
 		return AiProvider.CLAUDE;
 	}
 
+	/**
+	 * Simulates a Claude completion: brief delay, then local rule-based intent JSON.
+	 * Response content is the same structured payload used by {@link MockAiClient}.
+	 */
 	@Override
 	public AiResponse complete(String systemPrompt, String userPrompt) {
 		long start = System.currentTimeMillis();

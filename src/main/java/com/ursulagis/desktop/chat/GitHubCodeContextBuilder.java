@@ -25,8 +25,9 @@ import com.google.gson.JsonParser;
 import com.ursulagis.desktop.chat.ai.AiApiKeys;
 
 /**
- * Fetches relevant source snippets from the public GitHub repository (and local workspace fallback)
- * to ground LLM answers in real application code.
+ * Builds a bounded text block of relevant Ursula GIS source snippets for LLM
+ * prompts: keyword → known paths, optional GitHub code search, then local
+ * workspace or raw GitHub file contents (truncated per file and overall).
  */
 public final class GitHubCodeContextBuilder {
 
@@ -92,9 +93,16 @@ public final class GitHubCodeContextBuilder {
 			"src/main/java/com/ursulagis/desktop/chat/AchievementIntentCatalog.java",
 			"src/main/java/com/ursulagis/desktop/gui/onboarding/OnboardingAchievements.java");
 
+	/** Prevents instantiation. */
 	private GitHubCodeContextBuilder() {
 	}
 
+	/**
+	 * Collects up to a few relevant source files for {@code userQuery} and formats
+	 * them as a prompt section. Prefers the local workspace; falls back to GitHub raw.
+	 *
+	 * @return empty string when the query is blank; otherwise a truncated context block
+	 */
 	public static String buildForQuery(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return "";
@@ -129,6 +137,7 @@ public final class GitHubCodeContextBuilder {
 		return sb.toString().trim();
 	}
 
+	/** Maps domain keywords in the query to known controller/chat source paths. */
 	private static List<String> pathsFromKeywords(String userQuery) {
 		String normalized = AchievementIntentCatalog.normalize(userQuery);
 		List<String> paths = new ArrayList<>();
@@ -140,6 +149,7 @@ public final class GitHubCodeContextBuilder {
 		return paths;
 	}
 
+	/** Optional GitHub code search (needs network; uses token when configured). */
 	private static List<String> searchGitHubCode(String userQuery) {
 		List<String> paths = new ArrayList<>();
 		String token = AiApiKeys.github();
@@ -183,6 +193,7 @@ public final class GitHubCodeContextBuilder {
 		return paths;
 	}
 
+	/** Up to four significant (≥4 char) query tokens joined for the GitHub search API. */
 	private static String extractSearchTerms(String userQuery) {
 		return Pattern.compile("\\s+").splitAsStream(AchievementIntentCatalog.normalize(userQuery))
 				.filter(w -> w.length() >= 4)
@@ -191,6 +202,7 @@ public final class GitHubCodeContextBuilder {
 				.orElse("");
 	}
 
+	/** Local workspace first, then GitHub raw content. */
 	private static String fetchFile(String repoPath) {
 		String local = readLocalWorkspace(repoPath);
 		if (!local.isBlank()) {
@@ -199,6 +211,7 @@ public final class GitHubCodeContextBuilder {
 		return fetchFromGitHubRaw(repoPath);
 	}
 
+	/** Reads {@code repoPath} from the current working directory when the file exists. */
 	private static String readLocalWorkspace(String repoPath) {
 		Path path = Path.of(System.getProperty("user.dir", "."), repoPath);
 		if (!Files.isRegularFile(path)) {
@@ -211,6 +224,7 @@ public final class GitHubCodeContextBuilder {
 		}
 	}
 
+	/** Downloads raw file content from GitHub when the local workspace copy is missing. */
 	private static String fetchFromGitHubRaw(String repoPath) {
 		try {
 			HttpRequest request = HttpRequest.newBuilder()
@@ -231,6 +245,7 @@ public final class GitHubCodeContextBuilder {
 		return "";
 	}
 
+	/** Hard-cuts file content at {@code maxChars} and appends a truncation marker. */
 	private static String truncate(String content, int maxChars) {
 		if (content.length() <= maxChars) {
 			return content;

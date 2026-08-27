@@ -14,17 +14,24 @@ import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
 
 /**
- * Step-by-step guidance for the multi-stage "siembra fertilizada" workflow
- * (NDVI → cosecha → recomendación P → siembras por ambiente → siembra fertilizada).
+ * Detects “siembra fertilizada” / environment-based fertilization questions and
+ * builds Spanish step-by-step guidance (NDVI → cosecha → P recommendation →
+ * siembras por ambiente → siembra fertilizada), tailored with names and yields
+ * found in the user text and currently loaded map layers.
  */
 public final class SiembraFertilizadaWorkflowGuide {
 
 	private static final Pattern YIELD_KG_PATTERN = Pattern.compile("(\\d{3,5})\\s*kg\\s*/?\\s*ha", Pattern.CASE_INSENSITIVE);
 	private static final Pattern YIELD_TN_PATTERN = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*t(?:ns?)?\\s*/?\\s*ha", Pattern.CASE_INSENSITIVE);
 
+	/** Prevents instantiation. */
 	private SiembraFertilizadaWorkflowGuide() {
 	}
 
+	/**
+	 * Whether the query looks like the fertilized-seeding-by-environments workflow
+	 * (siembra+fert, NDVI+fósforo, variety/ambiente keywords, etc.).
+	 */
 	public static boolean matches(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return false;
@@ -38,6 +45,10 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return siembraFert || (ndviFosforo && (ambientes || campo)) || (siembraFert && ndviFosforo);
 	}
 
+	/**
+	 * Numbered Spanish guide for the full workflow, filling in polygon/NDVI
+	 * suggestions from {@code layerContext} and crop/yield/fert from the query.
+	 */
 	public static String buildGuidance(String userQuery, MapLayerContext layerContext) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Flujo de siembra fertilizada por ambientes — te guío paso a paso:\n\n");
@@ -106,6 +117,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return sb.toString();
 	}
 
+	/** Appends polygon match hints for a named field/ambiente. */
 	private static void appendPolygonStep(StringBuilder sb, MapLayerContext ctx, String nameHint, String role) {
 		if (ctx == null) {
 			sb.append("\n   - Buscá el ").append(role).append(" con nombre parecido a **").append(nameHint).append("**.");
@@ -131,6 +143,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		sb.append("\n   - Elegí el más adecuado o el más cercano al nombre **").append(nameHint).append("**.");
 	}
 
+	/** Lists already-loaded NDVI layer names under the download step when present. */
 	private static void appendNdviStep(StringBuilder sb, MapLayerContext ctx) {
 		if (ctx == null) {
 			return;
@@ -142,6 +155,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		}
 	}
 
+	/** Suggests the loaded NDVI with the highest mean, or a generic pick tip. */
 	private static void appendBestNdviHint(StringBuilder sb, MapLayerContext ctx) {
 		if (ctx == null) {
 			sb.append(" (compará el NDVI promedio en el histograma o propiedades de cada capa).");
@@ -159,6 +173,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		}
 	}
 
+	/** Mean NDVI from the layer entity when it is an {@link Ndvi}; otherwise null. */
 	private static Double ndviMean(LoadedLayerInfo info) {
 		if (info.getEntity() instanceof Ndvi ndvi) {
 			return ndvi.getMeanNDVI();
@@ -166,6 +181,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return null;
 	}
 
+	/** Field/lote token from the query (“regalada” or after para/del/de la). */
 	private static String extractFieldName(String query) {
 		String n = normalize(query);
 		if (n.contains("regalada")) {
@@ -175,6 +191,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return m.find() ? m.group(1) : "";
 	}
 
+	/** First crop keyword found in the query (soja/trigo/maíz), or empty. */
 	private static String extractCrop(String query) {
 		String lower = query.toLowerCase(Locale.ROOT);
 		if (lower.contains("soja")) {
@@ -189,6 +206,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return "";
 	}
 
+	/** Phosphorus source hint from MAP/fosfato wording in the query. */
 	private static String extractFertSource(String query) {
 		String lower = query.toLowerCase(Locale.ROOT);
 		if (lower.contains("fosfato monoamonico") || lower.contains("fosfato monoamónico")
@@ -201,6 +219,10 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return "";
 	}
 
+	/**
+	 * Parses yield from the query as t/ha (converts kg/ha when needed).
+	 * Returns {@code 0} when no yield is mentioned (caller may use a default).
+	 */
 	public static double extractYieldTn(String query) {
 		Matcher kg = YIELD_KG_PATTERN.matcher(query);
 		if (kg.find()) {
@@ -216,6 +238,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return 0;
 	}
 
+	/** Spanish-formatted t/ha string for the guide (default 4,6 when yield is unknown). */
 	private static String formatYield(double yieldTn) {
 		if (yieldTn <= 0) {
 			return "4,6";
@@ -223,6 +246,7 @@ public final class SiembraFertilizadaWorkflowGuide {
 		return String.format(Locale.ROOT, "%.1f", yieldTn).replace('.', ',');
 	}
 
+	/** Lowercases and strips accents for keyword matching. */
 	public static String normalize(String text) {
 		String lower = text.toLowerCase(Locale.ROOT);
 		return Normalizer.normalize(lower, Normalizer.Form.NFD)

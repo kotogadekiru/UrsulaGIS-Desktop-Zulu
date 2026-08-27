@@ -125,6 +125,19 @@ public class ChatController {
 							"Voy a buscar los contornos de las asignaciones y descargar el NDVI del período indicado.")
 							.enrichFromUserText(text.trim());
 				}
+				if (AchievementIntentCatalog.isRecorridaLoadQuery(text.trim())
+						&& (intent.getAction() == UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES
+								|| intent.getAction() == UrsulaAction.DOWNLOAD_NDVI
+								|| intent.getAction() == UrsulaAction.BULK_NDVI_DOWNLOAD
+								|| intent.getAction() == UrsulaAction.IMPORT_RECORRIDA
+								|| intent.getAction() == UrsulaAction.UNKNOWN)) {
+					var override = AchievementIntentCatalog.match(text.trim());
+					if (override.isPresent() && override.get().action() == UrsulaAction.LOAD_RECORRIDAS) {
+						AchievementIntentMatch m = override.get();
+						intent = new ParsedIntent(m.action(), intent.getTargetName(), m.score(), m.suggestedReply())
+								.enrichFromUserText(text.trim());
+					}
+				}
 				if (intent.getAction() == UrsulaAction.GENERAR_MARGEN
 						&& AchievementIntentCatalog.isSiembraShareOrImportQuery(text.trim())) {
 					var override = AchievementIntentCatalog.match(text.trim());
@@ -144,13 +157,16 @@ public class ChatController {
 						intent = new ParsedIntent(m.action(), null, m.score(), m.suggestedReply());
 					}
 				}
-				if (intent.getAction() == UrsulaAction.UNKNOWN) {
-					var catalogMatch = AchievementIntentCatalog.match(text.trim());
-					if (catalogMatch.isPresent()) {
-						AchievementIntentMatch m = catalogMatch.get();
+				var catalogMatch = AchievementIntentCatalog.match(text.trim());
+				if (catalogMatch.isPresent()) {
+					AchievementIntentMatch m = catalogMatch.get();
+					// Strong phrase matches beat a wrong LLM action (e.g. exportar pantalla → recorrida).
+					if (intent.getAction() == UrsulaAction.UNKNOWN || m.score() >= 10.0) {
 						String target = LaborTargetResolver.sanitizeTargetName(intent.getTargetName());
 						intent = new ParsedIntent(m.action(), target, m.score(), m.suggestedReply())
 								.enrichFromUserText(text.trim());
+					} else {
+						intent = intent.enrichFromUserText(text.trim());
 					}
 				} else {
 					intent = intent.enrichFromUserText(text.trim());
@@ -212,7 +228,52 @@ public class ChatController {
 		if (tryActivatePolygons(userText, layerContext)) {
 			return true;
 		}
+		if (tryExportPantalla(userText, layerContext)) {
+			return true;
+		}
+		if (tryLoadRecorridas(userText, layerContext)) {
+			return true;
+		}
 		return trySiembraImportShare(userText, layerContext);
+	}
+
+	private boolean tryLoadRecorridas(String userText, MapLayerContext layerContext) {
+		if (!AchievementIntentCatalog.isRecorridaLoadQuery(userText)) {
+			return false;
+		}
+		Optional<AchievementIntentMatch> match = AchievementIntentCatalog.match(userText);
+		if (match.isEmpty() || match.get().action() != UrsulaAction.LOAD_RECORRIDAS) {
+			return false;
+		}
+		AchievementIntentMatch m = match.get();
+		ParsedIntent intent = new ParsedIntent(m.action(), null, m.score(), m.suggestedReply())
+				.enrichFromUserText(userText);
+		ActionExecutionResult result = executor.execute(intent, layerContext);
+		panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
+		panel.setStatus(msg("Chat.statusReady", "Ready"));
+		if (result.launched()) {
+			UrsulaChatWindow.yieldToMainStage();
+		}
+		return true;
+	}
+
+	private boolean tryExportPantalla(String userText, MapLayerContext layerContext) {
+		if (!AchievementIntentCatalog.isExportScreenQuery(userText)) {
+			return false;
+		}
+		Optional<AchievementIntentMatch> match = AchievementIntentCatalog.match(userText);
+		if (match.isEmpty() || match.get().action() != UrsulaAction.EXPORT_PANTALLA) {
+			return false;
+		}
+		AchievementIntentMatch m = match.get();
+		ParsedIntent intent = new ParsedIntent(m.action(), null, m.score(), m.suggestedReply());
+		ActionExecutionResult result = executor.execute(intent, layerContext);
+		panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
+		panel.setStatus(msg("Chat.statusReady", "Ready"));
+		if (result.launched()) {
+			UrsulaChatWindow.yieldToMainStage();
+		}
+		return true;
 	}
 
 	private boolean tryActivatePolygons(String userText, MapLayerContext layerContext) {

@@ -11,7 +11,9 @@ import com.ursulagis.desktop.gui.JFXMain;
 import javafx.application.Platform;
 
 /**
- * Holds the active workflow orchestrator between chat messages.
+ * Session holder for the active siembra fertilizada (fertilized seeding) chat workflow.
+ * Bridges chat messages to {@link SiembraFertilizadaOrchestrator}, auto-advances sync steps,
+ * and resumes after async GUI work finishes.
  */
 public final class ChatWorkflowSession {
 
@@ -21,19 +23,34 @@ public final class ChatWorkflowSession {
 	private static JFXMain boundMain;
 	private static Consumer<String> messageConsumer;
 
+	/** Prevents instantiation. */
 	private ChatWorkflowSession() {
 	}
 
+	/**
+	 * Registers the main window and a callback for workflow status messages shown in chat.
+	 *
+	 * @param main              application main window used by the orchestrator
+	 * @param onWorkflowMessage consumer that posts intermediate workflow text to the chat UI
+	 */
 	public static void bind(JFXMain main, Consumer<String> onWorkflowMessage) {
 		boundMain = main;
 		messageConsumer = onWorkflowMessage;
 	}
 
+	/**
+	 * Whether a fertilized-seeding workflow is in progress (not finished or cleared).
+	 *
+	 * @return {@code true} if an orchestrator exists and has not reached {@link SiembraFertilizadaWorkflowStep#DONE}
+	 */
 	public static boolean hasActiveSession() {
 		return active != null && active.getCurrentStep() != SiembraFertilizadaWorkflowStep.DONE;
 	}
 
-	/** Called by the orchestrator when an async step finishes to continue the flow. */
+	/**
+	 * Continues the workflow on the FX thread after an async step (NDVI download, conversions, etc.) completes.
+	 * Called by the orchestrator via its async completion callbacks.
+	 */
 	public static void resumeAfterAsync() {
 		if (active == null || boundMain == null) {
 			return;
@@ -48,6 +65,15 @@ public final class ChatWorkflowSession {
 		});
 	}
 
+	/**
+	 * Entry point from chat: starts a new siembra fertilizada flow when the text matches the guide,
+	 * or advances an existing one on continue commands ("continuar", "siguiente", …).
+	 *
+	 * @param main         application main window
+	 * @param userText     latest user chat message
+	 * @param layerContext snapshot of loaded map layers for polygon/NDVI lookup
+	 * @return execution result for the chat UI, or {@code null} if the text is not a workflow request
+	 */
 	public static ActionExecutionResult handle(JFXMain main, String userText, MapLayerContext layerContext) {
 		boundMain = main;
 
@@ -71,17 +97,22 @@ public final class ChatWorkflowSession {
 		return runUntilPause(main, layerContext);
 	}
 
+	/** Clears the active orchestrator so a new fertilized-seeding request can start fresh. */
 	public static void clear() {
 		active = null;
 	}
 
+	/** Posts a workflow status line to the bound chat message consumer, if any. */
 	private static void publishMessage(String message) {
 		if (messageConsumer != null && message != null && !message.isBlank()) {
 			messageConsumer.accept(message);
 		}
 	}
 
-	/** Runs sync steps in sequence until async work, user dialog, error, or completion. */
+	/**
+	 * Runs orchestrator steps in a tight loop until async work, a user dialog, an error,
+	 * completion, or the auto-step safety limit is hit.
+	 */
 	private static ActionExecutionResult runUntilPause(JFXMain main, MapLayerContext layerContext) {
 		StringBuilder messages = new StringBuilder();
 		boolean launched = false;
@@ -107,6 +138,7 @@ public final class ChatWorkflowSession {
 		return toActionResult(messages.toString(), launched);
 	}
 
+	/** Appends a non-blank step message, separating lines with newlines. */
 	private static void appendMessage(StringBuilder messages, String text) {
 		if (text == null || text.isBlank()) {
 			return;
@@ -117,6 +149,7 @@ public final class ChatWorkflowSession {
 		messages.append(text);
 	}
 
+	/** Detects user phrases that mean "advance the current workflow" in Spanish or English. */
 	private static boolean isContinueCommand(String text) {
 		if (text == null) {
 			return false;
@@ -126,6 +159,7 @@ public final class ChatWorkflowSession {
 				|| n.equals("continue") || n.equals("next");
 	}
 
+	/** Wraps accumulated step text as launched or not-launched for the chat UI. */
 	private static ActionExecutionResult toActionResult(String message, boolean launched) {
 		return launched
 				? ActionExecutionResult.launched(message)

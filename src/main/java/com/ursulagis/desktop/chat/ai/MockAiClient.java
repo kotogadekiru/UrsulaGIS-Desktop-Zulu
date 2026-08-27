@@ -12,8 +12,10 @@ import com.ursulagis.desktop.chat.MapLayerContext;
 import com.ursulagis.desktop.chat.UrsulaPersonality;
 
 /**
- * Local rule-based client that simulates LLM intent parsing without network calls.
- * Delegates action matching to {@link AchievementIntentCatalog} (onboarding logros).
+ * Local rule-based {@link AiClient} that simulates LLM intent parsing without network calls.
+ * Matches keywords and onboarding achievements via {@link AchievementIntentCatalog},
+ * and returns intent JSON the same shape real providers produce. Also used as the
+ * base for mocked OpenAI/Claude clients.
  */
 public class MockAiClient implements AiClient {
 
@@ -21,11 +23,16 @@ public class MockAiClient implements AiClient {
 			"(?:capa|labor|mapa|cosecha|recorrida|ndvi)\\s+[\"']?([^\"'\\n]+)[\"']?",
 			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
+	/** Identifies this client as the offline {@link AiProvider#MOCK} backend. */
 	@Override
 	public AiProvider getProvider() {
 		return AiProvider.MOCK;
 	}
 
+	/**
+	 * Returns offline step-by-step guidance via {@link ChatGuidanceService}
+	 * (empty layer context), without calling an LLM.
+	 */
 	@Override
 	public AiResponse completePlain(String systemPrompt, String userPrompt) {
 		long start = System.currentTimeMillis();
@@ -35,6 +42,10 @@ public class MockAiClient implements AiClient {
 		return new AiResponse(text, "mock-local", getProvider(), elapsed, true);
 	}
 
+	/**
+	 * Parses the user prompt with local rules and returns intent JSON in
+	 * {@link AiResponse#getContent()}.
+	 */
 	@Override
 	public AiResponse complete(String systemPrompt, String userPrompt) {
 		long start = System.currentTimeMillis();
@@ -44,6 +55,7 @@ public class MockAiClient implements AiClient {
 		return new AiResponse(json, "mock-local", getProvider(), elapsed, true);
 	}
 
+	/** Short random sleep so mock responses feel closer to a network round-trip. */
 	protected void simulateLatency() {
 		try {
 			Thread.sleep(120 + (long) (Math.random() * 180));
@@ -52,6 +64,14 @@ public class MockAiClient implements AiClient {
 		}
 	}
 
+	/**
+	 * Maps natural-language text to an action JSON string using keywords,
+	 * achievement catalog matches, and optional layer target extraction.
+	 *
+	 * @param userPrompt   user message
+	 * @param systemPrompt may include active/selected layer names for targeting
+	 * @return intent JSON with {@code action}, optional {@code targetName}, {@code confidence}, {@code message}
+	 */
 	protected String parseIntent(String userPrompt, String systemPrompt) {
 		String text = userPrompt == null ? "" : userPrompt.toLowerCase(Locale.ROOT);
 		String target = extractTarget(userPrompt);
@@ -86,10 +106,15 @@ public class MockAiClient implements AiClient {
 			return intentJson("IMPORT_NDVI", target, 0.9,
 					"Abriendo diálogo para importar NDVI.");
 		}
+		if (AchievementIntentCatalog.isRecorridaLoadQuery(userPrompt)) {
+			return intentJson("LOAD_RECORRIDAS", target, 0.95,
+					"Busco las recorridas guardadas que coincidan y las cargo en el mapa.");
+		}
 		if (containsAny(text, "ndvi asign", "ndvi campa", "ndvi de soja camp", "descargar ndvi campa",
 				"obtener ndvi campa", "ndvi contornos", "download ndvi campaign",
-				"lotes asignad", "imagenes ndvi", "últimas imagenes ndvi", "ultimas imagenes ndvi",
-				"ndvi de los lotes", "asignados a")) {
+				"imagenes ndvi", "últimas imagenes ndvi", "ultimas imagenes ndvi",
+				"ndvi de los lotes")
+				|| (containsAny(text, "lotes asignad", "asignados a") && text.contains("ndvi"))) {
 			return intentJsonAsignacionNdvi(userPrompt, target);
 		}
 		if (containsAny(text, "descargar ndvi", "bulk ndvi", "ndvi masivo")) {
@@ -108,10 +133,15 @@ public class MockAiClient implements AiClient {
 		return intentJson("UNKNOWN", target, 0.3, UrsulaPersonality.unknownReply());
 	}
 
+	/** Whether the user referred to the currently active/selected layer by phrase. */
 	private static boolean refersToActiveLayer(String text) {
 		return containsAny(text, "capa activa", "active layer", "la activa", "capa seleccionada", "selected layer");
 	}
 
+	/**
+	 * Pulls a layer name from system-prompt lines such as
+	 * {@code Active layers:} or {@code Selected in layer tree:}.
+	 */
 	private static String resolveActiveLayerTarget(String systemPrompt) {
 		if (systemPrompt == null) {
 			return null;
@@ -134,6 +164,7 @@ public class MockAiClient implements AiClient {
 		return null;
 	}
 
+	/** Regex-extracts a layer/labor name mentioned after common Spanish/English nouns. */
 	private static String extractTarget(String userPrompt) {
 		if (userPrompt == null) {
 			return null;
@@ -145,6 +176,7 @@ public class MockAiClient implements AiClient {
 		return null;
 	}
 
+	/** True if {@code text} contains any of the given keyword substrings. */
 	private static boolean containsAny(String text, String... keywords) {
 		for (String kw : keywords) {
 			if (text.contains(kw)) {
@@ -154,6 +186,14 @@ public class MockAiClient implements AiClient {
 		return false;
 	}
 
+	/**
+	 * Builds the standard intent JSON object returned to the chat pipeline.
+	 *
+	 * @param action     {@link com.ursulagis.desktop.chat.UrsulaAction} name
+	 * @param targetName optional map/labor target
+	 * @param confidence match strength in {@code [0, 1]}
+	 * @param message    Ursula-voice reply for the UI
+	 */
 	static String intentJson(String action, String targetName, double confidence, String message) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("{\"action\":\"").append(escape(action)).append("\"");
@@ -165,6 +205,10 @@ public class MockAiClient implements AiClient {
 		return sb.toString();
 	}
 
+	/**
+	 * Builds {@code DOWNLOAD_NDVI_ASIGNACIONES} intent JSON, including campaign/crop/date
+	 * fields parsed from the user text when present.
+	 */
 	private static String intentJsonAsignacionNdvi(String userPrompt, String target) {
 		com.ursulagis.desktop.chat.AsignacionNdviRequest req =
 				com.ursulagis.desktop.chat.AsignacionNdviRequest.parse(userPrompt);
@@ -191,6 +235,7 @@ public class MockAiClient implements AiClient {
 		return sb.toString();
 	}
 
+	/** Escapes backslashes and quotes for embedding values in intent JSON. */
 	private static String escape(String s) {
 		return s.replace("\\", "\\\\").replace("\"", "\\\"");
 	}

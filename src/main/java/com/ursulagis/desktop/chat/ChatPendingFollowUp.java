@@ -6,8 +6,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Remembers the last chat action that asked the user for a clarification
- * (e.g. which campaign) so a short follow-up like "26/27" can resume it.
+ * Session-scoped memory for the last chat action that asked the user for a
+ * clarification (e.g. which campaign). A short follow-up like {@code "26/27"}
+ * can then resume the pending {@link UrsulaAction} without re-asking the whole request.
  */
 public final class ChatPendingFollowUp {
 
@@ -17,8 +18,20 @@ public final class ChatPendingFollowUp {
 			"campa[nñ]a\\s+[\"']?([^\"'\\n]+?)[\"']?\\s*$",
 			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
+	/** {@link Pending#awaiting()} value when Ursula is waiting for a campaign name. */
 	public static final String AWAIT_CAMPANIA = "campania";
 
+	/**
+	 * Snapshot of a paused action waiting for user clarification.
+	 *
+	 * @param action           action to resume
+	 * @param originalUserText full original request text
+	 * @param campaniaName     campaign already known, if any
+	 * @param cultivoName      crop already known, if any
+	 * @param beginDate        NDVI begin already known, if any
+	 * @param endDate          NDVI end already known, if any
+	 * @param awaiting         what is missing ({@link #AWAIT_CAMPANIA}, …)
+	 */
 	public record Pending(
 			UrsulaAction action,
 			String originalUserText,
@@ -31,21 +44,26 @@ public final class ChatPendingFollowUp {
 
 	private static volatile Pending pending;
 
+	/** Prevents instantiation. */
 	private ChatPendingFollowUp() {
 	}
 
+	/** Stores or replaces the current pending clarification. */
 	public static void set(Pending value) {
 		pending = value;
 	}
 
+	/** Clears any pending follow-up (after resume or a new independent request). */
 	public static void clear() {
 		pending = null;
 	}
 
+	/** Current pending clarification, if any. */
 	public static Optional<Pending> get() {
 		return Optional.ofNullable(pending);
 	}
 
+	/** Whether Ursula is waiting specifically for a campaign reply. */
 	public static boolean isAwaitingCampania() {
 		return pending != null && AWAIT_CAMPANIA.equals(pending.awaiting());
 	}
@@ -53,6 +71,7 @@ public final class ChatPendingFollowUp {
 	/**
 	 * If there is a pending clarification and {@code userText} answers it,
 	 * returns a resumed {@link ParsedIntent}; otherwise empty.
+	 * Clears the pending state on successful resume or when the text looks like a new request.
 	 */
 	public static Optional<ParsedIntent> tryResume(String userText) {
 		Pending current = pending;
@@ -88,6 +107,9 @@ public final class ChatPendingFollowUp {
 		return Optional.empty();
 	}
 
+	/**
+	 * Remembers an NDVI-asignaciones download that still needs the user to pick a campaign.
+	 */
 	public static void rememberNdviAsignacionNeedsCampania(AsignacionNdviRequest req, String originalUserText) {
 		set(new Pending(
 				UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES,
@@ -99,6 +121,10 @@ public final class ChatPendingFollowUp {
 				AWAIT_CAMPANIA));
 	}
 
+	/**
+	 * Extracts a campaign token from a short follow-up reply ({@code 26/27},
+	 * {@code campaña …}, or a single short name).
+	 */
 	static String extractCampaniaReply(String userText) {
 		String text = userText.trim();
 		Matcher phrase = CAMPANIA_PHRASE.matcher(text);
@@ -124,6 +150,7 @@ public final class ChatPendingFollowUp {
 		return null;
 	}
 
+	/** Appends the campaign token onto the original request text for re-parsing. */
 	private static String mergeOriginalWithCampania(String original, String campania) {
 		String base = original == null || original.isBlank()
 				? "descargar ndvi de asignaciones"
@@ -131,6 +158,7 @@ public final class ChatPendingFollowUp {
 		return base + " campaña " + campania;
 	}
 
+	/** Detects a full new command so we abandon the pending clarification. */
 	private static boolean looksLikeNewIndependentRequest(String userText) {
 		String n = AchievementIntentCatalog.normalize(userText);
 		if (n.length() < 12) {

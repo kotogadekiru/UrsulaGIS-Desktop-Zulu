@@ -74,10 +74,22 @@ class AchievementIntentCatalogTest {
 	}
 
 	@Test
-	@DisplayName("\"ultimas imagenes ndvi de lotes asignados a trigo\" maps to DOWNLOAD_NDVI_ASIGNACIONES")
-	void mapsLatestNdviAssignedWheat() {
+	@DisplayName("\"cargar las ultimas recorridas para los lotes que van a maiz\" maps to LOAD_RECORRIDAS not NDVI")
+	void mapsLoadRecorridasNotNdvi() {
+		String query = "cargar las ultimas recorridas para los lotes que van a maiz";
+		assertTrue(AchievementIntentCatalog.isRecorridaLoadQuery(query));
+		assertTrue(!AchievementIntentCatalog.isAsignacionNdviQuery(query));
+		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
+		assertEquals(UrsulaAction.LOAD_RECORRIDAS, match.action());
+		assertEquals(OnboardingAchievements.FIRST_RECORRIDA_GUIDED_SHOWN, match.achievementId());
+	}
+
+	@Test
+	@DisplayName("\"descargar las ultimas imagenes ndvi de los lotes asignados a trigo\" still maps to NDVI")
+	void mapsLatestNdviStillWorks() {
 		String query = "descargar las ultimas imagenes ndvi de los lotes asignados a trigo";
 		assertTrue(AchievementIntentCatalog.isAsignacionNdviQuery(query));
+		assertTrue(!AchievementIntentCatalog.isRecorridaLoadQuery(query));
 		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
 		assertEquals(UrsulaAction.DOWNLOAD_NDVI_ASIGNACIONES, match.action());
 	}
@@ -128,6 +140,27 @@ class AchievementIntentCatalogTest {
 	}
 
 	@Test
+	@DisplayName("\"exportar pantalla\" maps to EXPORT_PANTALLA not EXPORT_LABOR")
+	void mapsExportScreen() {
+		AchievementIntentMatch match = AchievementIntentCatalog.match("exportar pantalla")
+				.orElseThrow();
+
+		assertEquals(UrsulaAction.EXPORT_PANTALLA, match.action());
+		assertEquals(OnboardingAchievements.FIRST_CONFIG_SCREEN_EXPORTED, match.achievementId());
+		assertTrue(AchievementIntentCatalog.isExportScreenQuery("exportar pantalla"));
+	}
+
+	@Test
+	@DisplayName("\"exportar\" alone does not map to EXPORT_RECORRIDA")
+	void bareExportDoesNotMapToRecorrida() {
+		Optional<AchievementIntentMatch> match = AchievementIntentCatalog.match("exportar");
+		if (match.isPresent()) {
+			assertTrue(match.get().action() != UrsulaAction.EXPORT_RECORRIDA,
+					() -> "unexpected action " + match.get().action() + " score=" + match.get().score());
+		}
+	}
+
+	@Test
 	@DisplayName("prompt catalog includes achievement hints")
 	void promptIncludesAchievementHints() {
 		String prompt = AchievementIntentCatalog.buildActionCatalogForPrompt();
@@ -135,5 +168,6 @@ class AchievementIntentCatalogTest {
 		assertTrue(prompt.contains("FIRST_POLYGON_TO_HARVEST"));
 		assertTrue(prompt.contains("CONVERTIR_POLIGONO_A_COSECHA"));
 		assertTrue(prompt.contains("FIRST_HARVEST_IMPORTED"));
+		assertTrue(prompt.contains("EXPORT_PANTALLA"));
 	}
 }

@@ -8,7 +8,20 @@ import java.util.regex.Pattern;
 import com.ursulagis.desktop.chat.SiembraFertilizadaWorkflowGuide;
 
 /**
- * Parsed parameters for the fertilized seeding workflow.
+ * Parsed parameters for one fertilized-seeding (siembra fertilizada) chat workflow run.
+ * Extracted from free-text user messages (field name, crops, yield, seeds, NDVI dates)
+ * with sensible defaults when details are omitted.
+ *
+ * @param fieldName      lot / field name hint used to find polygons (e.g. "regalada")
+ * @param harvestCrop    crop for NDVI→cosecha conversion (typically soja)
+ * @param yieldTn        average yield in t/ha for the synthetic harvest
+ * @param fertSourceKey  fertilizer product key for P reposición (e.g. Fosfato monoamonico)
+ * @param lomasSeed      seed variety prefill for the lomas environment
+ * @param goodZoneSeed   seed variety prefill for good-zone environments
+ * @param rowSpacingM    row spacing in meters for seeding dialogs
+ * @param seedingCrop    crop for environment seeding maps (typically trigo)
+ * @param ndviBegin      start of the NDVI download window
+ * @param ndviEnd        end of the NDVI download window
  */
 public record SiembraFertilizadaWorkflowRequest(
 		String fieldName,
@@ -25,6 +38,12 @@ public record SiembraFertilizadaWorkflowRequest(
 	private static final Pattern YIELD_KG_PATTERN = Pattern.compile("(\\d{3,5})\\s*kg\\s*/?\\s*ha", Pattern.CASE_INSENSITIVE);
 	private static final Pattern YIELD_TN_PATTERN = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*t(?:ns?)?\\s*/?\\s*ha", Pattern.CASE_INSENSITIVE);
 
+	/**
+	 * Parses a chat query into workflow parameters, falling back to {@link #defaults()} when blank.
+	 *
+	 * @param query raw user text describing the desired siembra fertilizada
+	 * @return a request ready for {@link SiembraFertilizadaOrchestrator}
+	 */
 	public static SiembraFertilizadaWorkflowRequest parse(String query) {
 		if (query == null || query.isBlank()) {
 			return defaults();
@@ -43,6 +62,7 @@ public record SiembraFertilizadaWorkflowRequest(
 				parseCampaignEnd(lower));
 	}
 
+	/** Built-in defaults used when the user message is empty or omits a detail. */
 	private static SiembraFertilizadaWorkflowRequest defaults() {
 		return new SiembraFertilizadaWorkflowRequest(
 				"", "soja", 4.6, "Fosfato monoamonico",
@@ -50,6 +70,7 @@ public record SiembraFertilizadaWorkflowRequest(
 				LocalDate.of(2025, 11, 1), LocalDate.of(2026, 4, 30));
 	}
 
+	/** Extracts a field/lot name hint (e.g. "regalada" or text after "para"/"del"/"de la"). */
 	private static String extractFieldName(String query) {
 		String n = SiembraFertilizadaWorkflowGuide.normalize(query);
 		if (n.contains("regalada")) {
@@ -59,6 +80,7 @@ public record SiembraFertilizadaWorkflowRequest(
 		return m.find() ? m.group(1) : "";
 	}
 
+	/** Harvest crop for NDVI conversion; defaults to soja. */
 	private static String extractHarvestCrop(String lower) {
 		if (lower.contains("soja")) {
 			return "soja";
@@ -69,6 +91,7 @@ public record SiembraFertilizadaWorkflowRequest(
 		return "soja";
 	}
 
+	/** P fertilizer source key; currently always Fosfato monoamonico / MAP. */
 	private static String extractFertSourceKey(String lower) {
 		if (lower.contains("fosfato monoamonico") || lower.contains("fosfato monoamónico") || lower.contains("map")) {
 			return "Fosfato monoamonico";
@@ -76,6 +99,7 @@ public record SiembraFertilizadaWorkflowRequest(
 		return "Fosfato monoamonico";
 	}
 
+	/** Seed variety for lomas; defaults to Baguette 620 2627. */
 	private static String extractLomasSeed(String lower) {
 		if (lower.contains("baguette") || lower.contains("baguete")) {
 			return "Baguette 620 2627";
@@ -83,10 +107,12 @@ public record SiembraFertilizadaWorkflowRequest(
 		return "Baguette 620 2627";
 	}
 
+	/** Seed variety for good zones; defaults to Pehuen. */
 	private static String extractGoodZoneSeed(String lower) {
 		return lower.contains("pehuen") ? "Pehuen" : "Pehuen";
 	}
 
+	/** NDVI window start: campaign 25/26 → Nov 2025, otherwise roughly six months ago. */
 	private static LocalDate parseCampaignBegin(String lower) {
 		if (lower.contains("25/26") || lower.contains("25-26")) {
 			return LocalDate.of(2025, 11, 1);
@@ -94,6 +120,7 @@ public record SiembraFertilizadaWorkflowRequest(
 		return LocalDate.now().minusMonths(6);
 	}
 
+	/** NDVI window end: campaign 25/26 → Apr 2026, otherwise today. */
 	private static LocalDate parseCampaignEnd(String lower) {
 		if (lower.contains("25/26") || lower.contains("25-26")) {
 			return LocalDate.of(2026, 4, 30);

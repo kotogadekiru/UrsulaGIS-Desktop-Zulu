@@ -22,8 +22,9 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 /**
- * Loads Ursula GIS PDF manuals and video-tutorial transcript .txt files from docs/,
- * then selects query-relevant excerpts for chat prompts. Transcript filenames describe the flow.
+ * Loads Ursula GIS PDF manuals and video-tutorial transcript {@code .txt} files
+ * from {@code docs/} (disk or classpath), ranks them against the user query, and
+ * returns truncated query-relevant excerpts for chat system prompts.
  */
 public final class ManualContextBuilder {
 
@@ -41,16 +42,20 @@ public final class ManualContextBuilder {
 	private static final Map<String, String> TEXT_CACHE = new ConcurrentHashMap<>();
 	private static volatile List<ManualSource> TUTORIAL_SOURCES;
 
+	/** Whether the source is a PDF manual or a video transcript. */
 	private enum SourceKind {
 		PDF, VIDEO_TRANSCRIPT
 	}
 
+	/** One document candidate with keywords used for query ranking. */
 	private record ManualSource(String filename, String title, List<String> keywords, int topicBoost, SourceKind kind) {
 	}
 
+	/** Paragraph text paired with its query-relevance score. */
 	private record ScoredParagraph(String text, double score) {
 	}
 
+	/** Manual/transcript candidate ranked against the current query. */
 	private record ScoredManual(ManualSource manual, double score) {
 	}
 
@@ -72,9 +77,14 @@ public final class ManualContextBuilder {
 					List.of("ambiente", "fertiliz", "refert", "fosforo", "nitrogeno", "recomend", "reposicion"),
 					12, SourceKind.PDF));
 
+	/** Prevents instantiation. */
 	private ManualContextBuilder() {
 	}
 
+	/**
+	 * Ranks manuals/transcripts for {@code userQuery} and returns a prompt section
+	 * of the best excerpts, or empty when nothing relevant can be loaded.
+	 */
 	public static String buildForQuery(String userQuery) {
 		if (userQuery == null || userQuery.isBlank()) {
 			return "";
@@ -112,6 +122,7 @@ public final class ManualContextBuilder {
 		return addedExcerpt ? sb.toString().trim() : "";
 	}
 
+	/** Human title derived from a transcript filename (e.g. {@code importar_cosecha.txt}). */
 	static String titleFromFilename(String filename) {
 		String base = stripExtension(filename);
 		String spaced = CAMEL_CASE.matcher(base).replaceAll(" ");
@@ -122,6 +133,7 @@ public final class ManualContextBuilder {
 		return capitalizeWords(spaced) + " (videotutorial)";
 	}
 
+	/** Keywords extracted from a transcript filename for ranking and excerpt scoring. */
 	static List<String> keywordsFromFilename(String filename) {
 		String base = AchievementIntentCatalog.normalize(stripExtension(filename));
 		Set<String> keywords = new LinkedHashSet<>();
@@ -142,6 +154,7 @@ public final class ManualContextBuilder {
 		return List.copyOf(keywords);
 	}
 
+	/** Ranks PDF manuals and discovered transcripts by keyword overlap with the query. */
 	private static List<ManualSource> rankSources(String normalizedQuery) {
 		boolean genericHelp = normalizedQuery.contains("ayuda")
 				|| normalizedQuery.contains("como usar")
@@ -172,6 +185,7 @@ public final class ManualContextBuilder {
 				.toList();
 	}
 
+	/** Keyword/topic overlap score; video transcripts also get filename-token boosts. */
 	private static double scoreSource(String normalizedQuery, ManualSource source) {
 		double score = 0;
 		for (String keyword : source.keywords()) {
@@ -189,6 +203,7 @@ public final class ManualContextBuilder {
 		return score;
 	}
 
+	/** Discovers {@code .txt} transcripts from disk {@code docs/} and classpath index. */
 	private static List<ManualSource> discoverTutorialSources() {
 		List<ManualSource> cached = TUTORIAL_SOURCES;
 		if (cached != null) {
@@ -220,6 +235,7 @@ public final class ManualContextBuilder {
 		}
 	}
 
+	/** Adds {@code .txt} names from the working-directory {@code docs/} folder. */
 	private static void collectTutorialFilenamesFromDisk(Set<String> filenames) {
 		Path docsDir = Path.of(System.getProperty("user.dir", "."), "docs");
 		if (!Files.isDirectory(docsDir)) {
@@ -235,6 +251,7 @@ public final class ManualContextBuilder {
 		}
 	}
 
+	/** Adds transcript names listed in the classpath {@link #TUTORIAL_INDEX} file. */
 	private static void collectTutorialFilenamesFromIndex(Set<String> filenames) {
 		try (InputStream in = ManualContextBuilder.class.getClassLoader()
 				.getResourceAsStream(CLASSPATH_PREFIX + TUTORIAL_INDEX)) {
@@ -252,6 +269,7 @@ public final class ManualContextBuilder {
 		}
 	}
 
+	/** Cached full text of a PDF or transcript (disk or classpath). */
 	static String loadDocumentText(String filename) {
 		return TEXT_CACHE.computeIfAbsent(filename, ManualContextBuilder::readDocumentText);
 	}
@@ -262,6 +280,7 @@ public final class ManualContextBuilder {
 		return loadDocumentText(filename);
 	}
 
+	/** Dispatches to plain-text or PDF extraction based on file extension. */
 	private static String readDocumentText(String filename) {
 		if (filename.toLowerCase(Locale.ROOT).endsWith(".txt")) {
 			return readPlainText(filename);
@@ -269,6 +288,7 @@ public final class ManualContextBuilder {
 		return readPdfText(filename);
 	}
 
+	/** Reads a UTF-8 transcript from disk or classpath; empty on failure. */
 	private static String readPlainText(String filename) {
 		try (InputStream in = openDocumentStream(filename)) {
 			if (in == null) {
@@ -281,6 +301,7 @@ public final class ManualContextBuilder {
 		}
 	}
 
+	/** Extracts and cleans PDF text via PDFBox; empty on failure. */
 	private static String readPdfText(String filename) {
 		try (InputStream in = openDocumentStream(filename)) {
 			if (in == null) {
@@ -297,6 +318,7 @@ public final class ManualContextBuilder {
 		}
 	}
 
+	/** Opens {@code docs/<filename>} from the working directory, else the classpath resource. */
 	private static InputStream openDocumentStream(String filename) throws IOException {
 		Path local = Path.of(System.getProperty("user.dir", "."), "docs", filename);
 		if (Files.isRegularFile(local)) {
@@ -305,6 +327,7 @@ public final class ManualContextBuilder {
 		return ManualContextBuilder.class.getClassLoader().getResourceAsStream(CLASSPATH_PREFIX + filename);
 	}
 
+	/** Short transcripts are included whole; longer docs use scored paragraph excerpts. */
 	private static String selectContent(ManualSource source, String fullText, String normalizedQuery, int maxChars) {
 		if (source.kind() == SourceKind.VIDEO_TRANSCRIPT && fullText.length() <= FULL_TRANSCRIPT_LIMIT) {
 			return truncate(fullText, maxChars);
@@ -312,10 +335,17 @@ public final class ManualContextBuilder {
 		return selectExcerpts(fullText, normalizedQuery, maxChars, allKeywordHints(source));
 	}
 
+	/**
+	 * Selects highest-scoring paragraphs for the query (or a head truncate fallback).
+	 */
 	static String selectExcerpts(String fullText, String normalizedQuery, int maxChars) {
 		return selectExcerpts(fullText, normalizedQuery, maxChars, List.of());
 	}
 
+	/**
+	 * Selects highest-scoring paragraphs for the query, optionally boosting shared
+	 * manual/filename keywords; falls back to a head truncate when none score.
+	 */
 	private static String selectExcerpts(
 			String fullText, String normalizedQuery, int maxChars, List<String> extraKeywords) {
 		if (fullText == null || fullText.isBlank()) {
@@ -348,6 +378,7 @@ public final class ManualContextBuilder {
 		return truncate(fullText, maxChars);
 	}
 
+	/** Source keywords plus filename tokens for video transcripts. */
 	private static List<String> allKeywordHints(ManualSource source) {
 		List<String> hints = new ArrayList<>(source.keywords());
 		if (source.kind() == SourceKind.VIDEO_TRANSCRIPT) {
@@ -356,6 +387,7 @@ public final class ManualContextBuilder {
 		return hints;
 	}
 
+	/** Scores a paragraph by query-token overlap and shared manual keywords. */
 	private static double paragraphScore(String normalizedQuery, String paragraph, List<String> extraKeywords) {
 		String normalizedParagraph = AchievementIntentCatalog.normalize(paragraph);
 		double score = 0;
@@ -382,11 +414,13 @@ public final class ManualContextBuilder {
 		return score;
 	}
 
+	/** Filename without its last extension segment. */
 	private static String stripExtension(String filename) {
 		int dot = filename.lastIndexOf('.');
 		return dot > 0 ? filename.substring(0, dot) : filename;
 	}
 
+	/** Title-cases each whitespace-separated word for display titles. */
 	private static String capitalizeWords(String text) {
 		String[] words = text.split("\\s+");
 		StringBuilder sb = new StringBuilder();
@@ -405,6 +439,7 @@ public final class ManualContextBuilder {
 		return sb.toString();
 	}
 
+	/** Collapses whitespace and line breaks into single spaces for scoring/excerpts. */
 	private static String cleanText(String text) {
 		if (text == null) {
 			return "";
@@ -412,6 +447,7 @@ public final class ManualContextBuilder {
 		return WHITESPACE.matcher(text.replace('\r', '\n').trim()).replaceAll(" ");
 	}
 
+	/** Cuts at a word boundary near {@code maxChars} and appends a truncation marker. */
 	private static String truncate(String content, int maxChars) {
 		if (content.length() <= maxChars) {
 			return content;
