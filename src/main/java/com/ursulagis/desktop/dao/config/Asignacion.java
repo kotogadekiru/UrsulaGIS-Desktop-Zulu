@@ -43,15 +43,20 @@ public class Asignacion {
 	public void setLote(Lote lote) {
 		this.lote = lote;
 		if(lote!=null) {
-			this.setPoligono( lote.getContorno());
+			this.setContorno(lote.getContorno());
 		}
 	}
-	public void setPoligono(Poligono poligono) {
-		if(poligono ==null)return;
+
+	/** Al cambiar el contorno, la superficie asignada pasa a ser el área del polígono. */
+	public void setContorno(Poligono poligono) {
 		this.contorno = poligono;
-		if(poligono!=null) {
+		if(poligono != null) {
 			this.superficie = poligono.getArea();
 		}
+	}
+
+	public void setPoligono(Poligono poligono) {
+		setContorno(poligono);
 	}
 
 	public Double getSuperficie() {

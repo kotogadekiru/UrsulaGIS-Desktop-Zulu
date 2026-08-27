@@ -37,11 +37,16 @@ import java.util.function.Predicate;
 
 import static impl.org.controlsfx.i18n.Localization.getString;
 
+import java.util.logging.Logger;
 public class SearcheableTableCell <T, C> extends TableCell<T, C> {
+	private static final Logger logger = Logger.getLogger(SearcheableTableCell.class.getName());
+
 	//public class BooleanTableCell1<T> extends TableCell<T, C> {
 		//Label label = new Label();
 		SearchableComboBox<C> searcheableComboBox = null;
 		private javafx.beans.value.ChangeListener<C> valueChangeListener;
+		/** True while the search filter rebuilds items — avoids committing a spuriously selected value. */
+		private boolean suppressCommit;
 
 		//VBox container = null;
 		StackPane container = null;
@@ -79,7 +84,7 @@ public class SearcheableTableCell <T, C> extends TableCell<T, C> {
 		
 		// Add new listener
 		valueChangeListener = (obs, oldVal, newVal) -> {
-			if (newVal != null ) {
+			if (newVal != null && !suppressCommit) {
 				commitEdit(newVal);
 			}
 		};
@@ -87,7 +92,7 @@ public class SearcheableTableCell <T, C> extends TableCell<T, C> {
 	}
 	@Override
 	public void commitEdit(C value) {
-		System.out.println("commitEdit "+value);
+		logger.fine("commitEdit "+value);
 		// Remove the listener when committing edit
 		if (valueChangeListener != null) {
 			searcheableComboBox.valueProperty().removeListener(valueChangeListener);
@@ -183,6 +188,13 @@ public class SearcheableTableCell <T, C> extends TableCell<T, C> {
 		   imageView.setPreserveRatio(true);
 		  // field.setLeft(imageView);
 
+		   // ComboBoxListViewSkin treats SPACE as "select and close". Consume KEY_PRESSED so
+		   // the space stays in the search text (KEY_TYPED still inserts the character).
+		   field.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+			   if (e.getCode() == KeyCode.SPACE) {
+				   e.consume();
+			   }
+		   });
 		   
 		   return field;
 	   }
@@ -281,36 +293,44 @@ public class SearcheableTableCell <T, C> extends TableCell<T, C> {
 	   private void updateFilter() {
 		   // does not work, because of Bug https://bugs.openjdk.java.net/browse/JDK-8174176
 		   // ((FilteredList<C1>)filteredComboBox.getItems()).setPredicate(predicate());
-			FilteredList<C1> filteredList = createFilteredList();
-			System.out.println("updateFilter "+filteredList.size());
-		   // therefore we need to do this
-		   filteredComboBox.setItems(filteredList);
+		   suppressCommit = true;
+		   try {
+			   C1 retained = filteredComboBox.getValue();
+			   FilteredList<C1> filteredList = createFilteredList();
+			   filteredComboBox.setItems(filteredList);
+			   // Keep the current value so setItems does not auto-select another row and commit.
+			   filteredComboBox.setValue(retained);
+		   } finally {
+			   suppressCommit = false;
+		   }
 	   }
    
 	   /**
 		* Return the Predicate to filter the popup items based on the search field.
 		*/
 	   private Predicate<C1> predicate() {
-		   String searchText = searchField.getText();
-		//    if (searchText.isEmpty()) {
-		// 	   // don't filter
-		// 	   return null;
-		//    }
-   
+		   String searchText = searchField.getText() == null ? "" : searchField.getText().trim();
+		   if (searchText.isEmpty()) {
+			   return null;
+		   }
 		   return predicate(searchText);
 	   }
    
 	   /**
 		* Return the Predicate to filter the popup items based on the given search text.
+		* Matches when the display text contains every word (spaces allowed in the query).
 		*/
 	   private Predicate<C1> predicate(String searchText) {
-		   // OK, if the display text contains all words, ignoring case
-		  // String[] lowerCaseSearchWords = searchText.toLowerCase().split(" ");
+		   String[] lowerCaseSearchWords = searchText.toLowerCase().split("\\s+");
 		   return value -> {
 			   String lowerCaseDisplayText = getDisplayText(value);
-			   return lowerCaseDisplayText!=null?lowerCaseDisplayText.startsWith(searchText):false;
-			   //return  lowerCaseDisplayText.startsWith(searchText);
-			   //return Arrays.stream(lowerCaseSearchWords).allMatch(word -> lowerCaseDisplayText.contains(word));
+			   if (lowerCaseDisplayText == null) {
+				   return false;
+			   }
+			   String haystack = lowerCaseDisplayText.toLowerCase();
+			   return Arrays.stream(lowerCaseSearchWords)
+					   .filter(word -> !word.isEmpty())
+					   .allMatch(haystack::contains);
 		   };
 	   }
    
@@ -327,34 +347,37 @@ public class SearcheableTableCell <T, C> extends TableCell<T, C> {
 		* ENTER and SPACE, but we need to override this behavior.
 		*/
 	   private void preventDefaultComboBoxKeyListener() {
-		   filteredComboBox.skinProperty().addListener((obs, oldVal, newVal) -> {
-			   if (newVal instanceof ComboBoxListViewSkin) {
-				   ComboBoxListViewSkin<?> cblwSkin = (ComboBoxListViewSkin<?>)newVal;
-				   //cblwSkin.getSearchField().setOnKeyPressed(this::checkApplyAndCancel);
-				   if(cblwSkin.getPopupContent() instanceof ListView) {
-					   @SuppressWarnings("unchecked")
-					   final ListView<C1> listView = (ListView<C1>) cblwSkin.getPopupContent();
-					   if (listView != null) {
-						   listView.setOnKeyPressed(this::checkApplyAndCancel);						 
-					   }
-				   }
-			   } else {
-				   System.out.println("newSkin is not a ComboBoxListViewSkin "+newVal);
+		   filteredComboBox.skinProperty().addListener((obs, oldVal, newVal) -> installListViewKeyHandler());
+		   // Popup content is often created lazily; re-install when the popup opens.
+		   filteredComboBox.showingProperty().addListener((obs, oldVal, newVal) -> {
+			   if (Boolean.TRUE.equals(newVal)) {
+				   installListViewKeyHandler();
 			   }
 		   });
+	   }
+
+	   private void installListViewKeyHandler() {
+		   Skin<?> skin = filteredComboBox.getSkin();
+		   if (!(skin instanceof ComboBoxListViewSkin)) {
+			   return;
+		   }
+		   ComboBoxListViewSkin<?> cblwSkin = (ComboBoxListViewSkin<?>) skin;
+		   if (cblwSkin.getPopupContent() instanceof ListView) {
+			   @SuppressWarnings("unchecked")
+			   final ListView<C1> listView = (ListView<C1>) cblwSkin.getPopupContent();
+			   listView.setOnKeyPressed(this::checkApplyAndCancel);
+		   }
 	   }
    
 	   /**
 		* Used to alter the behaviour. React on Enter, Tab and ESC.
+		* SPACE must not close the popup — it belongs in the search field.
 		*/
 	   private void checkApplyAndCancel(KeyEvent e) {
 		   KeyCode code = e.getCode();
-		   //e.isShiftDown()
-		   System.out.println("checkApplyAndCancel "+code);
 		   if (code == KeyCode.ENTER || code == KeyCode.TAB) {
 			   // select the first item if no selection
 			   if (filteredComboBox.getSelectionModel().isEmpty()){
-				System.out.println("selectFirst because is empty");
 					filteredComboBox.getSelectionModel().selectFirst();
 			   }
 			   getSkinnable().hide();
@@ -367,15 +390,13 @@ public class SearcheableTableCell <T, C> extends TableCell<T, C> {
 			   getSkinnable().hide();
 			   // otherwise the focus would be somewhere else
 			   getSkinnable().requestFocus();
-		   } else if(code == KeyCode.BACK_SPACE){
-				System.out.println("backspace");
-		   }else {
-			System.out.println("falling through");
-			   // For all other keys, don't consume them - let them be handled naturally
-			   // This includes text input keys (letters, digits, backspace, etc.)
-			   // and navigation keys (arrows, home, end, etc.)
+		   } else if (code == KeyCode.SPACE) {
+			   // Do not close the combo; type a space into the search field.
+			   searchField.requestFocus();
+			   searchField.replaceSelection(" ");
 			   e.consume();
 		   }
+		   // Arrow / other keys: leave to ListView default navigation
 	   }
    
 	   /**
