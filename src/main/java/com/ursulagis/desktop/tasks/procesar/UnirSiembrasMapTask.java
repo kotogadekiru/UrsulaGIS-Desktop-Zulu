@@ -19,7 +19,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirASiembraTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
+	private static final Logger logger = Logger.getLogger(UnirSiembrasMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -105,11 +108,11 @@ public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 			reader.close();
 		}
 		
-		System.out.println("inserte "+featuresInsertadas+" elementos");
+		logger.fine("inserte "+featuresInsertadas+" elementos");
 		int elementosContiene = labor.outCollection.getCount();
-		System.out.println("la labor contiene "+elementosContiene+" elementos");
+		logger.fine("la labor contiene "+elementosContiene+" elementos");
 		if(featuresInsertadas != elementosContiene){
-			System.out.println("no se insertaron todos los elementos con exito.");
+			logger.fine("no se insertaron todos los elementos con exito.");
 		}
 		labor.setNombre(nombre);
 		labor.setLayer(new LaborLayer());
@@ -133,7 +136,7 @@ public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 		runLater(this.getItemsList());
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println("tarde "+time+" milisegundos en unir las cosechas.");
+		logger.fine("tarde "+time+" milisegundos en unir las cosechas.");
 	}
 
 	public ExtrudedPolygon  getPathTooltip( Geometry poly,SiembraItem siembraFeature,ExtrudedPolygon  renderablePolygon) {		

@@ -29,6 +29,7 @@ import com.ursulagis.desktop.tasks.ProgresibleTask;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
+import java.util.logging.Logger;
 /**
  * el mapa de recorrida perfecto tiene los puntos de muestreo, el camiono para recorrer y los poligonos con los ambitentes. son 3 mapas en total.
  * Lineas, puntos y poligonos
@@ -36,6 +37,8 @@ import com.ursulagis.desktop.utils.GeometryHelper;
  *
  */
 public class ExportarRecorridaTask extends ProgresibleTask<File>{
+	private static final Logger logger = Logger.getLogger(ExportarRecorridaTask.class.getName());
+
 	private Recorrida laborToExport=null;
 	private File outFile=null;
 
@@ -95,7 +98,7 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 			SimpleFeature pointFeature = constructPointFeature(items, map, fb, i);
 			boolean ret = exportFeatureCollection.add(pointFeature);
 			if(!ret) {
-				System.err.println("no se pudo agregar feature "+i+" en ExportarRecorridaTask");
+				logger.warning("no se pudo agregar feature "+i+" en ExportarRecorridaTask");
 			}
 			
 			//SimpleFeature lineFeature = constructLineFeature(items, map, fb, i);
@@ -147,7 +150,7 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 			}
 		}		
 
-		System.out.println("despues de guardar el shp el schema es: "+ shapeFile); //$NON-NLS-1$
+		logger.fine("despues de guardar el shp el schema es: "+ shapeFile); //$NON-NLS-1$
 		Configuracion config = Configuracion.getInstance();
 		config.setProperty(Configuracion.LAST_FILE, shapeFile.getAbsolutePath());
 		config.save();
@@ -207,7 +210,7 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 					}
 				}catch(Exception e) {
 					e.printStackTrace();
-					System.err.println("error tratando de parsear \""+value+"\" reemplazo por 0");
+					logger.warning("error tratando de parsear \""+value+"\" reemplazo por 0");
 				}
 				fb.add(dValue);
 
@@ -248,7 +251,7 @@ public class ExportarRecorridaTask extends ProgresibleTask<File>{
 					}
 				}catch(Exception e) {
 					e.printStackTrace();
-					System.err.println("error tratando de parsear \""+value+"\" reemplazo por 0");
+					logger.warning("error tratando de parsear \""+value+"\" reemplazo por 0");
 				}
 				fb.add(dValue);
 

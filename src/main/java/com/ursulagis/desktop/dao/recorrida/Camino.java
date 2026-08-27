@@ -31,6 +31,7 @@ import com.ursulagis.desktop.gui.Messages;
 import lombok.Data;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 @Data
 @Entity @Access(AccessType.PROPERTY)
 @NamedQueries({
@@ -39,6 +40,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 	@NamedQuery(name=Camino.FIND_ACTIVOS, query="SELECT o FROM Camino o where o.activo = true ORDER BY lower(o.nombre)") ,
 }) 
 public class Camino implements Comparable<Camino>{
+	private static final Logger logger = Logger.getLogger(Camino.class.getName());
+
 	private static final String COORDINATE_CLOSE = "}";
 	private static final String COORDINATE_OPEN = "{";
 	private static final String COORDITANTE_SEPARATOR = ",";
@@ -138,7 +141,7 @@ public class Camino implements Comparable<Camino>{
 						Position pos = Position.fromDegrees(dLat,dLon);
 						positions.add(pos);
 					}catch(Exception e){
-						System.out.println("error al des serializar el camino");
+						logger.fine("error al des serializar el camino");
 						e.printStackTrace();
 					}
 				}

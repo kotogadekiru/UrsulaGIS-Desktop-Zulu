@@ -21,7 +21,10 @@ import gov.nasa.worldwind.render.ExtrudedPolygon;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class ConvertirSueloACosechaTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(ConvertirSueloACosechaTask.class.getName());
+
 	Double mmLluviaEstimados=0.0;
 	Suelo suelo=null;
 
@@ -43,7 +46,7 @@ public class ConvertirSueloACosechaTask extends ProcessMapTask<CosechaItem,Cosec
 			ci.setId(si.getId());
 			ci.setGeometry(si.getGeometry());
 			ci.setElevacion(10.0);
-			System.out.println("observaciones en doProcess "+ci.getObservaciones());
+			logger.fine("observaciones en doProcess "+ci.getObservaciones());
 			labor.insertFeature(ci);
 			//SimpleFeature nf=ci.getFeature(labor.featureBuilder);
 
@@ -58,9 +61,9 @@ public class ConvertirSueloACosechaTask extends ProcessMapTask<CosechaItem,Cosec
 
 		reader.close();
 		labor.constructClasificador();
-		System.out.println("antes de run later");
+		logger.fine("antes de run later");
 		runLater(this.getItemsList());
-		System.out.println("despues de run later");
+		logger.fine("despues de run later");
 		updateProgress(0, featureCount);
 	}
 	

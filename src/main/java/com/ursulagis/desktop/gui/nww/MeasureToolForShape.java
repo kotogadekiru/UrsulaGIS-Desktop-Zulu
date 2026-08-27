@@ -15,6 +15,7 @@ import java.util.List;
 
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 /**
  * A specialized measure tool for surface shapes that supports inner boundaries.
  * This tool is designed to work specifically with SurfacePolygon shapes and allows
@@ -24,6 +25,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
  * @version 1.0
  */
 public class MeasureToolForShape extends AVListImpl implements Disposable {
+	private static final Logger logger = Logger.getLogger(MeasureToolForShape.class.getName());
+
 
     // Event constants
     public static final String EVENT_POSITION_ADD = "MeasureToolForShape.AddPosition";
@@ -95,7 +98,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     public MeasureToolForShape(final WorldWindow wwd, RenderableLayer applicationLayer) {
         if (wwd == null) {
             String msg = Logging.getMessage("nullValue.WorldWindow");
-            System.err.println(msg);
+            logger.warning(msg);
             throw new IllegalArgumentException(msg);
         }
 
@@ -221,7 +224,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     public void setSurfaceShape(SurfacePolygon surfaceShape) {
         if (surfaceShape == null) {
             String msg = Logging.getMessage("nullValue.Shape");
-            System.err.println(msg);
+            logger.warning(msg);
             throw new IllegalArgumentException(msg);
         }
         setSurfaceShapes(Collections.singletonList(surfaceShape));
@@ -233,7 +236,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     public void setSurfaceShapes(List<SurfacePolygon> surfaceShapes) {
         if (surfaceShapes == null || surfaceShapes.isEmpty()) {
             String msg = Logging.getMessage("nullValue.Shape");
-            System.err.println(msg);
+            logger.warning(msg);
             throw new IllegalArgumentException(msg);
         }
 
@@ -283,7 +286,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     public void addPosition(Position position) {
         if (position == null) {
             String msg = Logging.getMessage("nullValue.PositionIsNull");
-            System.err.println(msg);
+            logger.warning(msg);
             throw new IllegalArgumentException(msg);
         }
         try{
@@ -388,7 +391,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     public void setPositionAtIndex(List<Position> list, int index, Position position) {
         if (position == null) {
             String msg = Logging.getMessage("nullValue.PositionIsNull");
-            System.err.println(msg);
+            logger.warning(msg);
             throw new IllegalArgumentException(msg);
         }
 
@@ -735,7 +738,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
                 this.annotation.setPosition(position);
                 this.annotation.getAttributes().setVisible(true);
             } else {
-                System.out.println("setting annotation with null position");
+                logger.fine("setting annotation with null position");
                 this.annotation.getAttributes().setVisible(false);
             }
             

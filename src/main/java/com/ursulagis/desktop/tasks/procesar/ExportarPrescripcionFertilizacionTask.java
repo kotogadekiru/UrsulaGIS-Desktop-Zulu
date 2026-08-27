@@ -42,6 +42,7 @@ import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 
+import java.util.logging.Logger;
 /**
  * para el cufia la semilla es la 3ra culumna, los datos tienen que estar en enteros
  * diferencia entre AGFusion y 
@@ -51,6 +52,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
  *
  */
 public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>{
+	private static final Logger logger = Logger.getLogger(ExportarPrescripcionFertilizacionTask.class.getName());
+
 	private static final int MAX_ITEMS = 100;
 	private FertilizacionLabor laborToExport=null;
 	private File outFile=null;
@@ -93,14 +96,14 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			Geometry itemGeometry=GeometryHelper.limitPrescriptionGeometryParts(fi.getGeometry());
 			
 			if(itemGeometry == null) {
-				System.err.println("Saltando item con geometría nula: " + i.getId());
+				logger.warning("Saltando item con geometría nula: " + i.getId());
 				continue;
 			}
 
 			List<Polygon> flatPolygons = GeometryHelper.limitPrescriptionFlatPolygons(
 					PolygonValidator.geometryToFlatPolygons(itemGeometry));
 			if(flatPolygons.size()>1) {
-				System.out.println("flatPoligons es mas de 1 deberia ser 1 "+flatPolygons.size());
+				logger.fine("flatPoligons es mas de 1 deberia ser 1 "+flatPolygons.size());
 			}
 
 			for(Polygon p : flatPolygons){
@@ -109,17 +112,17 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 				SimpleFeature exportFeature = fb.buildFeature(null, new Object[]{simplifiedGeometry,dosisHa,0,0});
 				if(exportSize<MAX_ITEMS) {
 					if(exportFeature == null || exportFeature.getDefaultGeometry() == null) {
-						System.err.println("Saltando feature con geometría nula: " + i.getId());
+						logger.warning("Saltando feature con geometría nula: " + i.getId());
 						continue;
 					}
 					boolean ret = exportFeatureCollection.add(exportFeature);
 					if(!ret) {
-						System.err.println("no se pudo ingresar la feature "+i.getId()+" ");
+						logger.warning("no se pudo ingresar la feature "+i.getId()+" ");
 					}else {
 						exportSize++;						
 					}
 				}else {
-					System.err.println("tratando de agregar mas items de los maximos "+exportSize);
+					logger.warning("tratando de agregar mas items de los maximos "+exportSize);
 				}
 
 			}
@@ -166,7 +169,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			}
 		}		
 
-		System.out.println("despues de guardar el shp el schema es: "+ shapeFile); //$NON-NLS-1$
+		logger.fine("despues de guardar el shp el schema es: "+ shapeFile); //$NON-NLS-1$
 		try {
 			long bytes = Files.size(shapeFile.toPath());
 			long kilobytes = bytes/1024;
@@ -180,7 +183,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 				});
 
 			}
-			System.out.println(String.format("%,d kilobytes", bytes / 1024));
+			logger.fine(String.format("%,d kilobytes", bytes / 1024));
 		}catch(Exception e) {e.printStackTrace();}
 		if(guardarConfig) {
 			//guardar un archivo txt con la configuracion de la labor para que quede como registro de las operaciones
@@ -201,7 +204,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 				+ SiembraLabor.COLUMNA_DOSIS_COSTADO +":java.lang.Long,"
 				+SiembraLabor.COLUMNA_SEM_10METROS+":"+"java.lang.Long";//semilla siempre tiene que ser la 3ra columna
 
-		System.out.println("creando type con: "+typeDescriptor); 
+		logger.fine("creando type con: "+typeDescriptor); 
 
 		try {
 			type = DataUtilities.createType("PrescType", typeDescriptor); 
@@ -209,7 +212,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			e.printStackTrace();
 		}
 
-		System.out.println("PrescType: "+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
+		logger.fine("PrescType: "+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
 		return type;
 	}
 
@@ -422,7 +425,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 
 			}//termino de recorrer las categorias
 		} else {//si no es de poligonos
-			System.out.println("ya esta ambientado");
+			logger.fine("ya esta ambientado");
 			//			itemsCategoria = itemsByCat.parallelStream().map(catItems -> 
 			//						catItems.parallelStream().map( fIn->
 			//							labor.constructFeatureContainerStandar(fIn,true)
@@ -456,7 +459,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 				return;	
 			}
 			//reabsorver zonas mas chicas a las mas grandes vecinas
-			System.out.println("tiene mas de 100 zonas, reabsorviendo..."); 
+			logger.fine("tiene mas de 100 zonas, reabsorviendo..."); 
 			//tomar las 100 zonas mas grandes y reabsorver las otras en estas
 
 			items.sort((i1,i2)
@@ -476,7 +479,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			super.updateTitle("reabsorver zonas chicas");
 			updateProgress(0, i);
 			//double distanciaMax = ProyectionConstants.metersToLongLat(this.laborToExport.getConfigLabor().getAnchoFiltroOutlayers());
-			System.out.println("tratando de reducir"+ itemsAReducir.size()+" items");//TODO adjuntar otros y probar mejor suerte
+			logger.fine("tratando de reducir"+ itemsAReducir.size()+" items");//TODO adjuntar otros y probar mejor suerte
 
 			Clasificador clasificador = laborToExport.getClasificador();
 			List<LaborItem> done = new ArrayList<LaborItem>();		
@@ -491,7 +494,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 
 					int vecinosCounter = 0;
 					while(vecinos.size() == 0 && vecinosCounter < 100) {//solo duplico el envelope 100 veces
-						System.out.println("no hay vecino para adjuntarlo"+ ar.getId());
+						logger.fine("no hay vecino para adjuntarlo"+ ar.getId());
 						//buscar en un envelope mas grande					
 						envelope.expandBy(envelope.getWidth()*COEF_EXPANCION);//raiz de 2 para duplicar el area de busqueda
 						vecinos = tree.query(envelope);
@@ -567,7 +570,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 						}
 
 					} else {
-						System.out.println("no econtre en esta vuelta vecino para "+ar.getId());
+						logger.fine("no econtre en esta vuelta vecino para "+ar.getId());
 					}				
 
 					updateProgress(done.size(),itemsAReducir.size());
@@ -576,13 +579,13 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 
 				itemsAReducir.removeAll(done);
 			}
-			System.out.println("reduci "+ done.size()+" items de "+i);//adjuntar otros y probar mejor suerte
-			System.out.println("termine de reducir con n="+n+" poligonos no reducidos "+itemsAReducir.size());
+			logger.fine("reduci "+ done.size()+" items de "+i);//adjuntar otros y probar mejor suerte
+			logger.fine("termine de reducir con n="+n+" poligonos no reducidos "+itemsAReducir.size());
 			items.clear();
 			boolean res = items.addAll((List<LaborItem>)tree.queryAll());
-			System.out.println("items finales "+items.size()+" cambio? "+res);
+			logger.fine("items finales "+items.size()+" cambio? "+res);
 		}catch(Exception e) {
-			System.err.println("falle al reducir las geometrias chicas");
+			logger.warning("falle al reducir las geometrias chicas");
 			e.printStackTrace();
 
 		}

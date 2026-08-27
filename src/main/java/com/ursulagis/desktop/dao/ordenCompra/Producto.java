@@ -13,6 +13,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.logging.Logger;
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
 @Entity @Access(AccessType.FIELD)
@@ -22,7 +23,9 @@ import lombok.Setter;
 	@NamedQuery(name=Producto.FIND_ALL, query="SELECT o FROM Producto o ORDER BY lower(o.nombre)") ,
 	@NamedQuery(name=Producto.FIND_NAME, query="SELECT o FROM Producto o where o.nombre = :name") ,
 }) 
-public abstract class Producto {	
+public abstract class Producto {
+	private static final Logger logger = Logger.getLogger(Producto.class.getName());
+	
 	public static final String FIND_ALL="Producto.findAll";
 	public static final String FIND_NAME="Producto.findName";
 	@Id @GeneratedValue
@@ -39,7 +42,7 @@ public abstract class Producto {
 	
 	
 	public int compareTo(Producto p) {
-		System.out.println("comparando producto "+this+" con "+p);
+		logger.fine("comparando producto "+this+" con "+p);
 		if(p==null)return -1;		
 		return this.getNombre().compareTo(p.getNombre());	
 	}

@@ -32,12 +32,15 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 /**
  * Task para exportar una prescripción de pulverización en formato JSON
  * compatible con el formato de prescripción de drones XAG
  * @author quero
  */
 public class ExportarPrescripcionPulverizacionJSONTask extends ProgresibleTask<File> {
+	private static final Logger logger = Logger.getLogger(ExportarPrescripcionPulverizacionJSONTask.class.getName());
+
 	private PulverizacionLabor laborToExport = null;
 	private File outFile = null;
 	public boolean guardarConfig = true;
@@ -324,7 +327,7 @@ public class ExportarPrescripcionPulverizacionJSONTask extends ProgresibleTask<F
 					buffered = colectionCat.union();
 					buffered = buffered.buffer(bufer);
 				}catch(Exception e){
-					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision");
+					logger.fine("hubo una excepción uniendo las geometrias. Procediendo con precision");
 					try{
 						buffered = org.locationtech.jts.precision.EnhancedPrecisionOp.buffer(colectionCat, bufer);
 					}catch(Exception e2){
@@ -350,7 +353,7 @@ public class ExportarPrescripcionPulverizacionJSONTask extends ProgresibleTask<F
 	}
 	
 	public void reabsorverZonasChicas(List<LaborItem> items) {
-		System.out.println("tiene mas de 100 zonas, reabsorviendo...");
+		logger.fine("tiene mas de 100 zonas, reabsorviendo...");
 		
 		items.sort((i1, i2)
 				-> (-1 * Double.compare(i1.getGeometry().getArea(), i2.getGeometry().getArea())));

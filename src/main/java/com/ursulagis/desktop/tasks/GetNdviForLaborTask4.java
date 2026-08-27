@@ -61,7 +61,10 @@ import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.UnzipUtility;
 
 
+import java.util.logging.Logger;
 public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
+	private static final Logger logger = Logger.getLogger(GetNdviForLaborTask4.class.getName());
+
 	private static final String NDVI_DOWNLOAD_TYPE_CONFIG_KEY = "NDVI_DOWNLOAD_TYPE(SR/TOA)";
 	private static final String TOA = "TOA";
 	int MAX_URL_LENGHT = 4443;//2048 segun un stackoverflow //4443 segun pruevas con chrome// corresponde a 129 puntos
@@ -110,6 +113,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	private List<Ndvi> ndviToIgnore;
 
 	public GetNdviForLaborTask4(Poligono contorno, List<Ndvi> _observableList ) {
+		
 		this.contorno=contorno;
 	//	downloadDir=downloadDirectory;
 		observableList=_observableList;
@@ -119,7 +123,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 		try {
 			return	getNdviTiffFiles(contorno);
 		}catch(Exception e) {
-			System.err.println("error al descargar el ndvi de "+contorno);
+			logger.warning("error al descargar el ndvi de "+contorno);
 			e.printStackTrace();
 			return null;
 		}
@@ -175,7 +179,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 				if(feature instanceof Map){
 					String assetString = (String)((Map<?,?>)feature).get(ID);//fixme porque no usar date?
 					
-					System.out.println("asset id to download "+assetString);
+					logger.fine("asset id to download "+assetString);
 					//COPERNICUSS2_HARMONIZED20220317T140049_20220317T140814_T20HPH
 					LocalDate assetDate = getAssetDate(assetString);
 					BigDecimal porcNubes=new BigDecimal(0);
@@ -193,7 +197,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 				}
 			}
 		} else{
-			System.out.println("data no es list " +content);//data es null
+			logger.fine("data no es list " +content);//data es null
 		}
 
 		return assets;
@@ -204,7 +208,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 		List<Ndvi> ndviList = new ArrayList<Ndvi>();
 		GenericJson content = response.parseAs(GenericJson.class);
 		if(content == null)return ndviList;
-		System.out.println("ndvi content "+ content);//XXX ndvi content {"data":[]}
+		logger.fine("ndvi content "+ content);//XXX ndvi content {"data":[]}
 		Object features = content.get(DATA);
 
 		if(features == null)return ndviList;
@@ -233,16 +237,16 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 						meanNDVI = (BigDecimal)meanObject;
 						mean = bdf.format(meanNDVI);
 					} else {
-						System.out.println("no se de que clase es meanNDVI "+meanObject+ (meanObject!=null?" class " +meanObject.getClass().getCanonicalName():""));
+						logger.fine("no se de que clase es meanNDVI "+meanObject+ (meanObject!=null?" class " +meanObject.getClass().getCanonicalName():""));
 					}
 				}catch(Exception e) {
 					e.printStackTrace();
 				}
 				String path2 = feature.get(PATH2);
 				if(path2!=""&&porcNubes.doubleValue()<90){
-					System.out.println("path2 "+path2);
+					logger.fine("path2 "+path2);
 					Object[] nameBytes = downloadGoogleTifFile(path2);//XXX long running process
-					System.out.println("downloaded file "+nameBytes[0]+" size "+((byte[])nameBytes[1]).length);
+					logger.fine("downloaded file "+nameBytes[0]+" size "+((byte[])nameBytes[1]).length);
 					if(nameBytes!=null) {
 						String fileName = (String) nameBytes[0];
 						fileName = extractNameFromFileName(fileName);
@@ -268,7 +272,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 						ndviList.add(ndvi);
 					}
 				}else {//path2 es ""
-					System.out.println("path1 "+feature.get("path1"));
+					logger.fine("path1 "+feature.get("path1"));
 				}			
 			}}
 		return ndviList;
@@ -332,7 +336,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 		List<LocalDate> uniqueDates = getSentinellAssets(poligono);//assents tiene la forma ["COPERNICUS/S2/20161221T141042_20161221T142209_T20HLG","COPERNICUS/S2/20161221T141042_20161221T142209_T20HLG"]
 		updateProgress(0, uniqueDates.size());
 
-		System.out.println("procesando los dates unicos "+uniqueDates);
+		logger.fine("procesando los dates unicos "+uniqueDates);
 		DateTimeFormatter format1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");	
 
 		List<LocalDate> processedDates = Collections.synchronizedList(new ArrayList<LocalDate>());
@@ -341,7 +345,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 					if(isCancelled())return;
 					String sEnd = format1.format(assetDate.plusDays(1));
 					String sBegin = format1.format(assetDate.minusDays(1));
-					System.out.println("buscando los ndvi entre "+sBegin+" y "+sEnd);
+					logger.fine("buscando los ndvi entre "+sBegin+" y "+sEnd);
 
 				
 
@@ -355,7 +359,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 						});
 						long count = filtered.count();
 						if(count>0) {
-							System.out.println("skipping "+assetDate+" for "+contornoP);
+							logger.fine("skipping "+assetDate+" for "+contornoP);
 							return;//ya tengo ese ndvi cargado
 						}
 					}
@@ -364,7 +368,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 						loaded = DAH.getNdvi(contornoP,assetDate);
 
 						if(loaded!=null && loaded.size()>0) {
-							System.out.println("hay ndvi en base de datos.. cargando "+Arrays.toString(loaded.toArray()) );
+							logger.fine("hay ndvi en base de datos.. cargando "+Arrays.toString(loaded.toArray()));
 							//loaded.stream().forEach((ndvi)->ndvi.loadFileFromContent());
 							observableList.addAll(loaded);//agrego a la lista de observables para que se vayan mostrando
 							tiffFiles.addAll(loaded);//agrego a la coleccion final
@@ -381,10 +385,10 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 						String ndviDownloadAddres= HTTP_GEE_API_HELPER_HEROKUAPP_COM_NDVI_V3;
 						if(TOA.equals(ndviType)) {
 							ndviDownloadAddres=HTTP_GEE_API_HELPER_HEROKUAPP_COM_NDVI_V3;
-							System.out.println("downloading TOA "+ndviDownloadAddres);
+							logger.fine("downloading TOA "+ndviDownloadAddres);
 						}else {
 							ndviDownloadAddres=HTTP_GEE_API_HELPER_HEROKUAPP_COM_NDVI_V4_SR;
-							System.out.println("downloading SR "+ndviDownloadAddres);
+							logger.fine("downloading SR "+ndviDownloadAddres);
 						}
 						
 						GenericUrl url = new GenericUrl(ndviDownloadAddres);
@@ -402,7 +406,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 					assets=["COPERNICUS/S2/20161221T141042_20161221T142209_T20HLG"]
 					polygons=[[[[-64.69101905822754,-34.860017354204885],[-64.69058990478516,-34.86705989785682],[-64.67016220092773,-34.86515847050267],[-64.67265129089355,-34.86198932721536]]]]
 						 */
-						System.out.println("calling url: "+url);
+						logger.fine("calling url: "+url);
 						HttpResponse response = makePostRequest(url,req_content);
 
 						try {
@@ -417,7 +421,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 
 								//		break;//salgo del for retry
 							}else {//retry
-								System.out.println("no hay files para agregar");
+								logger.fine("no hay files para agregar");
 								// no descargo porque estaba nublada
 								//Thread.sleep(1000);//esperar a seguir operando
 							}
@@ -458,16 +462,16 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 				GenericUrl url = new GenericUrl(path);
 				HttpResponse response = makeGetRequest(url);
 				if(response == null){
-					System.err.println("no se pudo descargar el archivo de google... reintentando");
+					logger.warning("no se pudo descargar el archivo de google... reintentando");
 					continue;//retry
 				}
 				try {
 					InputStream is = response.getContent();
-					System.out.println("readinf content from is");
+					logger.fine("readinf content from is");
 					filePaths = UnzipUtility.readFrom(is);//(is, downloadDir.toPath());
-					System.out.println("filepaths is "+filePaths.size());
+					logger.fine("filepaths is "+filePaths.size());
 					for( ZipEntry e: filePaths.keySet()) {
-						System.out.println("reading zip entry "+e.getName());
+						logger.fine("reading zip entry "+e.getName());
 						if(e.getName().endsWith(".tif")) {
 							//Path outputFile=Files.createTempFile(e.getName(), "");
 							//Files.write( outputFile,filePaths.get(e));
@@ -481,7 +485,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 				//List<File> tifFiles = filePaths.keySet().stream().map((s)->new File(s)).filter((f)->s.getName().endsWith(".tif")).collect(Collectors.toList());
 				//return tifFiles.get(0);
 			}catch(Exception e){
-				System.err.println("no se pudo descargar el archivo de google... reintentando con tries="+tries);
+				logger.warning("no se pudo descargar el archivo de google... reintentando con tries="+tries);
 				e.printStackTrace();
 			}
 			try {
@@ -491,7 +495,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 			}
 			tries++;
 		}
-		System.err.println("saliendo despues de intentar 5 veces sin exito");
+		logger.warning("saliendo despues de intentar 5 veces sin exito");
 		return null;
 
 	}
@@ -563,7 +567,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 			HttpRequest request = requestFactory.buildGetRequest(url);
 			response= request.execute();
 		} catch (Exception e) {			
-			System.err.println("Fallo el getUrl "+url);
+			logger.warning("Fallo el getUrl "+url);
 			e.printStackTrace();
 
 			return null;
@@ -625,7 +629,7 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 			name += " hasta " + this.end;
 		}
 		this.taskName = name;
-		System.out.println("taskName: "+this.taskName);
+		logger.fine("taskName: "+this.taskName);
 	}
 
 	public void setIgnoreNDVI(List<Ndvi> _ndviToIgnore) {

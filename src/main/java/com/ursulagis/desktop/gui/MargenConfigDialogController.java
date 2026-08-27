@@ -29,7 +29,10 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
 
+import java.util.logging.Logger;
 public class MargenConfigDialogController  extends Dialog<Margen>{
+	private static final Logger logger = Logger.getLogger(MargenConfigDialogController.class.getName());
+
 	private static final String CONFIG_DIALOG_FXML = "MargenConfigDialog.fxml"; //$NON-NLS-1$
 	
 	
@@ -71,7 +74,7 @@ public class MargenConfigDialogController  extends Dialog<Margen>{
 	
 	public MargenConfigDialogController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("MargenConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -84,7 +87,7 @@ public class MargenConfigDialogController  extends Dialog<Margen>{
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -147,13 +150,13 @@ public class MargenConfigDialogController  extends Dialog<Margen>{
 			this.comboAmount.getSelectionModel().select(1);
 		}
 		this.comboAmount.valueProperty().addListener((o,s,s2)->{
-			System.out.println("cambiando colAmount a "+s2); //$NON-NLS-1$
+			logger.fine("cambiando colAmount a "+s2); //$NON-NLS-1$
 			if(options.get(0).equalsIgnoreCase(s2)){				
 				labor.colAmount.set(Margen.COLUMNA_RENTABILIDAD);
 				String n = textNombre.textProperty().get().replace(Messages.getString("MargenConfigDialogController.texto"),Messages.getString("MargenConfigDialogController.texto2"));; //$NON-NLS-1$ //$NON-NLS-2$
 			
 				
-				System.out.println("nombre despues de reemplazar renta es "+n); //$NON-NLS-1$
+				logger.fine("nombre despues de reemplazar renta es "+n); //$NON-NLS-1$
 				textNombre.textProperty().set(n);
 			} else{
 				labor.colAmount.set(Margen.COLUMNA_MARGEN);
@@ -198,7 +201,7 @@ public class MargenConfigDialogController  extends Dialog<Margen>{
 			controller.init();
 			ret = controller.showAndWait();
 		} catch (IOException e1) {
-			System.err.println("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

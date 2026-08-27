@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.geotools.api.data.FeatureReader;
 import org.geotools.data.simple.SimpleFeatureIterator;
@@ -38,6 +39,8 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(ProcessHarvestMapTask.class.getName());
+
 	private int cantidadDistanciasEntradaRegimen =0;
 	private int cantidadDistanciasTolerancia =0;
 
@@ -85,7 +88,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 			for(AttributeDescriptor att:descriptors){
 				String colName = att.getName().toString();
 
-				System.out.println(att.getType().getBinding().getName()+": "+colName);
+				logger.fine(att.getType().getBinding().getName()+": "+colName);
 				if("Mappable".equalsIgnoreCase(colName)){ 
 					mappableColumn=colName;	
 				}
@@ -103,7 +106,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 			featureCount=labor.getInCollection().size();
 		}
 
-		System.out.println("procesando una cosecha con "+featureCount+" elementos");
+		logger.fine("procesando una cosecha con "+featureCount+" elementos");
 		int divisor = 1;
 		if(labor.getConfiguracion().correccionOutlayersEnabled()){
 			divisor =2;
@@ -120,7 +123,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 				Object mappable = simpleFeature.getAttribute(mappableColumn);
 				Double mappableValue = Double.valueOf(1);
 				if(!mappableValue.equals(mappable)){//OK! Funciona
-					System.out.println("descartando el registro por no ser mapeable mappable="+mappable);
+					logger.fine("descartando el registro por no ser mapeable mappable="+mappable);
 					continue;
 				}
 			}
@@ -147,7 +150,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 				if(longLatGeom == null 
 						//			|| geom.getArea()*ProyectionConstants.A_HAS()*10000<labor.config.supMinimaProperty().doubleValue()
 						){//con esto descarto las geometrias muy chicas
-					System.out.println("geom es null, ignorando...");
+					logger.fine("geom es null, ignorando...");
 					continue;
 				}				
 
@@ -199,8 +202,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 // ProcessHarvestMapTask.5=\ big=
 // ProcessHarvestMapTask.6=\ puntos eliminados por punto duplicado
 
-					System.out.println(
-						"no inserto el feature "
+					logger.fine("no inserto el feature "
 						+featureNumber+" porque tiene una geometria empty="
 						+empty
 						+" valid ="
@@ -217,7 +219,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 				if(has>supMinimaHas){
 					labor.insertFeature(ci);//es posible que no se inserte si ya existe el id
 				}else{
-					System.out.println("descarto el punto por area menor al minimo. "+ci);
+					logger.fine("descarto el punto por area menor al minimo. "+ci);
 				}
 				/*
 				List<Polygon> mp = getPolygons(ci);	
@@ -246,12 +248,12 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 		labor.clearCache();
 		reader.close();
 
-		System.out.println(+puntosEliminados+" puntos eliminados por punto duplicado");	
+		logger.fine(puntosEliminados+" puntos eliminados por punto duplicado");	
 		if(labor.getConfiguracion().correccionOutlayersEnabled()){
-			System.out.println("corriegiendo outlayers con CV Max"+toleranciaCoeficienteVariacion); //$NON-NLS-1$
+			logger.fine("corriegiendo outlayers con CV Max"+toleranciaCoeficienteVariacion); //$NON-NLS-1$
 			corregirOutlayersParalell();		
 		} else { 
-			System.out.println("no corrijo outlayers"); //$NON-NLS-1$
+			logger.fine("no corrijo outlayers"); //$NON-NLS-1$
 		}
 		CosechaConfig config = (CosechaConfig)labor.getConfiguracion();
 
@@ -344,7 +346,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 				Geometry buffered = null;
 
 				try{
-					System.out.println("haciendo cascade union");
+					logger.fine("haciendo cascade union");
 					buffered = CascadedPolygonUnion.union(geometriesCat);
 					//buffered = at.transform(colectionCat);
 					buffered = buffered.buffer(bufer,1,BufferParameters.CAP_SQUARE);//sino le pongo buffer al resumir geometrias me quedan rectangulos medianos
@@ -356,7 +358,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 					//buffered = buffered.buffer(-bufer,1,BufferParameters.CAP_ROUND);
 					//	buffered =buffered.buffer(bufer);
 				}catch(Exception e){
-					System.out.println("probando union con parallelStream"); 	
+					logger.fine("probando union con parallelStream"); 	
 					try {
 						Geometry[] array =	geometriesCat.parallelStream().collect(() -> new Geometry[1],
 								(unionArray, geom) -> {
@@ -370,7 +372,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 										unionArray[0]=union1;
 									}catch(Exception error_uniendo) {
 										error_uniendo.printStackTrace();
-										System.out.println("skipping union of "+geom);
+										logger.fine("skipping union of "+geom);
 										if(unionArray[0]==null) {
 											unionArray[0]=geom;
 										}else {
@@ -392,7 +394,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 						buffered=array[0].buffer(bufer,1,BufferParameters.CAP_SQUARE);
 						//	buffered=buffered.buffer(-bufer,1,BufferParameters.CAP_ROUND);
 					}catch(Exception e3) {
-						System.out.println("fallo unir poligonos en parallell stream");
+						logger.fine("fallo unir poligonos en parallell stream");
 						e3.printStackTrace();
 						for(Geometry gu: geometriesCat) {
 							try {
@@ -433,7 +435,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 					SimpleFeature f = ci.getFeature(labor.getFeatureBuilder());
 					boolean ret = newOutcollection.add(f);
 					if(!ret) {
-						System.err.println("no se pudo agregar la feature id "+ci.getId()+" en ProcessHarvestMapTask.resumirGeometrias" );
+						logger.warning("no se pudo agregar la feature id "+ci.getId()+" en ProcessHarvestMapTask.resumirGeometrias");
 					}
 				}
 			}	
@@ -534,10 +536,10 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 							//This method is safe to be called from any thread.	
 							//updateProgress((list.size()+featureCount)/2, featureCount);
 						} else{
-							System.out.println("la query devolvio cero elementos"); //$NON-NLS-1$
+							logger.fine("la query devolvio cero elementos"); //$NON-NLS-1$
 						}
 					}catch(Exception e){
-						System.err.println("error en corregirOutliersParalell"); //$NON-NLS-1$
+						logger.warning("error en corregirOutliersParalell"); //$NON-NLS-1$
 						e.printStackTrace();
 					}
 				},	(list1, list2) -> list1.addAll(list2));
@@ -546,14 +548,14 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection("internal",labor.getType());		 //$NON-NLS-1$
 		boolean res = newOutcollection.addAll(filteredFeatures);
 		if(!res){
-			System.out.println("fallo el addAll(filteredFeatures)"); 
+			logger.fine("fallo el addAll(filteredFeatures)"); 
 		}
 
 		labor.clearCache();
 
 		int endtOutCollectionSize = newOutcollection.size();
 		if(initOutCollectionSize !=endtOutCollectionSize){
-			System.err.println("se perdieron elementos al hacer el filtro de outlayers. init="
+			logger.warning("se perdieron elementos al hacer el filtro de outlayers. init="
 					+initOutCollectionSize
 					+" end="+endtOutCollectionSize); 
 		}
@@ -651,8 +653,8 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 			//			promedioRinde = Math.max(promedioRinde,labor.minRindeProperty.doubleValue());
 			promedioAltura = sumatoriaAltura/divisor;
 		}else{
-			System.out.println("divisor es <0"+ divisor); //$NON-NLS-1$
-			System.out.println("sumatoria de rindes ="+sumatoriaRinde); //$NON-NLS-1$
+			logger.fine("divisor es <0" + divisor); //$NON-NLS-1$
+			logger.fine("sumatoria de rindes =" + sumatoriaRinde); //$NON-NLS-1$
 		}
 		//4) obtener la varianza (LA DIF ABSOLUTA DEL DATO Y EL PROM DE LA MUESTRA) (EJ. ABS(10-9.3)/9.3 = 13%)
 		//SI 13% ES MAYOR A TOLERANCIA CV% REEMPLAZAR POR PROMEDIO SINO NO
@@ -779,7 +781,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 			lastRumbo =rumbo;
 
 			if(labor.getConfiguracion().correccionDemoraPesadaEnabled() && esNuevaPasada){
-				System.out.println("corrigiendo entrada en regimen");
+				logger.fine("corrigiendo entrada en regimen");
 				double distEntradaRegimen = distanciaAvanceProm*cantidadDistanciasEntradaRegimen;
 				C = ProyectionConstants.getPoint(fact.createPoint(C), rumbo+180, distEntradaRegimen).getCoordinate();
 				D = ProyectionConstants.getPoint(fact.createPoint(D), rumbo+180, distEntradaRegimen).getCoordinate();

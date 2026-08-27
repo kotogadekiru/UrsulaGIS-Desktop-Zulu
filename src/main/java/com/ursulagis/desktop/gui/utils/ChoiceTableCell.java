@@ -12,7 +12,10 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 
+import java.util.logging.Logger;
 public class ChoiceTableCell<T> extends TableCell<T, String> {
+	private static final Logger logger = Logger.getLogger(ChoiceTableCell.class.getName());
+
 	//private final SimpleDateFormat formatter ;
 	private final ChoiceBox<String> combo ;//choice box muestra el valor seleccionado ComboBox No
 
@@ -30,7 +33,7 @@ public class ChoiceTableCell<T> extends TableCell<T, String> {
 		this.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
 		//	this.getTableRow().startEdit();
 			if(event.getClickCount()>1){
-			System.out.println("cell clicked ");
+			logger.fine("cell clicked ");
 			startEdit();
 			}
 			event.consume();
@@ -97,7 +100,7 @@ public class ChoiceTableCell<T> extends TableCell<T, String> {
 			if(!isEditing()){
 				combo.getSelectionModel().select(stringDate);
 			}
-			System.out.println("updateItem "+stringDate);
+			logger.fine("updateItem "+stringDate);
 			setGraphic(combo);
 		}
 		}catch(Exception e){
@@ -109,7 +112,7 @@ public class ChoiceTableCell<T> extends TableCell<T, String> {
 	@Override
 	public void startEdit() {
 		
-		System.out.println("empezando a editar");
+		logger.fine("empezando a editar");
 		if (!isEmpty()) {
 			//combo.setValue("valor inicial al hacer start edit");//getItem().atYear(LocalDate.now().getYear()
 		}

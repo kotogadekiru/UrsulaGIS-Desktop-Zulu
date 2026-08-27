@@ -63,7 +63,10 @@ import com.ursulagis.desktop.tasks.ProgresibleTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class JuntarShapefilesTask extends ProgresibleTask<File>{
+	private static final Logger logger = Logger.getLogger(JuntarShapefilesTask.class.getName());
+
 	List<FileDataStore> stores =null;
 	File shapeFile=null;
 	public JuntarShapefilesTask(List<FileDataStore> _stores,File _shapeFile){
@@ -100,12 +103,12 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 					String nAttName = att.getName().toString();// i+att.getName().toString();
 					String nAtt=new String(nAttName+":"+attClassName);
 					storeAttributeMapping.put(att.getName().toString(), nAttName);
-					System.out.println(nAtt+" en "+store.getNames().get(0));
+					logger.fine(nAtt+" en "+store.getNames().get(0));
 					if(!newDescriptors.contains(nAtt)){
 						newDescriptors.add(nAtt);
 					}
 				}
-				System.out.println("newDescriptors al final:\n"+newDescriptors);
+				logger.fine("newDescriptors al final:\n"+newDescriptors);
 				
 				ReferencedEnvelope b = store.getFeatureSource().getBounds();
 				if(unionEnvelope==null){
@@ -221,7 +224,7 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 			byPolygon.values().forEach(o->{
 				boolean ret = outCollection.add(o);
 				if(!ret) {
-					System.err.println("no se pudo ingresar el feature "+o.getID());
+					logger.warning("no se pudo ingresar el feature "+o.getID());
 				}
 			});
 			
@@ -264,7 +267,7 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 					try {
 						transaction.commit();
 					} catch (Exception e1) {
-						System.err.println("fallo el comit de la transaccion");
+						logger.warning("fallo el comit de la transaccion");
 						e1.printStackTrace();
 					}finally {
 						try {
@@ -412,7 +415,7 @@ public class JuntarShapefilesTask extends ProgresibleTask<File>{
 	 * @return una lista de poligonos que representa una grilla con un 100% de superposiocion
 	 */
 	private static List<Polygon> construirGrilla(BoundingBox bounds,double ancho) {
-		System.out.println("construyendo grilla");
+		logger.fine("construyendo grilla");
 		List<Polygon> polygons = new ArrayList<Polygon>();
 		//convierte los bounds de longlat a metros
 		Double minX = bounds.getMinX()/ProyectionConstants.metersToLong() - ancho/2;

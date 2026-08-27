@@ -12,11 +12,14 @@ import gov.nasa.worldwind.util.*;
 
 import java.net.*;
 
+import java.util.logging.Logger;
 /**
  * @version $Id: OSMCycleMapLayer.java 1171 2013-02-11 21:45:02Z dcollins $
  */
 public class GoogleTiledImageLayer extends BasicMercatorTiledImageLayer
 {
+	private static final Logger logger = Logger.getLogger(GoogleTiledImageLayer.class.getName());
+
 	public GoogleTiledImageLayer()
 	{
 		super(makeLevels());
@@ -61,7 +64,7 @@ public class GoogleTiledImageLayer extends BasicMercatorTiledImageLayer
 //					+ (tile.getLevelNumber() + 3)
 //					+"/"+ tile.getColumn()
 //					+"/"+ ((1 << (tile.getLevelNumber()) + 3) - 1 - tile.getRow()) + ".png");
-			System.out.println("calling url "+url);
+			logger.fine("calling url "+url);
 
 			return url;		}
 	}

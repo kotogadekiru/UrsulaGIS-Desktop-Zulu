@@ -29,6 +29,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 /**
  * clase que permite ingresar la dosis objetivo de la siembra a crear
  * mostrando adecuadamente todos los parametros involucrados
@@ -37,6 +38,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
  */
 
 public class SiembraDosisObjetivoDialog extends Dialog<Double>{
+	private static final Logger logger = Logger.getLogger(SiembraDosisObjetivoDialog.class.getName());
+
 	private static final String DIALOG_FXML = "SiembraDosisObjetivoDialog.fxml"; //$NON-NLS-1$
 
 	private SiembraLabor labor;
@@ -78,7 +81,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
 
 	public SiembraDosisObjetivoDialog() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("SiembraConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -94,7 +97,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -135,7 +138,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
     	String value = tfDosis.getText();
     	if("".equals(value))return;
     	Semilla s = labor.getSemilla();
-    	System.out.println("updating preview value = "+value+" unidad = "+unidad);
+    	logger.fine("updating preview value = "+value+" unidad = "+unidad);
     	Double dosis = PropertyHelper.parseDouble(value).doubleValue();
     	switch(unidad) {
     	case plaMetroCuadrado:{
@@ -149,7 +152,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
     		double grM2=kgM2*1000;
     		double ksemM2=grM2/s.getPesoDeMil();
     		this.plM2Obj=ksemM2*1000;
-    		System.out.println(kgHa+"kgHa es igual a "+PropertyHelper.formatDouble(plM2Obj)+" sem/m2");
+    		logger.fine(kgHa+"kgHa es igual a "+PropertyHelper.formatDouble(plM2Obj)+" sem/m2");
     		break;
     	}
     	case Bolsa:{
@@ -273,7 +276,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
 
 				this.cbUnidad.setItems(FXCollections.observableArrayList(unidades.keySet()));
 				this.cbUnidad.valueProperty().addListener((ov,old,nv)->{
-					System.out.println("cambiando unidad insumo de "+old+" a "+nv);
+					logger.fine("cambiando unidad insumo de "+old+" a "+nv);
 							unidadSelected = unidades.get(nv);		
 							updatePreview();
 				});
@@ -307,7 +310,7 @@ public class SiembraDosisObjetivoDialog extends Dialog<Double>{
 			controller.init();
 			ret = controller.showAndWait();
 		} catch (IOException e1) {
-			System.err.println("no se pudo levantar el fxml "+DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

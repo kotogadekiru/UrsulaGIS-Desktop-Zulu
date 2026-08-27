@@ -67,7 +67,10 @@ import com.ursulagis.desktop.utils.TarjetaHelper;
 import com.ursulagis.desktop.utils.UnzipUtility;
 
 
+import java.util.logging.Logger;
 public class CompartirPulverizacionLaborTask extends Task<String> {
+	private static final Logger logger = Logger.getLogger(CompartirPulverizacionLaborTask.class.getName());
+
 
 	//private static final String GET_RECORRIDAS_BY_ID_URL = "https://www.ursulagis.com/api/recorridas/id/";
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
@@ -88,8 +91,8 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 	public CompartirPulverizacionLaborTask(PulverizacionLabor pulverizacionLabor,OrdenPulverizacion ordenPulv) {
 		this.pulverizacionLabor = pulverizacionLabor;
 		this.ordenPulverizacion = ordenPulv;
-		System.out.println("compartiendo PulverizacionLabor "+pulverizacionLabor);
-		System.out.println("items "+pulverizacionLabor.getItems().size());
+		logger.fine("compartiendo PulverizacionLabor "+pulverizacionLabor);
+		logger.fine("items "+pulverizacionLabor.getItems().size());
 	}
 
 	@Override
@@ -105,9 +108,9 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 
 			Gson gson = getGson();
 
-			System.out.println("convirtirndo PulverizacionLabor a json "+this.ordenPulverizacion);
+			logger.fine("convirtirndo PulverizacionLabor a json "+this.ordenPulverizacion);
 			String json_body = gson.toJson(this.ordenPulverizacion, OrdenPulverizacion.class);
-			System.out.println("sending PulverizacionLabor "+ json_body);
+			logger.fine("sending PulverizacionLabor "+ json_body);
 
 			final HttpContent content = new ByteArrayContent("application/json", json_body.getBytes("UTF8") );
 
@@ -118,11 +121,11 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 			Reader reader = new InputStreamReader(resContent);
 
 			StandardResponse standarResponse =  new Gson().fromJson(reader, StandardResponse.class);
-			System.out.println("standarResponse = "+standarResponse);
+			logger.fine("standarResponse = "+standarResponse);
 			//StandardResponse standarResponse = response.parseAs(StandardResponse.class);
 			//Recorrida r = new Gson().fromJson((String) resContent.get("data"), Recorrida.class);
 			StandardResponse.StatusResponse status = standarResponse.getStatus();
-			System.out.println("response status = "+status);
+			logger.fine("response status = "+status);
 			if(StandardResponse.StatusResponse.SUCCESS.equals(status)) {
 				//com.google.api.client.util.ArrayMap data =(ArrayMap) resContent.get("data");
 				JsonElement data = standarResponse.getData();
@@ -208,7 +211,7 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 						if(contornoP!=null) {
 							ret.setPoligonoString(contornoP.getPoligonoStringForSharing());
 						} else {
-							System.out.println("no se pudo extraer el contorno de la cosecha");
+							logger.fine("no se pudo extraer el contorno de la cosecha");
 						}
 					});
 					return ret;
@@ -247,7 +250,7 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 			@Override
 			public Producto deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
 					throws JsonParseException {
-				System.out.println("des serializando "+json+" type "+typeOfT);
+				logger.fine("des serializando "+json+" type "+typeOfT);
 				/*
 				des serializando {"nombre":"Urea","porcN":46.0,"porcP":0.0,"porcK":0.0,"porcS":0.0,"id":29954} type class models.OrdenDeCompra.Producto
 				des serializando {"nombre":"Labor de Fertilizacion","id":8553} type class models.OrdenDeCompra.Producto
@@ -374,7 +377,7 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

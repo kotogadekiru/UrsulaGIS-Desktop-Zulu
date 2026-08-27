@@ -39,12 +39,15 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 
+import java.util.logging.Logger;
 /**
  * clase que toma una objeto de configuracion lo muestra y permite editarlo y lo devuelve
  * @author tomas
  *
  */
 public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLabor>{
+	private static final Logger logger = Logger.getLogger(PulverizacionConfigDialogController.class.getName());
+
 	private static final String CONFIG_DIALOG_FXML = "PulvConfigDialog.fxml"; //$NON-NLS-1$
 
 	@FXML
@@ -96,7 +99,7 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 
 	public PulverizacionConfigDialogController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("PulverizacionConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -109,7 +112,7 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -118,7 +121,7 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 			if(ButtonType.OK.equals(e)){					
 				if(chkMakeDefault.selectedProperty().get()){
 					labor.getConfigLabor().save();
-					System.out.println("guardando configuracion de pulverizacion");
+					logger.fine("guardando configuracion de pulverizacion");
 				}
 				return labor;
 			}else{
@@ -233,7 +236,7 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 			items.add(item);
 			labor.setItems(items);
 		} else if(items.size()<1) {
-			System.out.println("existe caldo pero sin items");
+			logger.fine("existe caldo pero sin items");
 			CaldoItem item = new CaldoItem();
 			item.setLabor(labor);
 			labor.getItems().add(item);
@@ -259,14 +262,14 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 				);
 		table.setEditable(true);
 		table.setOnDoubleClick(()->{
-			System.out.println("haciendo dobleClick");
+			logger.fine("haciendo dobleClick");
 			CaldoItem i = new CaldoItem();
 			labor.getItems().add(i);
 			i.setLabor(labor);
 			return i;
 		});
 		if(bpCaldo ==null) {
-			System.out.println("no puedo cargar la tabla porque caldoPane es null");
+			logger.fine("no puedo cargar la tabla porque caldoPane es null");
 		} else {
 			bpCaldo.setCenter(table);
 		}
@@ -287,7 +290,7 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 		
 			ret = controller.showAndWait();
 		} catch (IOException e1) {
-			System.err.println("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

@@ -42,6 +42,7 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 @Data
 @EqualsAndHashCode(exclude="lote")
 @Entity @Access(AccessType.PROPERTY)
@@ -52,6 +53,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 	@NamedQuery(name=Poligono.FIND_BY_LOTE, query="SELECT o FROM Poligono o where o.lote = :lote") ,
 }) 
 public class Poligono implements Comparable<Poligono>{
+	private static final Logger logger = Logger.getLogger(Poligono.class.getName());
+
 	private static final String COORDINATE_CLOSE = "}";
 	private static final String COORDINATE_OPEN = "{";
 	private static final String COORDITANTE_SEPARATOR = ",";
@@ -182,7 +185,7 @@ public class Poligono implements Comparable<Poligono>{
 						Position pos = Position.fromDegrees(dLat,dLon);
 						positions.add(pos);
 					}catch(Exception e){
-						System.out.println("error al des serializar el poligono");
+						logger.fine("error al des serializar el poligono");
 						e.printStackTrace();
 					}
 				}
@@ -239,7 +242,7 @@ public class Poligono implements Comparable<Poligono>{
 			setGeometry(g);
 			//TODO set holes
 		} catch (Exception e) {
-			System.out.println("error al leer el poligono desde el texto "+s);
+			logger.fine("error al leer el poligono desde el texto "+s);
 			e.printStackTrace();
 		}
 	}

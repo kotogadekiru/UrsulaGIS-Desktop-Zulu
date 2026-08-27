@@ -38,8 +38,11 @@ import java.awt.Dimension;
 
 import javax.swing.JPanel;
 
+import java.util.logging.Logger;
 //FIXME cambiar a javaFX SwingNode
 public class WWPanel extends JPanel {
+	private static final Logger logger = Logger.getLogger(WWPanel.class.getName());
+
 
 	private static final long serialVersionUID = -7158127157119827058L;
 	protected WorldWindow wwd;
@@ -90,13 +93,13 @@ public class WWPanel extends JPanel {
 			blueMarbleLayer.setName("Blue Marble");			
 			m.getLayers().add(blueMarbleLayer);
 		}catch(Exception e) {
-			System.out.println("fallo la carga del layer en gui/nww/replacementLayers/GIBS_BlueMarble.xml");
+			logger.fine("fallo la carga del layer en gui/nww/replacementLayers/GIBS_BlueMarble.xml");
 			e.printStackTrace();
 		}
 		try {
 			m.getLayers().add(new Sentinel2Layer());
 		}catch(Exception e) {
-			System.out.println("fallo la carga del layer en Sentinel2Layer");
+			logger.fine("fallo la carga del layer en Sentinel2Layer");
 			e.printStackTrace();
 		}
 	//	double transicion =3*1000;
@@ -115,7 +118,7 @@ public class WWPanel extends JPanel {
 		//	bing.setMinActiveAltitude(0);
 			m.getLayers().add(bing);
 		}catch(Exception e) {
-			System.out.println("fallo la carga del layer en gui/nww/replacementLayers/BingImageryEmxsys.xml");
+			logger.fine("fallo la carga del layer en gui/nww/replacementLayers/BingImageryEmxsys.xml");
 			e.printStackTrace();
 		}
 		

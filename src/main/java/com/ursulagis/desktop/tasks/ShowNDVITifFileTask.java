@@ -103,8 +103,11 @@ import mil.nga.tiff.TIFFImage;
 import mil.nga.tiff.TiffReader;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 @Log //private static final java.util.logging.Logger log = java.util.logging.Logger.getLogger(LogExample.class.getName());
 public class ShowNDVITifFileTask extends Task<Layer>{
+	private static final Logger logger = Logger.getLogger(ShowNDVITifFileTask.class.getName());
+
 	public static final double WATER_RENDER_VALUE = 0.09; //para que quede sobre el nivel del suelo
 	public static final double CLOUD_RENDER_VALUE = 2;// 2.2;
 	public static final int WATER_VALUE = -2;
@@ -385,7 +388,7 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 			GridPointAttributes gp=null;
 
 			if(gpMap.containsKey(value)) {
-				System.out.println("ndvi gpMapContains "+value);
+				logger.fine("ndvi gpMapContains "+value);
 				gp = gpMap.get(value);
 			} else {
 				gp =AnalyticSurface.createColorGradientAttributes(value, minValue, maxValue, minHue, maxHue); 
@@ -438,10 +441,10 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 		//			System.out.println("loading ndvi from file");
 		//		}
 		try{
-			System.out.println("mostrando el ndvi"+ndvi.getNombre());
+			logger.fine("mostrando el ndvi"+ndvi.getNombre());
 			RasterWraperApache wrapper = loadRaster(ndvi);
 			if(wrapper ==null ) {
-				System.out.println("no se pudo cargar el wrapper");
+				logger.fine("no se pudo cargar el wrapper");
 				return null;
 			}
 
@@ -600,7 +603,7 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 			//System.out.println("ndviProm "+ndviProm);
 
 			if(porcNubes>0.9) {
-				System.out.println("ignorando layer por nublado porcNubes = "+porcNubes);
+				logger.fine("ignorando layer por nublado porcNubes = "+porcNubes);
 				return null;
 			}
 			//				surface.setValues(AnalyticSurface.createColorGradientValues(
@@ -1013,7 +1016,7 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 		//System.out.println("loading raster target "+target.getName());
 
 		if(!(target.getContent().length>0)) {
-			System.out.println("el content de "+target.getNombre()+" es cero");
+			logger.fine("el content de "+target.getNombre()+" es cero");
 			return null;
 		}
 		TIFFImage tiffImage = TiffReader.readTiff(target.getContent());

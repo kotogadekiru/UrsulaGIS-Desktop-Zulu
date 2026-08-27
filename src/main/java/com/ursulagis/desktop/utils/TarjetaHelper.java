@@ -29,7 +29,10 @@ import com.google.api.client.json.jackson.JacksonFactory;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 
+import java.util.logging.Logger;
 public class TarjetaHelper {
+	private static final Logger logger = Logger.getLogger(TarjetaHelper.class.getName());
+
 	private static final String UUID_TARJETA = "UuidTarjeta";
 	private static final String NONEFOUND = "nonefound";
 	public static final String BASE_URL = "https://www.ursulagis.com";
@@ -48,7 +51,7 @@ public class TarjetaHelper {
 		if(uuidTarjeta.equals(NONEFOUND)) {
 			GenericUrl url = new GenericUrl(REGISTRAR_TARJETA_URL);	
 			url.set("token", Configuracion.getInstance().getPropertyOrDefault("USER", NONEFOUND));
-			System.out.println("llamand la url "+url.build());
+			logger.fine("llamand la url "+url.build());
 			//llamand la url http://www.ursulagis.com/api/file_server/registrar_tarjeta/?:token=749,586
 			byte[] bytes=null;
 			try {
@@ -64,7 +67,7 @@ public class TarjetaHelper {
 				res.disconnect();
 				Configuracion config = Configuracion.getInstance();
 				config.setProperty(UUID_TARJETA, tarjetaUuid);
-				System.out.println("cree la tarjeta "+tarjetaUuid);
+				logger.fine("cree la tarjeta "+tarjetaUuid);
 				config.save();
 			} catch (IOException e) {			
 				e.printStackTrace();
@@ -99,9 +102,9 @@ public class TarjetaHelper {
 	    
 		HttpResponse response = makeBinaryPostRequest(url,content,f.getName());
 		if(response != null) {
-			System.out.println("file uploaded to "+f.getName()+" "+response.parseAsString());
+			logger.fine("file uploaded to "+f.getName()+" "+response.parseAsString());
 		}else {
-			System.err.println("no se pudo insertar la tarjeta el response fue null");
+			logger.warning("no se pudo insertar la tarjeta el response fue null");
 		}
 		}catch(Exception e) {
 			e.printStackTrace();

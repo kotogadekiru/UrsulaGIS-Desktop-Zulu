@@ -16,13 +16,16 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+import java.util.logging.Logger;
 public class TestAplication extends Application {
+	private static final Logger logger = Logger.getLogger(TestAplication.class.getName());
+
 	public void start(Stage primaryStage) {
 		primaryStage.setTitle("Hola Mundo");
 		StackPane pane = new StackPane();
 		Button b = new Button("clicky");
 		b.setOnAction((action)->{
-			System.out.println("clicked");
+			logger.fine("clicked");
 			//HarvestConfigDialogController.config(new CosechaLabor()); 
 			//XXX no olvidarse de setear el controller en el fxml		
 			OrdenPulverizacionPaneController.config(new OrdenPulverizacion());

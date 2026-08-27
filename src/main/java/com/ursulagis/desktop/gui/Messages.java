@@ -14,10 +14,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import java.util.logging.Logger;
+
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.tasks.GoogleTranslatorHelper;
 
 public class Messages {
+	private static final Logger logger = Logger.getLogger(Messages.class.getName());
+
 	private static final String LOCALE_NOT_SET = "LOCALE_NOT_SET";
 	private static final String LOCALE_KEY = "LOCALE_KEY";
 	private static final String BUNDLE_NAME ="messages";//
@@ -41,7 +45,7 @@ public class Messages {
 		String loc = conf.getPropertyOrDefault(LOCALE_KEY, LOCALE_NOT_SET);
 		
 		Locale defaultLoc = Locale.getDefault();
-		System.out.println("default language es \""+defaultLoc.getLanguage()+ "\" supported? "+supports(defaultLoc.getLanguage()));
+		logger.fine("default language es \""+defaultLoc.getLanguage()+ "\" supported? "+supports(defaultLoc.getLanguage()));
 		if(loc.equals(LOCALE_NOT_SET) && Messages.supports(defaultLoc.getLanguage())) {
 			locale=defaultLoc;
 			
@@ -75,7 +79,7 @@ public class Messages {
 			conf.setProperty(LOCALE_KEY, locale.getLanguage());
 			conf.save();
 			localeChangeListeners.stream().forEach(f->f.accept(locale));
-			System.out.println("guardando el nuevo locale "+locale.getLanguage());
+			logger.fine("guardando el nuevo locale "+locale.getLanguage());
 		};
 		RESOURCE_BUNDLE_CONTAINER.set(BUNDLE_NAME, locale, whenReady);
 	}
@@ -134,7 +138,7 @@ public class Messages {
 		//TEST NumberFormater
 		try {
 			Double d = Messages.getNumberFormat().parse("1085").doubleValue();
-			System.out.println("1085 es "+d);
+			logger.fine("1085 es "+d);
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -149,6 +153,7 @@ public class Messages {
 /* ejemplo de como cargar un bundle en menoria
 import java.util.ListResourceBundle;
 
+import java.util.logging.Logger;
 public class MyResources extends ListResourceBundle {
 
 	@Override

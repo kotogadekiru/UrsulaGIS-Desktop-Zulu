@@ -41,7 +41,10 @@ import com.ursulagis.desktop.tasks.crear.CrearSueloMapTask;
 import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class ClonarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem>> {
+	private static final Logger logger = Logger.getLogger(ClonarLaborMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -184,7 +187,7 @@ public class ClonarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem
 				boolean ret = labor.outCollection.add(nf);
 				//featuresInsertadas++;
 				if(!ret){
-					System.out.println("no se pudo agregar la feature "+f);
+					logger.fine("no se pudo agregar la feature "+f);
 				}
 				updateProgress(this.featureNumber++, featureCount);
 			

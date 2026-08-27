@@ -11,6 +11,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import java.util.logging.Logger;
 /**
  * This utility extracts files and directories of a standard zip file to
  * a destination directory.
@@ -19,6 +20,8 @@ import java.util.zip.ZipOutputStream;
  */
 @Deprecated
 public class UnzipUtilityOld {
+	private static final Logger logger = Logger.getLogger(UnzipUtilityOld.class.getName());
+
 	/**
 	 * Size of the buffer to read/write data
 	 */
@@ -97,7 +100,7 @@ public class UnzipUtilityOld {
 			//remember close it
 			zos.close();
 
-			System.out.println("Done");
+			logger.fine("Done");
 
 		}catch(IOException ex){
 			ex.printStackTrace();

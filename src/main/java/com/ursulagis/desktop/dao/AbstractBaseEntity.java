@@ -10,6 +10,7 @@ import javax.persistence.MappedSuperclass;
 import com.ursulagis.desktop.api.OrdenPulverizacion;
 import lombok.Getter;
 
+import java.util.logging.Logger;
 /*
  @Entity
 public class Element
@@ -26,6 +27,8 @@ public class Element
 @Getter
 @MappedSuperclass
 public abstract class AbstractBaseEntity implements Serializable {
+	private static final Logger logger = Logger.getLogger(AbstractBaseEntity.class.getName());
+
 	private static final long serialVersionUID = 1L;
 
 	//@Id
@@ -57,10 +60,11 @@ public abstract class AbstractBaseEntity implements Serializable {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println("testing uuid");
+		logger.fine("testing uuid");
 		for(int i =0 ; i<30;i++) {
 			OrdenPulverizacion e = new OrdenPulverizacion();
-			System.out.println("i="+i+" "+e.getUuid());
+			final int idx = i;
+			logger.fine(() -> "i="+idx+" "+e.getUuid());
 		}
 	}
 }

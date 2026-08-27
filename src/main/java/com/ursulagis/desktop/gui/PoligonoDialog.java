@@ -21,7 +21,10 @@ import javafx.stage.Modality;
 import javafx.stage.Window;
 import com.ursulagis.desktop.utils.DAH;
 
+import java.util.logging.Logger;
 public class PoligonoDialog extends Dialog<Poligono>{
+	private static final Logger logger = Logger.getLogger(PoligonoDialog.class.getName());
+
 	private Poligono poligono = null;
 	
 	Text nombreLabel = null;
@@ -104,7 +107,7 @@ public class PoligonoDialog extends Dialog<Poligono>{
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta");
+				logger.fine("la configuracion es incorrecta");
 				event.consume();
 			}
 		});

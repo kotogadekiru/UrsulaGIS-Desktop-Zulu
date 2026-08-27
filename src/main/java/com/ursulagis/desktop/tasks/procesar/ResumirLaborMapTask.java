@@ -35,6 +35,7 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 
+import java.util.logging.Logger;
 /**
  * 
  * @author quero
@@ -42,6 +43,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
  */
 
 public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem>> {
+	private static final Logger logger = Logger.getLogger(ResumirLaborMapTask.class.getName());
+
 	private Labor<?> aResumir=null;
 	//private Map<Class,Function<LaborItem,String>> tooltipCreator = ClonarLaborMapTask.constructTooltipCreator();
 	public ResumirLaborMapTask(Labor<LaborItem> _aResumir) {	
@@ -114,7 +117,7 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 			LaborItem ci = aResumir.constructFeatureContainerStandar(f, false);
 		
 			int cat = labor.getClasificador().getCategoryFor(ci.getAmount());//LaborItem.getDoubleFromObj(f.getAttribute(labor.colRendimiento.get())));
-			System.out.println("cat for "+ci.getAmount()+" es "+cat);
+			logger.fine("cat for "+ci.getAmount()+" es "+cat);
 			itemsByCat.get(cat).add(ci);
 			featureNumber++;
 			updateProgress(featureNumber, featureCount);
@@ -128,7 +131,7 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 		
 			for(List<LaborItem> catItems : itemsByCat) {
 				checkCancelled();
-				System.out.println("resumiendo "+catItems.size());
+				logger.fine("resumiendo "+catItems.size());
 				if(catItems.size()>0) {
 					itemsCategoria.add(resumirItems(catItems));
 				}
@@ -136,7 +139,7 @@ public class ResumirLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIte
 				updateProgress(featureNumber, featureCount);
 			}
 			
-		System.out.println("items resumidos "+itemsCategoria.size());
+		logger.fine("items resumidos "+itemsCategoria.size());
 		return itemsCategoria;
 	}
 

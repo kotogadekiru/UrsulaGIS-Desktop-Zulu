@@ -38,12 +38,15 @@ import javafx.stage.Stage;
 import com.ursulagis.desktop.utils.DAH;
 
 
+import java.util.logging.Logger;
 /**
  * clase que toma una objeto de configuracion lo muestra y permite editarlo y lo devuelve
  * @author tomas
  *
  */
 public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
+	private static final Logger logger = Logger.getLogger(SiembraConfigDialogController.class.getName());
+
 	private static final String SEED_CONFIG_DIALOG_FXML = "SiembraConfigDialog.fxml"; //$NON-NLS-1$
 
 	@FXML
@@ -108,7 +111,7 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 
 	public SiembraConfigDialogController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("SiembraConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -123,7 +126,7 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -266,7 +269,7 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 		SiembraConfig.Unidad unidadPrecioInsumo = labor.getConfiguracion().precioInsumoUnitProperty().get();
 		String precioDialog =precioInsumoLaborUsdKg;
 		if(unidadPrecioInsumo == SiembraConfig.Unidad.Bolsa) {
-			System.out.println("cargando una labor con precio en bolsa");
+			logger.fine("cargando una labor con precio en bolsa");
 			double usdKg =PropertyHelper.parseDouble(precioInsumoLaborUsdKg).doubleValue();
 			double semBolsa = labor.getSemilla().getCultivo().getSemPorBolsa();
 			double kSemBolsa=semBolsa/1000;
@@ -398,19 +401,19 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 		nuevoPrecio = PropertyHelper.parseDouble(n);
 
 		Unidad unidadInsumo = labor.getConfiguracion().precioInsumoUnitProperty().getValue();
-		System.out.println("editando precio con unidad "+unidadInsumo);
+		logger.fine("editando precio con unidad "+unidadInsumo);
 		if(unidadInsumo==Unidad.Bolsa) {
-			System.out.println("ingresando un precio por bolsa "+nuevoPrecio.doubleValue());
+			logger.fine("ingresando un precio por bolsa "+nuevoPrecio.doubleValue());
 			// convertir de precio por bolsa a precio por kg
 			Semilla s = labor.getSemilla();
 			Double semBolsa = s.getCultivo().getSemPorBolsa();
 			Double pMil = s.getPesoDeMil();
 			Double kgBolsa = semBolsa*pMil;//semBolsa*pMil/1000000;
-			System.out.println("peso bolsa kg="+kgBolsa);
+			logger.fine("peso bolsa kg="+kgBolsa);
 			Double precioKg = nuevoPrecio.doubleValue()*1000000/kgBolsa;
 			nuevoPrecio=precioKg;
 			//TODO fix error de redondeo convierte 180 en 179,994 y 200 en 199,987 (depende del peso de mil)
-			System.out.println("precio por kg queda en "+nuevoPrecio.doubleValue());
+			logger.fine("precio por kg queda en "+nuevoPrecio.doubleValue());
 		}
 		labor.setPrecioInsumo(nuevoPrecio.doubleValue());
 		labor.getConfiguracion().getConfigProperties().setProperty(SiembraLabor.COLUMNA_PRECIO_SEMILLA, nuevoPrecio.toString());
@@ -426,7 +429,7 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 
 		this.precioInsumoUnit.setItems(FXCollections.observableArrayList(unidades.keySet()));
 		this.precioInsumoUnit.valueProperty().addListener((ob,old,nv)->{
-			System.out.println("cambiando unidad insumo de "+old+" a "+nv);
+			logger.fine("cambiando unidad insumo de "+old+" a "+nv);
 			labor.getConfiguracion().precioInsumoUnitProperty().set(unidades.get(nv));
 
 		});
@@ -500,7 +503,7 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 			controller.init();
 			ret = controller.showAndWait();
 		} catch (IOException e1) {
-			System.err.println("no se pudo levantar el fxml "+SEED_CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+SEED_CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

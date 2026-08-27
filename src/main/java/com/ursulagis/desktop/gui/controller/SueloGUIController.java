@@ -30,7 +30,10 @@ import com.ursulagis.desktop.tasks.importar.OpenSoilMapTask;
 import com.ursulagis.desktop.tasks.procesar.ProcessBalanceDeNutrientes2;
 import com.ursulagis.desktop.utils.FileHelper;
 
+import java.util.logging.Logger;
 public class SueloGUIController extends AbstractGUIController{
+	private static final Logger logger = Logger.getLogger(SueloGUIController.class.getName());
+
 
 
 	public SueloGUIController(JFXMain _main) {
@@ -98,7 +101,7 @@ public class SueloGUIController extends AbstractGUIController{
 
 			playSound();
 			viewGoTo(ret);
-			System.out.println("balanceNutrientesTask succeeded"); 
+			logger.fine("balanceNutrientesTask succeeded"); 
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SOIL_NUTRIENT_BALANCE);
 		});
 		JFXMain.executorPool.execute(balanceNutrientesTask);
@@ -210,7 +213,7 @@ public class SueloGUIController extends AbstractGUIController{
 				labor.setLayer(new LaborLayer());
 				Optional<Suelo> cosechaConfigured= SueloConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
+					logger.fine("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -224,7 +227,7 @@ public class SueloGUIController extends AbstractGUIController{
 					umTask.uninstallProgressBar();
 					main.viewGoTo(ret);
 
-					System.out.println("OpenSoilMapTask succeeded"); 
+					logger.fine("OpenSoilMapTask succeeded"); 
 					main.playSound();
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SOIL_IMPORTED);
 				});//fin del OnSucceeded

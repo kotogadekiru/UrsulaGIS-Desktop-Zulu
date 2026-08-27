@@ -9,7 +9,10 @@ import gov.nasa.worldwind.render.ShapeAttributes;
 import gov.nasa.worldwindx.examples.analytics.AnalyticSurfaceAttributes;
 import gov.nasa.worldwindx.examples.analytics.ExportableAnalyticSurface;
 
+import java.util.logging.Logger;
 public class LaborLayer extends RenderableLayer {
+	private static final Logger logger = Logger.getLogger(LaborLayer.class.getName());
+
 	private RenderableLayer analyticSurfaceLayer=null;
 	private RenderableLayer extrudedPolygonsLayer=null;
 	private int elementsCount=0;
@@ -52,7 +55,7 @@ public class LaborLayer extends RenderableLayer {
 	     * @param opacity the current opacity value, which is ignored by this layer.
 	     */
 		super.setOpacity(op);
-		System.out.println("setting opacity para labor layer "+op);
+		logger.fine("setting opacity para labor layer "+op);
 		if(extrudedPolygonsLayer!=null) {
 			extrudedPolygonsLayer.setOpacity(op);
 			
@@ -104,7 +107,7 @@ public class LaborLayer extends RenderableLayer {
 
 	@Override
 	public void dispose() {
-		System.out.println("disposing of LaborLayer");
+		logger.fine("disposing of LaborLayer");
 		if(extrudedPolygonsLayer!=null) {
 			extrudedPolygonsLayer.dispose();
 			extrudedPolygonsLayer=null;
@@ -218,7 +221,7 @@ public class LaborLayer extends RenderableLayer {
 
 			this.extrudedPolygonsLayer.removeAllRenderables();
 			this.extrudedPolygonsLayer.dispose();
-			System.out.println("removing old extrudedPolygonsLayer");
+			logger.fine("removing old extrudedPolygonsLayer");
 
 		}
 		this.extrudedPolygonsLayer = extrudedPolygonsLayer;

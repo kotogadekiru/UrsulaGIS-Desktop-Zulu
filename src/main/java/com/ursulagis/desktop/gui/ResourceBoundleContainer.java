@@ -20,8 +20,11 @@ import com.ursulagis.desktop.tasks.GoogleTranslatorHelper;
 
 import javafx.application.Platform;
 
+import java.util.logging.Logger;
 //Clase que permite tener el mismo resourceBoundle en toda la aplicacion y cambiar el lenguaje en tiempo de ejecucion
 public class ResourceBoundleContainer {
+	private static final Logger logger = Logger.getLogger(ResourceBoundleContainer.class.getName());
+
 
 	private	ResourceBundle RESOURCE_BUNDLE =null;
 	public ResourceBoundleContainer() {super();}
@@ -38,14 +41,14 @@ public class ResourceBoundleContainer {
 		// /gui/messages_en.properties
 		String resourceName = bUNDLE_NAME+"_"+locale.getLanguage().toLowerCase()+".properties";
 
-		System.out.println("searching for resourceBoundle in  "+resourceName);		
+		logger.fine("searching for resourceBoundle in  "+resourceName);		
 
 		//URL path = this.getClass().getResource(resourceName);
 		//System.out.println("boundle file found at "+path);
 		InputStream is = this.getClass().getResourceAsStream(resourceName);
 		if(is!=null) {
 			URL path = this.getClass().getResource(resourceName);
-			System.out.println("boundle file found at "+path);
+			logger.fine("boundle file found at "+path);
 			try {
 				RESOURCE_BUNDLE=new TxtResourceBundle(is);
 				//RESOURCE_BUNDLE = ResourceBundle.getBundle(bUNDLE_NAME,locale, Messages.class.getClassLoader());
@@ -116,11 +119,11 @@ public class ResourceBoundleContainer {
 			try {
 				// Use UTF-8 encoding to properly handle accented characters
 				props.load(new InputStreamReader(stream, StandardCharsets.UTF_8));
-				System.out.println("finished loading language bundle");
+				logger.fine("finished loading language bundle");
 				//props.values().stream().forEach((v)->System.out.println(v));
 				
 			} catch (Exception e) {
-				System.out.println("failed to load language bundle");
+				logger.fine("failed to load language bundle");
 				e.printStackTrace();
 			}
 		}

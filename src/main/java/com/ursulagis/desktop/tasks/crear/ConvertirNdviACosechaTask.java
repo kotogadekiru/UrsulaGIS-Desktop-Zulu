@@ -33,7 +33,10 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.LinearRegression;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(ConvertirNdviACosechaTask.class.getName());
+
 	private static  double NDVI_RINDE_CERO = ShowNDVITifFileTask.MIN_VALUE;//0.2;
 	Double rindeProm = 0.0;
 	Ndvi ndvi=null;
@@ -76,12 +79,12 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 			}
 		}
 		if(size == 0){
-			System.err.println("no hay puntos iterables para obtener el promedio");
+			logger.warning("no hay puntos iterables para obtener el promedio");
 			return;
 		}
 		this.featureCount=size;
 		Double averageNdvi = Double.valueOf(sum/size);
-		System.out.println("el promedio de los ndvi es "+averageNdvi);
+		logger.fine("el promedio de los ndvi es "+averageNdvi);
 		// si el rinde promedio es >0.5 => NDVI_RINDE_CERO es 0.3
 		//si el rinde promedio es <0.5 => NDVI_RINDE_CERO es 0.1
 		//chequear el minimo ndvi segun el cultivo? para el trigo inicial en macollo el minimo de 0.5 es malo
@@ -122,11 +125,11 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 		
 		Configuracion config = Configuracion.getInstance();
 		String useSigmoidString = config.getPropertyOrDefault(this.getClass().getName()+".USE_SIGMOID", "false");
-		System.out.println(this.getClass().getName()+".USE_SIGMOID="+useSigmoidString);
+		logger.fine(this.getClass().getName()+".USE_SIGMOID="+useSigmoidString);
 		Function<Double, Double> calcRinde = getRineForNDVILinealFunction(averageNdvi);
 		
 		if("true".equals(useSigmoidString)) {
-			System.out.println("usando interpolacion sigmoidea");
+			logger.fine("usando interpolacion sigmoidea");
 			calcRinde = getRindeForNDVISigmoidFunction(averageNdvi);
 		}
 		//Function<Double, Double> calcRinde = getRineForNDVILinealFunction(averageNdvi);
@@ -201,7 +204,7 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 					SimpleFeature f = ci.getFeature(fBuilder);
 					boolean res = features.add(f);
 					if(!res){
-						System.out.println("no se pudo agregar la feature "+ci);
+						logger.fine("no se pudo agregar la feature "+ci);
 					}
 				//	labor.insertFeature(ci);
 					itemsToShow.add(ci);
@@ -223,7 +226,7 @@ public class ConvertirNdviACosechaTask extends ProcessMapTask<CosechaItem,Cosech
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){//XXX si esto falla es provablemente porque se estan creando mas de una feature con el mismo id
-			System.out.println("no se pudieron agregar las features al outCollection");
+			logger.fine("no se pudieron agregar las features al outCollection");
 		}
 
 				

@@ -31,7 +31,10 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class RecomendFertNFromHarvestMapTask extends ProcessMapTask<FertilizacionItem,FertilizacionLabor> {
+	private static final Logger logger = Logger.getLogger(RecomendFertNFromHarvestMapTask.class.getName());
+
 	private CosechaLabor cosecha;
 	private List<Suelo> suelos;
 	private List<FertilizacionLabor> fertilizaciones;
@@ -74,12 +77,12 @@ public class RecomendFertNFromHarvestMapTask extends ProcessMapTask<Fertilizacio
 						//}
 						Geometry geom = PolygonValidator.validate(cItem.getGeometry());
 						if(geom==null) {
-							System.out.println("item geom es null");
+							logger.fine("item geom es null");
 							return;
 						}
 						Double areaGeom =  ProyectionConstants.A_HAS(geom.getArea());
 						if(areaGeom==0) {
-							System.out.println("item areaGeom es 0");
+							logger.fine("item areaGeom es 0");
 							return;
 						}
 						fi.setGeometry(geom);
@@ -93,7 +96,7 @@ public class RecomendFertNFromHarvestMapTask extends ProcessMapTask<Fertilizacio
 						//System.out.println("absN="+absN+" dispSuelo="+dispNSuelo+" dispNFert="+dispNFert);
 						double nAAplicar= absN-dispNSuelo-dispNFert;
 						if(Double.isNaN(nAAplicar)) {
-							System.out.println("item nAAplicar es NaN");
+							logger.fine("item nAAplicar es NaN");
 							nAAplicar=0;
 						}
 
@@ -120,14 +123,14 @@ public class RecomendFertNFromHarvestMapTask extends ProcessMapTask<Fertilizacio
 						//System.out.println("inserte la feature "+featureNumber+" "+fi);
 						updateProgress(featureNumber, featureCount);
 					}catch(Exception e) {
-						System.err.println("error al procesar el item "+cItem);
+						logger.warning("error al procesar el item "+cItem);
 						e.printStackTrace();
 					}
 				});
 			}
 			//list.parallelStream().forEach(/* Do Something */);
 					).get();
-			System.out.println("construyendo clasificador");
+			logger.fine("construyendo clasificador");
 			labor.constructClasificador();
 			runLater(getItemsList());
 			updateProgress(0, featureCount);	

@@ -30,7 +30,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.util.StringConverter;
 
+import java.util.logging.Logger;
 public class DateRangeSlider {
+	private static final Logger logger = Logger.getLogger(DateRangeSlider.class.getName());
+
 	private static final String DD_MM_YYYY = "dd/MM/yyyy";
 	private static DateTimeFormatter formater = DateTimeFormatter.ofPattern(DD_MM_YYYY);	
 	private LocalDate min,max,low,high;
@@ -52,7 +55,7 @@ public class DateRangeSlider {
 		innerSlider.setShowTickMarks(true);
 		innerSlider.setShowTickLabels(true);
 		double deltaTick = innerSlider.getMax()-innerSlider.getMin();
-		System.out.println("delta ticks "+deltaTick);
+		logger.fine("delta ticks "+deltaTick);
 		innerSlider.setMajorTickUnit(deltaTick/5);
 		//innerSlider.setBlockIncrement(deltaTick/2);//1000*3600*24*5);//milis por 5 dias
 		
@@ -109,12 +112,12 @@ public class DateRangeSlider {
 		if(res.get().equals(ButtonType.OK)){
 			//TODO update min max range
 			updateLowHigh();
-			System.out.println("seleccione fecha low "+low+" high "+high);
+			logger.fine("seleccione fecha low "+low+" high "+high);
 						
 		} else {
 			//TODO fecha not selected
-			System.out.println("ok button not selected");
-			System.out.println(res.get().getText()+" pressed");
+			logger.fine("ok button not selected");
+			logger.fine(res.get().getText()+" pressed");
 		}
 	}
 	

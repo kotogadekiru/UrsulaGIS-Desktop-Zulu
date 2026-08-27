@@ -62,7 +62,10 @@ import javafx.stage.Stage;
 
 
 
+import java.util.logging.Logger;
 public class GenericLaborGUIController extends AbstractGUIController {
+	private static final Logger logger = Logger.getLogger(GenericLaborGUIController.class.getName());
+
 
 	private boolean layerPanelUpdateScheduled = false;
 
@@ -234,7 +237,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 
 			layer.setOpacity(n.doubleValue());//newOp>0.1?newOp:1);
 			this.getWwd().redraw();
-			System.out.println("layer transparente" + layer.getName()+" "+layer.getOpacity());
+			logger.fine("layer transparente" + layer.getName()+" "+layer.getOpacity());
 		});
 		Stage stage = new Stage();
 		stage.setScene(sc);
@@ -384,7 +387,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_OUTLIERS_FILTERED);
 			playSound();
 			viewGoTo(ret);
-			System.out.println("hice outliers en la labor"); 
+			logger.fine("hice outliers en la labor"); 
 		});
 		executorPool.execute(uMmTask);
 	}
@@ -403,7 +406,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_SUMMARIZED);
 			playSound();
 			viewGoTo(ret);
-			System.out.println("ProcessMarginTask succeeded"); 
+			logger.fine("ProcessMarginTask succeeded"); 
 		});
 		executorPool.execute(uMmTask);
 	}

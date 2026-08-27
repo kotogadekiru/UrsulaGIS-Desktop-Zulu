@@ -31,7 +31,10 @@ import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
+import java.util.logging.Logger;
 public class LaborDataStore<E> {
+	private static final Logger logger = Logger.getLogger(LaborDataStore.class.getName());
+
 	private static List<Labor<?>> locked = Collections.synchronizedList(new ArrayList<Labor<?>>());
 	/**
 	 * 
@@ -207,7 +210,7 @@ public class LaborDataStore<E> {
 	private static void updateAllCachedEnvelopes(Envelope envelope,Labor<? extends LaborItem> labor){		
 		//System.out.println(labor.nombre+" empezando updateAllCachedEnvelopes en "+Thread.currentThread().getId());
 		if(labor.outCollection == null) {
-			System.err.println("No se puede iterar sobre outCollection porque es null en "+labor.getNombre());
+			logger.warning("No se puede iterar sobre outCollection porque es null en "+labor.getNombre());
 			labor.treeCache = new Quadtree();
 			labor.treeCacheEnvelope = new Envelope();
 			return;
@@ -244,12 +247,12 @@ public class LaborDataStore<E> {
 	}
 
 	public static void dispose(Labor<? extends LaborItem> labor) {
-		System.out.println("antes de dispose locked contiene "+locked.size()+" elementos");
+		logger.fine("antes de dispose locked contiene "+locked.size()+" elementos");
 		if(locked.contains(labor)) {
-			System.out.println("no puedo hacer dispose porque esta lockeada");
+			logger.fine("no puedo hacer dispose porque esta lockeada");
 		}
 		checkLock(labor);
-		System.out.println("haciendo dispose de "+labor.getNombre());
+		logger.fine("haciendo dispose de "+labor.getNombre());
 		
 		if(labor.inStore!=null){
 			labor.inStore.dispose();
@@ -277,7 +280,7 @@ public class LaborDataStore<E> {
 			labor.layer=null;
 		}
 		locked.remove(labor);
-		System.out.println("despues de dispose locked contiene "+locked.size()+" elementos");
+		logger.fine("despues de dispose locked contiene "+locked.size()+" elementos");
 	}
 	
 	public static void insertFeature(LaborItem laborItem, Labor<? extends LaborItem> labor) {
@@ -324,7 +327,7 @@ public class LaborDataStore<E> {
 				labor.treeCache.remove(g.getEnvelopeInternal(), labor);
 			}
 			if(removed) {
-				System.out.println("removi el feature "+old);
+				logger.fine("removi el feature "+old);
 			}
 		}
 		}finally {

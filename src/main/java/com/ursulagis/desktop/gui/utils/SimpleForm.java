@@ -21,7 +21,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import com.ursulagis.desktop.utils.DAH;
 
+import java.util.logging.Logger;
 public class SimpleForm<T> {
+	private static final Logger logger = Logger.getLogger(SimpleForm.class.getName());
+
 	static final String ICON = "com/ursulagis/desktop/gui/1-512.png";
 	public SimpleForm(T myBean){
 		Stage stage = new Stage();
@@ -91,7 +94,7 @@ public class SimpleForm<T> {
 		Button commitBtn = new Button("Guardar");
 		commitBtn.setOnAction(a->{
 			T lote = fxForm.getSource();
-			System.out.println("guartdando el lote "+lote);
+			logger.fine("guartdando el lote "+lote);
 			DAH.save(lote);
 			stage.close();
 		});

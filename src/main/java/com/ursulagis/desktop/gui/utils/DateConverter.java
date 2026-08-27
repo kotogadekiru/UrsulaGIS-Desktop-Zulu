@@ -10,8 +10,11 @@ import java.util.Date;
 
 import javafx.util.StringConverter;
 
+import java.util.logging.Logger;
 public class DateConverter extends StringConverter<LocalDate>
 {
+	private static final Logger logger = Logger.getLogger(DateConverter.class.getName());
+
 	// Default Date Pattern
 	private String pattern = "dd/MM/yyyy";
 	// The Date Time Converter
@@ -36,7 +39,7 @@ public class DateConverter extends StringConverter<LocalDate>
 			try{
 				date = LocalDate.parse(text, dtFormatter);
 			}catch(Exception e){
-				System.out.println("no se pudo parsear "+text);
+				logger.fine("no se pudo parsear "+text);
 				date = LocalDate.now();
 				e.printStackTrace();
 			}

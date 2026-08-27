@@ -43,6 +43,7 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 /**
  * clase que toma una siembra y una fertilizacion y genera una nueva siembra que combian las dos.
  * @author quero
@@ -50,6 +51,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
  */
 
 public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
+	private static final Logger logger = Logger.getLogger(SiembraFertTask.class.getName());
+
 	private SiembraLabor siembra;
 	private FertilizacionLabor fertilizacion;
 	private boolean esFertLinea=true;
@@ -76,7 +79,7 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 		}
 		labor.setLayer(new LaborLayer());
 		labor.setEntreSurco(siembra.getEntreSurco());
-		System.out.println("asignando entresurco a siembra fert con valor "+siembra.getEntreSurco()+" queda en "+labor.getEntreSurco());
+		logger.fine("asignando entresurco a siembra fert con valor "+siembra.getEntreSurco()+" queda en "+labor.getEntreSurco());
 		labor.colAmount.set(SiembraLabor.COLUMNA_KG_SEMILLA);
 		labor.setClasificador(siembra.getClasificador().clone());
 
@@ -150,7 +153,7 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 //		},	(env1, env2) -> env1.addAll(env2));
 		
 		featureCount = grillaCover.size();
-		System.out.println("termine de crear la grilla con "+grillaCover.size()+" elementos");
+		logger.fine("termine de crear la grilla con "+grillaCover.size()+" elementos");
 		int clasesSiembra = siembra.clasificador.getNumClasses();
 		//int clasesB = fertilizacion.clasificador.getNumClasses();
 		//claseAB = clasesA*claseB(r)+claseA(r)
@@ -193,7 +196,7 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 						featureNumber++;
 						updateProgress(featureNumber, featureCount);
 					}catch(Exception e){
-						System.err.println("error al construir un elemento de la grilla");
+						logger.warning("error al construir un elemento de la grilla");
 						e.printStackTrace();
 					}
 				},
@@ -277,7 +280,7 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 				areasIntersecciones.put(sPoly,areaInterseccion);				
 					
 			}catch(Exception e){
-				System.err.println("no se pudo hacer la intersección entre"+poly+""+g); //$NON-NLS-1$ //$NON-NLS-2$
+				logger.warning("no se pudo hacer la intersección entre"+poly+""+g); //$NON-NLS-1$ //$NON-NLS-2$
 			}		
 		}		
 		//si el area intersectada es mayor a un minimo procedo a crear la siembra promedio
@@ -292,11 +295,11 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 				dosisHaProm+=aPoly.getDosisHa()*peso;
 				fertL+=aPoly.getDosisFertLinea()*peso;
 				if(Double.isNaN(fertL)) {
-					System.out.println("item fertL es NaN");
+					logger.fine("item fertL es NaN");
 					fertL=0;
 				}
 				if(Double.isNaN(fertC)) {
-					System.out.println("item fertC es NaN");
+					logger.fine("item fertC es NaN");
 					fertC=0;
 				}
 				fertC+=aPoly.getDosisFertCostado()*peso;
@@ -437,12 +440,12 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 	 * @return
 	 */
 	private List<SiembraItem> resumirClases(Map<Integer,List<SiembraItem>> byBicluster) {	
-		System.out.println("resumiendoBicluster con "+byBicluster.size()+" clusters");
+		logger.fine("resumiendoBicluster con "+byBicluster.size()+" clusters");
 		List<SiembraItem> objects = new  ArrayList<SiembraItem>();
 		for(Integer clase:  byBicluster.keySet()) {
 			List<SiembraItem> cluster = byBicluster.get(clase);//.values()
 			//objects.addAll(cluster);
-			System.out.println("resumiendo el cluster "+clase+" con "+cluster.size()+" features");
+			logger.fine("resumiendo el cluster "+clase+" con "+cluster.size()+" features");
 			objects.addAll(construirSiembraItemResumido(cluster));
 		}	
 		return objects;
@@ -536,12 +539,12 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 		Geometry union = GeometryHelper.unirGeometrias(aUnir);
 		Double unionArea = union.getArea();//no da igual el area de la interseccion que el area de la union
 		if(unionArea==0) {
-			System.err.println("area union es null");
+			logger.warning("area union es null");
 			return catFeatures;}
 		siembraProm=siembraProm/areaInterseccion;
 		fertPromL=fertPromL/areaInterseccion;
 		if(Double.isNaN(fertPromL)) {
-			System.out.println("item fertPromL es NaN");
+			logger.fine("item fertPromL es NaN");
 			fertPromL=0;
 		}
 		fertPromC=fertPromC/areaInterseccion;
@@ -709,7 +712,7 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 	 * @return una lista de poligonos que representa una grilla con un 100% de superposiocion
 	 */
 	public static List<Polygon> construirGrilla(BoundingBox bounds,double ancho) {
-		System.out.println("construyendo grilla");
+		logger.fine("construyendo grilla");
 		List<Polygon> polygons = new ArrayList<Polygon>();
 		//convierte los bounds de longlat a metros
 		Double minX = bounds.getMinX()/ProyectionConstants.metersToLong() - ancho/2;

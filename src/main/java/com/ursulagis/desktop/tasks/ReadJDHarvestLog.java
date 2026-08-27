@@ -27,7 +27,10 @@ import javafx.scene.paint.Color;
 
 
 
+import java.util.logging.Logger;
 public class ReadJDHarvestLog  extends Task<File>{
+	private static final Logger logger = Logger.getLogger(ReadJDHarvestLog.class.getName());
+
 	private static final String TASK_CLOSE_ICON = "/gui/event-close.png";
 	private ProgressBar progressBarTask;
 	private Pane progressPane;
@@ -43,11 +46,11 @@ public class ReadJDHarvestLog  extends Task<File>{
 		String fddFileName = readFdlFile();
 		String dir = fdl.getParent();
 		String fddPath = dir+File.separator+fddFileName;
-		System.out.println("fdd File path = "+fddPath);
+		logger.fine("fdd File path = "+fddPath);
 		File fddFile = new File(fddPath);
 
 		int fileLength = (int)fddFile.length();
-		System.out.println("fileLength ="+fileLength);
+		logger.fine("fileLength ="+fileLength);
 
 		byte[] result = new byte[fileLength];
 		//  Map<String,Integer> headers = new HashMap<>();
@@ -87,7 +90,7 @@ public class ReadJDHarvestLog  extends Task<File>{
 	}
 
 	private static void log(Object aThing){
-		System.out.println(String.valueOf(aThing));
+		logger.fine(String.valueOf(aThing));
 	}
 	
 	//Caracteres de control
@@ -131,14 +134,14 @@ public class ReadJDHarvestLog  extends Task<File>{
 	//10 00 en Little Endian es Inicio Encabezado
 	//02 00 en Little Endian es Inicio de texto
 	private void navigateByteArray(byte[] result, int cursor){
-		System.out.println();
+		logger.fine("");
 		
 		if(result.length<4){
-			System.out.println("parcial < 4: {\n"+new String(result)+"\n}");
+			logger.fine("parcial < 4: {\n"+new String(result)+"\n}");
 			return;
 		}
 		//	while(cursor<result.length && cursor<50){
-		System.out.println("cursor="+cursor);
+		logger.fine("cursor="+cursor);
 		
 		int headerLength = 0;// Short.toUnsignedInt(bb.getShort(0));
 		while(headerLength<2 || headerLength==256 ){
@@ -149,16 +152,16 @@ public class ReadJDHarvestLog  extends Task<File>{
 			bb2.put(result[cursor+1]);
 			headerLength =  Short.toUnsignedInt(bb2.getShort(0));
 			cursor+=2;
-			System.out.println("cursor="+cursor);
+			logger.fine("cursor="+cursor);
 		}
 		if(headerLength>256){
-			System.out.println("parcial > 255: {\n"+new String(Arrays.copyOfRange(result, cursor, result.length))+"\n}");
+			logger.fine("parcial > 255: {\n"+new String(Arrays.copyOfRange(result, cursor, result.length))+"\n}");
 			return;
 		}
 		int begin = cursor;//0+2=2
 		int end = begin + headerLength+1;//2+1=3
 		cursor=end;//3+1=4
-		System.out.println("begin="+begin+" headerLength="+headerLength+" end="+end+" cursor+1="+cursor);
+		logger.fine("begin="+begin+" headerLength="+headerLength+" end="+end+" cursor+1="+cursor);
 		try{
 			byte[] headerB = Arrays.copyOfRange(result, begin, end);//2,3
 			byte[] headerB2 = Arrays.copyOfRange(result, end, result.length);
@@ -198,37 +201,37 @@ public class ReadJDHarvestLog  extends Task<File>{
 							</LogDataBlock>
 			 */
 
-			System.out.println("Root element :" + doc.getDocumentElement().getNodeName());//Root element :RCDLogFile
+			logger.fine("Root element :" + doc.getDocumentElement().getNodeName());//Root element :RCDLogFile
 
 			NodeList files = doc.getElementsByTagName("EvenByteDelta");
 			Element fileElement = (Element) files.item(0);
 			String fddFileName = fileElement.getAttribute("filePathName");
-			System.out.println("filePathName= : " + fddFileName);//ok!!
+			logger.fine("filePathName= : " + fddFileName);//ok!!
 
 
 			NodeList clients = doc.getElementsByTagName("rcdsetup:Client");
 			Element element = (Element) clients.item(0);
 			if(element!=null)
-				System.out.println("cliente= : " + element.getAttribute("name"));//ok!!
+				logger.fine("cliente= : " + element.getAttribute("name"));//ok!!
 			element=null;	
 			NodeList operators = doc.getElementsByTagName("rcdsetup:Operator");
 			element = (Element) operators.item(0);
-			if(element!=null)System.out.println("operador= : " + element.getAttribute("name"));//ok!!
+			if(element!=null)logger.fine("operador= : " + element.getAttribute("name"));//ok!!
 			element=null;	
 			NodeList farms = doc.getElementsByTagName("rcdsetup:Farm");
 			element = (Element) farms.item(0);
-			if(element!=null)System.out.println("campo= : " + element.getAttribute("name"));//ok!!
+			if(element!=null)logger.fine("campo= : " + element.getAttribute("name"));//ok!!
 			element=null;	
 
 			NodeList fields = doc.getElementsByTagName("rcdsetup:Field");
 			element = (Element) fields.item(0);
-			if(element!=null)System.out.println("lote= : " + element.getAttribute("name"));//ok!!
+			if(element!=null)logger.fine("lote= : " + element.getAttribute("name"));//ok!!
 			element=null;	
 			NodeList crops = doc.getElementsByTagName("rcdsetup:Crop");
 			element = (Element) crops.item(0);
-			if(element!=null)System.out.println("cultivo= : " + element.getAttribute("name"));//ok!!
+			if(element!=null)logger.fine("cultivo= : " + element.getAttribute("name"));//ok!!
 			element=null;	
-			System.out.println("");
+			logger.fine("");
 			return fddFileName;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -248,7 +251,7 @@ public class ReadJDHarvestLog  extends Task<File>{
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

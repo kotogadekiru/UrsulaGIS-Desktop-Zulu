@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
+import java.util.logging.Logger;
 /**
  * Performs simple logistic regression.
  * User: tpeng
@@ -17,6 +18,8 @@ import java.util.Scanner;
  * @author Matthieu Labas
  */
 public class Logistic {
+	private static final Logger logger = Logger.getLogger(Logistic.class.getName());
+
 
 	/** the learning rate */
 	private double rate;
@@ -49,7 +52,7 @@ public class Logistic {
 				// not necessary for learning
 				lik += label * Math.log(classify(x)) + (1-label) * Math.log(1- classify(x));
 			}
-			System.out.println("iteration: " + n + " " + Arrays.toString(weights) + " mle: " + lik);
+			logger.fine("iteration: " + n + " " + Arrays.toString(weights) + " mle: " + lik);
 		}
 	}
 
@@ -106,10 +109,10 @@ public class Logistic {
 		Logistic logistic = new Logistic(5);
 		logistic.train(data);
 		int[] x = {2, 1, 1, 0, 1};
-		System.out.println("prob(1|x) = " + logistic.classify(x));
+		logger.fine("prob(1|x) = " + logistic.classify(x));
 
 		int[] x2 = {1, 0, 1, 0, 0};
-		System.out.println("prob(1|x2) = " + logistic.classify(x2));
+		logger.fine("prob(1|x2) = " + logistic.classify(x2));
 
 	}
 

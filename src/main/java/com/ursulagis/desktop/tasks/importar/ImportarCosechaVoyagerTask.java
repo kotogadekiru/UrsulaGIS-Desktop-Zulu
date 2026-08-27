@@ -56,6 +56,7 @@ import com.ursulagis.desktop.utils.Voyager2Settings;
 
 
 
+import java.util.logging.Logger;
 /**
 
  * Imports harvest points from a Case IH Voyager 2 card (.vy1 directory) using the CNHVoyager2 Java wrapper.
@@ -65,6 +66,8 @@ import com.ursulagis.desktop.utils.Voyager2Settings;
  */
 
 public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(ImportarCosechaVoyagerTask.class.getName());
+
 
 
 
@@ -122,11 +125,11 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
         settings.validateForImport();
 
-        System.out.println("Validating Voyager 2 settings");
+        logger.fine("Validating Voyager 2 settings");
 
         Voyager2NativeLoader.ensureLoaded(settings);
 
-        System.out.println("Ensuring Voyager 2 native libraries are loaded");
+        logger.fine("Ensuring Voyager 2 native libraries are loaded");
 
 
 
@@ -136,11 +139,11 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
             updateMessage("Initializing Voyager 2 SDK…");
 
-            System.out.println("Initializing Voyager 2 SDK from " + settings.getSdkBasePath());
+            logger.fine("Initializing Voyager 2 SDK from " + settings.getSdkBasePath());
 
             CNHVoyager2.initialize(settings.getSdkBasePath());
 
-            System.out.println("Creating Voyager 2 card with license key " + settings.getLicenseKey());
+            logger.fine("Creating Voyager 2 card with license key " + settings.getLicenseKey());
 
             cardHandle = CNHVoyager2.createCard(settings.getLicenseKey());
 
@@ -150,7 +153,7 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
             CNHVoyager2.openCard(cardHandle, cardDirectory.getAbsolutePath());
 
-            System.out.println("Card opened successfully");
+            logger.fine("Card opened successfully");
 
 
 
@@ -164,7 +167,7 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
             if (resolvedKeys.isEmpty()) {
 
-                System.out.println("No harvest dataset found on card: " + cardDirectory);
+                logger.fine("No harvest dataset found on card: " + cardDirectory);
 
                 throw new CNHVoyager2Exception("No harvest dataset found on card: " + cardDirectory);
 
@@ -174,7 +177,7 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
             List<VoyagerHarvestSample> samples = loadSamplesFromDatasets(cardHandle, resolvedKeys);
 
-            System.out.println("Harvest samples loaded: " + samples.size()
+            logger.fine("Harvest samples loaded: " + samples.size()
 
                     + " from " + resolvedKeys.size() + " dataset(s)");
 
@@ -200,7 +203,7 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
                 } catch (CNHVoyager2Exception e) {
 
-                    System.err.println("Failed to release Voyager card: " + e.getMessage());
+                    logger.warning("Failed to release Voyager card: " + e.getMessage());
 
                 }
 
@@ -230,7 +233,7 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
             String key = datasets.get(0).getSelectionKey();
 
-            System.out.println("Single harvest dataset: " + key);
+            logger.fine("Single harvest dataset: " + key);
 
             return Collections.singletonList(key);
 
@@ -252,7 +255,7 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
             keys.add(summary.getSelectionKey());
 
-            System.out.println("Selected harvest dataset: " + summary.getSelectionKey());
+            logger.fine("Selected harvest dataset: " + summary.getSelectionKey());
 
         }
 
@@ -278,7 +281,7 @@ public class ImportarCosechaVoyagerTask extends ProgresibleTask<CosechaLabor> {
 
             List<VoyagerHarvestSample> batch = CNHVoyager2.loadHarvestDatasetSamples(cardHandle, key);
 
-            System.out.println("Dataset " + key + ": " + batch.size() + " samples");
+            logger.fine("Dataset " + key + ": " + batch.size() + " samples");
 
             allSamples.addAll(batch);
 

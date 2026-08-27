@@ -22,7 +22,10 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.util.Duration;
 
+import java.util.logging.Logger;
 public class ShowNDVIEvolution {
+	private static final Logger logger = Logger.getLogger(ShowNDVIEvolution.class.getName());
+
 	private WorldWindow wwd;
 	private LayerPanel layerPanel;
 
@@ -126,7 +129,7 @@ public class ShowNDVIEvolution {
 			}
 		}
 		s+=4;
-		System.out.println("agregando endKF con s="+s);
+		logger.fine("agregando endKF con s="+s);
 		// KeyFrame endKF = new KeyFrame(Duration.seconds(s),(t)->{
 		// 	for(Layer l: ndviLayers){
 		// 		l.setEnabled(true);
@@ -137,7 +140,7 @@ public class ShowNDVIEvolution {
 		// });
 
 		//timeline.getKeyFrames().add(endKF);
-		System.out.println("playing animation");
+		logger.fine("playing animation");
 		timeline.play();
 	}
 

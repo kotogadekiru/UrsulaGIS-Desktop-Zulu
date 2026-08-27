@@ -40,10 +40,13 @@ import javafx.stage.Window;
 import com.ursulagis.desktop.tasks.procesar.RedrawMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
+import java.util.logging.Logger;
 /**
  * Clase que maneja los eventos directos sobre los items
  */
 public class LaborItemGUIController extends AbstractGUIController{
+	private static final Logger logger = Logger.getLogger(LaborItemGUIController.class.getName());
+
 
 	public LaborItemGUIController(JFXMain _main) {
 		super(_main);
@@ -69,7 +72,7 @@ public class LaborItemGUIController extends AbstractGUIController{
 		try {
 			Labor<?> l = findOwner(item,wwd);
 			if(l==null)return;
-					System.out.println("el item pertenece a la labor "+l.getNombre());
+					logger.fine("el item pertenece a la labor "+l.getNombre());
 					//el item pertenece a la labor Margarita Tr 2425  Cosecha
 					SimpleFeature f = item.getFeature(l.getFeatureBuilder());
 					l.changeFeature(f, null);
@@ -179,7 +182,7 @@ public class LaborItemGUIController extends AbstractGUIController{
 			SimpleFeature old = item.getFeature(l.getFeatureBuilder());
 
 			ArrayList<LaborItem> liLista = new ArrayList<LaborItem>();
-			System.out.println("Comenzando a cargar la los datos de la tabla"); //$NON-NLS-1$
+			logger.fine("Comenzando a cargar la los datos de la tabla"); //$NON-NLS-1$
 			liLista.add(item);
 
 			final ObservableList<LaborItem> dataLotes =	FXCollections.observableArrayList(liLista);
@@ -206,7 +209,7 @@ public class LaborItemGUIController extends AbstractGUIController{
 			tablaStage.setTitle("editar item");
 			tablaStage.setScene(scene);
 			tablaStage.showAndWait();
-			System.out.println("el item editado quedo en "+item);	
+			logger.fine("el item editado quedo en "+item);	
 				
 			
 			l.changeFeature(old, item);

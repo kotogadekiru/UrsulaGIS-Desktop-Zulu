@@ -35,6 +35,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.logging.Logger;
 /**
  * clase que representa una observacion
  * @author quero
@@ -51,6 +52,8 @@ import lombok.Setter;
 }) 
 
 public class Recorrida extends AbstractBaseEntity{
+	private static final Logger logger = Logger.getLogger(Recorrida.class.getName());
+
 	/**
 	 * 
 	 */
@@ -106,11 +109,11 @@ public class Recorrida extends AbstractBaseEntity{
 	public Recorrida(FileDataStore store) {
 		if(store !=null){
 			ServiceInfo info = store.getInfo();
-			System.out.println("labor inStore.info = "+info );
+			logger.fine("labor inStore.info = "+info);
 			try {
 				SimpleFeatureType schema = store.getSchema();
-				System.out.println("Prescription Type: "+DataUtilities.encodeType(schema));
-				System.out.println(schema);
+				logger.fine("Prescription Type: "+DataUtilities.encodeType(schema));
+				logger.fine(String.valueOf(schema));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

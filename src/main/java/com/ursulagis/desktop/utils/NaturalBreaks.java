@@ -22,7 +22,10 @@ import org.geotools.api.filter.expression.PropertyName;
 
 import org.locationtech.jts.geom.Geometry;
 
+import java.util.logging.Logger;
 public class NaturalBreaks {
+	private static final Logger logger = Logger.getLogger(NaturalBreaks.class.getName());
+
     private String amountCol ="";
     private int numClases=9;
     private double areaRef = 0;
@@ -154,8 +157,8 @@ public class NaturalBreaks {
         }
 //        localMax[numClases-1] = breaks[breaks.length-1];
 //        localMin[numClases-1] = breaks[breaks.length-1];
-        System.out.println("localMax: "+Arrays.toString(localMax));
-        System.out.println("localMin: "+Arrays.toString(localMin));
+        logger.fine("localMax: "+Arrays.toString(localMax));
+        logger.fine("localMin: "+Arrays.toString(localMin));
   
         return new RangedClassifier(localMin, localMax);
     }

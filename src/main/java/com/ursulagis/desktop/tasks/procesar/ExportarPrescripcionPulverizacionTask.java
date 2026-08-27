@@ -42,6 +42,7 @@ import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 
+import java.util.logging.Logger;
 /**
  * para el cufia la semilla es la 3ra culumna, los datos tienen que estar en enteros
  * diferencia entre AGFusion y 
@@ -52,6 +53,8 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
  */
 
 public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>{
+	private static final Logger logger = Logger.getLogger(ExportarPrescripcionPulverizacionTask.class.getName());
+
 	private PulverizacionLabor laborToExport=null;
 	private File outFile=null;
 	public boolean guardarConfig=true;
@@ -70,15 +73,15 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 		String typeDescriptor = "*the_geom:"+Polygon.class.getCanonicalName()+":4326,"
 				+ PulverizacionLabor.COLUMNA_DOSIS + ":java.lang.Long";
 		
-		System.out.println("creando type con: "+typeDescriptor); //$NON-NLS-1$ the_geom:Polygon:4326,Fert L:java.lang.Long,Fert C:java.lang.Long,seeding:java.lang.Long
-		System.out.println("Long.SIZE="+Long.SIZE);//64bits=16bytes. ok!! //$NON-NLS-1$
+		logger.fine("creando type con: "+typeDescriptor); //$NON-NLS-1$ the_geom:Polygon:4326,Fert L:java.lang.Long,Fert C:java.lang.Long,seeding:java.lang.Long
+		logger.fine("Long.SIZE="+Long.SIZE);//64bits=16bytes. ok!! //$NON-NLS-1$
 		try {
 			type = DataUtilities.createType("PrescType", typeDescriptor); //$NON-NLS-1$
 		} catch (SchemaException e) {
 			e.printStackTrace();
 		}
 
-		System.out.println("PrescType: "+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
+		logger.fine("PrescType: "+DataUtilities.encodeType(type));//PrescType: the_geom:Polygon,Rate:java.lang.Long //$NON-NLS-1$
 
 		List<LaborItem> items = new ArrayList<LaborItem>();
 	
@@ -120,7 +123,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 				SimpleFeature exportFeature = fb.buildFeature(null,new Object[] {p,dosisHa.longValue()});
 				boolean ret = exportFeatureCollection.add(exportFeature);
 				if(!ret) {
-					System.err.println("no se pudo agregar id "+id.toString()+" en ExportarPrescripcionPulverizacionTask");
+					logger.warning("no se pudo agregar id "+id.toString()+" en ExportarPrescripcionPulverizacionTask");
 				}
 			}
 			updateProgress(exportFeatureCollection.size(), items.size());
@@ -168,7 +171,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 			}
 		}		
 
-		System.out.println("despues de guardar el shp el schema es: "+ shapeFile); //$NON-NLS-1$
+		logger.fine("despues de guardar el shp el schema es: "+ shapeFile); //$NON-NLS-1$
 //		Configuracion config = Configuracion.getInstance();
 //		config.setProperty(Configuracion.LAST_FILE, shapeFile.getAbsolutePath());
 //		config.save();
@@ -247,7 +250,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 					buffered = colectionCat.union();
 					buffered =buffered.buffer(bufer);
 				}catch(Exception e){
-					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
+					logger.fine("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
 					//java.lang.IllegalArgumentException: Comparison method violates its general contract!
 					try{
 					buffered= EnhancedPrecisionOp.buffer(colectionCat, bufer);//java.lang.IllegalArgumentException: Comparison method violates its general contract!
@@ -283,7 +286,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 	
 	public void reabsorverZonasChicas( List<LaborItem> items) {
 		//TODO reabsorver zonas mas chicas a las mas grandes vecinas
-		System.out.println("tiene mas de 100 zonas, reabsorviendo..."); //$NON-NLS-1$
+		logger.fine("tiene mas de 100 zonas, reabsorviendo..."); //$NON-NLS-1$
 		//TODO tomar las 100 zonas mas grandes y reabsorver las otras en estas
 
 	

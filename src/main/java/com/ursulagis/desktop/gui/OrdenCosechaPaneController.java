@@ -47,7 +47,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.logging.Logger;
 public class OrdenCosechaPaneController extends Dialog<OrdenCosecha>{
+	private static final Logger logger = Logger.getLogger(OrdenCosechaPaneController.class.getName());
+
 	private static final String ORDEN_FERT_DESCRIPCION = "OrdenFert.DESCRIPCION";
 
 	private static final String ORDEN_FERT_CULTIVO = "OrdenFert.CULTIVO";
@@ -104,7 +107,7 @@ public class OrdenCosechaPaneController extends Dialog<OrdenCosecha>{
     
 	public OrdenCosechaPaneController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("OrdenFert.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -116,9 +119,9 @@ public class OrdenCosechaPaneController extends Dialog<OrdenCosecha>{
 
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
-			System.out.println("acion en okBtn");
+			logger.fine("acion en okBtn");
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -232,14 +235,14 @@ public class OrdenCosechaPaneController extends Dialog<OrdenCosecha>{
 		table.setEditable(false);
 
 		if(bpItems ==null) {
-			System.out.println("no puedo cargar la tabla porque caldoPane es null");
+			logger.fine("no puedo cargar la tabla porque caldoPane es null");
 		} else {
 			bpItems.setCenter(table);
 		}
 	}
 	
 	public void init() {
-		System.out.println("iniciando OrdenFertilizacionController");
+		logger.fine("iniciando OrdenFertilizacionController");
 		//VBox v= new VBox(new ImageView(new Image(JFXMain.ICON)));
 		this.getDialogPane().setContent(content);
 
@@ -263,7 +266,7 @@ public class OrdenCosechaPaneController extends Dialog<OrdenCosecha>{
 			
 			OrdenCosechaPaneController controller = ((OrdenCosechaPaneController) myLoader.getController());
 			if(controller==null) {
-				System.out.println("controller es null " + CONFIG_DIALOG_FXML);
+				logger.fine("controller es null " + CONFIG_DIALOG_FXML);
 			} else {
 				controller.setLabor(labor2);
 			controller.init();//null pointer
@@ -272,7 +275,7 @@ public class OrdenCosechaPaneController extends Dialog<OrdenCosecha>{
 			ret = controller.showAndWait();
 			}
 		} catch (Exception e1) {
-			System.err.println("no se pudo levantar el fxml " + CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml " + CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

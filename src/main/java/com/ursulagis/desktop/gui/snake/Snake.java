@@ -19,7 +19,10 @@ import gov.nasa.worldwind.render.ShapeAttributes;
 import gov.nasa.worldwind.render.Wedge;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
-public class Snake {	  
+import java.util.logging.Logger;
+public class Snake {
+	private static final Logger logger = Logger.getLogger(Snake.class.getName());
+	  
 	//	  static final int SCREEN_SIZE_X=40;         // In units of snake sections.
 	//	  static final int SCREEN_SIZE_Y=30;
 	public static double scale = 10000;
@@ -208,12 +211,12 @@ public class Snake {
 		//TODO validate new hading between -180 and +180
 		int ofset=0;
 		if(newHeading.degrees>180 || newHeading.degrees<-180) {		
-			System.err.println("new heading error");
+			logger.warning("new heading error");
 			//turning snake -10 from -180.0� newHeading -190.0�
 			ofset = newHeading.degrees>0?-360:360;
 			newHeading = newHeading.addDegrees(ofset);	
 		}
-		System.out.println("turning snake "+degrees+" from "+heading+" newHeading "+newHeading);
+		logger.fine("turning snake "+degrees+" from "+heading+" newHeading "+newHeading);
 		this.heading=newHeading;
 		Angle head = snakeHead.getHeading(); 		
 		Angle newHeadHeading=head.addDegrees(degrees+ofset);		

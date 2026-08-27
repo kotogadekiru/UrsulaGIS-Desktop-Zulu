@@ -19,7 +19,10 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.TextAlignment;
 
+import java.util.logging.Logger;
 public class DoubleTableColumn<T> extends TableColumn<T,String> {
+	private static final Logger logger = Logger.getLogger(DoubleTableColumn.class.getName());
+
 	public DoubleTableColumn(String title,Function<T,Double>  getMethod, BiConsumer<T,Double> setMethod){
 		super(title);	
 		setEditable(setMethod != null);
@@ -40,7 +43,7 @@ public class DoubleTableColumn<T> extends TableColumn<T,String> {
 				//cellData.getTableView().refresh();
 				return new SimpleStringProperty(stringValue);	
 			}catch(Exception e){
-				System.out.println("Fall� el Decimal Format en DoubleTableColumn "+title +" para "+doubleValue);
+				logger.fine("Fall� el Decimal Format en DoubleTableColumn "+title +" para "+doubleValue);
 				return new SimpleStringProperty(String.valueOf(doubleValue));
 			}
 		});
@@ -99,7 +102,7 @@ public class DoubleTableColumn<T> extends TableColumn<T,String> {
 	public static DoubleTableColumn<Map<String,Object>> createMapTableColumn(String k) {
 		DoubleTableColumn<Map<String,Object>> dColumn = new DoubleTableColumn<Map<String,Object>>(k,
 				(p)->{	try {//getMethod
-					System.out.println("obteniendo "+k);
+					logger.fine("obteniendo "+k);
 					Number n =(Number) p.get(k);
 					if(n!=null) {
 						return n.doubleValue();
@@ -109,7 +112,7 @@ public class DoubleTableColumn<T> extends TableColumn<T,String> {
 				} catch (Exception e) {	e.printStackTrace();}
 				return null;
 				},(p,d)->{ try {//setMethod
-					System.out.println("tratando de editar "+k);
+					logger.fine("tratando de editar "+k);
 					p.put(k,d);
 					//tabla.refresh();
 				} catch (Exception e) {	e.printStackTrace();}

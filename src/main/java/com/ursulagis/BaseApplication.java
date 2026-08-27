@@ -20,7 +20,10 @@ import com.ursulagis.plugin.*;
 
 import static javax.swing.filechooser.FileSystemView.getFileSystemView;
 
+import java.util.logging.Logger;
 public class BaseApplication extends Application implements Log {
+	private static final Logger logger = Logger.getLogger(BaseApplication.class.getName());
+
 
     public static File outputFile;
     /**
@@ -90,8 +93,8 @@ public class BaseApplication extends Application implements Log {
             try {
                 plugin.setup(stage, textArea, toolbar, this, menuBar);
             } catch (Exception e) {
-                System.err.println("Unable to start plugin");
-                System.err.println(plugin.getClass().getName());
+                logger.warning("Unable to start plugin");
+                logger.warning(plugin.getClass().getName());
                 e.printStackTrace();
                 log("Unable to start plugin");
                 log(plugin.getClass().getName());

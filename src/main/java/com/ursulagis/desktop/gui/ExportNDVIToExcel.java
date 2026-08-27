@@ -38,7 +38,10 @@ import javafx.util.Duration;
 import com.ursulagis.desktop.tasks.ShowNDVITifFileTask;
 import com.ursulagis.desktop.utils.ExcelHelper;
 
+import java.util.logging.Logger;
 public class ExportNDVIToExcel {
+	private static final Logger logger = Logger.getLogger(ExportNDVIToExcel.class.getName());
+
 	private WorldWindow wwd;
 	private LayerPanel layerPanel;
 	private static final String YYYY_MM_DD = "yyyy-MM-dd";
@@ -99,7 +102,7 @@ public class ExportNDVIToExcel {
 				Sector sector =  surface.getSector();
 				
 				int[] dim = surface.getDimensions();
-				System.out.println("dimensions " + Arrays.toString(dim));
+				logger.fine("dimensions " + Arrays.toString(dim));
 				
 				final int width = dim[0];
 				final int height = dim[1];
@@ -155,7 +158,7 @@ public class ExportNDVIToExcel {
 			}
 		}
 
-		System.out.println("creando excel con "+data.size()+" lineas");
+		logger.fine("creando excel con "+data.size()+" lineas");
 		ExcelHelper excelHelper=new ExcelHelper();
 		excelHelper.exportData("ndvi", data);
 	}

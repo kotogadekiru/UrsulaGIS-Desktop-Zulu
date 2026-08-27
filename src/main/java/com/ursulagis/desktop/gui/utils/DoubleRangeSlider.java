@@ -19,10 +19,13 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.util.StringConverter;
 
+import java.util.logging.Logger;
 /**
  * Misma estructura que {@link DateRangeSlider}, para filtrar por un rango numérico (% nublado).
  */
 public class DoubleRangeSlider {
+	private static final Logger logger = Logger.getLogger(DoubleRangeSlider.class.getName());
+
 	private Double min, max, low, high;
 	private RangeSlider innerSlider;
 	private StringProperty rangeProperty;
@@ -37,7 +40,7 @@ public class DoubleRangeSlider {
 		innerSlider.setShowTickMarks(true);
 		innerSlider.setShowTickLabels(true);
 		double deltaTick = innerSlider.getMax() - innerSlider.getMin();
-		System.out.println("delta ticks " + deltaTick);
+		logger.fine("delta ticks " + deltaTick);
 		innerSlider.setMajorTickUnit(deltaTick / 5);
 
 		innerSlider.setLabelFormatter(createConverter());
@@ -93,10 +96,10 @@ public class DoubleRangeSlider {
 		Optional<ButtonType> res = rangeDialog.showAndWait();
 		if (res.get().equals(ButtonType.OK)) {
 			updateLowHigh();
-			System.out.println("seleccione nublado low " + low + " high " + high);
+			logger.fine("seleccione nublado low " + low + " high " + high);
 		} else {
-			System.out.println("ok button not selected");
-			System.out.println(res.get().getText() + " pressed");
+			logger.fine("ok button not selected");
+			logger.fine(res.get().getText() + " pressed");
 		}
 	}
 

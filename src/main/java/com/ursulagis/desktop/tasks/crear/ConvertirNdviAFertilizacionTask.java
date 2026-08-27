@@ -36,7 +36,10 @@ import com.ursulagis.desktop.tasks.ShowNDVITifFileTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<FertilizacionItem,FertilizacionLabor> {
+	private static final Logger logger = Logger.getLogger(ConvertirNdviAFertilizacionTask.class.getName());
+
 	public double  ndviMin = ShowNDVITifFileTask.MIN_VALUE;//0.2;
 	public double  ndviMax = 1;//ShowNDVITifFileTask.MIN_VALUE;//0.2;
 	private boolean correguirOutlayer=false;
@@ -50,7 +53,7 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		dosisMin = _dosisMin;
 		ndvi=_ndvi;
 		correguirOutlayer=labor.getConfigLabor().correccionOutlayersEnabled();
-		System.out.println("CooregirOut: " + correguirOutlayer);
+		logger.fine("CooregirOut: " + correguirOutlayer);
 	}
 	
 	public void doProcess() throws IOException {
@@ -87,14 +90,14 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		}
 		
 		if(size == 0){
-			System.err.println("no hay puntos iterables para obtener el promedio");
+			logger.warning("no hay puntos iterables para obtener el promedio");
 			return;
 		}
 		this.featureCount=size;
 		Double averageNdvi = Double.valueOf(sum/size);
-		System.out.println("el promedio de los ndvi es "+averageNdvi);
-		System.out.println("maxNDVI "+max);
-		System.out.println("minNDVI "+min);
+		logger.fine("el promedio de los ndvi es "+averageNdvi);
+		logger.fine("maxNDVI "+max);
+		logger.fine("minNDVI "+min);
 		// si el rinde promedio es >0.5 => NDVI_RINDE_CERO es 0.3
 		//si el rinde promedio es <0.5 => NDVI_RINDE_CERO es 0.1
 		//chequear el minimo ndvi segun el cultivo? para el trigo inicial en macollo el minimo de 0.5 es malo
@@ -153,8 +156,8 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		final double ndviMin = min;
 		Function<Double,Double> calcDosis = (ndvi)->pendiente*(ndvi-ndviMin)+origen;
 		
-		System.out.println("min= "+min+" => "+calcDosis.apply(min));
-		System.out.println("max= "+max+" => "+calcDosis.apply(max));
+		logger.fine("min= "+min+" => "+calcDosis.apply(min));
+		logger.fine("max= "+max+" => "+calcDosis.apply(max));
 		
 		//logaritmica
 //		double pendienteNdviRinde=averageNdvi>NDVI_RINDE_CERO?Math.log(rindeProm)/(Math.log(averageNdvi)-Math.log(NDVI_RINDE_CERO)):1;
@@ -168,7 +171,7 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		Geometry contornoGeom =null;
 		if(contorno !=null) {
 			contornoGeom = contorno.toGeometry();
-			System.out.println("hay controno");
+			logger.fine("hay controno");
 		}
 		
 		for (int y = 0; y < height; y++){
@@ -212,7 +215,7 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 						try {
 						poly=GeometryHelper.getIntersection(poly,contornoGeom);
 						if(poly == null || poly.isEmpty())continue;
-						System.out.println("el contorno no cubre el polygono y la interseccion es: "+poly.toText());
+						logger.fine("el contorno no cubre el polygono y la interseccion es: "+poly.toText());
 						}catch(Exception e) {//org.locationtech.jts.geom.TopologyException: Found null DirectedEdge
 							e.printStackTrace();//org.locationtech.jts.geom.TopologyException: side location conflict [ (-61.920393510481325, -33.66456750394795, NaN) ]
 						}
@@ -223,7 +226,7 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 					SimpleFeature f = ci.getFeature(fBuilder);
 					boolean res = features.add(f);
 					if(!res){
-						System.out.println("no se pudo agregar la feature "+ci);
+						logger.fine("no se pudo agregar la feature "+ci);
 					}
 				//	labor.insertFeature(ci);
 				//	itemsToShow.add(ci);
@@ -247,13 +250,13 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){//XXX si esto falla es provablemente porque se estan creando mas de una feature con el mismo id
-			System.out.println("no se pudieron agregar las features al outCollection");
+			logger.fine("no se pudieron agregar las features al outCollection");
 		}
 	//	
 		if (correguirOutlayer) {
 				//System.out.println("corrijo outlayer" + labor.config.getAnchoFiltroOutlayers());
 				corregirOutlayersParalell();
-				System.out.println("corrio outlayer");
+				logger.fine("corrio outlayer");
 		}		
 		labor.constructClasificador();	
 		runLater(this.getItemsList());
@@ -306,7 +309,7 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 	
 	private void corregirOutlayersParalell() {			
 		//GeodeticCalculator calc = new GeodeticCalculator(DefaultEllipsoid.WGS84); 
-		System.out.println("se corrije Paralel outliers");
+		logger.fine("se corrije Paralel outliers");
 		//1) crear un circulo de radio a definir y centro en el centroide de la cosecha
 		double ancho = 10;
 		double alfa = 0;
@@ -336,10 +339,10 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 							//This method is safe to be called from any thread.	
 							//updateProgress((list.size()+featureCount)/2, featureCount);
 						} else{
-							System.out.println("la query devolvio cero elementos"); //$NON-NLS-1$
+							logger.fine("la query devolvio cero elementos"); //$NON-NLS-1$
 						}
 					}catch(Exception e){
-						System.err.println("error en corregirOutliersParalell"); //$NON-NLS-1$
+						logger.warning("error en corregirOutliersParalell"); //$NON-NLS-1$
 						e.printStackTrace();
 					}
 				},	(list1, list2) -> list1.addAll(list2));
@@ -349,14 +352,14 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection("internal",labor.getType());		 //$NON-NLS-1$
 		boolean res = newOutcollection.addAll(filteredFeatures);
 		if(!res){
-			System.out.println("fallo el addAll(filteredFeatures)"); 
+			logger.fine("fallo el addAll(filteredFeatures)"); 
 		}
 
 		labor.clearCache();
 
 		int endtOutCollectionSize = newOutcollection.size();
 		if(initOutCollectionSize !=endtOutCollectionSize){
-			System.err.println("se perdieron elementos al hacer el filtro de outlayers. init="
+			logger.warning("se perdieron elementos al hacer el filtro de outlayers. init="
 					+initOutCollectionSize
 					+" end="+endtOutCollectionSize); 
 		}
@@ -461,8 +464,8 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 			//			promedioRinde = Math.max(promedioRinde,labor.minRindeProperty.doubleValue());
 			promedioAltura = sumatoriaAltura/divisor;
 		}else{
-			System.out.println("divisor es <0"+ divisor); //$NON-NLS-1$
-			System.out.println("sumatoria de rindes ="+sumatoriaRinde); //$NON-NLS-1$
+			logger.fine("divisor es <0"+ divisor); //$NON-NLS-1$
+			logger.fine("sumatoria de rindes ="+sumatoriaRinde); //$NON-NLS-1$
 		}
 		//4) obtener la varianza (LA DIF ABSOLUTA DEL DATO Y EL PROM DE LA MUESTRA) (EJ. ABS(10-9.3)/9.3 = 13%)
 		//SI 13% ES MAYOR A TOLERANCIA CV% REEMPLAZAR POR PROMEDIO SINO NO
@@ -470,10 +473,10 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		if(!(promedioRinde==0)){
 			double coefVariacionCosechaFeature = Math.abs(rindeCosechaFeature-promedioRinde)/promedioRinde;
 		//	cosechaFeature.setDesvioRinde(coefVariacionCosechaFeature);
-			System.out.println("EL COEFICIENTE ES: " + coefVariacionCosechaFeature);
+			logger.fine("EL COEFICIENTE ES: " + coefVariacionCosechaFeature);
 			if(coefVariacionCosechaFeature > 0 ||!rindeEnRango){//si el coeficiente de variacion es mayor al 20% no es homogeneo
 				//El valor esta fuera de los parametros y modifico el valor por el promedio
-					System.out.println("reemplazo "+cosechaFeature.getDosistHa()+" por "+promedioRinde);
+					logger.fine("reemplazo "+cosechaFeature.getDosistHa()+" por "+promedioRinde);
 				cosechaFeature.setDosistHa(promedioRinde);
 
 				cosechaFeature.setElevacion(promedioAltura);
@@ -497,7 +500,7 @@ public class ConvertirNdviAFertilizacionTask extends ProcessMapTask<Fertilizacio
 		5, 5*0.5,
 		10, 10);
 		for(double i=0;i<11;i++) {
-			System.out.println("x= "+i+" y= "+calcDosis.apply(i));
+			logger.fine("x= "+i+" y= "+calcDosis.apply(i));
 		}
 
 		

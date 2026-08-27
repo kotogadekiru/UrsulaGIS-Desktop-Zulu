@@ -53,7 +53,10 @@ import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.JsonUtil;
 
 
+import java.util.logging.Logger;
 public class CotizarOdenDeCompraOnlineTask extends Task<String> {
+	private static final Logger logger = Logger.getLogger(CotizarOdenDeCompraOnlineTask.class.getName());
+
 
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
 	public static final String ZOOM_TO_KEY = "ZOOM_TO";
@@ -72,8 +75,8 @@ public class CotizarOdenDeCompraOnlineTask extends Task<String> {
 
 	public CotizarOdenDeCompraOnlineTask(OrdenCompra orden) {
 		this.ordenCompra = orden;		
-		System.out.println("compartiendo OrdenCompra "+orden);
-		System.out.println("items "+orden.getItems().size());
+		logger.fine("compartiendo OrdenCompra "+orden);
+		logger.fine("items "+orden.getItems().size());
 	}
 
 	@Override
@@ -84,10 +87,10 @@ public class CotizarOdenDeCompraOnlineTask extends Task<String> {
 
 			Gson gson = getGson();//new GsonBuilder().serializeNulls().setExclusionStrategies( getJSonStrategy()).create();
 		
-			System.out.println("convirtiendo OrdenCompra a json "+ordenCompra);
+			logger.fine("convirtiendo OrdenCompra a json "+ordenCompra);
 
 			String json_body = gson.toJson(ordenCompra, OrdenCompra.class);
-			System.out.println("sending OrdenCompra "+ json_body);			
+			logger.fine("sending OrdenCompra "+ json_body);			
 
 			final HttpContent content = new ByteArrayContent("application/json", json_body.getBytes("UTF8") );
 
@@ -98,13 +101,13 @@ public class CotizarOdenDeCompraOnlineTask extends Task<String> {
 			Reader reader = new InputStreamReader(resContent);
 
 			StandardResponse standarResponse =  new Gson().fromJson(reader, StandardResponse.class);
-			System.out.println("standarResponse = "+standarResponse);
+			logger.fine("standarResponse = "+standarResponse);
 				
 			StandardResponse.StatusResponse status = standarResponse.getStatus();
-			System.out.println("response status = "+status);
+			logger.fine("response status = "+status);
 			if(StandardResponse.StatusResponse.SUCCESS.equals(status)) {				
 				JsonElement data = standarResponse.getData();
-				System.out.println("orden compra subida correctamente");
+				logger.fine("orden compra subida correctamente");
 				if(data !=null) {
 					// Failed to invoke public dao.OrdenDeCompra.Producto() with no args
 					//FIXME cambiar estrategia de producto a JoinedTable y crear un descerializador que convierta de producto a productoGenerico o fertilizacion etc.
@@ -136,7 +139,7 @@ public class CotizarOdenDeCompraOnlineTask extends Task<String> {
 			@Override
 			public Producto deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
 					throws JsonParseException {
-				System.out.println("des serializando "+json+" type "+typeOfT);
+				logger.fine("des serializando "+json+" type "+typeOfT);
 				/*
 				des serializando {"nombre":"Urea","porcN":46.0,"porcP":0.0,"porcK":0.0,"porcS":0.0,"id":29954} type class models.OrdenDeCompra.Producto
 				des serializando {"nombre":"Labor de Fertilizacion","id":8553} type class models.OrdenDeCompra.Producto
@@ -258,7 +261,7 @@ public class CotizarOdenDeCompraOnlineTask extends Task<String> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

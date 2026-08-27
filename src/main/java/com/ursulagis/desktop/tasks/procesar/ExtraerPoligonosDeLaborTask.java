@@ -37,7 +37,10 @@ import javafx.scene.paint.Color;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
+	private static final Logger logger = Logger.getLogger(ExtraerPoligonosDeLaborTask.class.getName());
+
 	private static final String TASK_CLOSE_ICON = Messages.getString("ExtraerPoligonosDeLaborTask.0"); //$NON-NLS-1$
 
 	private ProgressBar progressBarTask;
@@ -104,7 +107,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 					}
 					poligonos.add(poli);
 				} else{
-					System.out.println("el polígono es chico"+has); //$NON-NLS-1$
+					logger.fine("el polígono es chico"+has); //$NON-NLS-1$
 				}
 				//}
 				index++;
@@ -330,7 +333,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask"); //$NON-NLS-1$
+			logger.fine("cancelando el ProcessMapTask"); //$NON-NLS-1$
 			this.cancel();
 			this.uninstallProgressBar();
 		});
@@ -411,7 +414,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 					buffered = colectionCat.union();
 					buffered =buffered.buffer(bufer);
 				}catch(Exception e){
-					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
+					logger.fine("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
 					//java.lang.IllegalArgumentException: Comparison method violates its general contract!
 					try{
 					buffered= EnhancedPrecisionOp.buffer(colectionCat, bufer);//java.lang.IllegalArgumentException: Comparison method violates its general contract!
@@ -447,7 +450,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 	public void reabsorverZonasChicas( List<LaborItem> items) {
 		if(items.size()<100)return;
 		//TODO reabsorver zonas mas chicas a las mas grandes vecinas
-		System.out.println("tiene mas de 100 zonas, reabsorviendo..."); //$NON-NLS-1$
+		logger.fine("tiene mas de 100 zonas, reabsorviendo..."); //$NON-NLS-1$
 		//TODO tomar las 100 zonas mas grandes y reabsorver las otras en estas
 
 	

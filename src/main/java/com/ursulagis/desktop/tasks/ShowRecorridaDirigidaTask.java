@@ -13,7 +13,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import com.ursulagis.desktop.tasks.procesar.GenerarRecorridaDirigidaTask;
 
+import java.util.logging.Logger;
 public class ShowRecorridaDirigidaTask extends Task<RenderableLayer> {
+	private static final Logger logger = Logger.getLogger(ShowRecorridaDirigidaTask.class.getName());
+
 
 
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
@@ -67,7 +70,7 @@ public class ShowRecorridaDirigidaTask extends Task<RenderableLayer> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("Cancelando GenerarRecorridaDirigidaTask");
+			logger.fine("Cancelando GenerarRecorridaDirigidaTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

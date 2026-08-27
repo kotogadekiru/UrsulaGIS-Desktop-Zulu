@@ -40,7 +40,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.logging.Logger;
 public class OrdenSiembraPaneController extends Dialog<OrdenSiembra>{
+	private static final Logger logger = Logger.getLogger(OrdenSiembraPaneController.class.getName());
+
 	private static final String ORDEN_SIEMBRA_DESCRIPCION = "OrdenSiembra.DESCRIPCION";
 
 	private static final String ORDEN_SIEMBRA_CULTIVO = "OrdenSiembra.CULTIVO";
@@ -102,7 +105,7 @@ public class OrdenSiembraPaneController extends Dialog<OrdenSiembra>{
 
 	public OrdenSiembraPaneController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("OrdenSiem.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -114,9 +117,9 @@ public class OrdenSiembraPaneController extends Dialog<OrdenSiembra>{
 
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
-			System.out.println("acion en okBtn");
+			logger.fine("acion en okBtn");
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -239,14 +242,14 @@ public class OrdenSiembraPaneController extends Dialog<OrdenSiembra>{
 		table.setEditable(false);
 
 		if(bpItems ==null) {
-			System.out.println("no puedo cargar la tabla porque caldoPane es null");
+			logger.fine("no puedo cargar la tabla porque caldoPane es null");
 		} else {
 			bpItems.setCenter(table);
 		}
 	}
 
 	public void init() {
-		System.out.println("iniciando OrdenSiembraController");
+		logger.fine("iniciando OrdenSiembraController");
 		//VBox v= new VBox(new ImageView(new Image(JFXMain.ICON)));
 		this.getDialogPane().setContent(content);
 
@@ -270,7 +273,7 @@ public class OrdenSiembraPaneController extends Dialog<OrdenSiembra>{
 
 			OrdenSiembraPaneController controller = ((OrdenSiembraPaneController) myLoader.getController());
 			if(controller==null) {
-				System.out.println("controller es null "+CONFIG_DIALOG_FXML);
+				logger.fine("controller es null "+CONFIG_DIALOG_FXML);
 			} else {
 				controller.setLabor(labor2);
 				controller.init();//null pointer
@@ -279,7 +282,7 @@ public class OrdenSiembraPaneController extends Dialog<OrdenSiembra>{
 				ret = controller.showAndWait();
 			}
 		} catch (Exception e1) {
-			System.err.println("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

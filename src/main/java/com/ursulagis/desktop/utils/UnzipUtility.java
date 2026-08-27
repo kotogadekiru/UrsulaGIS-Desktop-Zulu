@@ -15,6 +15,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import java.util.logging.Logger;
 /**
  * This utility extracts files and directories of a standard zip file to
  * a destination directory.
@@ -22,6 +23,8 @@ import java.util.zip.ZipOutputStream;
  *
  */
 public class UnzipUtility {
+	private static final Logger logger = Logger.getLogger(UnzipUtility.class.getName());
+
 	/**
 	 * Size of the buffer to read/write data
 	 */
@@ -39,13 +42,13 @@ public class UnzipUtility {
 		
 		try {
 			ZipEntry entry = zipIn.getNextEntry();
-			System.out.println("reading entry "+entry.getName());
+			logger.fine("reading entry "+entry.getName());
 			while (entry != null) {
 				if (!entry.isDirectory()) {					
 					byte[] bytes = extractBytes(zipIn);
 					entrys.put(entry,bytes);
 				}				
-				System.out.println("\nfinished reading bytes");
+				logger.fine("\nfinished reading bytes");
 								
 				zipIn.closeEntry();
 				entry = zipIn.getNextEntry();
@@ -54,7 +57,7 @@ public class UnzipUtility {
 		} catch (Exception e) {			
 			e.printStackTrace();
 		}		
-		System.out.println("returning entrys "+entrys.size());
+		logger.fine("returning entrys "+entrys.size());
 		return entrys;
 	}
 	
@@ -167,7 +170,7 @@ public class UnzipUtility {
 			//remember close it
 			zos.close();
 
-			System.out.println("Done");
+			logger.fine("Done");
 
 		}catch(IOException ex){
 			ex.printStackTrace();

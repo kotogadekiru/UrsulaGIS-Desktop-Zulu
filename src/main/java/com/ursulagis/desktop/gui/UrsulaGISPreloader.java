@@ -30,11 +30,14 @@ import java.io.IOException;
 
 import com.ursulagis.desktop.tasks.UpdateTask;
 
+import java.util.logging.Logger;
 /**
  * Preloader for UrsulaGIS Desktop application
  * Shows a branded loading screen while the main application initializes
  */
 public class UrsulaGISPreloader extends Preloader {
+	private static final Logger logger = Logger.getLogger(UrsulaGISPreloader.class.getName());
+
     
     private static final String ICON_PATH = "U_nueva_3_256x256_verde.png";
     //private static final String FALLBACK_ICON_PATH = "gui/U_nueva_256x256_verde.png";
@@ -53,7 +56,7 @@ public class UrsulaGISPreloader extends Preloader {
     public void init() throws Exception {
         message = UpdateTask.checkForUpdate();
         if(message==null)message="<html><body><h>No Network!</h></body></html>";
-        System.out.println("UrsulaGISPreloader init message: " + message);
+        logger.fine("UrsulaGISPreloader init message: " + message);
     }
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -91,10 +94,10 @@ public class UrsulaGISPreloader extends Preloader {
             if (this.engine.getLoadWorker().isRunning()) {
                 boolean cancelled = this.engine.getLoadWorker().cancel();
                 if (cancelled) {
-                    System.out.println("WebEngine load cancelled successfully.");
+                    logger.fine("WebEngine load cancelled successfully.");
                 }
             }
-            System.out.println("preloaderStage onHiding");
+            logger.fine("preloaderStage onHiding");
         });
         // Show the preloader
         primaryStage.show();
@@ -143,13 +146,13 @@ public class UrsulaGISPreloader extends Preloader {
         if (info instanceof ProgressNotification) {
             ProgressNotification progressInfo = (ProgressNotification) info;
             double progress = progressInfo.getProgress();
-            System.out.println("handleApplicationNotification progress: " + progress);
+            logger.fine("handleApplicationNotification progress: " + progress);
 
             if(progress>0.8){
                 Stage stage = JFXMain.stage;
               
                 if(stage!=null ){
-                    System.out.println("showing stage");   
+                    logger.fine("showing stage");   
                     stage.show();	
                     //&& stage.isShowing()
                     this.preloaderStage.toFront();
@@ -159,18 +162,18 @@ public class UrsulaGISPreloader extends Preloader {
          //   Platform.runLater(() -> {
                 if (progressBar != null) {
                     progressBar.setProgress(progress);
-                    System.out.println("Progress bar updated to: " + progress);
+                    logger.fine("Progress bar updated to: " + progress);
                 }
            // });
 
         } else if (info instanceof StateChangeNotification) {
             StateChangeNotification stateInfo = (StateChangeNotification) info;
             if (stateInfo.getType() == Type.BEFORE_INIT) {
-              System.out.println("BEFORE_INIT");
+              logger.fine("BEFORE_INIT");
             } else if (stateInfo.getType() == Type.BEFORE_LOAD) {
-                System.out.println("BEFORE_LOAD");
+                logger.fine("BEFORE_LOAD");
             } else if (stateInfo.getType() == Type.BEFORE_START) {
-                System.out.println("BEFORE_START");
+                logger.fine("BEFORE_START");
             }
         }
     }

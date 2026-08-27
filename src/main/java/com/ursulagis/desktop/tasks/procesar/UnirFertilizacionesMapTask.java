@@ -30,7 +30,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearFertilizacionMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem,FertilizacionLabor> {
+	private static final Logger logger = Logger.getLogger(UnirFertilizacionesMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -79,7 +82,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		
 		// Validar que haya fertilizaciones habilitadas
 		if(fertilizaciones.isEmpty()){
-			System.err.println("No hay fertilizaciones habilitadas para procesar");
+			logger.warning("No hay fertilizaciones habilitadas para procesar");
 			return;
 		}
 		
@@ -92,7 +95,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 			}
 			if(labor.fertilizante==null){//inicializo las propiedades con los valores de la primera fert unida
 				//esto no se corre porque en el constructor se inicializa con los valores default
-				System.out.println("inicializando las variables de la nueva fertilizacion con los de la primera fert a unir");
+				logger.fine("inicializando las variables de la nueva fertilizacion con los de la primera fert a unir");
 				labor.fertilizante=fert.fertilizante;
 				labor.setPrecioInsumo(fert.getPrecioInsumo());
 				labor.setFecha(fert.getFecha());
@@ -123,7 +126,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		
 		// Validar que se haya obtenido un envelope válido
 		if(unionEnvelope == null || unionEnvelope.isEmpty()){
-			System.err.println("No se pudo obtener un envelope válido de las fertilizaciones");
+			logger.warning("No se pudo obtener un envelope válido de las fertilizaciones");
 			return;
 		}
 		
@@ -135,7 +138,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		List<Polygon>  grilla = GrillarCosechasMapTask.construirGrilla(unionEnvelope, ancho);
 		//List<Polygon>  grilla = construirGrillaTriangular(unionEnvelope, ancho);
 		//double elementos = grilla.size();
-		System.out.println("creando una grilla con "+grilla.size()+" elementos");
+		logger.fine("creando una grilla con "+grilla.size()+" elementos");
 		// 3 recorrer cada pixel de la grilla promediando los valores y generando los nuevos items de la cosecha
 		List<SimpleFeature> features = Collections.synchronizedList(new ArrayList<SimpleFeature>());
 
@@ -164,7 +167,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 									if(f!=null){
 										boolean res = features.add(f);
 										if(!res){
-											System.out.println("no se pudo agregar la feature "+f);
+											logger.fine("no se pudo agregar la feature "+f);
 										}
 									}
 								}
@@ -172,7 +175,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 								updateProgress( this.featureNumber, featureCount);
 
 							}catch(Exception e){
-								System.err.println("error al construir un elemento de la grilla");
+								logger.warning("error al construir un elemento de la grilla");
 								e.printStackTrace();
 							}
 						},
@@ -183,7 +186,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 			l.clearCache();
 		}
 
-		System.out.println("cree una union de "+byPolygon.size()+" elementos");
+		logger.fine("cree una union de "+byPolygon.size()+" elementos");
 
 		//FIXME esto hace que la grilla no tenga memoria
 		if(labor.inCollection == null){
@@ -192,7 +195,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){//XXX si esto falla es provablemente porque se estan creando mas de una feature con el mismo id
-			System.out.println("no se pudieron agregar las features al outCollection");
+			logger.fine("no se pudieron agregar las features al outCollection");
 		}
 
 		// 4 mostrar la fertilizacion sintetica creada
@@ -203,7 +206,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 		runLater(byPolygon.values());
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println("tarde "+time+" milisegundos en unir las fertilizaciones.");
+		logger.fine("tarde "+time+" milisegundos en unir las fertilizaciones.");
 	}
 
 //	@Override
@@ -240,7 +243,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 			try{
 				// Validar que la geometría sea válida antes de la intersección
 				if(!g.isValid()){
-					System.err.println("Geometría inválida detectada, intentando corregir: "+g);
+					logger.warning("Geometría inválida detectada, intentando corregir: "+g);
 					g = g.buffer(0); // Intenta corregir geometrías inválidas
 				}
 				Geometry intersection = EnhancedPrecisionOp.intersection(poly, g);
@@ -256,7 +259,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 					}
 				}
 			}catch(Exception e){
-				System.err.println("no se pudo hacer la interseccion entre\n"+poly+"\n y\n"+g);
+				logger.warning("no se pudo hacer la interseccion entre\n"+poly+"\n y\n"+g);
 				e.printStackTrace();
 			}		
 		}
@@ -281,7 +284,7 @@ public class UnirFertilizacionesMapTask extends ProcessMapTask<FertilizacionItem
 				return null;
 			}
 		}catch(Exception e){	
-			System.err.println("fallo convexHull de collectionCat");
+			logger.warning("fallo convexHull de collectionCat");
 			e.printStackTrace();
 			return null;
 		}

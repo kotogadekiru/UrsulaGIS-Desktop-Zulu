@@ -19,7 +19,10 @@ import javafx.scene.input.KeyCode;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 
+import java.util.logging.Logger;
 public class SnakesLayer extends RenderableLayer {
+	private static final Logger logger = Logger.getLogger(SnakesLayer.class.getName());
+
 	Timer timer= new Timer();
 	AdvanceTheSnakeTask advanceTask = new AdvanceTheSnakeTask(this);
 	final double MIN_TIME_INTERVAL=5;
@@ -40,9 +43,9 @@ public class SnakesLayer extends RenderableLayer {
 		createStartFood();
 
 		// First thing to do: Start up the periodic task:
-		System.out.println("About to start the snake.");
+		logger.fine("About to start the snake.");
 		startTimer(millisecs);   // Argument is number of milliseconds per snake move.
-		System.out.println("Snake started.");
+		logger.fine("Snake started.");
 
 
 		JFXMain.stage.getScene().setOnKeyPressed(event->{
@@ -60,7 +63,7 @@ public class SnakesLayer extends RenderableLayer {
 		for(int i=0;i<1000;i++) {
 			food.add(getNewFood());
 		}
-		System.out.println("start food created "+food.size());
+		logger.fine("start food created "+food.size());
 	}
 	
 	public void createSnakes() {
@@ -90,7 +93,7 @@ public class SnakesLayer extends RenderableLayer {
 		public AdvanceTheSnakeTask(SnakesLayer _layer) {
 			super();
 			layer = _layer;
-			System.out.println("AdvanceTheSnakeTask Constructor");
+			logger.fine("AdvanceTheSnakeTask Constructor");
 		}
 		public void run() {
 			// Put stuff here that should happen during every advance.
@@ -198,12 +201,12 @@ public class SnakesLayer extends RenderableLayer {
 	}
 
 	public void redSnakeLeft() {
-		System.out.println("turning left");
+		logger.fine("turning left");
 		redSnake.turnLeft();
 	}
 	
 	public void redSnakeRight() {
-		System.out.println("turning right");
+		logger.fine("turning right");
 		redSnake.turnRight();
 	}
 	
@@ -223,7 +226,7 @@ public class SnakesLayer extends RenderableLayer {
 	}
 
 	public void stop() {
-		System.out.println("stopping timer in SnakeLayer");
+		logger.fine("stopping timer in SnakeLayer");
 		this.stop=true;
 		if(timer!=null) {
 			timer.cancel();

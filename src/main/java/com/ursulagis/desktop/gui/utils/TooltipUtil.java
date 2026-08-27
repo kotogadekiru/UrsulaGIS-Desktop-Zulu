@@ -6,7 +6,10 @@ import java.lang.reflect.Field;
 import javafx.scene.control.Tooltip;
 import javafx.util.Duration;
 
+import java.util.logging.Logger;
 public class TooltipUtil {
+	private static final Logger logger = Logger.getLogger(TooltipUtil.class.getName());
+
 	/**
      * <p>
      * Tooltip behavior is controlled by a private class javafx.scene.control.Tooltip$TooltipBehavior.
@@ -59,7 +62,7 @@ public static void setupCustomTooltipBehavior(int openDelayInMillis, int visible
             ttbehaviourField.set(Tooltip.class, newTTBehaviour);
              
         } catch (Exception e) {
-            System.out.println("Aborted setup due to error:" + e.getMessage());
+            logger.fine("Aborted setup due to error:" + e.getMessage());
         }
     }
 }

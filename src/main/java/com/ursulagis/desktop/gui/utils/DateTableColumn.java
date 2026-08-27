@@ -13,7 +13,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.TextAlignment;
 
+import java.util.logging.Logger;
 public class DateTableColumn<T> extends TableColumn<T, Date> {
+	private static final Logger logger = Logger.getLogger(DateTableColumn.class.getName());
+
 	public DateTableColumn(String title,Function<T,Calendar>  getMethod, BiConsumer<T,Calendar> setMethod){
 		super(title);	
 		setEditable(setMethod != null);
@@ -23,7 +26,7 @@ public class DateTableColumn<T> extends TableColumn<T, Date> {
 			try{
 				return new SimpleObjectProperty<Date>(calendarValue.getTime());	
 			}catch(Exception e){
-				System.out.println("Fall� ella conversion de Calendar a Date "+title +" para \""+calendarValue+"\"");
+				logger.fine("Fall� ella conversion de Calendar a Date "+title +" para \""+calendarValue+"\"");
 				return null;
 			}
 		});

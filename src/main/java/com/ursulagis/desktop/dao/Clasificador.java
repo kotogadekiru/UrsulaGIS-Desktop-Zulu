@@ -40,8 +40,11 @@ import lombok.Data;
 import com.ursulagis.desktop.utils.NaturalBreaks;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 import com.ursulagis.desktop.utils.UrsulaJenksNaturalBreaksFunction;
+import java.util.logging.Logger;
 @Data
 public class Clasificador {
+	private static final Logger logger = Logger.getLogger(Clasificador.class.getName());
+
 	private static final String CLASIFICADOR_MIN_AREA_JENKINS = "Clasificador.MIN_AREA_JENKINS";
 	public static final String NUMERO_CLASES_CLASIFICACION = "NUMERO_CLASES_CLASIFICACION";
 	private static final String CLASIFICADOR_JENKINS = "Jenkins";
@@ -212,17 +215,17 @@ public class Clasificador {
 		//TODO construir una colleccion equivalente pero donde cada feature tenga la misma superficie
 		//10m^2 para que tengan el mismo peso relativo
 		if(collection.size()>0){
-			System.out.println("evaluando la colleccion para poder hacer jenkins");
+			logger.fine("evaluando la colleccion para poder hacer jenkins");
 
 
 			clasifier = (Classifier) func.evaluate(collection);//XXX esto demora unos segundos!
 
-			System.out.println(Arrays.toString(clasifier.getTitles())+" size: "+clasifier.getSize());
+			logger.fine(Arrays.toString(clasifier.getTitles())+" size: "+clasifier.getSize());
 		} else{
-			System.out.println("no se pudo evaluar jenkins porque la coleccion de datos es de tamanio cero");
+			logger.fine("no se pudo evaluar jenkins porque la coleccion de datos es de tamanio cero");
 		}
 		if(clasifier == null){
-			System.out.println("No se pudo evaluar la colleccion de features con el metodo de Jenkins");
+			logger.fine("No se pudo evaluar la colleccion de features con el metodo de Jenkins");
 
 		}
 		//  int clase =   clasifier.classify(arg0)
@@ -270,15 +273,15 @@ public class Clasificador {
 		//TODO construir una colleccion equivalente pero donde cada feature tenga la misma superficie
 		//10m^2 para que tengan el mismo peso relativo
 		if(collection.size()>0){
-			System.out.println("evaluando la colleccion para poder hacer jenkins");
+			logger.fine("evaluando la colleccion para poder hacer jenkins");
 			//double areaLongLat = 100/ProyectionConstants.A_HAS();
 
 			clasifier = (Classifier) func.evaluate(collection);//XXX esto demora unos segundos!
 		} else{
-			System.out.println("no se pudo evaluar jenkins porque la coleccion de datos es de tamanio cero");
+			logger.fine("no se pudo evaluar jenkins porque la coleccion de datos es de tamanio cero");
 		}
 		if(clasifier == null){
-			System.out.println("No se pudo evaluar la colleccion de features con el metodo de Jenkins");
+			logger.fine("No se pudo evaluar la colleccion de features con el metodo de Jenkins");
 
 		}
 		//  int clase =   clasifier.classify(arg0)
@@ -316,7 +319,7 @@ public class Clasificador {
 	}
 
 	private Double[] constructValoresHisto(Set<Double> valores) {
-		System.out.println("creando histograma para un set menor o igual a la cantidad de clases del sistema valores.size() "+ valores.size());
+		logger.fine("creando histograma para un set menor o igual a la cantidad de clases del sistema valores.size() "+ valores.size());
 		if(valores.isEmpty()) {
 			int numLimites = Math.max(0, getNumClasses() - 1);
 			histograma = new Double[numLimites];
@@ -497,7 +500,7 @@ public class Clasificador {
 		int numClases = clasesClasificadorProperty.intValue();
 		//return 3;
 		if(numClases > colors.length|| numClases < 1){
-			System.err.println("la configuracion de "+NUMERO_CLASES_CLASIFICACION+" no puede ser mayor a "+(colors.length));
+			logger.warning("la configuracion de "+NUMERO_CLASES_CLASIFICACION+" no puede ser mayor a "+(colors.length));
 			numClases=colors.length;
 		}
 		return numClases;
@@ -506,9 +509,9 @@ public class Clasificador {
 	public boolean isInitialized(){return initialized;}
 
 	public void constructClasificador(String nombreClasif, Labor<?> labor) {
-		System.out.println("constructClasificador "+nombreClasif);
+		logger.fine("constructClasificador "+nombreClasif);
 		if (Clasificador.CLASIFICADOR_JENKINS.equalsIgnoreCase(nombreClasif)) {
-			System.out.println("construyendo clasificador jenkins "+labor.colAmount.get());
+			logger.fine("construyendo clasificador jenkins "+labor.colAmount.get());
 
 			//*** nuevo codigo para tomar en cuenta el area de los poligonos
 			//			SimpleFeatureCollection areaInvariantCol = new DefaultFeatureCollection("internal",labor.getType());
@@ -553,7 +556,7 @@ public class Clasificador {
 			//this.constructJenksClasifier(labor.outCollection,labor.colAmount.get());
 
 		} else {//if(Clasificador.CLASIFICADOR_DESVIOSTANDAR.equalsIgnoreCase(nombreClasif)) {
-			System.out.println("no hay jenks Classifier falling back to histograma");
+			logger.fine("no hay jenks Classifier falling back to histograma");
 			List<LaborItem> items = new ArrayList<LaborItem>();
 
 			SimpleFeatureIterator ocReader = labor.outCollection.features();

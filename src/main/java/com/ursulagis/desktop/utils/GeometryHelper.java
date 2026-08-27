@@ -43,7 +43,10 @@ import gov.nasa.worldwind.util.measure.MeasureTool;
 import com.ursulagis.desktop.gui.PoligonLayerFactory;
 import com.ursulagis.desktop.tasks.procesar.ExtraerPoligonosDeLaborTask;
 
+import java.util.logging.Logger;
 public class GeometryHelper {
+	private static final Logger logger = Logger.getLogger(GeometryHelper.class.getName());
+
 	
 	/**
 	 * metodo que une los poligonos mostrados como medicion de area
@@ -143,15 +146,15 @@ public class GeometryHelper {
 		Coordinate[] boundCoords = g.getCoordinates();
 		List<Coordinate> vertices = new ArrayList<Coordinate>();
 		vertices.add(boundCoords[0]);	
-		System.out.println("bounds size ="+boundCoords.length);
+		logger.fine("bounds size ="+boundCoords.length);
 		for(int i=1;i<boundCoords.length-1;i++) {	//busco i+1 asi que esta bien cortar en length-1
 			Coordinate c0 = vertices.get(vertices.size()-1);//last
 
 			Coordinate c1 = boundCoords[i];
-			System.out.println("i: "+i+" "+c1);
+			logger.fine("i: "+i+" "+c1);
 			Coordinate c2 = boundCoords[i+1];		
 			if(c0.distance(c2)>minDistance) {
-				System.out.println(" agregando "+ c1);
+				logger.fine(" agregando "+ c1);
 				vertices.add(c1);
 			}
 		}
@@ -159,7 +162,7 @@ public class GeometryHelper {
 		//System.out.println("n-1="+vertices.get(vertices.size()-1));
 		//aunque deberia ser el mismo que el primero
 		vertices.add(vertices.get(0));//Cerrar el ciclo
-		System.out.println("n="+vertices.get(vertices.size()-1));
+		logger.fine("n="+vertices.get(vertices.size()-1));
 		ret = g.getFactory().createPolygon(vertices.toArray(new Coordinate[vertices.size()]));
 
 		return ret;
@@ -245,7 +248,7 @@ public class GeometryHelper {
 			int c5Index =i+2<coords.length?i+2:i+2-(coords.length); 
 			Coordinate c5p = coords[c5Index];
 
-			System.out.println("i:"+i+" ["+c0Index+","+i+","+c4Index+","+c5Index+"]");
+			logger.fine("i:"+i+" ["+c0Index+","+i+","+c4Index+","+c5Index+"]");
 			//c3 coordenada intemedia para que la derivada sea continua
 			Coordinate c3 = new Coordinate();
 			c3.x=c4.x-(c5p.x-c4.x)/3;
@@ -275,10 +278,10 @@ public class GeometryHelper {
 					distances+=	ls.distance(fact.createPoint(c));
 				}
 				if(ratio>(distances/ls.getLength())) {
-					System.out.println("agregando lerps");
+					logger.fine("agregando lerps");
 					lerps.addAll(candidates);
 				} else { 
-					System.out.println("el error es muy grande no interpolando. r = "+distances/ls.getLength());
+					logger.fine("el error es muy grande no interpolando. r = "+distances/ls.getLength());
 					lerps.add(c1);
 				}
 			}
@@ -332,7 +335,7 @@ public class GeometryHelper {
 			int c5Index =i+2<coords.length?i+2:i+2-(coords.length); 
 			Coordinate c5p = coords[c5Index];
 
-			System.out.println("i:"+i+" ["+c0Index+","+i+","+c4Index+","+c5Index+"]");
+			logger.fine("i:"+i+" ["+c0Index+","+i+","+c4Index+","+c5Index+"]");
 			Coordinate c3 = new Coordinate();
 			c3.x=c4.x-(c5p.x-c4.x)/3;
 			c3.y=c4.y-(c5p.y-c4.y)/3;
@@ -395,7 +398,7 @@ public class GeometryHelper {
 	}
 
 	public static Geometry createCircle(Point c,double radius) {
-		System.out.println("creando un circulo con radio "+radius);
+		logger.fine("creando un circulo con radio "+radius);
 		double latRadius = ProyectionConstants.metersToLat()*radius;
 
 		double fact = ProyectionConstants.metersToLat()/ProyectionConstants.metersToLong();
@@ -534,12 +537,12 @@ public class GeometryHelper {
 	@Deprecated //no maneja el caso de multipoligon
 	public static Poligono constructPoligonoOld(Geometry g) {
 		//ExtraerPoligonosDeLaborTask.geometryToPoligono((Geometry)g);
-		System.out.println("convirtiendo geometria a poligono "+g);		
+		logger.fine("convirtiendo geometria a poligono "+g);		
 		List<Position> positions = new ArrayList<Position>();		
 
 		if(g instanceof Polygon) {
 			Polygon pol =(Polygon)g;
-			System.out.println("es polygon");
+			logger.fine("es polygon");
 
 			Coordinate[] coords = pol.getExteriorRing().getCoordinates();
 			for(int i=0;i<coords.length;i++) {
@@ -710,7 +713,7 @@ public class GeometryHelper {
 	/** Use when g1 was already prepared with {@link #prepareForIntersection}. */
 	public static Geometry getIntersection(Geometry g1, Geometry g2, boolean g1Prepared){
 		if(g1==null || g2 ==null) {
-			System.err.println("antes de validar geometrias devolviendo null porque una de las geometrias a intersectar es null. g1= "+g1+",g2= "+g2);
+			logger.warning("antes de validar geometrias devolviendo null porque una de las geometrias a intersectar es null. g1= "+g1+",g2= "+g2);
 			return null;
 		}
 		if (!g1Prepared) {
@@ -934,11 +937,11 @@ public class GeometryHelper {
 		List<Geometry> boundaries = aIntersectar.stream().map(g->g.getBoundary()).collect(Collectors.toList());
 		Geometry unitedBoundary = toGeometryCollection(boundaries).union();
 		List<?> lines = LineStringExtracter.getLines(unitedBoundary);
-		System.out.println("agregando lines "+lines.size()+" para poligonizer");
+		logger.fine("agregando lines "+lines.size()+" para poligonizer");
 		polygonizer.add(lines);
 
 		Collection polys = polygonizer.getPolygons();
-		System.out.println("cree "+polys.size()+" poligonos");
+		logger.fine("cree "+polys.size()+" poligonos");
 		Set<Geometry> geometriasOutput = new HashSet<Geometry>();
 		geometriasOutput.addAll(polys);
 		return geometriasOutput;
@@ -1169,7 +1172,7 @@ public class GeometryHelper {
 		List<Envelope> envelopes = splitEnvelope(e);
 		//Arrays.toString
 		//	String s = Arrays.asList(j).stream().collect(Collectors.joining("</td><td>","<td>","</td>"));
-		System.out.println("envelopes created = "+envelopes);
+		logger.fine("envelopes created = "+envelopes);
 	}
 
 	public static Geometry unirGeometrias(List<Geometry> aUnir) {
@@ -1191,7 +1194,7 @@ public class GeometryHelper {
 						//densifier.getResultGeometry();//si la geometria es grande esto devuelve POLYGON EMPTY?
 					}
 				}catch(Exception e) {
-					System.err.println("fallo densifier con "+g);
+					logger.warning("fallo densifier con "+g);
 					//e.printStackTrace();
 				}
 				return  g;			
@@ -1225,7 +1228,7 @@ public class GeometryHelper {
 			//System.out.println("geometria densa unida "+union);
 			//return dif;
 		}catch(Exception e) {
-			System.err.println("fallo collection buffer uniendo de a una "+aUnir);
+			logger.warning("fallo collection buffer uniendo de a una "+aUnir);
 			//e.printStackTrace();
 			Geometry union=null;
 
@@ -1279,7 +1282,7 @@ public class GeometryHelper {
 	 * @return
 	 */
 	public static synchronized Geometry extractContornoGeometry(Labor<?> labor) {
-		System.out.println("extrayendo contorno de labor "+labor);
+		logger.fine("extrayendo contorno de labor "+labor);
 		try{					
 			ReferencedEnvelope bounds = labor.outCollection.getBounds();
 			//hace la union de todas las geometrias
@@ -1300,7 +1303,7 @@ public class GeometryHelper {
 			if(cascadedUnion.getNumGeometries()==1) {
 				return cascadedUnion;
 			} else {
-				System.out.println("despues de hacer unir cascading sigue teniendo mas de una geometria "+cascadedUnion.getNumGeometries());
+				logger.fine("despues de hacer unir cascading sigue teniendo mas de una geometria "+cascadedUnion.getNumGeometries());
 			}
 			//hago un buffer de las que quedan
 			// un buffer de 20mts es bastante
@@ -1471,7 +1474,7 @@ public class GeometryHelper {
 	 * @return
 	 */
 	public static Poligono constructPolygon(PositionList coordinates,List<PositionList> holes) {		
-		System.out.println("convirtiendo PositionList a poligono "+coordinates);		
+		logger.fine("convirtiendo PositionList a poligono "+coordinates);		
 		List<Position> positions = new ArrayList<Position>();
 		for(Position pos: coordinates.list) {
 			positions.add(pos);

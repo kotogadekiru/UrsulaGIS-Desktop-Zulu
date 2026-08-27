@@ -13,6 +13,7 @@ import java.awt.geom.*;
 import java.util.*;
 import java.util.List;
 import com.ursulagis.desktop.gui.nww.MeasureToolController;
+import java.util.logging.Logger;
 /**
  * A utility class to interactively draw shapes and measure distance and area across the terrain. When armed, the class
  * monitors mouse events to allow the definition of a measure shape that can be one of {@link #SHAPE_LINE}, {@link
@@ -92,6 +93,7 @@ import com.ursulagis.desktop.gui.nww.MeasureToolController;
  * @see MeasureToolController
  */
 public class MeasureTool extends AVListImpl implements Disposable {
+	private static final Logger logger = Logger.getLogger(MeasureTool.class.getName());
 
     public static final String SHAPE_LINE = "MeasureTool.ShapeLine";
     public static final String SHAPE_PATH = "MeasureTool.ShapePath";
@@ -1117,7 +1119,7 @@ public class MeasureTool extends AVListImpl implements Disposable {
     public Position getPositionAtIndex(int positionIndex){
         //System.out.println("getPositionAtIndex "+positionIndex);
         if(positionIndex < positions.size() - 1){
-            System.out.println("getPositionAtIndex for "+positionIndex+" found in "+positionIndex);
+            logger.fine("getPositionAtIndex for "+positionIndex+" found in "+positionIndex);
             return positions.get(positionIndex);
         }else{
             int index = positions.size() - 1;
@@ -1125,7 +1127,7 @@ public class MeasureTool extends AVListImpl implements Disposable {
                 for(int ibIndex=0;ibIndex<ib.size()-1;ibIndex++){
                 index++;
                 if(positionIndex==index){
-                    System.out.println("getPositionAtIndex for "+positionIndex+" found in ibindex "+ibIndex);
+                    logger.fine("getPositionAtIndex for "+positionIndex+" found in ibindex "+ibIndex);
                     
                     return ib.get(ibIndex);
                     }
@@ -1148,7 +1150,7 @@ public class MeasureTool extends AVListImpl implements Disposable {
                 for(int ibIndex=0;ibIndex<ib.size()-1;ibIndex++){
                     index++;
                     if(positionIndex==index){
-                        System.out.println("ib index for "+positionIndex+" is "+ibIndex);
+                        logger.fine("ib index for "+positionIndex+" is "+ibIndex);
                         ib.set(ibIndex, surfacePosition);
                         if(ibIndex==0){
                             ib.set(ib.size()-1, surfacePosition);

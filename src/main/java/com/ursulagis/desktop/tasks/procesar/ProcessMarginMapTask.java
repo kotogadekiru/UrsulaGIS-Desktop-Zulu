@@ -31,7 +31,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class ProcessMarginMapTask extends ProcessMapTask<MargenItem,Margen> {
+	private static final Logger logger = Logger.getLogger(ProcessMarginMapTask.class.getName());
+
 	//	public Group map = new Group();
 
 	double distanciaAvanceMax = 0;
@@ -62,8 +65,8 @@ public class ProcessMarginMapTask extends ProcessMapTask<MargenItem,Margen> {
 		
 		this.costoFijoHa = margen.costoFijoHaProperty.getValue();
 		showMargen = Margen.COLUMNA_MARGEN.equals(labor.colAmount.get());
-		System.out.println("showMargen es "+showMargen);
-		System.out.println("inicializando ProcessMarginMapTask con costo Fijo = "+ costoFijoHa);
+		logger.fine("showMargen es "+showMargen);
+		logger.fine("inicializando ProcessMarginMapTask con costo Fijo = "+ costoFijoHa);
 	}
 
 
@@ -77,11 +80,11 @@ public class ProcessMarginMapTask extends ProcessMapTask<MargenItem,Margen> {
 		labores.addAll(siembras);
 		labores.addAll(cosechas);	
 		updateProgress(1, 100);	
-	System.out.println("Construyendo grilla labores");
+	logger.fine("Construyendo grilla labores");
 		ReferencedEnvelope unionEnvelope = getBounds(labores);
 		List<Polygon> grilla = construirGrilla(unionEnvelope);
 		updateProgress(2, 100);	
-		System.out.println("extrayendo geometrias activas");
+		logger.fine("extrayendo geometrias activas");
 		List<Geometry> geometriasActivas = labores.parallelStream().collect(
 				()->new ArrayList<Geometry>(),
 				(activas, labor) ->{		
@@ -144,7 +147,7 @@ public class ProcessMarginMapTask extends ProcessMapTask<MargenItem,Margen> {
 			l.clearCache();
 			l.getLayer().setEnabled(false);
 		});
-		System.out.println("clasificador antes de constructClasificador es "+labor.clasificador.tipoClasificadorProperty.get());
+		logger.fine("clasificador antes de constructClasificador es "+labor.clasificador.tipoClasificadorProperty.get());
 		labor.constructClasificador();//labor.clasificador.tipoClasificadorProperty.get());
 		runLater(itemsToShow);
 		updateProgress(0, featureCount);	
@@ -185,7 +188,7 @@ public class ProcessMarginMapTask extends ProcessMapTask<MargenItem,Margen> {
 	private List<Polygon> construirGrilla(BoundingBox bounds) {
 		Double ancho=10d;//new CosechaConfig().getAnchoFiltroOutlayers()/3;
 		
-		System.out.println("construyendo grilla");
+		logger.fine("construyendo grilla");
 		List<Polygon> polygons = new ArrayList<Polygon>();
 		//convierte los bounds de longlat a metros
 		Double minX = bounds.getMinX()/ProyectionConstants.metersToLong() - ancho/2;

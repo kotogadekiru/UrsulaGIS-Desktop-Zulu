@@ -51,7 +51,10 @@ import com.ursulagis.desktop.gui.utils.DateConverter;
 
 
 
+import java.util.logging.Logger;
 public class ExcelHelper {
+	private static final Logger logger = Logger.getLogger(ExcelHelper.class.getName());
+
 
 	//	private Workbook workbook;
 	//	private Sheet sheet = null;
@@ -92,7 +95,7 @@ public class ExcelHelper {
 		 config.setProperty(Configuracion.LAST_FILE,file.getParent());
 		 config.save();
 		}
-		System.out.println("archivo seleccionado para guardar "+file);
+		logger.fine("archivo seleccionado para guardar "+file);
 
 		return file;
 	}
@@ -101,7 +104,7 @@ public class ExcelHelper {
 		try {
 			InputStream excelStream = PulverizacionLabor.class.getClassLoader()
 					.getResourceAsStream("./dao/pulverizacion/agroquimicos.xlsx");
-			if(excelStream==null) System.out.println("stream es null");
+			if(excelStream==null) logger.fine("stream es null");
 //			FileInputStream file = new FileInputStream(new File(
 //					"/dao/pulverizacion/agroquimicos.xlsx"));
 
@@ -228,14 +231,14 @@ public class ExcelHelper {
 					// Check the cell type and format accordingly
 					switch (cell.getCellType()) {
 					case Cell.CELL_TYPE_NUMERIC:
-						System.out.print(cell.getNumericCellValue() + "t");
+						logger.fine(cell.getNumericCellValue() + "t");
 						break;
 					case Cell.CELL_TYPE_STRING:
-						System.out.print(cell.getStringCellValue() + "t");
+						logger.fine(cell.getStringCellValue() + "t");
 						break;
 					}
 				}
-				System.out.println("");
+				logger.fine("");
 			}
 			file.close();
 			workbook.close();
@@ -442,7 +445,7 @@ public class ExcelHelper {
 				workbook.write(out);
 				out.close();
 				workbook.close();
-				System.out.println("el archivo excel fue guardado con exito.");
+				logger.fine("el archivo excel fue guardado con exito.");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -738,7 +741,7 @@ public class ExcelHelper {
 				workbook.write(out);
 				out.close();
 				workbook.close();
-				System.out.println("el backup del fue guardado con exito.");
+				logger.fine("el backup del fue guardado con exito.");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

@@ -14,7 +14,10 @@ import gov.nasa.worldwind.geom.Position;
 import com.ursulagis.desktop.gui.Messages;
 import javafx.concurrent.Task;
 
+import java.util.logging.Logger;
 public class SimplificarCaminoTask extends Task<Camino>{
+	private static final Logger logger = Logger.getLogger(SimplificarCaminoTask.class.getName());
+
 	private Camino camino=null;
 	private List<Position> positions=null;
 
@@ -27,11 +30,11 @@ public class SimplificarCaminoTask extends Task<Camino>{
 	protected Camino call() throws Exception {
 		// TODO simplificar camino y devolverlo
 		NumberFormat nf = Messages.getNumberFormat();
-		System.out.println("antes "+nf.format(camino.getLongitud()));
+		logger.fine("antes "+nf.format(camino.getLongitud()));
 		//SimplificarCaminoTask.ordenarTriadas(camino);
 		ordenarRecorrido(camino);
 		//this.ordenarRecorrido2(this.camino);
-		System.out.println("despues "+nf.format(camino.getLongitud()));
+		logger.fine("despues "+nf.format(camino.getLongitud()));
 		return camino;
 	}
 	public void quitarInicioYFin(Camino c) {
@@ -73,12 +76,12 @@ public class SimplificarCaminoTask extends Task<Camino>{
 					//a esta en el medio de los 2 lados cortos.
 					//cambiar como primer punto a b
 					swap(i,i+1,positions);
-					System.out.println("cambiando a por b como primer punto");
+					logger.fine("cambiando a por b como primer punto");
 					crosses++;
 				}else if(ac<bc) {//a esta en una de las puntas
 					swap(i+1,i+2,positions);
 					crosses++;
-					System.out.println("cambiando b por c");
+					logger.fine("cambiando b por c");
 				}				
 			}			
 		}while(crosses>0 );
@@ -108,7 +111,7 @@ public class SimplificarCaminoTask extends Task<Camino>{
 
 
 	public static void swap(int i, int j, List<Position> positions) {
-		System.out.println("swapping "+i+" "+j);
+		logger.fine("swapping "+i+" "+j);
 		i=i%positions.size();
 		j=j%positions.size();
 		Position posI= positions.get(i);
@@ -199,12 +202,12 @@ public class SimplificarCaminoTask extends Task<Camino>{
 			sb.append("\n["+i+"] ("+p.getLatitude()+", "+p.getLongitude()+"), ");
 		}
 		//String s = c.getPositions().stream().map(p->p.toString()).collect(Collectors.joining(", ","",""));
-		System.out.println(sb);
+		logger.fine(sb.toString());
 	}
 
 	public static double distanciaPuntosGrados(int i, int j,List<Position> positions) {
 		if(i==j){
-			System.out.println("calculando la distancia entre 2 elementos de igual indice");
+			logger.fine("calculando la distancia entre 2 elementos de igual indice");
 			return 0;
 		}
 		Position di = positions.get(i%positions.size());

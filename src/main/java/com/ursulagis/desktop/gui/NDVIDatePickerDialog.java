@@ -17,7 +17,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.scene.control.Alert.AlertType;
 
+import java.util.logging.Logger;
 public class NDVIDatePickerDialog {
+	private static final Logger logger = Logger.getLogger(NDVIDatePickerDialog.class.getName());
+
 	private Stage owner=null;
 	
 	public LocalDate initialDate = LocalDate.now();
@@ -65,7 +68,7 @@ public class NDVIDatePickerDialog {
 		datePickerFechaDesde.setConverter(dc);
 		datePickerFechaDesde.valueProperty().bindBidirectional(iniLdp);
 		datePickerFechaDesde.valueProperty().addListener((ob,old,n)->{
-			System.out.println("date picker fecha desde cambio a "+datePickerFechaDesde.valueProperty().get()+" initial quedo en "+iniLdp.get()); //$NON-NLS-1$ //$NON-NLS-2$
+			logger.fine("date picker fecha desde cambio a "+datePickerFechaDesde.valueProperty().get()+" initial quedo en "+iniLdp.get()); //$NON-NLS-1$ //$NON-NLS-2$
 		});
 		
 		DatePicker datePickerFechaHasta=new DatePicker();
@@ -73,7 +76,7 @@ public class NDVIDatePickerDialog {
 		datePickerFechaHasta.valueProperty().bindBidirectional(finLdp);
 		datePickerFechaHasta.valueProperty().addListener((ob,old,n)->{
 			iniLdp.set(n.minusMonths(1));
-			System.out.println("date picker fecha hasta cambio a "+datePickerFechaHasta.valueProperty().get()+" initial quedo en "+iniLdp.get()); //$NON-NLS-1$ //$NON-NLS-2$
+			logger.fine("date picker fecha hasta cambio a "+datePickerFechaHasta.valueProperty().get()+" initial quedo en "+iniLdp.get()); //$NON-NLS-1$ //$NON-NLS-2$
 		});
 		
 		VBox vb = new VBox();

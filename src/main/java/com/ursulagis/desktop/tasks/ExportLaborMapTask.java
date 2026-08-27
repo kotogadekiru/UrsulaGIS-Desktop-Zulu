@@ -23,7 +23,10 @@ import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.config.Configuracion;
 
 
+import java.util.logging.Logger;
 public class ExportLaborMapTask extends ProgresibleTask<File>{
+	private static final Logger logger = Logger.getLogger(ExportLaborMapTask.class.getName());
+
 	Labor<?> laborToExport=null;
 	File shapeFile=null;
 	public boolean guardarConfig=true;
@@ -46,7 +49,7 @@ public class ExportLaborMapTask extends ProgresibleTask<File>{
 	}
 
 	private File doExport() throws InterruptedException {
-		System.out.println("llamando a call en ExportHarvestMap");
+		logger.fine("llamando a call en ExportHarvestMap");
 		Map<String, Serializable> params = new HashMap<String, Serializable>();
 		try {
 			params.put("url", shapeFile.toURI().toURL());

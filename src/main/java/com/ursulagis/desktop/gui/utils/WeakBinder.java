@@ -16,7 +16,10 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
 
+import java.util.logging.Logger;
 public class WeakBinder {
+	private static final Logger logger = Logger.getLogger(WeakBinder.class.getName());
+
 	private final List<Object> hardRefs = new ArrayList<>();
 	private final Map<ObservableValue<?>, WeakInvalidationListener> listeners = new HashMap<>();
 
@@ -66,7 +69,7 @@ public class WeakBinder {
 					@Override
 					public void invalidated(Observable observable) {
 						SimpleStringProperty sp=(SimpleStringProperty)observable;
-						System.out.println("subject invalidated value is: "+sp.getValue());			
+						logger.fine("subject invalidated value is: "+sp.getValue());			
 					}		  
 				}
 				);
@@ -76,7 +79,7 @@ public class WeakBinder {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 				SimpleStringProperty sp=(SimpleStringProperty)observable;
-				System.out.println("subject changed value is: "+newValue);					
+				logger.fine("subject changed value is: "+newValue);					
 			}
 		});
 
@@ -87,8 +90,8 @@ public class WeakBinder {
 		subject=null;
 		System.gc();
 		for(int i =0;i<10;i++) {
-			System.out.println("Invlistener es: "+ref.get());		
-			System.out.println("Changelistener fue collected: "+wcr.wasGarbageCollected());			
+			logger.fine("Invlistener es: "+ref.get());		
+			logger.fine("Changelistener fue collected: "+wcr.wasGarbageCollected());			
 
 		}
 	}

@@ -13,6 +13,7 @@ import java.util.List;
 
 import com.ursulagis.desktop.gui.nww.MeasureToolForShape.ControlPoint;
 
+import java.util.logging.Logger;
 /**
  * Controller for the MeasureToolForShape class.
  * Handles mouse interactions for editing surface shapes with inner boundaries.
@@ -21,6 +22,8 @@ import com.ursulagis.desktop.gui.nww.MeasureToolForShape.ControlPoint;
  * @version 1.0
  */
 public class MeasureToolForShapeController extends MouseAdapter implements SelectListener, PositionListener, RenderingListener{
+	private static final Logger logger = Logger.getLogger(MeasureToolForShapeController.class.getName());
+
     protected MeasureToolForShape measureToolForShape;
     //protected boolean creationMode = false;//permite agregar o borrar puntos
     // protected boolean active = false;
@@ -181,7 +184,7 @@ public class MeasureToolForShapeController extends MouseAdapter implements Selec
         if (pickedObjects != null && pickedObjects.size() > 0) {
             PickedObject pickedObject = pickedObjects.getTopPickedObject();
             if (pickedObject != null && pickedObject.getObject() instanceof MeasureToolForShape.ControlPoint)  {
-                System.out.println("mouseMoved over control point");
+                logger.fine("mouseMoved over control point");
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
                 return;
             }

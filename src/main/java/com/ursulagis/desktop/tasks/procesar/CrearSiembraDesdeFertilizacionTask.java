@@ -41,13 +41,15 @@ import com.ursulagis.desktop.tasks.crear.ConvertirASiembraTask;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
-//public class CrearSiembraDesdeFertilizacionTask {
+import java.util.logging.Logger;
 
 	
 //	package com.ursulagis.desktop.tasks.procesar;
 
 	
 	public class CrearSiembraDesdeFertilizacionTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
+		private static final Logger logger = Logger.getLogger(CrearSiembraDesdeFertilizacionTask.class.getName());
+
 		/**
 		 * la lista de las cosechas a unir
 		 */
@@ -88,9 +90,9 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 			double totalFerti = fertilizacion.getCantidadInsumo();
 			double totalHa = fertilizacion.getCantidadLabor();
 		    double promedio = totalFerti/totalHa;
-			System.out.println("Area: " + totalHa + " Dosis: " + totalFerti + " Promedio: " + promedio);
+			logger.fine("Area: " + totalHa + " Dosis: " + totalFerti + " Promedio: " + promedio);
 			Semilla semilla = labor.getSemilla();
-			System.out.println("semilla es "+semilla);
+			logger.fine("semilla es "+semilla);
 			double entresurco = labor.getEntreSurco();
 			double pmil = semilla.getPesoDeMil();
 			double pg = semilla.getPG();
@@ -141,14 +143,14 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 						}		
 				
 				}
-				System.out.println("la dosis antes max y min es : " + dosis );
+				logger.fine("la dosis antes max y min es : " + dosis);
 				
 				if (dosis <= dosisXhaMin ) dosis=dosisXhaMin;
 				
 				if (dosis >= dosisXhaMax  ) dosis= dosisXhaMax;
 								
 				
-				System.out.println("la dosis final es : " + dosis );
+				logger.fine("la dosis final es : " + dosis);
 				
 				double semillasHa = ProyectionConstants.METROS2_POR_HA*dosis/pg;
 				

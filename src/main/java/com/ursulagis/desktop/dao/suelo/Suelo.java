@@ -23,10 +23,13 @@ import lombok.Getter;
 import lombok.Setter;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
 //@Entity
 public class Suelo extends Labor<SueloItem>{
+	private static final Logger logger = Logger.getLogger(Suelo.class.getName());
+
 	
 	private static final String DOUBLE_TYPE = ":Double,";
 	//utilizando una densidad aparente promedio para todos los sitios de 1,3. 
@@ -116,7 +119,7 @@ public class Suelo extends Labor<SueloItem>{
 				+ Suelo.COLUMNA_TEXTURA + ":String,"//getTextura(),
 				+ Suelo.COLUMNA_POROSIDAD + DOUBLE_TYPE
 				+ Suelo.COLUMNA_CAPACIDAD_CAMPO + DOUBLE_TYPE;//	getPorcCC()
-		System.out.println("cree suelo type "+type);
+		logger.fine("cree suelo type "+type);
 		return type;
 	}
 
@@ -378,7 +381,7 @@ public class Suelo extends Labor<SueloItem>{
 		//nutrientesMap.keySet().forEach(p->{
 			Nutriente n = nutrientesMap.get(p);
 			if(n==null) {
-				System.out.println("el nutriente para el parametro "+p+" es null");
+				logger.fine("el nutriente para el parametro "+p+" es null");
 				continue;}
 			//System.out.println("Obteniendo los kg de Nutriente para "+n.getNombre());
 			Double ppm =Suelo.getPpm(p, item);

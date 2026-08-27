@@ -14,7 +14,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.TextAlignment;
 
+import java.util.logging.Logger;
 public class LocalDateTableColumn<T> extends TableColumn<T, LocalDate> {
+	private static final Logger logger = Logger.getLogger(LocalDateTableColumn.class.getName());
+
 	public LocalDateTableColumn(String title,Function<T,LocalDate>  getMethod, BiConsumer<T,Calendar> setMethod){
 		super(title);	
 		setEditable(setMethod != null);
@@ -25,7 +28,7 @@ public class LocalDateTableColumn<T> extends TableColumn<T, LocalDate> {
 			
 				return new SimpleObjectProperty<LocalDate>(localDateValue);	
 			}catch(Exception e){
-				System.out.println("Fall� ella conversion de Calendar a Date "+title +" para \""+localDateValue+"\"");
+				logger.fine("Fall� ella conversion de Calendar a Date "+title +" para \""+localDateValue+"\"");
 				return null;
 			}
 		});

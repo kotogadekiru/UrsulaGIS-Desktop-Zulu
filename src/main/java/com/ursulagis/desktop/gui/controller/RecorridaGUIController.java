@@ -61,7 +61,10 @@ import com.ursulagis.desktop.tasks.procesar.InterpolarRecorridaMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 
+import java.util.logging.Logger;
 public class RecorridaGUIController extends AbstractGUIController {
+	private static final Logger logger = Logger.getLogger(RecorridaGUIController.class.getName());
+
 	public RecorridaGUIController(JFXMain _main) {
 		super(_main);
 	}
@@ -300,7 +303,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 			//XXX agregar boton de actualizar desde la nube?
 			task.uninstallProgressBar();			
 		});
-		System.out.println("ejecutando Compartir Recorrida"); 
+		logger.fine("ejecutando Compartir Recorrida"); 
 		executorPool.execute(task);
 	}
 	
@@ -328,7 +331,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 			task.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SYNCED_FROM_CLOUD);
 		});
-		System.out.println("ejecutando Compartir Recorrida"); 
+		logger.fine("ejecutando Compartir Recorrida"); 
 		executorPool.execute(task);
 	}
 
@@ -441,7 +444,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 			@SuppressWarnings("unchecked")
 			Map<String,String> map = new Gson().fromJson(obs, Map.class);	 
 			if(map == null) {
-				System.out.println("salteando "+m0.nombre+" porque obs es null");
+				logger.fine("salteando "+m0.nombre+" porque obs es null");
 				continue;
 			}
 			props = new LinkedHashMap<String,Number>();//convierto el valor de obs a number
@@ -454,7 +457,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 						//dValue=Messages.getNumberFormat().parse((String)value).doubleValue();
 						//dValue=Double.parseDouble((String)value);
 					}catch(Exception e) {
-						System.err.println("error tratando de parsear \""+value+"\" reemplazo por 0");
+						logger.warning("error tratando de parsear \""+value+"\" reemplazo por 0");
 					}
 					props.put(k, dValue);//ojo number format exception
 				} else if(Number.class.isAssignableFrom(value.getClass())) {

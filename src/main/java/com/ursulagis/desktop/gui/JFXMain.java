@@ -140,6 +140,8 @@ import com.ursulagis.desktop.gui.onboarding.AchievementsOverviewDialog;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 
 public class JFXMain extends Application {
+	private static final Logger logger = Logger.getLogger(JFXMain.class.getName());
+
 	private static final String PREFERED_TREE_WIDTH_KEY = "PREFERED_TREE_WIDTH";
 	private static final String GOV_NASA_WORLDWIND_AVKEY_INITIAL_ALTITUDE = "gov.nasa.worldwind.avkey.InitialAltitude"; 
 	private static final String GOV_NASA_WORLDWIND_AVKEY_INITIAL_LONGITUDE = "gov.nasa.worldwind.avkey.InitialLongitude"; 
@@ -174,7 +176,7 @@ public class JFXMain extends Application {
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("Could not load build date from properties: " + e.getMessage());
+			logger.warning("Could not load build date from properties: " + e.getMessage());
 			// Use current date as fallback
 			JFXMain.buildDate = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
 		}
@@ -220,7 +222,7 @@ public class JFXMain extends Application {
 		Runtime.getRuntime().addShutdownHook(new Thread(JFXMain::shutdownOnDebugStop, "ursula-shutdown"));
 		notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_INIT));
         // Perform non-GUI initialization tasks here
-        System.out.println("Application init() called. Loading configurations...");
+        logger.fine("Application init() called. Loading configurations...");
         // Example: load a configuration file
         // config = loadConfiguration(); 
 		setInitialPosition();//pone init Lat y initLong en Configuracion
@@ -263,7 +265,7 @@ public class JFXMain extends Application {
 				Platform.runLater(()->{
 					JFXMain.config.save();
 					DAH.closeEm();					
-					System.out.println("Application Closed by click to Close Button(X)"); 
+					logger.fine("Application Closed by click to Close Button(X)"); 
 					
 					// Properly shutdown WorldWindow and release OpenGL resources
 					try {
@@ -288,7 +290,7 @@ public class JFXMain extends Application {
 											((javax.swing.JComponent) wwdComponent).removeAll();
 										}
 									} catch (Exception ex) {
-										System.err.println("Error disposing component: " + ex.getMessage());
+										logger.warning("Error disposing component: " + ex.getMessage());
 									}
 								});
 							}
@@ -307,7 +309,7 @@ public class JFXMain extends Application {
 						}).start();
 					} catch (Exception ex) {
 						// If shutdown fails, still exit but log the error
-						System.err.println("Error during shutdown: " + ex.getMessage());
+						logger.warning("Error during shutdown: " + ex.getMessage());
 						ex.printStackTrace();
 						// Still exit even if there's an error
 						new Thread(() -> {
@@ -359,7 +361,7 @@ public class JFXMain extends Application {
 			notifyPreloader(new Preloader.ProgressNotification(1.0));
 	
 		}catch(Exception e) {
-			System.out.println("no se pudo hacer start de JFXMain.start(stage)");
+			logger.fine("no se pudo hacer start de JFXMain.start(stage)");
 			e.printStackTrace();
 		}
 	}
@@ -395,7 +397,7 @@ public class JFXMain extends Application {
 						lastClearCacheRun.setValue(end);
 						long deltaMs = (end.toNanoOfDay()-init.toNanoOfDay())/(1000*1000);
 						lagTimeProperty.setValue(600*deltaMs/1000);
-						System.out.println("tarde "+(deltaMs)+"ms en hacer gc() en JFXMain.startClearCacheCronJob()");
+						logger.fine("tarde "+(deltaMs)+"ms en hacer gc() en JFXMain.startClearCacheCronJob()");
 					}
 		};
 		scheduler.scheduleAtFixedRate(clearCaches, 60, 30, TimeUnit.SECONDS);//si suspendi la pc hace todos los jobs juntos
@@ -501,7 +503,7 @@ public class JFXMain extends Application {
 							message += "Please install up-to-date graphics driver and try again.\n"; 
 							message += "Reason: " + t.getMessage() + "\n";  
 							message += "This program will end when you press OK."; 
-							System.err.println(message);
+							logger.warning(message);
 							t.printStackTrace();
 							Alert alert = new Alert(AlertType.ERROR,message,ButtonType.OK);
 							alert.initOwner(stage);
@@ -558,7 +560,7 @@ public class JFXMain extends Application {
 			//this.wwjPanel.setPreferredSize(new Dimension(nu.intValue(),(int)stage.getWidth()));
 			//this.wwjPanel.repaint();
 			}else{
-				System.out.println("stage with chaged for the first time from "+old+" to "+nu);
+				logger.fine("stage with chaged for the first time from "+old+" to "+nu);
 			}
 		});	
 	}
@@ -833,7 +835,7 @@ public class JFXMain extends Application {
 				wwd.shutdown();
 			}
 		} catch (Exception ex) {
-			System.err.println("Shutdown hook error: " + ex.getMessage());
+			logger.warning("Shutdown hook error: " + ex.getMessage());
 		}
 	}
 
@@ -1093,7 +1095,7 @@ public class JFXMain extends Application {
 					paddedMinLon, paddedMaxLon);
 			ExampleUtil.goTo(wwd, sector);
 		} catch (Exception e) {
-			System.err.println("viewGoToFit failed, falling back to viewGoTo: " + e.getMessage());
+			logger.warning("viewGoToFit failed, falling back to viewGoTo: " + e.getMessage());
 			viewGoTo(labor);
 		}
 	}
@@ -1103,7 +1105,7 @@ public class JFXMain extends Application {
 			Position position=(Position) layer.getValue(ProcessMapTask.ZOOM_TO_KEY);
 			viewGoTo(position);
 		} catch (Exception e) {
-			System.err.println("fallo hacer zoom a la cosecha nueva"); 
+			logger.warning("fallo hacer zoom a la cosecha nueva"); 
 			e.printStackTrace();
 		}
 	}
@@ -1115,7 +1117,7 @@ public class JFXMain extends Application {
 
 		WorldWindow wwd = getWwd();
 		if (wwd == null || wwd.getModel() == null || wwd.getModel().getGlobe() == null) {
-			System.err.println("viewGoTo aborted: WorldWindow or globe is not initialized.");
+			logger.warning("viewGoTo aborted: WorldWindow or globe is not initialized.");
 			return;
 		}
 
@@ -1407,16 +1409,16 @@ public class JFXMain extends Application {
 						});
 
 					} catch (URISyntaxException e) {
-						System.out.println("URISyntaxException: " + e.getMessage());
+						logger.fine("URISyntaxException: " + e.getMessage());
 						e.printStackTrace();
 					} catch (Exception e) {
-						System.out.println("Unexpected error: " + e.getMessage());
+						logger.fine("Unexpected error: " + e.getMessage());
 						e.printStackTrace();
 					}
 				}
 			});
 		}else {
-			System.out.println("no reprodusco el sonido porque ya hay un player andando");
+			logger.fine("no reprodusco el sonido porque ya hay un player andando");
 		}
 	}
 

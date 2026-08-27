@@ -69,7 +69,10 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 import com.ursulagis.desktop.utils.TarjetaHelper;
 import com.ursulagis.desktop.utils.UnzipUtility;
 
+import java.util.logging.Logger;
 public class CompartirSiembraLaborTask extends Task<String> {
+	private static final Logger logger = Logger.getLogger(CompartirSiembraLaborTask.class.getName());
+
 	//private static final String GET_RECORRIDAS_BY_ID_URL = "https://www.ursulagis.com/api/recorridas/id/";
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
 	public static final String ZOOM_TO_KEY = "ZOOM_TO";
@@ -89,7 +92,7 @@ public class CompartirSiembraLaborTask extends Task<String> {
 	public CompartirSiembraLaborTask(SiembraLabor siembraLabor,OrdenSiembra orden) {
 		this.siembraLabor = siembraLabor;
 		this.ordenSiembra = orden;
-		System.out.println("compartiendo SiembraLabor "+siembraLabor);
+		logger.fine("compartiendo SiembraLabor "+siembraLabor);
 		//System.out.println("items "+siembraLabor.getItems().size());
 	}
 
@@ -102,11 +105,11 @@ public class CompartirSiembraLaborTask extends Task<String> {
 				
 		Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
 		//GeometryHelper.simplificarPoligono(contornoP);
-		System.out.println("contorno siembra es "+contornoG.toText());
+		logger.fine("contorno siembra es "+contornoG.toText());
 		if(contornoP!=null) {
 			ordenSiembra.setPoligonoString(contornoP.getPoligonoStringForSharing());
 		} else {
-			System.out.println("no se pudo extraer el contorno de la cosecha");
+			logger.fine("no se pudo extraer el contorno de la cosecha");
 		}
 
 		String ordenUrl = uploadLaborFile(this.siembraLabor);
@@ -118,9 +121,9 @@ public class CompartirSiembraLaborTask extends Task<String> {
 
 			Gson gson = getGson();
 
-			System.out.println("convirtiendo SiembraLabor a json "+this.ordenSiembra);
+			logger.fine("convirtiendo SiembraLabor a json "+this.ordenSiembra);
 			String json_body = gson.toJson(this.ordenSiembra, OrdenSiembra.class);
-			System.out.println("sending SiembraLabor "+ json_body);
+			logger.fine("sending SiembraLabor "+ json_body);
 
 			final HttpContent content = new ByteArrayContent("application/json", json_body.getBytes("UTF8") );
 
@@ -131,12 +134,12 @@ public class CompartirSiembraLaborTask extends Task<String> {
 			Reader reader = new InputStreamReader(resContent);
 			this.updateProgress(4, 10);
 			StandardResponse standarResponse =  new Gson().fromJson(reader, StandardResponse.class);
-			System.out.println("standarResponse = "+standarResponse);
+			logger.fine("standarResponse = "+standarResponse);
 			this.updateProgress(5, 10);
 			//StandardResponse standarResponse = response.parseAs(StandardResponse.class);
 			//Recorrida r = new Gson().fromJson((String) resContent.get("data"), Recorrida.class);
 			StandardResponse.StatusResponse status = standarResponse.getStatus();
-			System.out.println("response status = "+status);
+			logger.fine("response status = "+status);
 			if(StandardResponse.StatusResponse.SUCCESS.equals(status)) {
 				this.updateProgress(6, 10);
 				//com.google.api.client.util.ArrayMap data =(ArrayMap) resContent.get("data");
@@ -151,11 +154,11 @@ public class CompartirSiembraLaborTask extends Task<String> {
 					String dbUrl = dbSiembraLabor.getUrl();
 					this.ordenSiembra.setUrl(dbUrl);
 					this.updateProgress(8, 10);
-					System.out.println("guardando siembra");
+					logger.fine("guardando siembra");
 					long ini = System.currentTimeMillis();
 					DAH.save(ordenSiembra);
 					long time = System.currentTimeMillis()-ini;
-					System.out.println("guarde siembra en "+time+"ms");
+					logger.fine("guarde siembra en "+time+"ms");
 					this.updateProgress(9, 10);
 					//java.math.BigDecimal id = (java.math.BigDecimal) data.get("id");
 					//String prettyresponse = resContent.toPrettyString();
@@ -225,7 +228,7 @@ public class CompartirSiembraLaborTask extends Task<String> {
 			SiembraItem si = siembra.constructFeatureContainerStandar(f,false);
 			
 			Double kgHa =si.getDosisHa(); 
-			System.out.println("sumando un item con dosis "+kgHa);
+			logger.fine("sumando un item con dosis "+kgHa);
 			//76.11764705882352
 //			si.getDosisFertCostado();
 //			si.getDosisFertLinea();
@@ -255,7 +258,7 @@ public class CompartirSiembraLaborTask extends Task<String> {
 		itemSemilla.setProducto(producto);		
 		
 		if(kgBolsa != 1.0 && kgBolsa>0 ) {//si semBolsa ==1 o semBolsa ==0
-			System.out.println("kgBolsa es "+kgBolsa);//kgBolsa es 1.4780000000000001E-4
+			logger.fine("kgBolsa es "+kgBolsa);//kgBolsa es 1.4780000000000001E-4
 			itemSemilla.setCantidad(insumoTotal/kgBolsa);//kgBolsa no es cero
 			itemSemilla.setObservaciones("Cantidad en bolsas de "
 									+nf.format(semBolsa)+" semillas y "//1semBolsa
@@ -364,16 +367,16 @@ public class CompartirSiembraLaborTask extends Task<String> {
 			@Override
 			public Producto deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
 					throws JsonParseException {
-				System.out.println("des serializando "+json+" type "+typeOfT);
+				logger.fine("des serializando "+json+" type "+typeOfT);
 				/*
 				des serializando {"nombre":"Urea","porcN":46.0,"porcP":0.0,"porcK":0.0,"porcS":0.0,"id":29954} type class models.OrdenDeCompra.Producto
 				des serializando {"nombre":"Labor de Fertilizacion","id":8553} type class models.OrdenDeCompra.Producto
 				 * */
 				String productoNombre = json.getAsJsonObject().get("nombre").getAsString();
 				try {
-					System.out.println("buscando producto local con nombre "+productoNombre);
+					logger.fine("buscando producto local con nombre "+productoNombre);
 					Producto p = DAH.findProducto(productoNombre);
-					System.out.println("encontre "+p);
+					logger.fine("encontre "+p);
 					//javax.persistence.NoResultException: getSingleResult() did not retrieve any entities.
 					return p;
 				}catch(Exception e) {
@@ -493,7 +496,7 @@ public class CompartirSiembraLaborTask extends Task<String> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

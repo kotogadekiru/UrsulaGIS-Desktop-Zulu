@@ -24,8 +24,11 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearCosechaMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
+import java.util.logging.Logger;
 @Deprecated
 public class CortarCosechaMapTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(CortarCosechaMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -89,7 +92,7 @@ public class CortarCosechaMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 				//	buffered = colectionCat.union();
 					buffered =colectionCat.buffer(bufer);
 				}catch(Exception e){
-					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
+					logger.fine("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
 					//java.lang.IllegalArgumentException: Comparison method violates its general contract!
 					try{
 					buffered= EnhancedPrecisionOp.buffer(colectionCat, bufer);//java.lang.IllegalArgumentException: Comparison method violates its general contract!
@@ -110,7 +113,7 @@ public class CortarCosechaMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 				boolean ret = labor.outCollection.add(nf);
 				//featuresInsertadas++;
 				if(!ret){
-					System.out.println("no se pudo agregar la feature "+f);
+					logger.fine("no se pudo agregar la feature "+f);
 				}
 				updateProgress(this.featureNumber++, featureCount);
 			}

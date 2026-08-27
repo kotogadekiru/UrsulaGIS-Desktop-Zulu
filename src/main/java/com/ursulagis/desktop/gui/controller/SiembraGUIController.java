@@ -45,7 +45,10 @@ import com.ursulagis.desktop.tasks.procesar.UnirSiembrasMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 
+import java.util.logging.Logger;
 public class SiembraGUIController {
+	private static final Logger logger = Logger.getLogger(SiembraGUIController.class.getName());
+
 	private JFXMain main=null;
 	private Pane progressBox;
 	private Executor executorPool;
@@ -145,7 +148,7 @@ public class SiembraGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println("doEditSiembra succeeded"); 
+				logger.fine("doEditSiembra succeeded"); 
 				playSound();
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_EDITED);
 			});//fin del OnSucceeded						
@@ -178,7 +181,7 @@ public class SiembraGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println("ProcessUniteHarvestMapsTask succeeded"); 
+			logger.fine("ProcessUniteHarvestMapsTask succeeded"); 
 			playSound();
 			if (isJoin) {
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_JOINED);
@@ -251,7 +254,7 @@ public class SiembraGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println("GrillarSiembrasMapTask succeeded"); 
+			logger.fine("GrillarSiembrasMapTask succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_GRIDDED);
 		});//fin del OnSucceeded		
@@ -307,7 +310,7 @@ public class SiembraGUIController {
 		siembraFertTask.installProgressBar(main.progressBox);
 		siembraFertTask.setOnSucceeded(handler -> {
 			SiembraLabor ret = (SiembraLabor)handler.getSource().getValue();
-			System.out.println("el entresurco de la siembra fertilizada es: " + ret.getEntreSurco());
+			logger.fine("el entresurco de la siembra fertilizada es: " + ret.getEntreSurco());
 			siembraFertTask.uninstallProgressBar();
 			siembraEnabled.getLayer().setEnabled(false);
 			fertEnabled.getLayer().setEnabled(false);
@@ -316,7 +319,7 @@ public class SiembraGUIController {
 
 			main.playSound();
 			main.viewGoTo(ret);
-			System.out.println("SiembraFertTask succeded"); 
+			logger.fine("SiembraFertTask succeded"); 
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZED_SEEDING_GENERATED);
 		});
 		this.executorPool.execute(siembraFertTask);
@@ -334,7 +337,7 @@ public class SiembraGUIController {
 				labor.setLayer(new LaborLayer());
 				Optional<SiembraLabor> cosechaConfigured= SiembraConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
+					logger.fine("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -347,7 +350,7 @@ public class SiembraGUIController {
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
 
-					System.out.println("OpenFertMapTask succeeded"); 
+					logger.fine("OpenFertMapTask succeeded"); 
 					playSound();
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_IMPORTED);
 					if (onImported != null) {
@@ -386,7 +389,7 @@ public class SiembraGUIController {
 				});
 				d.showAndWait();
 				String unidad = d.getResult();
-				System.out.println("unidad seleccionada " + unidad);
+				logger.fine("unidad seleccionada " + unidad);
 				return unidad;
 	}
 
@@ -462,23 +465,23 @@ public class SiembraGUIController {
 		CompartirSiembraLaborTask task = new CompartirSiembraLaborTask(value,op);			
 			task.installProgressBar(main.progressBox);
 			task.setOnFailed((handler)->{
-				System.out.println("task failed");
+				logger.fine("task failed");
 			});
 			task.setOnSucceeded(handler -> {
-				System.out.println("task succeeded");
+				logger.fine("task succeeded");
 				String ret = (String)handler.getSource().getValue();
-				System.out.println("showing qr for "+ret);
+				logger.fine("showing qr for "+ret);
 				if(ret!=null && !ret.isEmpty() ) {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_SHARED);
 				} else { 
-					System.out.println("ret es null asi que no hay url para mostrar qr");
+					logger.fine("ret es null asi que no hay url para mostrar qr");
 				}
 				task.uninstallProgressBar();			
 			});
 			
 			task.stateProperty().addListener((ob,ov,nv)->{//observable, oldValue, newValue
-				System.out.println("state changed to "+nv);
+				logger.fine("state changed to "+nv);
 			});
 		    //stateProperty for Task:
 //		    task.stateProperty().addListener(new ChangeListener<Worker.State>() {
@@ -495,7 +498,7 @@ public class SiembraGUIController {
 		    //start Task
 		    new Thread(task).start();
 		    
-			System.out.println("ejecutando Compartir Siembra");
+			logger.fine("ejecutando Compartir Siembra");
 			//task.run();
 			//JFXMain.executorPool.submit(task);		
 	}
@@ -512,7 +515,7 @@ public class SiembraGUIController {
 		siembra.setNombre(cosecha.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(siembra);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			siembra.dispose();//libero los recursos reservados
 			return;
 		}		

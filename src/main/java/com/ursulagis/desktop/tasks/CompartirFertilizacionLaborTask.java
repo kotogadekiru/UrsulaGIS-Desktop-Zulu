@@ -67,7 +67,10 @@ import com.ursulagis.desktop.utils.TarjetaHelper;
 import com.ursulagis.desktop.utils.UnzipUtility;
 
 
+import java.util.logging.Logger;
 public class CompartirFertilizacionLaborTask extends Task<String> {
+	private static final Logger logger = Logger.getLogger(CompartirFertilizacionLaborTask.class.getName());
+
 
 	//private static final String GET_RECORRIDAS_BY_ID_URL = "https://www.ursulagis.com/api/recorridas/id/";
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
@@ -88,8 +91,8 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 	public CompartirFertilizacionLaborTask(FertilizacionLabor fertilizacionLabor,OrdenFertilizacion ordenFert) {
 		this.fertilizacionLabor = fertilizacionLabor;
 		this.ordenFertilizacion = ordenFert;
-		System.out.println("compartiendo FertilizacionLabor " + fertilizacionLabor);
-		System.out.println("item " + fertilizacionLabor.getProductoLabor());
+		logger.fine("compartiendo FertilizacionLabor " + fertilizacionLabor);
+		logger.fine("item " + fertilizacionLabor.getProductoLabor());
 	}
 
 	@Override
@@ -105,9 +108,9 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 
 			Gson gson = getGson();
 
-			System.out.println("convirtirndo FertilizacionLabor a json "+this.ordenFertilizacion);
+			logger.fine("convirtirndo FertilizacionLabor a json "+this.ordenFertilizacion);
 			String json_body = gson.toJson(this.ordenFertilizacion, OrdenFertilizacion.class);
-			System.out.println("sending FertilizacionLabor "+ json_body);
+			logger.fine("sending FertilizacionLabor "+ json_body);
 
 			final HttpContent content = new ByteArrayContent("application/json", json_body.getBytes("UTF8") );
 
@@ -118,11 +121,11 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 			Reader reader = new InputStreamReader(resContent);
 
 			StandardResponse standarResponse =  new Gson().fromJson(reader, StandardResponse.class);
-			System.out.println("standarResponse = "+standarResponse);
+			logger.fine("standarResponse = "+standarResponse);
 			//StandardResponse standarResponse = response.parseAs(StandardResponse.class);
 			//Recorrida r = new Gson().fromJson((String) resContent.get("data"), Recorrida.class);
 			StandardResponse.StatusResponse status = standarResponse.getStatus();
-			System.out.println("response status = "+status);
+			logger.fine("response status = "+status);
 			if(StandardResponse.StatusResponse.SUCCESS.equals(status)) {
 				//com.google.api.client.util.ArrayMap data =(ArrayMap) resContent.get("data");
 				JsonElement data = standarResponse.getData();
@@ -204,10 +207,10 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 						Poligono contornoP =GeometryHelper.constructPoligono(contornoG);
 						if(contornoP!=null) {
 							String posString = contornoP.getPoligonoStringForSharing();
-							System.out.println("contorno: "+posString);
+							logger.fine("contorno: "+posString);
 							ret.setPoligonoString(posString);
 						} else {
-							System.err.println("no se pudo extraer el contorno de la cosecha");
+							logger.warning("no se pudo extraer el contorno de la cosecha");
 						}
 					});
 					return ret;
@@ -239,7 +242,7 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 			export.call();
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.err.println("error al exportar la labor "+labor.getNombre());
+			logger.warning("error al exportar la labor "+labor.getNombre());
 			return null;
 		}
 		File zipFile = UnzipUtility.zipFiles(FileHelper.selectAllFiles(dir),dir.toFile());
@@ -252,7 +255,7 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 			@Override
 			public Producto deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
 					throws JsonParseException {
-				System.out.println("des serializando "+json+" type "+typeOfT);
+				logger.fine("des serializando "+json+" type "+typeOfT);
 				/*
 				des serializando {"nombre":"Urea","porcN":46.0,"porcP":0.0,"porcK":0.0,"porcS":0.0,"id":29954} type class models.OrdenDeCompra.Producto
 				des serializando {"nombre":"Labor de Fertilizacion","id":8553} type class models.OrdenDeCompra.Producto
@@ -379,7 +382,7 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

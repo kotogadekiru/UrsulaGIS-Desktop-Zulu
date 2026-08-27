@@ -30,7 +30,10 @@ import javafx.scene.chart.XYChart.Series;
 import com.ursulagis.desktop.tasks.ProgresibleTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
+import java.util.logging.Logger;
 public class CorrelacionarLayersTask extends ProgresibleTask<XYChart.Series<Number, Number>> {
+	private static final Logger logger = Logger.getLogger(CorrelacionarLayersTask.class.getName());
+
 	Labor<?> laborX=null;
 	String columnX=null;
 	Labor<?> laborY=null;
@@ -84,7 +87,7 @@ public class CorrelacionarLayersTask extends ProgresibleTask<XYChart.Series<Numb
 						this.updateProgress(workDone.incrementAndGet(), totalWork);						
 					},	(xy1, xy2) -> xy1.addAll(xy2));		
 			 XYChart.Series<Number, Number> series = new XYChart.Series<>();
-			 System.out.println("creando el grafico con "+xyData.size()+" elementos");
+			 logger.fine("creando el grafico con "+xyData.size()+" elementos");
 			 series.getData().addAll(xyData);
 			 return series;
 		}catch(Exception e) {

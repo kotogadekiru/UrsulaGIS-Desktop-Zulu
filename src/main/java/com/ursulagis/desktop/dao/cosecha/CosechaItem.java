@@ -11,10 +11,13 @@ import com.ursulagis.desktop.dao.LaborItem;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.logging.Logger;
 @Data
 @EqualsAndHashCode(callSuper=true)//si no pones esto todos los hashmaps andan mal y grillar cosecha no anda
 @Entity
-public class CosechaItem extends LaborItem {	
+public class CosechaItem extends LaborItem {
+	private static final Logger logger = Logger.getLogger(CosechaItem.class.getName());
+	
 	Double rindeTnHa=0.0;
 	Double desvioRinde=0.0;
 	Double precioTnGrano=0.0;
@@ -168,7 +171,7 @@ public class CosechaItem extends LaborItem {
 			bd = bd.setScale(3, RoundingMode.HALF_UP);
 			return bd.doubleValue();
 		} catch (Exception e) {
-			System.err.println("CosechaItem::round "+d);
+			logger.warning("CosechaItem::round "+d);
 			//e.printStackTrace();
 			return 0;
 		}

@@ -49,8 +49,11 @@ import javafx.util.StringConverter;
 
 import com.ursulagis.desktop.utils.DaylightCalculator;
 import com.ursulagis.desktop.utils.ExcelHelper;
+import java.util.logging.Logger;
 //agrege que extende de vbox 
 public class NDVIChart extends VBox {
+	private static final Logger logger = Logger.getLogger(NDVIChart.class.getName());
+
 	private WorldWindow wwd;
 	private LineChart<Number,Number> lineChart =null;
 
@@ -155,7 +158,7 @@ public class NDVIChart extends VBox {
 				
 				sr.getData().add(new XYChart.Data<Number, Number>(lNdvi.getFecha().toEpochDay(), bd.doubleValue()));
 				}catch(Exception e) {
-					System.err.println("Excepcion para "+lNdvi.getNombre());
+					logger.warning("Excepcion para "+lNdvi.getNombre());
 					e.printStackTrace();
 				}
 			});
@@ -281,7 +284,7 @@ public class NDVIChart extends VBox {
 		
 
 	
-		System.out.println("Mostre grafico");
+		logger.fine("Mostre grafico");
 
 
 	}

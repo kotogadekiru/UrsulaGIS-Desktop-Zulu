@@ -9,7 +9,10 @@ import org.locationtech.jts.geom.util.GeometryFixer;
 import org.locationtech.jts.operation.polygonize.Polygonizer;
 import org.locationtech.jts.precision.EnhancedPrecisionOp;
 
+import java.util.logging.Logger;
 public class PolygonValidator {
+	private static final Logger logger = Logger.getLogger(PolygonValidator.class.getName());
+
 
 	public static List<Polygon> geometryToFlatPolygons(Geometry itemGeometry){
 		List<Polygon> ret=new ArrayList<Polygon>();
@@ -43,7 +46,7 @@ public class PolygonValidator {
 				ret.addAll(geometryToFlatPolygons(gi));
 			}
 		} else {
-			System.out.println("geometry no es multiPolygon ni poligon "+ itemGeometry);
+			logger.fine("geometry no es multiPolygon ni poligon "+ itemGeometry);
 		}
 		return ret;
 	}
@@ -144,7 +147,7 @@ public class PolygonValidator {
 					return geom; // If the polygon is valid just return it
 				}
 				}catch(Exception e) {
-					System.out.println("no puedo ver si geom.isValid "+geom);
+					logger.fine("no puedo ver si geom.isValid "+geom);
 				//	e.printStackTrace();
 				}
 				Polygonizer polygonizer = new Polygonizer();
@@ -157,7 +160,7 @@ public class PolygonValidator {
 					geom.normalize(); // validate does not pick up rings in the wrong order - this will fix that
 					return geom; // If the multipolygon is valid just return it
 				}}catch(Exception ex){
-					System.out.println("no puedo ver si geom.isValid "+geom);
+					logger.fine("no puedo ver si geom.isValid "+geom);
 					//ex.printStackTrace();
 				}
 				Polygonizer polygonizer = new Polygonizer();

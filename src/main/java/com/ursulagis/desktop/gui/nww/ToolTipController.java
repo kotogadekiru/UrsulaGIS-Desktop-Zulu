@@ -22,6 +22,7 @@ import gov.nasa.worldwind.layers.*;
 import gov.nasa.worldwind.render.*;
 import gov.nasa.worldwind.util.*;
 
+import java.util.logging.Logger;
 /**
  * Controls display of tool tips on picked objects. Any shape implementing {@link AVList} can participate. Shapes
  * provide tool tip text in their AVList for either or both of hover and rollover events. The keys associated with the
@@ -32,6 +33,8 @@ import gov.nasa.worldwind.util.*;
  */
 public class ToolTipController implements SelectListener, Disposable
 {
+	private static final Logger logger = Logger.getLogger(ToolTipController.class.getName());
+
     protected WorldWindow wwd;
     protected String hoverKey = AVKey.HOVER_TEXT;
     protected String rolloverKey = AVKey.ROLLOVER_TEXT;
@@ -274,7 +277,7 @@ public class ToolTipController implements SelectListener, Disposable
             annotation.setText(text);           
         }  else  {
             annotation = new ToolTipAnnotation(text);
-            System.out.println("creando nuevo tooltip");
+            logger.fine("creando nuevo tooltip");
             layer.addAnnotation(annotation);
         }
         annotation.setScreenPoint(event.getPickPoint());

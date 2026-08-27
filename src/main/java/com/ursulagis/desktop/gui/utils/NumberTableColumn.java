@@ -15,8 +15,11 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.TextAlignment;
+import java.util.logging.Logger;
 @Deprecated
 public class NumberTableColumn<T> extends TableColumn<T,String> {
+	private static final Logger logger = Logger.getLogger(NumberTableColumn.class.getName());
+
 	public NumberTableColumn(String title,Function<T,Number>  getMethod, BiConsumer<T,Number> setMethod){
 		super(title);	
 
@@ -29,7 +32,7 @@ public class NumberTableColumn<T> extends TableColumn<T,String> {
 			try{
 				return new SimpleStringProperty(df.format(numberValue));	
 			}catch(Exception e){
-				System.out.println("Fall� el Decimal Format en String Table Column "+title +" para "+numberValue);
+				logger.fine("Fall� el Decimal Format en String Table Column "+title +" para "+numberValue);
 
 				return new SimpleStringProperty(String.valueOf(numberValue));
 			}

@@ -35,6 +35,7 @@ import com.ursulagis.desktop.tasks.ProgresibleTask;
 import com.ursulagis.desktop.utils.FileHelper;
 
 
+import java.util.logging.Logger;
 /**
  * para el cufia la semilla es la 3ra culumna, los datos tienen que estar en enteros
  * diferencia entre AGFusion y 
@@ -45,6 +46,8 @@ import com.ursulagis.desktop.utils.FileHelper;
  */
 
 public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
+	private static final Logger logger = Logger.getLogger(ExportarCosechaDePuntosTask.class.getName());
+
 	Labor<?> laborToExport=null;
 	File shapeFile=null;
 	public boolean guardarConfig=true;
@@ -57,7 +60,7 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 	}
 
 	public File call()  {//copiado de exportar labor
-		System.out.println("llamando a call en ExportHarvestMap");
+		logger.fine("llamando a call en ExportHarvestMap");
 		Map<String, Serializable> params = new HashMap<String, Serializable>();
 		try {
 			params.put("url", shapeFile.toURI().toURL());
@@ -76,13 +79,13 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 					+ CosechaLabor.COLUMNA_CURSO+":java.lang.Double,"
 					+ CosechaLabor.COLUMNA_ELEVACION+":java.lang.Double,";
 
-			System.out.println("creando type con: "+typeDescriptor); 
+			logger.fine("creando type con: "+typeDescriptor); 
 
 
 			SimpleFeatureType pointType = DataUtilities.createType("PrescType", typeDescriptor); //$NON-NLS-1$
 
 			//SimpleFeatureType pointType =laborToExport.getPointType();
-			System.out.println("cosecha point type es "+pointType);
+			logger.fine("cosecha point type es "+pointType);
 
 			ShapefileDataStoreFactory dataStoreFactory = new ShapefileDataStoreFactory();
 			newDataStore = (ShapefileDataStore) dataStoreFactory.createNewDataStore(params);
@@ -111,7 +114,7 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 				};
 				boolean res = pointFeatureCollection.add(fb.buildFeature(null,attributes));
 				if(!res) {
-					System.out.println("no se pudo insertar point para "+i);
+					logger.fine("no se pudo insertar point para "+i);
 				}
 				updateProgress(idx + 1, progressMax);
 			}
@@ -160,7 +163,7 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 		SimpleFeatureIterator it = laborToExport.outCollection.features();
 		DefaultFeatureCollection pointFeatureCollection =  new DefaultFeatureCollection("internal",type); //$NON-NLS-1$
 		SimpleFeatureBuilder fb = new SimpleFeatureBuilder(type);
-		System.out.println("exportando type: "+type);
+		logger.fine("exportando type: "+type);
 		while(it.hasNext()){
 			SimpleFeature sf = it.next();		
 			List<Object> attributes = sf.getAttributes();
@@ -171,14 +174,14 @@ public class ExportarCosechaDePuntosTask  extends ProgresibleTask<File>{
 
 				}
 			}
-			System.out.println(attributes);
+			logger.fine(String.valueOf(attributes));
 			fb.addAll(attributes);//Can handle 12 attributes only, index is 12
 
 			//FIXME no se esta exportando bien la cosecha a puntos
 			SimpleFeature pointFeature = fb.buildFeature(null);
 			boolean ret = pointFeatureCollection.add(pointFeature);
 			if(!ret) {
-				System.err.println("no se pudo agregar la feature id "+LaborItem.getID(sf)+" en ExportarCosechaDePuntos" );
+				logger.warning("no se pudo agregar la feature id "+LaborItem.getID(sf)+" en ExportarCosechaDePuntos");
 			}
 
 		}

@@ -63,7 +63,10 @@ import com.ursulagis.desktop.tasks.UpdateTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.ExcelHelper;
 
+import java.util.logging.Logger;
 public class BulkNdviDownloadGUI {
+	private static final Logger logger = Logger.getLogger(BulkNdviDownloadGUI.class.getName());
+
 	private static final int MAX_TRYS = 3;
 	private static int MAX_DATES_PER_QUERY = 4;//con 20 tarda 7.3 min para mes para 208 poligonos//con 40 en 2 poligonos 6 meses tira service unavailable 503; con 20 y 2 poli 6 meses parece andar bien
 	private static final String YYYY_MM_DD = "yyyy-MM-dd";
@@ -351,7 +354,7 @@ public class BulkNdviDownloadGUI {
 						a.setTitle(Messages.getString("BulkNdviDownloadGUI.stageNDVITitle"));
 						a.show();
 					});
-					System.out.println("termine de procesar todos los poligonos");
+					logger.fine("termine de procesar todos los poligonos");
 				});
 				//return resNDVI;
 				//recorrer los poligonos buscando ndvi para las fechas seleccionadas
@@ -482,7 +485,7 @@ public class BulkNdviDownloadGUI {
 				HttpRequest request = requestFactory.buildPostRequest(url, req_content);//(url);
 				response= request.execute();
 				if(trys>1) {
-					System.err.println("Exito luego de "+(trys)+" intentos");
+					logger.warning("Exito luego de "+(trys)+" intentos");
 				}
 			} catch (Exception e) {
 				/*
@@ -495,11 +498,11 @@ public class BulkNdviDownloadGUI {
 				String message = e.getClass().getName();
 				String[] lines = e.getMessage().split("\n");
 				if(lines.length>0)message = message.concat(" "+lines[0] );
-				System.err.println(message);
+				logger.warning(message);
 				if(trys<MAX_TRYS) {
-					System.err.println("Reintentando "+(MAX_TRYS-trys)+" vececes mas");
+					logger.warning("Reintentando "+(MAX_TRYS-trys)+" vececes mas");
 				}else {
-					System.err.println("Fallo el request "+(trys)+" vececes. Abandonando.");
+					logger.warning("Fallo el request "+(trys)+" vececes. Abandonando.");
 				}
 				response = null;
 //				try {
@@ -542,7 +545,7 @@ public class BulkNdviDownloadGUI {
 						BigDecimal meanNDVI = (BigDecimal)meanObject;
 						mean = bdf.format(meanNDVI);
 					} else {
-						System.out.println("no se de que clase es meanNDVI "+meanObject.getClass().getCanonicalName());
+						logger.fine("no se de que clase es meanNDVI "+meanObject.getClass().getCanonicalName());
 					}
 					
 					Object cloudsObject = metadata.get("porcNubes");
@@ -551,7 +554,7 @@ public class BulkNdviDownloadGUI {
 						BigDecimal cloudsBD = (BigDecimal)cloudsObject;
 						clouds = bdf.format(cloudsBD);
 					} else {
-						System.out.println("no se de que clase es meanNDVI "+meanObject.getClass().getCanonicalName());
+						logger.fine("no se de que clase es meanNDVI "+meanObject.getClass().getCanonicalName());
 					}
 					//System.out.println(date+" "+mean);//2020-01-15 2.00 {meanNDVI:"0.24"}
 					String path2 = (String) feature.get(PATH2);

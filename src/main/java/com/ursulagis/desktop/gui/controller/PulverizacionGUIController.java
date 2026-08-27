@@ -30,7 +30,10 @@ import com.ursulagis.desktop.tasks.procesar.UnirPulverizacionesMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 
+import java.util.logging.Logger;
 public class PulverizacionGUIController {
+	private static final Logger logger = Logger.getLogger(PulverizacionGUIController.class.getName());
+
 	//private static final String DD_MM_YYYY = "dd/MM/yyyy";
 	JFXMain main=null;
 	private Pane progressBox;
@@ -131,7 +134,7 @@ public class PulverizacionGUIController {
 				}
 				task.uninstallProgressBar();			
 			});
-			System.out.println("ejecutando Compartir Recorrida");
+			logger.fine("ejecutando Compartir Recorrida");
 			JFXMain.executorPool.submit(task);		
 	}
 	
@@ -149,7 +152,7 @@ public class PulverizacionGUIController {
 				umTask.uninstallProgressBar();
 				//	viewGoTo(ret);
 				main.wwjPanel.repaint();
-				System.out.println("doEditPulverización succeeded"); //$NON-NLS-1$
+				logger.fine("doEditPulverización succeeded"); //$NON-NLS-1$
 				main.playSound();
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_EDITED);
 			});//fin del OnSucceeded						
@@ -242,7 +245,7 @@ public class PulverizacionGUIController {
 					labor.setLayer(new LaborLayer());
 					Optional<PulverizacionLabor> cosechaConfigured= PulverizacionConfigDialogController.config(labor);
 					if(!cosechaConfigured.isPresent()){//
-						System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); //$NON-NLS-1$
+						logger.fine("el dialogo termino con cancel asi que no continuo con la fertilización"); //$NON-NLS-1$
 						continue;
 					}							
 
@@ -258,7 +261,7 @@ public class PulverizacionGUIController {
 						umTask.uninstallProgressBar();
 						main.viewGoTo(ret);
 
-						System.out.println("ProcessPulvMapTask succeeded"); //$NON-NLS-1$
+						logger.fine("ProcessPulvMapTask succeeded"); //$NON-NLS-1$
 						main.playSound();
 						OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_IMPORTED);
 					});//fin del OnSucceeded
@@ -292,7 +295,7 @@ public class PulverizacionGUIController {
 				}
 				umTask.uninstallProgressBar();
 				viewGoTo(ret);
-				System.out.println("ProcessUniteFertMapsTask succeeded"); 
+				logger.fine("ProcessUniteFertMapsTask succeeded"); 
 				playSound();
 				OnboardingAchievements.getInstance().unlock(
 						JFXMain.stage,

@@ -26,7 +26,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearCosechaMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(UnirCosechasMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -109,7 +112,7 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 				boolean ret = labor.outCollection.add(nf);
 				featuresInsertadas++;
 				if(!ret){
-					System.out.println("no se pudo agregar la feature "+f);
+					logger.fine("no se pudo agregar la feature "+f);
 				}
 			}
 			
@@ -131,11 +134,11 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 			
 		}
 		
-		System.out.println("inserte "+featuresInsertadas+" elementos");
+		logger.fine("inserte "+featuresInsertadas+" elementos");
 		int elementosContiene = labor.outCollection.getCount();
-		System.out.println("la labor contiene "+elementosContiene+" elementos");
+		logger.fine("la labor contiene "+elementosContiene+" elementos");
 		if(featuresInsertadas!=elementosContiene){
-			System.out.println("no se insertaron todos los elementos con exito.");
+			logger.fine("no se insertaron todos los elementos con exito.");
 		}
 		labor.setNombre(nombre);
 		labor.setLayer(new LaborLayer());
@@ -151,7 +154,7 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 			if(elementosContiene > 0) {
 				labor.constructClasificador();
 			} else {
-				System.err.println("No se unieron cosechas: ninguna feature en las capas seleccionadas.");
+				logger.warning("No se unieron cosechas: ninguna feature en las capas seleccionadas.");
 			}
 //		}
 
@@ -184,7 +187,7 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 		runLater(itemsToShow);
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println("tarde "+time+" milisegundos en unir las cosechas.");
+		logger.fine("tarde "+time+" milisegundos en unir las cosechas.");
 	}
 
 	/**
@@ -245,7 +248,7 @@ public class UnirCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 			if(count>0)	coeficienteConversion=sumCoef/count;
 		}
 		//TODO remover comentario
-		System.out.println("el coeficiente de conversion para "+cosecha.getNombre()+" es "+coeficienteConversion);
+		logger.fine("el coeficiente de conversion para "+cosecha.getNombre()+" es "+coeficienteConversion);
 		return coeficienteConversion;
 	}
 	

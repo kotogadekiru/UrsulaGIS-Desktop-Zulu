@@ -55,7 +55,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
+	private static final Logger logger = Logger.getLogger(GenerarRecorridaDirigidaTask.class.getName());
+
 
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
 	public static final String ZOOM_TO_KEY = "ZOOM_TO";
@@ -114,7 +117,7 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 		String nombreRecorrida =null;
 		//ancho me permite controlar la distancia minima entre los puntos y entre el punto y la frontera
 		double ancho = 5+Math.sqrt(superficieMinimaAMuestrear*ProyectionConstants.METROS2_POR_HA)/10;
-		System.out.println("ancho="+ancho); //ancho=86.60254037844386
+		logger.fine("ancho="+ancho); //ancho=86.60254037844386
 		Map<String,Color> colorCat = new HashMap<String, Color>();
 		Map<String,List<Geometry>> ambsRec = new HashMap<String, List<Geometry>>();
 
@@ -208,7 +211,7 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 								&& intersectionCount == 0) {//esto asegura distancia a los otros puntos
 							Muestra muestra = new Muestra();
 							muestra.setNombre(nombre);//una letra de A a I
-							System.out.println("generando muestra con nombre "+nombre);
+							logger.fine("generando muestra con nombre "+nombre);
 							muestra.setSubNombre(Integer.toString(countMuestraGenerada));
 							countMuestraGenerada++;
 							muestra.initObservacionSuelo();
@@ -226,7 +229,7 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 				}//termino de evaluar el poligono con tamanio suficiente
 				count++;//FIXME subnombre se repite
 				updateProgress(count, featureCount);
-				System.out.println("Termine de generar todos los puntos "+recorrida.muestras.size());
+				logger.fine("Termine de generar todos los puntos "+recorrida.muestras.size());
 			}//termino de recorrer el while de una labor
 			//c.getLayer().setEnabled(false);
 			c.getLayer().setOpacity(0.18);
@@ -236,7 +239,7 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 
 		//TODO crear un PathLayer con los puntos de itemsToShow
 		ordenarMuestras(recorrida.muestras);
-		System.out.println("Termine de ordenar las muestras");
+		logger.fine("Termine de ordenar las muestras");
 		Muestra first = recorrida.muestras.get(0);
 		
 		recorrida.setLatitude(first.latitude);
@@ -381,7 +384,7 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("Cancelando GenerarRecorridaDirigidaTask");
+			logger.fine("Cancelando GenerarRecorridaDirigidaTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

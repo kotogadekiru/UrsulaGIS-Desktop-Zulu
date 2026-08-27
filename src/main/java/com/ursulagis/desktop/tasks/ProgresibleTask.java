@@ -11,7 +11,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import java.io.InputStream;
 
+import java.util.logging.Logger;
 public abstract class ProgresibleTask<E> extends Task<E>{
+	private static final Logger logger = Logger.getLogger(ProgresibleTask.class.getName());
+
 	
 	private static final String TASK_CLOSE_ICON = "gui/event-close.png";
 	//public static final String ZOOM_TO_KEY = "ZOOM_TO";
@@ -60,23 +63,23 @@ public abstract class ProgresibleTask<E> extends Task<E>{
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});
 		try {
-			System.out.println("Attempting to load image: " + TASK_CLOSE_ICON);
+			logger.fine("Attempting to load image: " + TASK_CLOSE_ICON);
 			InputStream imageStream = getClass().getClassLoader().getResourceAsStream(TASK_CLOSE_ICON);
 			if (imageStream != null) {
-				System.out.println("Successfully found image resource: " + TASK_CLOSE_ICON);
+				logger.fine("Successfully found image resource: " + TASK_CLOSE_ICON);
 				Image imageDecline = new Image(imageStream);
 				cancel.setGraphic(new ImageView(imageDecline));
 			} else {
-				System.err.println("Could not find image resource: " + TASK_CLOSE_ICON);
+				logger.warning("Could not find image resource: " + TASK_CLOSE_ICON);
 				cancel.setText("X");
 			}
 		} catch (Exception e) {
-			System.err.println("Error loading image: " + e.getMessage());
+			logger.warning("Error loading image: " + e.getMessage());
 			e.printStackTrace();
 			cancel.setText("X");
 		}

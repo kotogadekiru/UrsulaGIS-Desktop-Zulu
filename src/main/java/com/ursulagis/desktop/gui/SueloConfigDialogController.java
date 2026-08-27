@@ -32,12 +32,15 @@ import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
 
 
+import java.util.logging.Logger;
 /**
  * clase que toma una objeto de configuracion lo muestra y permite editarlo y lo devuelve
  * @author tomas
  *
  */
 public class SueloConfigDialogController  extends Dialog<Suelo>{
+	private static final Logger logger = Logger.getLogger(SueloConfigDialogController.class.getName());
+
 	private static final String CONFIG_DIALOG_FXML = "SueloConfigDialog.fxml"; //$NON-NLS-1$
 
 	@FXML
@@ -100,7 +103,7 @@ public class SueloConfigDialogController  extends Dialog<Suelo>{
 
 	public SueloConfigDialogController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("SueloConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -113,7 +116,7 @@ public class SueloConfigDialogController  extends Dialog<Suelo>{
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -227,7 +230,7 @@ public class SueloConfigDialogController  extends Dialog<Suelo>{
 //		}
 		
 		this.comboAmount.valueProperty().addListener((o,s,s2)->{
-			System.out.println("cambiando colAmount a "+s2); //$NON-NLS-1$
+			logger.fine("cambiando colAmount a "+s2); //$NON-NLS-1$
 			
 			labor.colAmount.set(s2);
 //			if(options.get(0).equalsIgnoreCase(s2)){				
@@ -290,7 +293,7 @@ public class SueloConfigDialogController  extends Dialog<Suelo>{
 			controller.init();
 			ret = controller.showAndWait();
 		} catch (IOException e1) {
-			System.err.println("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

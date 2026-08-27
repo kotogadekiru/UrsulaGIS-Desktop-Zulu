@@ -43,7 +43,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class GenerarOrdenCompraTask  extends Task<OrdenCompra>{
+	private static final Logger logger = Logger.getLogger(GenerarOrdenCompraTask.class.getName());
+
 	private static final String TASK_CLOSE_ICON = "/gui/event-close.png";
 	private ProgressBar progressBarTask;
 	private Pane progressPane;
@@ -247,7 +250,7 @@ public class GenerarOrdenCompraTask  extends Task<OrdenCompra>{
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

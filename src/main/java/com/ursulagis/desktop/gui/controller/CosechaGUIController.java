@@ -64,7 +64,10 @@ import com.ursulagis.desktop.tasks.procesar.UnirFertilizacionesMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 
+import java.util.logging.Logger;
 public class CosechaGUIController extends AbstractGUIController {
+	private static final Logger logger = Logger.getLogger(CosechaGUIController.class.getName());
+
 
 
 	public CosechaGUIController(JFXMain _main) {
@@ -337,7 +340,7 @@ public class CosechaGUIController extends AbstractGUIController {
 				labor.setLayer(layer);
 				Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+					logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 					labor.dispose();//libero los recursos reservados
 					continue;
 				}							
@@ -350,7 +353,7 @@ public class CosechaGUIController extends AbstractGUIController {
 					this.getLayerPanel().update(this.getWwd());
 					viewGoTo(ret);
 					umTask.uninstallProgressBar();
-					System.out.println("OpenHarvestMapTask succeeded"); 
+					logger.fine("OpenHarvestMapTask succeeded"); 
 					playSound();
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_IMPORTED);
 				});//fin del OnSucceeded
@@ -378,7 +381,7 @@ public class CosechaGUIController extends AbstractGUIController {
 				}
 				task.uninstallProgressBar();			
 			});
-			System.out.println("ejecutando Compartir Fertilizacion");
+			logger.fine("ejecutando Compartir Fertilizacion");
 			JFXMain.executorPool.submit(task);		
 	}
 	
@@ -407,8 +410,8 @@ public class CosechaGUIController extends AbstractGUIController {
 					return histoChart;
 				}catch(Throwable t){
 					t.printStackTrace();
-					System.out.println("no hay ninguna labor para mostrar"); 
-					System.out.print(t.getMessage());
+					logger.fine("no hay ninguna labor para mostrar"); 
+					logger.fine(t.getMessage());
 					return null;
 				}
 			}			
@@ -424,10 +427,10 @@ public class CosechaGUIController extends AbstractGUIController {
 
 				Scene scene = new Scene(histoChart, 800,450);
 				histoStage.setScene(scene);
-				System.out.println("termine de crear el grafico rinde vs altura"); 
+				logger.fine("termine de crear el grafico rinde vs altura"); 
 				histoStage.initOwner(JFXMain.stage);
 				histoStage.show();
-				System.out.println("histoChart.show();"); 
+				logger.fine("histoChart.show();"); 
 			}else{
 				Alert error = new Alert(AlertType.ERROR);
 				error.setTitle(Messages.getString("JFXMain.heightVsAmountErrorTitle")); 
@@ -450,7 +453,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			}
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println("ProcessUniteFertMapsTask succeeded"); 
+			logger.fine("ProcessUniteFertMapsTask succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_SUMMED);
 		});//fin del OnSucceeded						
@@ -495,7 +498,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println("ProcessUniteHarvestMapsTask succeeded"); 
+			logger.fine("ProcessUniteHarvestMapsTask succeeded"); 
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
@@ -520,7 +523,7 @@ public class CosechaGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println("EditHarvestMapTask succeeded"); 
+				logger.fine("EditHarvestMapTask succeeded"); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
@@ -545,7 +548,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			e.printStackTrace();
 		}
 		String anchoGrillaLabel = Messages.getString("CosechaGUIController.anchoGrilla");
-		System.out.println("anchoGrillaLabel: " + anchoGrillaLabel);
+		logger.fine("anchoGrillaLabel: " + anchoGrillaLabel);
 		ancho = NumberInputDialog.showAndWait(
 				Messages.getString("CosechaGUIController.configureAnchoGrilla"), 
 						Messages.getString("CosechaGUIController.configureAnchoGrilla"), //Configure el ancho de la grilla 
@@ -606,7 +609,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println("GrillarCosechasMapTask succeeded"); 
+			logger.fine("GrillarCosechasMapTask succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_GRIDDED);
 		});//fin del OnSucceeded		
@@ -698,7 +701,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		fertN.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionN")); 
 		Optional<FertilizacionLabor> fertConfigured= FertilizacionConfigDialogController.config(fertN);
 		if(!fertConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			return;
 		}							
 
@@ -751,7 +754,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println("RecomendFertNFromHarvestPotentialMapTask succeeded"); 
+			logger.fine("RecomendFertNFromHarvestPotentialMapTask succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_N_FERTILIZATION_RECOMMENDED);
 		});//fin del OnSucceeded
@@ -769,7 +772,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		fertPAbs.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionP")); 
 		Optional<FertilizacionLabor> fertConfigured= FertilizacionConfigDialogController.config(fertPAbs);
 		if(!fertConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			return;
 		}							
 
@@ -834,7 +837,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println("RecomendFertNFromHarvestPotentialMapTask succeeded"); 
+			logger.fine("RecomendFertNFromHarvestPotentialMapTask succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_P_BALANCE_FERTILIZATION_RECOMMENDED);
 		});//fin del OnSucceeded
@@ -851,7 +854,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		labor.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionP")); 
 		Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			return;
 		}					
 
@@ -902,7 +905,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			umTask.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_P_FERTILIZATION_RECOMMENDED);
 			viewGoTo(ret);
-			System.out.println("RecomendFertFromHarvestPotentialMapTask succeeded"); 
+			logger.fine("RecomendFertFromHarvestPotentialMapTask succeeded"); 
 			playSound();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
@@ -961,7 +964,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		labor.setNombre(cosecha.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<FertilizacionLabor> siembraConfigured= FertilizacionConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -994,7 +997,7 @@ public class CosechaGUIController extends AbstractGUIController {
 
 		Optional<PulverizacionLabor> siembraConfigured= PulverizacionConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -1046,7 +1049,7 @@ public class CosechaGUIController extends AbstractGUIController {
 		labor.setNombre(cosecha.getNombre()+" "+Messages.getString("JFXMain.cosechaNueva"));  
 		Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		

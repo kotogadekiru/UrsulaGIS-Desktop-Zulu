@@ -13,7 +13,10 @@ import javafx.scene.text.TextAlignment;
 import com.ursulagis.desktop.utils.DAH;
 import javafx.beans.property.SimpleBooleanProperty;
 
+import java.util.logging.Logger;
 public class BooleanTableColumn<T> extends TableColumn<T,Boolean> {
+	private static final Logger logger = Logger.getLogger(BooleanTableColumn.class.getName());
+
 
 	public BooleanTableColumn(String title,Function<T,Boolean>  getMethod, BiConsumer<T,Boolean> setMethod){
 		super(title);	
@@ -59,7 +62,7 @@ public class BooleanTableColumn<T> extends TableColumn<T,Boolean> {
 				newVal = cellEditingEvent.getNewValue();
 				if(setMethod!=null)setMethod.accept(p,newVal);//Double.valueOf( cellEditingEvent.getNewValue()));		
 			
-				System.out.println("modificando el objeto boolean");
+				logger.fine("modificando el objeto boolean");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

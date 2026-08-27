@@ -31,7 +31,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
+	private static final Logger logger = Logger.getLogger(GrillarSiembrasMapTask.class.getName());
+
 	/**
 	 * la lista de las siembras a unir
 	 */
@@ -98,7 +101,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		labor.setLayer(new LaborLayer());
 		// 2 generar una grilla de ancho ="ancho" que cubra bounds
 		List<Polygon>  grilla = construirGrilla(unionEnvelope, ancho);
-		System.out.println("creando una grilla con"+grilla.size()+" elementos");
+		logger.fine("creando una grilla con"+grilla.size()+" elementos");
 
 		featureCount = grilla.size();
 
@@ -128,7 +131,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 								if(f!=null){
 									boolean res = features.add(f);
 									if(!res){
-										System.out.println("no se pudo agregar la feature"+f);
+										logger.fine("no se pudo agregar la feature"+f);
 									}
 								}
 							}
@@ -136,7 +139,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 							updateProgress( this.featureNumber, featureCount);
 
 						}catch(Exception e){
-							System.err.println("error al construir un elemento de la grilla");
+							logger.warning("error al construir un elemento de la grilla");
 							e.printStackTrace();
 						}
 						},
@@ -147,7 +150,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 			s.clearCache();
 		}
 
-		System.out.println("cree una union de"+byPolygon.size()+" elementos");
+		logger.fine("cree una union de"+byPolygon.size()+" elementos");
 
 		if(labor.inCollection == null){
 			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarSiembrasMapTask.9"),labor.getType());
@@ -155,7 +158,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){
-			System.out.println("no se pudieron agregar las features al outCollection");
+			logger.fine("no se pudieron agregar las features al outCollection");
 		}
 
 		labor.constructClasificador();
@@ -163,7 +166,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		runLater(byPolygon.values());
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println("tarde"+time+" milisegundos en unir las siembras. es"+time/featureCount+" milisegundos por polígono");
+		logger.fine("tarde"+time+" milisegundos en unir las siembras. es"+time/featureCount+" milisegundos por polígono");
 	}
 
 	/**
@@ -192,7 +195,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 				areasIntersecciones.put(sPoly,areaInterseccion);
 				intersections.add(interseccion);			
 			}catch(Exception e){
-				System.err.println("fallo la interseccion entre "+poly+" y "+g);
+				logger.warning("fallo la interseccion entre "+poly+" y "+g);
 			}		
 		}
 

@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.ursulagis.desktop.utils.CustomProperties;
 
+import java.util.logging.Logger;
 /**
  * clase util para acceder al archivo de configuracion persistente en el sistema.
  * el usuario debe construir la instancia leer, modificar y guardar los cambios realizados. 
@@ -25,6 +26,8 @@ import com.ursulagis.desktop.utils.CustomProperties;
 
 
 public class Configuracion{
+	private static final Logger logger = Logger.getLogger(Configuracion.class.getName());
+
 	public static final String URSULA_GIS_APPDATA_FOLDER = "UrsulaGIS";
 	public static final String APPDATA = "APPDATA";
 
@@ -74,7 +77,7 @@ public class Configuracion{
 			propF.getParentFile().mkdirs();
 			propF.createNewFile();
 		} catch (IOException e) {
-			System.err.println("no pude crear el config.properties");
+			logger.warning("no pude crear el config.properties");
 			e.printStackTrace();
 		}
 		loadProperties();
@@ -112,13 +115,13 @@ public class Configuracion{
 			InputStream in = this.getClass().getResourceAsStream(
 					DEFAULT_CONFIG_PROPERTIES);
 		//	propertiesFileUrl=DEFAULT_CONFIG_PROPERTIES;
-			System.out.println("Read all properties from file");
+			logger.fine("Read all properties from file");
 			try {
 				// Use UTF-8 encoding for reading default properties
 				configProp.load(new InputStreamReader(in, StandardCharsets.UTF_8));
-				System.out.println("finished loading defaults");
+				logger.fine("finished loading defaults");
 			} catch (IOException e) {
-				System.out.println("failed to load default configuration");
+				logger.fine("failed to load default configuration");
 				e.printStackTrace();
 			}
 		}
@@ -135,7 +138,7 @@ public class Configuracion{
 		try {
 			return  new Configuracion();
 		}catch(Exception e) {
-			System.out.println("error al conseguir la instancia de configuracion");
+			logger.fine("error al conseguir la instancia de configuracion");
 			return null;
 		}
 		//return LazyHolder.INSTANCE;
@@ -179,7 +182,7 @@ public class Configuracion{
 			writer.close();
 			fos.close();
 		} catch (IOException e) {
-			System.err.println("fallo el guardar config.properties en "+propertiesFileUrl);
+			logger.warning("fallo el guardar config.properties en "+propertiesFileUrl);
 			e.printStackTrace();
 		}
 	}

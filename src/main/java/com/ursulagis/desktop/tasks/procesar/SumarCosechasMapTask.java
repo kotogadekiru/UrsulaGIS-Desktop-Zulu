@@ -29,7 +29,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearCosechaMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(SumarCosechasMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -85,7 +88,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 			}
 			if(labor.getCultivo()==null){//inicializo las propiedades con los valores de la primera fert unida
 				//esto no se corre porque en el constructor se inicializa con los valores default
-				System.out.println("inicializando las variables de la nueva fertilizacion con los de la primera fert a unir");
+				logger.fine("inicializando las variables de la nueva fertilizacion con los de la primera fert a unir");
 				labor.setCultivo(fert.getCultivo());
 				labor.setPrecioInsumo(fert.getPrecioInsumo());
 				labor.setFecha(fert.getFecha());
@@ -119,7 +122,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 		List<Polygon>  grilla = GrillarCosechasMapTask.construirGrilla(unionEnvelope, ancho);
 		//List<Polygon>  grilla = construirGrillaTriangular(unionEnvelope, ancho);
 		//double elementos = grilla.size();
-		System.out.println("creando una grilla con "+grilla.size()+" elementos");
+		logger.fine("creando una grilla con "+grilla.size()+" elementos");
 		// 3 recorrer cada pixel de la grilla promediando los valores y generando los nuevos items de la cosecha
 		featureNumber = 0;
 		featureCount = grilla.size();
@@ -150,7 +153,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 								if(f!=null){
 									boolean res = features.add(f);
 									if(!res){
-										System.out.println("no se pudo agregar la feature "+f);
+										logger.fine("no se pudo agregar la feature "+f);
 									}
 								}
 							}
@@ -158,7 +161,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 							updateProgress( this.featureNumber, featureCount);
 
 						}catch(Exception e){
-							System.err.println("error al construir un elemento de la grilla");
+							logger.warning("error al construir un elemento de la grilla");
 							e.printStackTrace();
 						}
 						},
@@ -169,7 +172,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 			l.clearCache();
 		}
 		
-		System.out.println("cree una union de "+byPolygon.size()+" elementos");
+		logger.fine("cree una union de "+byPolygon.size()+" elementos");
 
 //FIXME esto hace que la grilla no tenga memoria
 		if(labor.inCollection == null){
@@ -178,7 +181,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){//XXX si esto falla es provablemente porque se estan creando mas de una feature con el mismo id
-			System.out.println("no se pudieron agregar las features al outCollection");
+			logger.fine("no se pudieron agregar las features al outCollection");
 		}
 
 		// 4 mostrar la fertilizacion sintetica creada
@@ -189,7 +192,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 		runLater(byPolygon.values());
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println("tarde "+time+" milisegundos en unir las fertilizaciones.");
+		logger.fine("tarde "+time+" milisegundos en unir las fertilizaciones.");
 	}
 
 //	@Override
@@ -230,7 +233,7 @@ public class SumarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLabo
 				intersections.add(g);
 			
 			}catch(Exception e){
-				System.err.println("no se pudo hacer la interseccion entre\n"+poly+"\n y\n"+g);
+				logger.warning("no se pudo hacer la interseccion entre\n"+poly+"\n y\n"+g);
 			}		
 		}
 

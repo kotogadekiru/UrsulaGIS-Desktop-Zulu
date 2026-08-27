@@ -14,7 +14,10 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
+import java.util.logging.Logger;
 public class HarvestSelectDialogController extends Dialog<CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(HarvestSelectDialogController.class.getName());
+
 	private static final String HARVEST_SELECT_DIALOG_FXML = "HarvestSelectDialog.fxml"; //$NON-NLS-1$
 	
 	@FXML
@@ -25,7 +28,7 @@ public class HarvestSelectDialogController extends Dialog<CosechaLabor> {
 	
 	public HarvestSelectDialogController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("HarvestSelectDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -71,7 +74,7 @@ public class HarvestSelectDialogController extends Dialog<CosechaLabor> {
 		controller.init();
 		ret = controller.showAndWait();
 	} catch (IOException e1) {
-		System.err.println("no se pudo levantar el fxml "+HARVEST_SELECT_DIALOG_FXML); //$NON-NLS-1$
+		logger.warning("no se pudo levantar el fxml "+HARVEST_SELECT_DIALOG_FXML); //$NON-NLS-1$
 		e1.printStackTrace();
 		System.exit(0);
 	}

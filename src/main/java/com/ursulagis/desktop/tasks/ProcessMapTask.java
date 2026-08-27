@@ -84,9 +84,12 @@ import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
+import java.util.logging.Logger;
 //import org.geotools.api.filter.FilterFactory2;
 //TODO change extend to ProgresibleTask<E>
 public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> extends ProgresibleTask<E>{
+	private static final Logger logger = Logger.getLogger(ProcessMapTask.class.getName());
+
 	public static final String LABOR_ITEM_AVKey = "LABOR_ITEM";
 	private static final int TARGET_LOW_RES_TIME = 2000;
 	//private static final String TASK_CLOSE_ICON = "/gui/event-close.png";
@@ -123,7 +126,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			labor.clearCache();//remember to clear your cache!!!
 			doProcess();
 		} catch (Exception e1) {
-			System.err.println("Error al procesar el task");
+			logger.warning("Error al procesar el task");
 			e1.printStackTrace();
 		}
 
@@ -187,7 +190,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				 * path para dibujarlo
 				 */
 				if(forPolygon.getNumPoints()==0){
-					System.err.println("dibujando un path con cero puntos "+ forPolygon);
+					logger.warning("dibujando un path con cero puntos "+ forPolygon);
 					return null;
 				}
 				//				for (int i = 0; i < forPolygon.getNumPoints(); i++) {
@@ -281,7 +284,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 
 
 			} else {
-				System.err.println("tratando de crear un extruded poligon sin un poligono");
+				logger.warning("tratando de crear un extruded poligon sin un poligono");
 			}
 		}//termine de recorrer el multipoligono
 
@@ -539,7 +542,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		double maxX = labor.maxX.getLongitude().degrees;;
 		double maxY = labor.maxY.getLatitude().degrees;
 
-		System.out.println("creando analyticSurface con minX="+minX+
+		logger.fine("creando analyticSurface con minX="+minX+
 				" minY="+minY+" maxX="+maxX+" maxY="+maxY);
 		//creando analyticSurface con minX=0.0 minY=0.0 maxX=-1.0 maxY=-1.0
 
@@ -730,7 +733,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				int index = (col+fila*width);//index me da negativo
 
 				if(index<0 ||index>=maxIndex) {
-					System.err.println("fila="+fila+" col="+col+" index="+index);
+					logger.warning("fila="+fila+" col="+col+" index="+index);
 					//System.err.println("index out of range for "+center+" bounds = "+bounds);
 					return;
 				} else { 
@@ -774,7 +777,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				try{
 					attributesList.set(index,newGridPoint);				
 				}catch(Exception e){
-					System.out.println("excepcion tratando de agregar el index "+index+" size="+attributesList.size());
+					logger.fine("excepcion tratando de agregar el index "+index+" size="+attributesList.size());
 				}
 			}
 		};
@@ -975,7 +978,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		 * path para dibujarlo
 		 */
 		if(poly.getNumPoints()==0){
-			System.err.println("dibujando un path con cero puntos "+ poly);
+			logger.warning("dibujando un path con cero puntos "+ poly);
 			return null;
 		}
 		for (int i = 0; i < poly.getNumPoints(); i++) {
@@ -1097,7 +1100,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("devolviendo itemList size "+cItems.size());
+		logger.fine("devolviendo itemList size "+cItems.size());
 		return cItems;
 	}
 
@@ -1163,7 +1166,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			}
 			}catch(Exception e ) {
 				e.printStackTrace();
-				System.err.println("Excepcion en updateStatsLabor");
+				logger.warning("Excepcion en updateStatsLabor");
 			}
 		});//
 
@@ -1230,8 +1233,8 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		//			//	labor.maxY = Math.max(labor.maxY, envelopeInternal.getMaxY());
 		//		}
 
-		System.out.println("(maxElev, minElev)= ("+labor.maxElev+" , "+labor.minElev+")");
-		System.out.println("(min, max) = ("+labor.minAmount+" , "+labor.maxAmount+")");//(min,max) = (203.0 , 203.0)
+		logger.fine("(maxElev, minElev)= ("+labor.maxElev+" , "+labor.minElev+")");
+		logger.fine("(min, max) = ("+labor.minAmount+" , "+labor.maxAmount+")");//(min,max) = (203.0 , 203.0)
 	}
 
 	protected void runLater(Collection<FC> itemsToShow) {	
@@ -1265,8 +1268,8 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		//int medRes=5*lowRes;
 		//	System.out.println("mid res rendering milis: "+medRes);
 		int highRes=Math.min(10*lowRes,30000);
-		System.out.println("lowRes= "+lowRes);
-		System.out.println("highRes= "+highRes);
+		logger.fine("lowRes= "+lowRes);
+		logger.fine("highRes= "+highRes);
 		installPlaceMark();
 		//
 
@@ -1285,11 +1288,11 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 //				if(labor.getContorno()==null) {
 //					extractContorno();//FIXME consume mucha memoria si son muchos puntos
 //				}
-				System.out.println("corriendo analyticSurfaceLayerHD");
+				logger.fine("corriendo analyticSurfaceLayerHD");
 				RenderableLayer analyticSurfaceLayerHD = createAnalyticSurfaceFromQuery(highRes);//30
 				analyticSurfaceLayerHD.setPickEnabled(false);//ya es false de fabrica
 				labor.getLayer().setAnalyticSurfaceLayer(analyticSurfaceLayerHD);
-				System.out.println("termine analyticSurfaceLayerHD");
+				logger.fine("termine analyticSurfaceLayerHD");
 			}).handle((r,e) -> {
 				if (e != null) e.printStackTrace();		
 				return null;
@@ -1420,7 +1423,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 									if(pmStandard!=null)this.addRenderable(pmStandard);//extPoly.render(dc);
 
 								}catch(Exception e){
-									System.out.println("error al tratar de contruir un poligono desde un punto");
+									logger.fine("error al tratar de contruir un poligono desde un punto");
 									e.printStackTrace();
 								}
 							} else if(g instanceof Polygon){
@@ -1488,7 +1491,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			}
 			@Override
 			public void dispose() {
-				System.out.println("disposing of extrudedPoligonsLayer");
+				logger.fine("disposing of extrudedPoligonsLayer");
 				env=null;
 				renderables.stream().forEach(r->{
 					if(r instanceof ReusableExtrudedPolygon) {
@@ -1650,9 +1653,9 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				Long despues = System.currentTimeMillis();
 				Long demora = despues - antes;
 				if(demora > 1000){
-					System.out.println("tardo mas de 1 segundos en unir "+ polygonCollection.getNumGeometries());
-					System.out.println("tarde "+demora/1000+"s en hacer buffer(0)");
-					System.err.println("probable error de la configuracion de metros por unidad de distancia, probar con 0.0254 para pulgadas. terminando el proceso");
+					logger.fine("tardo mas de 1 segundos en unir "+ polygonCollection.getNumGeometries());
+					logger.fine("tarde "+demora/1000+"s en hacer buffer(0)");
+					logger.warning("probable error de la configuracion de metros por unidad de distancia, probar con 0.0254 para pulgadas. terminando el proceso");
 					//labor.config.valorMetrosPorUnidadDistanciaProperty().set(0.0254);
 					//super.cancel();
 					//					 tardo mas de 10 segundos en unir 1390

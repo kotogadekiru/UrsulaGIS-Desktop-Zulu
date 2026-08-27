@@ -50,7 +50,10 @@ import javafx.scene.paint.Color;
 import com.ursulagis.desktop.utils.DAH;
 
 
+import java.util.logging.Logger;
 public class CompartirRecorridaTask extends Task<String> {
+	private static final Logger logger = Logger.getLogger(CompartirRecorridaTask.class.getName());
+
 	
 	//private static final String GET_RECORRIDAS_BY_ID_URL = "https://www.ursulagis.com/api/recorridas/id/";
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
@@ -73,8 +76,8 @@ public class CompartirRecorridaTask extends Task<String> {
 	public CompartirRecorridaTask(Recorrida recorrida) {
 		this.recorrida = recorrida;
 		
-		System.out.println("compartiendo recorrida "+recorrida);
-		System.out.println("muestras "+recorrida.getMuestras().size());
+		logger.fine("compartiendo recorrida "+recorrida);
+		logger.fine("muestras "+recorrida.getMuestras().size());
 	}
 
 	@Override
@@ -93,9 +96,9 @@ public class CompartirRecorridaTask extends Task<String> {
 		    // 1. Java object to JSON file
 		//    gson.toJson(obj, new FileWriter("C:\\projects\\staff.json"));
 		 //   recorrida.muestras.clear();
-		System.out.println("convirtirndo recorrida a json "+recorrida);
+		logger.fine("convirtirndo recorrida a json "+recorrida);
 	  	String json_body = gson.toJson(recorrida, Recorrida.class);
-	  	System.out.println("sending recorrida "+ json_body);
+	  	logger.fine("sending recorrida "+ json_body);
 	  	//String document_id = document.getId();
 	  	//String resource_url = "https://api.mendeley.com/documents/" + document_id;
 	  	//GenericUrl gen_url = new GenericUrl(resource_url);
@@ -111,11 +114,11 @@ public class CompartirRecorridaTask extends Task<String> {
 		Reader reader = new InputStreamReader(resContent);
 
 		StandardResponse standarResponse =  new Gson().fromJson(reader, StandardResponse.class);
-		System.out.println("standarResponse = "+standarResponse);
+		logger.fine("standarResponse = "+standarResponse);
 		//StandardResponse standarResponse = response.parseAs(StandardResponse.class);
 		//Recorrida r = new Gson().fromJson((String) resContent.get("data"), Recorrida.class);
 		StandardResponse.StatusResponse status = standarResponse.getStatus();
-		System.out.println("response status = "+status);
+		logger.fine("response status = "+status);
 		if(StandardResponse.StatusResponse.SUCCESS.equals(status)) {
 		//com.google.api.client.util.ArrayMap data =(ArrayMap) resContent.get("data");
 			JsonElement data = standarResponse.getData();
@@ -262,7 +265,7 @@ public class CompartirRecorridaTask extends Task<String> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

@@ -24,7 +24,10 @@ import com.google.api.client.util.ArrayMap;
 
 import gov.nasa.worldwind.geom.Position;
 
+import java.util.logging.Logger;
 public class GoogleGeocodingHelper {
+	private static final Logger logger = Logger.getLogger(GoogleGeocodingHelper.class.getName());
+
 	private static String key ="AIzaSyBYcc2x7_tskwlltuImLmTx8W_j079l8Q8";
 	private static String API_KEY="&key="+key;
 	private static String GEOCODE_API_GOOGLE_URL ="https://maps.googleapis.com/maps/api/geocode/json";//?address=";
@@ -61,7 +64,7 @@ public class GoogleGeocodingHelper {
 		//url.appendRawPath(API_KEY);
 		url.put("address", query);
 		url.put("key", key);
-		System.out.println("buscando la ubicacion de "+query+" con el url \n"+url);
+		logger.fine("buscando la ubicacion de "+query+" con el url \n"+url);
 		//https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=YOUR_API_KEY
 		//https://maps.googleapis.com/maps/api/geocode/json?address=Pehuajo&key=AIzaSyBYcc2x7_tskwlltuImLmTx8W_j079l8Q8
 		HttpResponse response = makeRequest(url);
@@ -77,14 +80,14 @@ public class GoogleGeocodingHelper {
 	
 	private static Position parseGeoCodeResponse(HttpResponse response) throws IOException {
 		GenericJson content = response.parseAs(GenericJson.class);
-		System.out.println("response content:\n"+content);
+		logger.fine("response content:\n"+content);
 		
 		//{"results":[{"address_components":[{"long_name":"Pehuaj�","short_name":"Pehuaj�","types":["locality","political"]},{"long_name":"Pehuaj� Partido","short_name":"Pehuaj� Partido","types":["administrative_area_level_2","political"]},{"long_name":"Buenos Aires Province","short_name":"Buenos Aires Province","types":["administrative_area_level_1","political"]},{"long_name":"Argentina","short_name":"AR","types":["country","political"]}],"formatted_address":"Pehuaj�, Buenos Aires Province, Argentina","geometry":{"bounds":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}},"location":{"lat":-35.8107166,"lng":-61.8987832},"location_type":"APPROXIMATE","viewport":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}}},"place_id":"ChIJ86BrWCz4wJURA89cs7G_REg","types":["locality","political"]}],"status":"OK"}
 			ArrayMap<String,Object> data = (ArrayMap<String,Object>) content.getUnknownKeys();
 		for(String key :data.keySet()){
 			ArrayList<Object> val =(ArrayList<Object>) data.get(key);
 			for(Object o:val){
-				System.out.println("object: "+o);
+				logger.fine("object: "+o);
 			
 			ArrayMap<String,Object> valMap = (ArrayMap<String,Object>) o;
 			ArrayMap<String,Object> geometry = (ArrayMap<String, Object>)valMap.get("geometry");
@@ -94,7 +97,7 @@ public class GoogleGeocodingHelper {
 			
 //		    "lat" : 37.4224764,
 //            "lng" : -122.0842499
-			System.out.println("lat: "+lat+ " lon: "+lng);
+			logger.fine("lat: "+lat+ " lon: "+lng);
 			return Position.fromDegrees(lat.doubleValue(), lng.doubleValue());
 			}
 		

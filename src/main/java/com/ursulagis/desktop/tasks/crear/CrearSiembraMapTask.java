@@ -22,12 +22,15 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 
+import java.util.logging.Logger;
 /**
  * task que genera una siembra con dosis fija a partir de un poligono
  * @author quero
  *
  */
 public class CrearSiembraMapTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
+	private static final Logger logger = Logger.getLogger(CrearSiembraMapTask.class.getName());
+
 	Double plantasM2Objetivo = 0.0;
 	List<Poligono> polis=null;
 
@@ -41,7 +44,7 @@ public class CrearSiembraMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 	public void doProcess() throws IOException {
 		//labor.setContorno(GeometryHelper.unirPoligonos(polis));
 		Semilla semilla = labor.getSemilla();
-		System.out.println("semilla es "+semilla);
+		logger.fine("semilla es "+semilla);
 		double entresurco = labor.getEntreSurco();
 		double pmil = semilla.getPesoDeMil();
 		double pg = semilla.getPG();

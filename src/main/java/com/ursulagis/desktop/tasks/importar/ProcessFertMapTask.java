@@ -23,12 +23,15 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearFertilizacionMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 /**
  *   Cuando el ingreso marginal es igual al costo unitario el beneficio ($/Ha) de agregar N es m�ximo
  * @author tomas
  *
  */
 public class ProcessFertMapTask extends ProcessMapTask<FertilizacionItem,FertilizacionLabor> {
+	private static final Logger logger = Logger.getLogger(ProcessFertMapTask.class.getName());
+
 
 	public ProcessFertMapTask(FertilizacionLabor labor) {
 		super(labor);
@@ -64,7 +67,7 @@ public class ProcessFertMapTask extends ProcessMapTask<FertilizacionItem,Fertili
 			featureCount=labor.getInCollection().size();
 		}
 		
-		System.out.println("Fertilización Type:"+DataUtilities.encodeType(reader.getFeatureType())); //$NON-NLS-1$
+		logger.fine("Fertilización Type:"+DataUtilities.encodeType(reader.getFeatureType())); //$NON-NLS-1$
 
 		int divisor = 1;
 

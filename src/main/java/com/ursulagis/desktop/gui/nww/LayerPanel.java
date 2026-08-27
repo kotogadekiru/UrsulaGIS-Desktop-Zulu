@@ -48,7 +48,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
 
+import java.util.logging.Logger;
 public class LayerPanel extends VBox {
+	private static final Logger logger = Logger.getLogger(LayerPanel.class.getName());
+
 
 	private static final int TREE_ITEM_ICON_WIDTH = 50;
 
@@ -259,7 +262,7 @@ public class LayerPanel extends VBox {
 			});
 			}catch(Exception e){
 				e.printStackTrace();
-				System.out.println("no se pudo ordenar"); 
+				logger.fine("no se pudo ordenar"); 
 			}
 		}
 		if(tree==null){
@@ -379,7 +382,7 @@ public class LayerPanel extends VBox {
 		return new RenderableLayer(){
 			@Override	
 			public void dispose() {
-				System.out.println("disposing of rootLayer "+this.getName());
+				logger.fine("disposing of rootLayer "+this.getName());
 				super.dispose();
 			}
 		};
@@ -402,7 +405,7 @@ public class LayerPanel extends VBox {
 			mv.setCache(true);
 			item.setGraphic(mv);
 		} else {
-			System.err.println("Warning: Could not load icon: " + iconUrl);
+			logger.warning("Warning: Could not load icon: " + iconUrl);
 		}
 	}
 

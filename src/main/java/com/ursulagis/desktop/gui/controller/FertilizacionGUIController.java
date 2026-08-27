@@ -38,7 +38,10 @@ import com.ursulagis.desktop.tasks.procesar.UnirFertilizacionesMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 
+import java.util.logging.Logger;
 public class FertilizacionGUIController extends AbstractGUIController {
+	private static final Logger logger = Logger.getLogger(FertilizacionGUIController.class.getName());
+
 	public FertilizacionGUIController(JFXMain _main) {
 		super(_main);
 	}
@@ -126,7 +129,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 				umTask.uninstallProgressBar();
 				//this.wwjPanel.repaint();//null pointer
-				System.out.println("doEditFertilización succeeded"); 
+				logger.fine("doEditFertilización succeeded"); 
 				playSound();
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
@@ -209,7 +212,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				this.getLayerPanel().update(this.getWwd());
 			}	
 			umTask.uninstallProgressBar();
-			System.out.println("doEditFertilización succeeded"); 
+			logger.fine("doEditFertilización succeeded"); 
 			playSound();
 		});//fin del OnSucceeded						
 		JFXMain.executorPool.execute(umTask);
@@ -231,7 +234,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				fAPartir.setActivo(false);
 			}		
 			umTask2.uninstallProgressBar();
-			System.out.println("doEditFertilización succeeded"); 
+			logger.fine("doEditFertilización succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_SPLIT);
 		});//fin del OnSucceeded						
@@ -248,7 +251,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		labor.setNombre(fertilizacionLabor.getNombre()+" "+Messages.getString("CosechaGUIController.siembra"));  
 		Optional<SiembraLabor> siembraConfigured= SiembraConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -324,7 +327,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 
 			playSound();
 			viewGoTo(ret);
-			System.out.println("SiembraFertTask succeded"); 
+			logger.fine("SiembraFertTask succeded"); 
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_FROM_FERTILIZATION);
 		});
 		executorPool.execute(siembraFert);
@@ -369,7 +372,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				}
 				task.uninstallProgressBar();			
 			});
-			System.out.println("ejecutando Compartir Fertilizacion");
+			logger.fine("ejecutando Compartir Fertilizacion");
 			JFXMain.executorPool.submit(task);		
 	}
 	
@@ -385,7 +388,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				labor.setLayer(new LaborLayer());
 				Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
+					logger.fine("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -399,7 +402,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
 
-					System.out.println("OpenFertMapTask succeeded"); 
+					logger.fine("OpenFertMapTask succeeded"); 
 					playSound();
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_IMPORTED);
 				});//fin del OnSucceeded
@@ -436,7 +439,7 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			fertilizacionesAUnir.forEach(f -> f.getLayer().setEnabled(false));
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
-			System.out.println("ProcessUniteFertMapsTask succeeded"); 
+			logger.fine("ProcessUniteFertMapsTask succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, achievementId);
 		});//fin del OnSucceeded						

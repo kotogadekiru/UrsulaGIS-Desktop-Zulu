@@ -46,11 +46,14 @@ import com.ursulagis.desktop.tasks.crear.CrearSueloMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
+import java.util.logging.Logger;
 /**
  * proceso que no contemplaba potacio ni azufre
  */
 @Deprecated
 public class ProcessBalanceDeNutrientes extends ProcessMapTask<SueloItem,Suelo> {
+	private static final Logger logger = Logger.getLogger(ProcessBalanceDeNutrientes.class.getName());
+
 	double distanciaAvanceMax = 0;
 	double anchoMax = 0;
 
@@ -98,13 +101,13 @@ public class ProcessBalanceDeNutrientes extends ProcessMapTask<SueloItem,Suelo> 
 				()->new ReferencedEnvelope(),
 				(env, labor) ->{		
 					ReferencedEnvelope b = labor.outCollection.getBounds();
-					System.out.println("agregando al envelope "+b );
+					logger.fine("agregando al envelope "+b);
 					env.expandToInclude(b);
 				},	(env1, env2) -> env1.expandToInclude(env2));
 		
 		// 2 generar una grilla de ancho ="ancho" que cubra bounds
 		List<Polygon>  grilla = GrillarCosechasMapTask.construirGrilla(unionEnvelope, ancho);
-		System.out.println("construi una grilla con "+grilla.size()+" elementos");//construi una grilla con 5016 elementos
+		logger.fine("construi una grilla con "+grilla.size()+" elementos");//construi una grilla con 5016 elementos
 		//obtener una lista con todas las geometrias de las labores
 		List<Geometry> geometriasActivas = labores.parallelStream().collect(
 				()->new ArrayList<Geometry>(),
@@ -128,7 +131,7 @@ public class ProcessBalanceDeNutrientes extends ProcessMapTask<SueloItem,Suelo> 
 		//GeometryCollection activasCollection = GeometryHelper.toGeometryCollection(geometriasActivas);
 		//Geometry cover =  activasCollection.buffer(0);
 		Geometry cover = GeometryHelper.unirGeometrias(geometriasActivas);
-		System.out.println("el area del cover es: "+GeometryHelper.getHas(cover));//el area del cover es: 3.114509320893096E-12
+		logger.fine("el area del cover es: "+GeometryHelper.getHas(cover));//el area del cover es: 3.114509320893096E-12
 		//intersectar la grilla con el contorno
 		List<Geometry> grillaCover = grilla.parallelStream().collect(
 				()->new ArrayList<Geometry>(),
@@ -149,7 +152,7 @@ public class ProcessBalanceDeNutrientes extends ProcessMapTask<SueloItem,Suelo> 
 		//}
 
 		featureCount = grillaCover.size();
-		System.out.println("grilla cover size "+featureCount);
+		logger.fine("grilla cover size "+featureCount);
 		
 		grillaCover.parallelStream().forEach(g->{		
 				SueloItem sueloItem = createSueloForPoly(g);		
@@ -178,7 +181,7 @@ private SueloItem createSueloForPoly(Geometry geomQuery) {
 	
 		Double areaQuery =GeometryHelper.getHas(geomQuery);//ProyectionConstants.A_HAS( geomQuery.getArea());
 		if(!(areaQuery>0)) {
-			System.out.println("salteando la geometria "+geomQuery+" porque el area no es >0");
+			logger.fine("salteando la geometria "+geomQuery+" porque el area no es >0");
 			return null;//si el area no es mayor a cero paso a la siguiente
 		}
 		//	* ProyectionConstants.A_HAS();
@@ -188,7 +191,7 @@ private SueloItem createSueloForPoly(Geometry geomQuery) {
 		//Double kgPFert = getKgPFertilizacion(geomQuery);
 		//Double kgNSuelo = getKgNSuelo(geomQuery);	
 		//Double kgNFert = getKgNFertilizacion(geomQuery);
-		System.out.println("obteniendo los nutrientes de los suelos");
+		logger.fine("obteniendo los nutrientes de los suelos");
 		Map<SueloParametro,Double> kgNutrienteSuelos = getKgNutrientesSuelos(geomQuery);
 		Map<SueloParametro,Double> kgNutrienteFerts = getKgNutrientesFertilizaciones(geomQuery);
 		
@@ -232,17 +235,17 @@ private SueloItem createSueloForPoly(Geometry geomQuery) {
 //			&& kgMoSuelo == 0
 //			&& kgMoCosecha == 0
 //			&& elev == 10)return null;//descarto los que no tienen valores
-		System.out.println("uniendo los parametros de los suelos");
+		logger.fine("uniendo los parametros de los suelos");
 		joinParametrosSuelosMaps(kgNutrienteSuelos,kgNutrienteFerts);
 		joinParametrosSuelosMaps(kgNutrienteSuelos,kgNutrientesCosechas);
 		
 		Double sumaAreas = kgNutrienteSuelos.get(SueloParametro.Area);
 		if(sumaAreas==null || sumaAreas==0) {
-			System.out.println("salteando el item porque no tiene areas");
+			logger.fine("salteando el item porque no tiene areas");
 			return null;
 		}
 		
-		System.out.println("sumaAreas "+sumaAreas);
+		logger.fine("sumaAreas "+sumaAreas);
 		Double elev =  kgNutrienteSuelos.get(SueloParametro.Elevacion)/sumaAreas;
 		Double newDensSuelo = kgNutrienteSuelos.get(SueloParametro.Densidad)/sumaAreas;// y si hay superposicion entre los suelo item? no deberia
 		//N

@@ -109,7 +109,10 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 import com.ursulagis.desktop.gui.nww.MeasureToolForShape;
 
 
+import java.util.logging.Logger;
 public class PoligonoGUIController extends AbstractGUIController{
+	private static final Logger logger = Logger.getLogger(PoligonoGUIController.class.getName());
+
 
 	//private ExecutorService executorPool=null;
 
@@ -272,7 +275,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 //				}
 				doGetNdviTiffFiles(poligonos);
 			}catch(Exception e) {
-				System.err.println("Error al guardar los poligonos"); //-NLS-1$
+				logger.warning("Error al guardar los poligonos"); //-NLS-1$
 				e.printStackTrace();
 			}
 			//});
@@ -547,14 +550,14 @@ public class PoligonoGUIController extends AbstractGUIController{
 				? SiembraConfigDialogController.config(labor, prefill)
 				: SiembraConfigDialogController.config(labor);
 		if(!siembraConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}				
 		
 		Optional<Double> plM2Obj= SiembraDosisObjetivoDialog.config(siembraConfigured.get());
 		if(!plM2Obj.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}
@@ -582,7 +585,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println("CrearSiembraMapTask succeeded"); //-NLS-1$
+			logger.fine("CrearSiembraMapTask succeeded"); //-NLS-1$
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_SIEMBRA);
 			if (onComplete != null) {
@@ -600,7 +603,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		labor.setLayer(layer);
 		Optional<FertilizacionLabor> cosechaConfigured= FertilizacionConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}							
@@ -648,7 +651,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
+			logger.fine("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_FERTILIZATION);
 		});//fin del OnSucceeded
@@ -665,7 +668,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		//TODO modificar el dialog controler para poder ingresar el caldo
 		Optional<PulverizacionLabor> pulvConfigured= PulverizacionConfigDialogController.config(labor);
 		if(!pulvConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}							
@@ -690,7 +693,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			polis.stream().forEach(p->p.getLayer().setEnabled(false));
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
+			logger.fine("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_PULVERIZATION);
 		});//fin del OnSucceeded
@@ -762,7 +765,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 			umTask.uninstallProgressBar();
-			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
+			logger.fine("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_SOIL);
 		});//fin del OnSucceeded
@@ -835,7 +838,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		task.setFinDate(ndviDpDLG.finalDate);
 		task.setIgnoreNDVI((List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class));
 		
-		System.out.println("procesando los datos entre "+ndviDpDLG.initialDate+" y "+ ndviDpDLG.finalDate);//hasta aca ok!
+		logger.fine("procesando los datos entre "+ndviDpDLG.initialDate+" y "+ ndviDpDLG.finalDate);//hasta aca ok!
 		task.installProgressBar(progressBox);
 		task.setOnSucceeded(handler -> {
 			if(plo instanceof Poligono){
@@ -843,7 +846,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			}
 			task.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DOWNLOADED);
-			System.out.println("termine de descargar todos los ndvi de "+plo);
+			logger.fine("termine de descargar todos los ndvi de "+plo);
 		});
 		JFXMain.executorPool.submit(task);
 	}
@@ -873,7 +876,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		task.setBeginDate(begin);
 		task.setFinDate(fin);			
 		task.setIgnoreNDVI((List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class));
-		System.out.println("procesando los datos entre "+begin+" y "+fin);//hasta aca ok!
+		logger.fine("procesando los datos entre "+begin+" y "+fin);//hasta aca ok!
 		task.installProgressBar(progressBox);
 		task.setOnSucceeded(handler -> {			
 			task.uninstallProgressBar();			
@@ -905,7 +908,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			showPoligonos(poligonos);			
 			umTask.uninstallProgressBar();
 			this.main.wwjPanel.repaint();
-			System.out.println("polígonos Extraídos succeeded"); 
+			logger.fine("polígonos Extraídos succeeded"); 
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_EXTRACTED);
 		});//fin del OnSucceeded						
@@ -1049,7 +1052,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				}
 				umTask.uninstallProgressBar();
 				viewGoTo(ret);
-				System.out.println("ProcessUniteHarvestMapsTask succeeded"); 
+				logger.fine("ProcessUniteHarvestMapsTask succeeded"); 
 				playSound();
 			});//fin del OnSucceeded
 			JFXMain.executorPool.execute(umTask);
@@ -1186,7 +1189,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				this.getLayerPanel().update(this.getWwd());
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_INTERSECTED);
 			}catch(Exception e) {
-				System.err.println("Error al intesectar los poligonos"); //-NLS-1$
+				logger.warning("Error al intesectar los poligonos"); //-NLS-1$
 				e.printStackTrace();
 			}
 		});
@@ -1242,7 +1245,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				//nombre=nombre+" "+p.getNombre();
 			}
 		}
-		System.out.println("generando siembra para "+geometriasActivas.size()+" poligonos");
+		logger.fine("generando siembra para "+geometriasActivas.size()+" poligonos");
 		doCrearSiembra(geometriasActivas, prefill, onComplete);
 		//		Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 		//		if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
@@ -1279,7 +1282,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 				//nombre=nombre+" "+p.getNombre();
 			}
 		}
-		System.out.println("generando fertilizacion para "+geometriasActivas.size()+" poligonos");
+		logger.fine("generando fertilizacion para "+geometriasActivas.size()+" poligonos");
 		doCrearFertilizacion(geometriasActivas);
 		//		Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 		//		if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
@@ -1313,7 +1316,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		labor.setNombre(polis.get(0).getNombre()+" "+Messages.getString("JFXMain.cosecha")); //-NLS-1$ //-NLS-2$
 		Optional<CosechaLabor> cosechaConfigured= HarvestConfigDialogController.config(labor);
 		if(!cosechaConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); //-NLS-1$
 			labor.dispose();//libero los recursos reservados
 			return;
 		}		
@@ -1340,7 +1343,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			umTask.uninstallProgressBar();
 			viewGoTo(ret);
 
-			System.out.println("OpenHarvestMapTask succeeded"); //-NLS-1$
+			logger.fine("OpenHarvestMapTask succeeded"); //-NLS-1$
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_HARVEST);
 		});//fin del OnSucceeded
@@ -1406,7 +1409,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			task.setIgnoreNDVI((List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class));
 
 
-			System.out.println("procesando los datos entre "+ndviDpDLG.initialDate+" y "+ ndviDpDLG.finalDate);//hasta aca ok!
+			logger.fine("procesando los datos entre "+ndviDpDLG.initialDate+" y "+ ndviDpDLG.finalDate);//hasta aca ok!
 			task.installProgressBar(progressBox);
 			task.setOnSucceeded(handler -> {
 				if(p instanceof Poligono){
@@ -1517,7 +1520,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		List<FileDataStore> stores = FileHelper.chooseShapeFileAndGetMultipleStores(files);
 		executorPool.submit(()->{
 			if (stores != null) {for(FileDataStore store : stores){//abro cada store y lo dibujo en el harvestMap individualmente
-				System.out.println("cargando stores para importar poligonos"); //$NON-NLS-1$
+				logger.fine("cargando stores para importar poligonos"); //$NON-NLS-1$
 				try {
 					String storeName = store.getNames().get(0).getLocalPart().replace("%20", " ");
 					//System.out.println(storeName);
@@ -1575,10 +1578,12 @@ public class PoligonoGUIController extends AbstractGUIController{
 				holes = new ArrayList<PositionList>();	
 				KMLPolygon kmlPolygon = (KMLPolygon)placemark.getGeometry();		
 				
-				Iterable<? extends KMLLinearRing> innerBoundariesIterable = kmlPolygon.getInnerBoundaries();//.getField("innerBoundaryIs");			
+				Iterable<? extends KMLLinearRing> innerBoundariesIterable = kmlPolygon.getInnerBoundaries();//.getField("innerBoundaryIs");
+				if(innerBoundariesIterable != null) {
 					 for(KMLLinearRing innerRing : innerBoundariesIterable) {					
 							holes.add(innerRing.getCoordinates());					
-					 }					
+					 }
+				}
 			}
 			KMLBoundary boundary = (KMLBoundary)placemark.getGeometry().getField("outerBoundaryIs");		
 			if(boundary ==null)return;			

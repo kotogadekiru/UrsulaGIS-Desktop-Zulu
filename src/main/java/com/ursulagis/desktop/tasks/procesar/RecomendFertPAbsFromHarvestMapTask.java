@@ -25,10 +25,13 @@ import com.ursulagis.desktop.tasks.crear.CrearFertilizacionMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.PolygonValidator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
+import java.util.logging.Logger;
 /**
  * Task que toma el suelo y recomienda cuanto fertilizante aplicar para llegar al requerimiento de absorcion del cultivo
  */
 public class RecomendFertPAbsFromHarvestMapTask extends ProcessMapTask<FertilizacionItem,FertilizacionLabor> {
+	private static final Logger logger = Logger.getLogger(RecomendFertPAbsFromHarvestMapTask.class.getName());
+
 	private CosechaLabor cosecha;
 	private List<Suelo> suelos;
 	private List<FertilizacionLabor> fertilizaciones;
@@ -72,7 +75,7 @@ public class RecomendFertPAbsFromHarvestMapTask extends ProcessMapTask<Fertiliza
 						//}
 						Geometry geom = PolygonValidator.validate(cItem.getGeometry());
 						if(geom==null) {
-							System.out.println("item geom es null");
+							logger.fine("item geom es null");
 							return;
 						}
 						Double areaGeom =  ProyectionConstants.A_HAS(geom.getArea());
@@ -112,14 +115,14 @@ public class RecomendFertPAbsFromHarvestMapTask extends ProcessMapTask<Fertiliza
 						//System.out.println("inserte la feature "+featureNumber+" "+fi);
 						updateProgress(featureNumber, featureCount);
 					}catch(Exception e) {
-						System.err.println("error al procesar el item "+cItem);
+						logger.warning("error al procesar el item "+cItem);
 						e.printStackTrace();
 					}
 				});
 			}
 			//list.parallelStream().forEach(/* Do Something */);
 					).get();
-			System.out.println("construyendo clasificador");
+			logger.fine("construyendo clasificador");
 			labor.constructClasificador();
 			runLater(getItemsList());
 			updateProgress(0, featureCount);	

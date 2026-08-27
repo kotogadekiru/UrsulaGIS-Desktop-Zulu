@@ -48,12 +48,15 @@ import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.gui.utils.DateConverter;
 
 
+import java.util.logging.Logger;
 /**
  * clase que toma una objeto de configuracion lo muestra y permite editarlo y lo devuelve
  * @author tomas
  *
  */
 public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
+	private static final Logger logger = Logger.getLogger(HarvestConfigDialogController.class.getName());
+
 
 
 	private static final String HARVEST_CONFIG_DIALOG_FXML = "HarvestConfigDialog.fxml"; //-NLS-1$
@@ -188,7 +191,7 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //-NLS-1$
 				event.consume();
 			}
 		});
@@ -476,7 +479,7 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 				Messages.setLocale(Messages.getLocales().get(0));
 				boundle=Messages.getBoundle();
 			}
-			System.out.println("boundle "+boundle);
+			logger.fine("boundle "+boundle);
 			FXMLLoader myLoader = new FXMLLoader(HarvestConfigDialogController.class.getResource(
 					HARVEST_CONFIG_DIALOG_FXML));
 			myLoader.setResources(boundle);
@@ -486,7 +489,7 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 			controller.init();
 			ret = controller.showAndWait();
 		} catch (IOException e1) {
-			System.err.println("no se pudo levantar el fxml "+HARVEST_CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+HARVEST_CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

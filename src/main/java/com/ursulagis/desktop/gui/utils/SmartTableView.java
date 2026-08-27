@@ -78,7 +78,10 @@ import com.ursulagis.desktop.utils.ExcelHelper;
 
 
 
+import java.util.logging.Logger;
 public class SmartTableView<T> extends TableView<T> {
+	private static final Logger logger = Logger.getLogger(SmartTableView.class.getName());
+
 	private Supplier<T> onDoubleClick=null;
 	private Consumer<T> onShowClick=null;
 
@@ -173,7 +176,7 @@ public class SmartTableView<T> extends TableView<T> {
 			populateColumns(data.get(0).getClass());
 		}else{
 			//populateColumns(onDoubleClick.get().getClass());
-			System.out.println("no creo las columnas porque no hay datos");
+			logger.fine("no creo las columnas porque no hay datos");
 		}
 
 		//	Map<String,Consumer<T>> consumerMap = new HashMap<String,Consumer<T>>();
@@ -656,7 +659,7 @@ public class SmartTableView<T> extends TableView<T> {
 					if(namesColumnsMap.containsKey(name)) {
 						name = namesColumnsMap.get(name);
 					}else {
-						System.out.println("el map no contiene "+name);
+						logger.fine("el map no contiene "+name);
 						 {continue;}
 					}
 				}
@@ -771,9 +774,8 @@ public class SmartTableView<T> extends TableView<T> {
 					try {
 						Method setMethod = clazz.getMethod(setMethodName, fieldType);
 						setMethod.invoke(p,d);
-						// Platform.runLater(() -> {
-						 	DAH.save(p);
-						// });
+						DAH.save(p);
+						refresh();
 						maybeUnlockAsignacionAchievement(p);
 					} catch (Exception e) {
 
@@ -1391,7 +1393,7 @@ public class SmartTableView<T> extends TableView<T> {
 		Platform.runLater(()->{
 
 			ArrayList<LaborItem> liLista = new ArrayList<LaborItem>();
-			System.out.println("Comenzando a cargar la los datos de la tabla"); //$NON-NLS-1$
+			logger.fine("Comenzando a cargar la los datos de la tabla"); //$NON-NLS-1$
 			Iterator<?> it = labor.outCollection.iterator();
 			while(it.hasNext()){
 				LaborItem lI = labor.constructFeatureContainerStandar((SimpleFeature)it.next(), false);

@@ -14,6 +14,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
@@ -62,10 +63,7 @@ public class UpdateTask  extends Task<File>{
 	private Label progressBarLabel;
 	private HBox progressContainer;
 
-	
-
-
-	//	private static final Logger logger = LoggerFactory.getLogger(UpdateTask.class);//sl4j
+	private static final Logger logger = Logger.getLogger(UpdateTask.class.getName());
 
 	public static String lastVersionURL=null;
 	private static boolean isUpdateAvailable=false;
@@ -74,7 +72,7 @@ public class UpdateTask  extends Task<File>{
 
 	public File call()  {
 		//lastVersionURL="http://s3-sa-east-1.amazonaws.com/ursulagis/downloads/UrsulaGIS0.2.18.jar";
-		System.out.println("descargando: "+lastVersionURL);
+		logger.fine("descargando: "+lastVersionURL);
 		GenericUrl url = new GenericUrl(UpdateTask.lastVersionURL);
 		HttpRequestFactory requestFactory = createRequestFactory();
 		File fout=null;
@@ -165,12 +163,12 @@ public class UpdateTask  extends Task<File>{
 	private void installWindows(File fout, String lowerName) throws IOException {
 		if (lowerName.endsWith(".msi")) {
 			String p = fout.getAbsolutePath();
-			System.out.println("ejecutando instalador MSI: " + p);
+			logger.fine("ejecutando instalador MSI: " + p);
 			ProcessBuilder pb = new ProcessBuilder("cmd.exe", "/c",
 					"msiexec.exe /x \"" + p + "\" /q /norestart && msiexec.exe /i \"" + p + "\"");
 			pb.start();
 		} else if (lowerName.endsWith(".exe")) {
-			System.out.println("ejecutando instalador: " + fout.getAbsolutePath());
+			logger.fine("ejecutando instalador: " + fout.getAbsolutePath());
 			ProcessBuilder pb = new ProcessBuilder(fout.getAbsolutePath());
 			pb.directory(fout.getParentFile());
 			pb.start();
@@ -182,7 +180,7 @@ public class UpdateTask  extends Task<File>{
 	/** macOS: {@code open} runs .pkg / .dmg with the default handler; other types fall back to Desktop. */
 	private void installMacos(File fout, String lowerName) throws IOException {
 		if (lowerName.endsWith(".pkg") || lowerName.endsWith(".dmg") || lowerName.endsWith(".zip")) {
-			System.out.println("abriendo con open: " + fout.getAbsolutePath());
+			logger.fine("abriendo con open: " + fout.getAbsolutePath());
 			new ProcessBuilder("open", fout.getAbsolutePath()).start();
 		} else {
 			openWithDefaultApplication(fout);
@@ -193,14 +191,14 @@ public class UpdateTask  extends Task<File>{
 	private void installLinux(File fout, String lowerName) throws IOException {
 		if (lowerName.endsWith(".appimage")) {
 			if (!fout.setExecutable(true)) {
-				System.err.println("No se pudo marcar como ejecutable: " + fout);
+				logger.warning("No se pudo marcar como ejecutable: " + fout);
 			}
-			System.out.println("ejecutando AppImage: " + fout.getAbsolutePath());
+			logger.fine("ejecutando AppImage: " + fout.getAbsolutePath());
 			new ProcessBuilder(fout.getAbsolutePath()).start();
 			return;
 		}
 		try {
-			System.out.println("abriendo con xdg-open: " + fout.getAbsolutePath());
+			logger.fine("abriendo con xdg-open: " + fout.getAbsolutePath());
 			new ProcessBuilder("xdg-open", fout.getAbsolutePath()).start();
 		} catch (IOException e) {
 			openWithDefaultApplication(fout);
@@ -210,7 +208,7 @@ public class UpdateTask  extends Task<File>{
 	private void openWithDefaultApplication(File fout) {
 		try {
 			if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-				System.out.println("abriendo con Desktop: " + fout.getAbsolutePath());
+				logger.fine("abriendo con Desktop: " + fout.getAbsolutePath());
 				Desktop.getDesktop().open(fout);
 			}
 		} catch (IOException | HeadlessException e) {
@@ -254,7 +252,7 @@ public class UpdateTask  extends Task<File>{
 				read= is.read(bytesIn);
 				return read;
 			}catch(Exception e){
-				System.out.println("fallo read "+i);
+				logger.fine("fallo read "+i);
 			}
 		}//fin del for trate de leer 10 veces.
 		return -1;
@@ -273,7 +271,7 @@ public class UpdateTask  extends Task<File>{
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});
@@ -340,7 +338,7 @@ public class UpdateTask  extends Task<File>{
 			url.put("USER", usr);
 			url.put("PLATFORM", platformQueryValue());
 			
-			System.out.println("calling url=> "+url);
+			logger.fine("calling url=> "+url);
 			//http://localhost:5000/update?VERSION=0.2.26&USER=693,468
 			//http://www.ursulagis.com/update?VERSION=0.2.20
 			HttpTransport HTTP_TRANSPORT = new NetHttpTransport();

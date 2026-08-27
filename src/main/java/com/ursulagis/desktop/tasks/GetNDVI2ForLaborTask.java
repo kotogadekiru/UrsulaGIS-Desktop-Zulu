@@ -49,8 +49,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import com.ursulagis.desktop.utils.UnzipUtility;
 
+import java.util.logging.Logger;
 @Deprecated
 public class GetNDVI2ForLaborTask extends Task<List<File>>{
+	private static final Logger logger = Logger.getLogger(GetNDVI2ForLaborTask.class.getName());
+
 	//private static final String URSULA_TOKEN = "ursulaToken";
 
 	private static final String MMG_GUI_EVENT_CLOSE_PNG = "/gui/event-close.png";
@@ -185,7 +188,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 					try {
 						Map<?,?> metadata = (Map<?,?>)((Map<?,?>)feature).get("metadata");
 						porcNubes = (BigDecimal)metadata.get("porcNubes");
-						System.out.println("porcNubes "+metadata.get("porcNubes"));//dateString 2018-03-08
+						logger.fine("porcNubes "+metadata.get("porcNubes"));//dateString 2018-03-08
 					}catch(Exception e) {
 						e.printStackTrace();
 					}
@@ -197,7 +200,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 				}
 			}
 		} else{
-			System.out.println("content no es list");
+			logger.fine("content no es list");
 		}
 
 		return assets;
@@ -211,7 +214,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 
 		GenericJson content = response.parseAs(GenericJson.class);
 		if(content == null)return files;
-		System.out.println("ndvi content "+ content);//XXX ndvi content {"data":[]}
+		logger.fine("ndvi content "+ content);//XXX ndvi content {"data":[]}
 		Object features = content.get(DATA);
 
 		if(features == null)return files;
@@ -224,7 +227,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 				try {
 					Map<?,?> metadata = (Map<?,?>)((Map<?,?>)feature).get("metadata");
 					porcNubes = (BigDecimal)metadata.get("porcNubes");
-					System.out.println("porcNubes "+metadata.get("porcNubes"));//dateString 2018-03-08
+					logger.fine("porcNubes "+metadata.get("porcNubes"));//dateString 2018-03-08
 					
 					
 					Object meanObject = metadata.get("meanNDVI");
@@ -233,7 +236,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 						BigDecimal meanNDVI = (BigDecimal)meanObject;
 						mean = bdf.format(meanNDVI);
 					} else {
-						System.out.println("no se de que clase es meanNDVI "+meanObject.getClass().getCanonicalName());
+						logger.fine("no se de que clase es meanNDVI "+meanObject.getClass().getCanonicalName());
 					}
 					
 				}catch(Exception e) {
@@ -242,7 +245,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 
 				String path2 = feature.get(PATH2);
 				if(path2!=""&&porcNubes.doubleValue()<90){
-					System.out.println("path2 "+path2);
+					logger.fine("path2 "+path2);
 
 					File tiffFile = downloadGoogleTifFile(path2);
 
@@ -259,7 +262,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 						//					}
 					}
 				}else {//path2 es ""
-					System.out.println("path1 "+feature.get("path1"));
+					logger.fine("path1 "+feature.get("path1"));
 				}
 				//updateProgress(observableList.size(), data.size());
 			}}
@@ -308,7 +311,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 		//List<String> idsList =  Arrays.asList(subAssets.split(","));
 		//List<LocalDate> uniqueDates =idsList.stream().map(GetNDVI2ForLaborTask::getAssetDate).distinct().collect(Collectors.toList());
 
-		System.out.println("procesando los dates unicos "+uniqueDates);
+		logger.fine("procesando los dates unicos "+uniqueDates);
 		DateTimeFormatter format1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");	
 
 		//IntegerProperty i=new SimpleIntegerProperty(0);
@@ -317,7 +320,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 				(tiffFiles, assetDate) ->{
 					String sEnd = format1.format(assetDate.plusDays(1));
 					String sBegin = format1.format(assetDate.minusDays(1));
-					System.out.println("buscando los ndvi entre "+sBegin+" y "+sEnd);
+					logger.fine("buscando los ndvi entre "+sBegin+" y "+sEnd);
 
 					GenericUrl url = new GenericUrl(HTTP_GEE_API_HELPER_HEROKUAPP_COM_NDVI_V3);
 
@@ -333,7 +336,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 					assets=["COPERNICUS/S2/20161221T141042_20161221T142209_T20HLG"]
 					polygons=[[[[-64.69101905822754,-34.860017354204885],[-64.69058990478516,-34.86705989785682],[-64.67016220092773,-34.86515847050267],[-64.67265129089355,-34.86198932721536]]]]
 					 */
-					System.out.println("calling url: "+url);
+					logger.fine("calling url: "+url);
 					//for(int i=0;i<3;i++) {
 					HttpResponse response = makePostRequest(url,req_content);
 
@@ -353,7 +356,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 
 							//		break;//salgo del for retry
 						}else {//retry
-							System.out.println("no hay files para agregar");
+							logger.fine("no hay files para agregar");
 							// no descargo porque estaba nublada
 							//Thread.sleep(1000);//esperar a seguir operando
 						}
@@ -453,7 +456,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 				GenericUrl url = new GenericUrl(path);
 				HttpResponse response = makeGetRequest(url);
 				if(response == null){
-					System.err.println("no se pudo descargar el archivo de google... reintentando");
+					logger.warning("no se pudo descargar el archivo de google... reintentando");
 					continue;//retry
 				}
 				try {
@@ -465,7 +468,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 				List<File> tifFiles = filePaths.stream().map((s)->new File(s)).filter((f)->f.getName().endsWith(".tif")).collect(Collectors.toList());
 				return tifFiles.get(0);
 			}catch(Exception e){
-				System.err.println("no se pudo descargar el archivo de google... reintentando");
+				logger.warning("no se pudo descargar el archivo de google... reintentando");
 				e.printStackTrace();
 			}
 			try {
@@ -475,7 +478,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 			}
 			tries++;
 		}
-		System.err.println("saliendo despues de intentar 5 veces sin exito");
+		logger.warning("saliendo despues de intentar 5 veces sin exito");
 		return null;
 
 	}
@@ -565,7 +568,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 			//				a.show();
 			//				uninstallProgressBar();
 			//			});
-			System.err.println("Fallo el getUrl "+url);
+			logger.warning("Fallo el getUrl "+url);
 			e.printStackTrace();
 
 			return null;
@@ -600,7 +603,7 @@ public class GetNDVI2ForLaborTask extends Task<List<File>>{
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

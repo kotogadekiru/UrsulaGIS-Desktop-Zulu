@@ -65,6 +65,7 @@ import lombok.Getter;
 import lombok.Setter;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
+import java.util.logging.Logger;
 /**
  * hace las veces de un featureStore con los metodos especificos para manejar el tipo de labor especifico
  * @author tomas
@@ -83,6 +84,8 @@ import com.ursulagis.desktop.utils.GeometryHelper;
 	@NamedQuery(name=Labor.FIND_ACTIVOS, query="SELECT o FROM Labor o where o.activo = true") ,
 }) 
 public abstract class Labor<E extends LaborItem>  {
+	private static final Logger logger = Logger.getLogger(Labor.class.getName());
+
 	//private static final String THE_GEOM_OLUMN = "the_geom";
 	@Transient public static final String FIND_ALL="Labor.findAll";
 	@Transient public static final String FIND_NAME = "Labor.findName";
@@ -235,7 +238,7 @@ public abstract class Labor<E extends LaborItem>  {
 			this.fecha = df.parse(defaultDate);// Unparseable date: "30/04/2018"
 		} catch (ParseException e) {
 			this.fecha=new Date();
-			System.out.println("fallo el parse de la fecha default");
+			logger.fine("fallo el parse de la fecha default");
 			e.printStackTrace();
 		}
 
@@ -368,11 +371,11 @@ public abstract class Labor<E extends LaborItem>  {
 		if(inStore !=null){
 			this.inStore = inStore;
 			ServiceInfo info = inStore.getInfo();
-			System.out.println("labor inStore.info = "+info );
+			logger.fine("labor inStore.info = "+info);
 			try {
 				SimpleFeatureType schema = inStore.getSchema();
-				System.out.println("Prescription Type: "+DataUtilities.encodeType(schema));
-				System.out.println(schema);
+				logger.fine("Prescription Type: "+DataUtilities.encodeType(schema));
+				logger.fine(String.valueOf(schema));
 				String title = schema.getName().toString();
 				//String title = inStore.getInfo().getTitle();
 				if (title != null && !title.trim().isEmpty()) {
@@ -524,7 +527,7 @@ public abstract class Labor<E extends LaborItem>  {
 	public synchronized void clearCache(){//do not clear cache while people are working 
 		synchronized(this) {
 		if(treeCache!=null) {
-			System.out.println("clearing Cache de "+this.nombre+" con size "+treeCache.size());
+			logger.fine("clearing Cache de "+this.nombre+" con size "+treeCache.size());
 		}
 		treeCache = null;
 		treeCacheEnvelope=null;
@@ -636,7 +639,7 @@ public abstract class Labor<E extends LaborItem>  {
 	public void insertFeature(E laborItem) {
 		if(-1.0 == laborItem.getId()) {
 			laborItem.setId(this.getNextID());
-			System.out.println("actualizando el item con id "+laborItem.getId());			
+			logger.fine("actualizando el item con id "+laborItem.getId());			
 		}
 		LaborDataStore.insertFeature(laborItem,this);
 		//		Geometry cosechaGeom = laborItem.getGeometry();
@@ -658,7 +661,7 @@ public abstract class Labor<E extends LaborItem>  {
 	 */
 	public void insertFeature(SimpleFeature f){
 		if(!outCollection.add(f)) {
-			System.err.println("No se pudo insertar la feature "+f);
+			logger.warning("No se pudo insertar la feature "+f);
 		}
 	}
 
@@ -707,21 +710,21 @@ public abstract class Labor<E extends LaborItem>  {
 
 
 	public static void main(String[] args) {
-		System.out.println("testing build type");
+		logger.fine("testing build type");
 		CosechaLabor l = new CosechaLabor();
 		CosechaItem item = new CosechaItem();
 		item.setObservaciones("observo una observacion");
 		l.insertFeature(item);
 		SimpleFeature sf = item.getFeature(l.getFeatureBuilder());
 		if(!l.outCollection.add(sf)) {
-			System.err.println("No se pudo insertar la feature "+sf);
+			logger.warning("No se pudo insertar la feature "+sf);
 		}
 		
 		SimpleFeatureIterator features = l.outCollection.features();
 		
 		
 		for(SimpleFeature f=null ; features.hasNext();f=features.next()) {
-			if(f!=null)System.out.println(f.toString());
+			if(f!=null)logger.fine(f.toString());
 		}
 		/*
 		 * "building descriptor 
@@ -759,7 +762,7 @@ public abstract class Labor<E extends LaborItem>  {
 				+ COLUMNA_CATEGORIA + ":Integer,"
 				+ COLUMNA_OBSERVACIONES + ":String,";
 		typeDescriptor+= getTypeDescriptors();
-		System.out.println("building descriptor "+typeDescriptor);
+		logger.fine("building descriptor "+typeDescriptor);
 		try {
 			type = DataUtilities.createType("LABOR", typeDescriptor);
 		} catch (SchemaException e) {

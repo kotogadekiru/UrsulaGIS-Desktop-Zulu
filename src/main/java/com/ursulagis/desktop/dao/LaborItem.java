@@ -25,12 +25,15 @@ import com.ursulagis.desktop.dao.siembra.SiembraItem;
 import com.ursulagis.desktop.gui.Messages;
 
 
+import java.util.logging.Logger;
 @Data
 //@EqualsAndHashCode(callSuper=true)//si no pones esto todos los hashmaps andan mal y grillar cosecha no anda
 @Entity @Access(AccessType.FIELD)//variable (el default depende de donde pongas el @Id)
 //@Entity @Access(AccessType.PROPERTY)//getter
 @Inheritance(strategy=javax.persistence.InheritanceType.TABLE_PER_CLASS)
 public abstract class LaborItem implements Comparable<Object>{
+	private static final Logger logger = Logger.getLogger(LaborItem.class.getName());
+
 	@javax.persistence.Id @GeneratedValue
 	protected Double id=Double.valueOf(-1);
 	protected Geometry geometry=null;
@@ -72,7 +75,7 @@ public abstract class LaborItem implements Comparable<Object>{
 			Point p = (Point) geom;
 			Coordinate c=p.getCoordinate();
 			if(c.x==0 &&c.y==0){
-				System.out.println("seteando una geometria POINT 0,0 "+geom);
+				logger.fine("seteando una geometria POINT 0,0 "+geom);
 				return;
 			}
 		}
@@ -215,7 +218,7 @@ public abstract class LaborItem implements Comparable<Object>{
 				//	d = Double.parseDouble((String) o);
 			}catch(Exception e){
 				e.printStackTrace();
-				System.out.println("returning 0 for " + o);
+				logger.fine("returning 0 for " + o);
 			}
 		}else{
 			//es por que estoy leyendo una columna que no existe en ese feature. como ancho en una prescripcion.

@@ -37,7 +37,11 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
+
 public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem>> {
+	private static final Logger logger = Logger.getLogger(OutliersLaborMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -116,10 +120,10 @@ public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIt
 							done.set(done.get()+1);
 							updateProgress(done.get(), initOutCollectionSize);
 						} else{
-							System.out.println("la query devolvio cero elementos"); //$NON-NLS-1$
+							logger.fine("la query devolvio cero elementos"); //$NON-NLS-1$
 						}
 					}catch(Exception e){
-						System.err.println("error en corregirOutliersParalell"); //$NON-NLS-1$
+						logger.warning("error en corregirOutliersParalell"); //$NON-NLS-1$
 						e.printStackTrace();
 					}
 				},	(list1, list2) -> list1.addAll(list2));
@@ -128,14 +132,14 @@ public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIt
 		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection("internal",labor.getType());		 //$NON-NLS-1$
 		boolean res = newOutcollection.addAll(filteredFeatures);
 		if(!res){
-			System.out.println("fallo el addAll(filteredFeatures)"); 
+			logger.fine("fallo el addAll(filteredFeatures)"); 
 		}
 
 		labor.clearCache();
 
 		int endtOutCollectionSize = newOutcollection.size();
 		if(initOutCollectionSize !=endtOutCollectionSize){
-			System.err.println("se perdieron elementos al hacer el filtro de outlayers. init="
+			logger.warning("se perdieron elementos al hacer el filtro de outlayers. init="
 					+initOutCollectionSize
 					+" end="+endtOutCollectionSize); 
 		}
@@ -198,8 +202,8 @@ public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIt
 			//			promedioRinde = Math.max(promedioRinde,labor.minRindeProperty.doubleValue());
 			promedioAltura = sumatoriaAltura/divisor;
 		}else{
-			System.out.println("divisor es <0"+ divisor); //$NON-NLS-1$
-			System.out.println("sumatoria de rindes ="+sumatoriaRinde); //$NON-NLS-1$
+			logger.fine("divisor es <0"+ divisor); //$NON-NLS-1$
+			logger.fine("sumatoria de rindes ="+sumatoriaRinde); //$NON-NLS-1$
 		}
 		//4) obtener la varianza (LA DIF ABSOLUTA DEL DATO Y EL PROM DE LA MUESTRA) (EJ. ABS(10-9.3)/9.3 = 13%)
 		//SI 13% ES MAYOR A TOLERANCIA CV% REEMPLAZAR POR PROMEDIO SINO NO
@@ -210,7 +214,7 @@ public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIt
 
 			if(coefVariacionCosechaFeature > toleranciaCoeficienteVariacion ||!rindeEnRango){//si el coeficiente de variacion es mayor al 20% no es homogeneo
 				//El valor esta fuera de los parametros y modifico el valor por el promedio
-					System.out.println("reemplazo "+cosechaFeature.getAmount()+" por "+promedioRinde);
+					// System.out.println("reemplazo "+cosechaFeature.getAmount()+" por "+promedioRinde);
 				cosechaFeature.setAmount(promedioRinde);
 
 				cosechaFeature.setElevacion(promedioAltura);

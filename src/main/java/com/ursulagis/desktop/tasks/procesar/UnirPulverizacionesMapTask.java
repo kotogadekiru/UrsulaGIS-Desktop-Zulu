@@ -29,7 +29,10 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.tasks.crear.CrearPulverizacionMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem,PulverizacionLabor> {
+	private static final Logger logger = Logger.getLogger(UnirPulverizacionesMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -108,7 +111,7 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 		List<Polygon>  grilla = GrillarCosechasMapTask.construirGrilla(unionEnvelope, ancho);
 		//List<Polygon>  grilla = construirGrillaTriangular(unionEnvelope, ancho);
 		//double elementos = grilla.size();
-		System.out.println("creando una grilla con "+grilla.size()+" elementos");
+		logger.fine("creando una grilla con "+grilla.size()+" elementos");
 		// 3 recorrer cada pixel de la grilla promediando los valores y generando los nuevos items de la cosecha
 		List<SimpleFeature> features = Collections.synchronizedList(new ArrayList<SimpleFeature>());
 		
@@ -137,7 +140,7 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 								if(f!=null){
 									boolean res = features.add(f);
 									if(!res){
-										System.out.println("no se pudo agregar la feature "+f);
+										logger.fine("no se pudo agregar la feature "+f);
 									}
 								}
 							}
@@ -145,7 +148,7 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 							updateProgress( this.featureNumber, featureCount);
 
 						}catch(Exception e){
-							System.err.println("error al construir un elemento de la grilla");
+							logger.warning("error al construir un elemento de la grilla");
 							e.printStackTrace();
 						}
 						},
@@ -156,7 +159,7 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 			l.clearCache();
 		}
 		
-		System.out.println("cree una union de "+byPolygon.size()+" elementos");
+		logger.fine("cree una union de "+byPolygon.size()+" elementos");
 
 //FIXME esto hace que la grilla no tenga memoria
 		if(labor.inCollection == null){
@@ -165,7 +168,7 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){//XXX si esto falla es provablemente porque se estan creando mas de una feature con el mismo id
-			System.out.println("no se pudieron agregar las features al outCollection");
+			logger.fine("no se pudieron agregar las features al outCollection");
 		}
 
 		// 4 mostrar la pulverizacion sintetica creada
@@ -176,7 +179,7 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 		runLater(byPolygon.values());
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println("tarde "+time+" milisegundos en unir las pulverizaciones.");
+		logger.fine("tarde "+time+" milisegundos en unir las pulverizaciones.");
 	}
 
 //	@Override
@@ -217,7 +220,7 @@ public class UnirPulverizacionesMapTask extends ProcessMapTask<PulverizacionItem
 				intersections.add(g);
 			
 			}catch(Exception e){
-				System.err.println("no se pudo hacer la interseccion entre\n"+poly+"\n y\n"+g);
+				logger.warning("no se pudo hacer la interseccion entre\n"+poly+"\n y\n"+g);
 			}		
 		}
 

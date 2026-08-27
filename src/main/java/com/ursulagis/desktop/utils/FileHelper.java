@@ -31,7 +31,10 @@ import javafx.stage.FileChooser;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
 
 
+import java.util.logging.Logger;
 public class FileHelper {
+	private static final Logger logger = Logger.getLogger(FileHelper.class.getName());
+
 	public static  List<File> selectShpFiles(Path uploadedShpFilePath) {
 		List<File> shpFiles =selectAllFiles(uploadedShpFilePath);
 
@@ -71,7 +74,7 @@ public class FileHelper {
 		try(Stream<Path> paths = Files.walk(uploadedShpFilePath)) {
 			paths.forEach(filePath -> {
 				if(!filePath.toFile().isDirectory()){
-					System.out.println("agregando "+filePath+" a la respuesta");
+					logger.fine("agregando "+filePath+" a la respuesta");
 					shpFiles.add(filePath.toFile());
 				}
 			});
@@ -111,7 +114,7 @@ public class FileHelper {
 	 * @param f2 filter regex "*.jpg"
 	 */
 	public static List<File> chooseFiles(String f1,String f2) {
-		System.out.println("eligiendo archivos"); //$NON-NLS-1$
+		logger.fine("eligiendo archivos"); //$NON-NLS-1$
 		List<File> files =null;
 		FileChooser fileChooser = new FileChooser();
 
@@ -130,15 +133,15 @@ public class FileHelper {
 			lastFile=File.listRoots()[0];
 		} 	
 		try{
-			System.out.println("último archivo"+lastFile); //$NON-NLS-1$
+			logger.fine("último archivo"+lastFile); //$NON-NLS-1$
 			//if(lastFile != null && lastFile.exists()){
-			System.out.println("directorio padre"+lastFile.getParent()); //$NON-NLS-1$
-			System.out.println("último nombre de archivo"+lastFile.getName()); //$NON-NLS-1$
+			logger.fine("directorio padre"+lastFile.getParent()); //$NON-NLS-1$
+			logger.fine("último nombre de archivo"+lastFile.getName()); //$NON-NLS-1$
 			fileChooser.setInitialDirectory(lastFile.getParentFile());
 			fileChooser.setInitialFileName(lastFile.getName());
-			System.out.println("mostrando múltiples diálogos..."); //$NON-NLS-1$
+			logger.fine("mostrando múltiples diálogos..."); //$NON-NLS-1$
 			files = fileChooser.showOpenMultipleDialog(JFXMain.stage);
-			System.out.println("diálogo mostrado"); //$NON-NLS-1$
+			logger.fine("diálogo mostrado"); //$NON-NLS-1$
 			//		file = files.get(0);
 		}catch(Exception e){
 			e.printStackTrace();
@@ -151,7 +154,7 @@ public class FileHelper {
 			}
 
 		}
-		System.out.println("archivos seleccionados"+files); //$NON-NLS-1$
+		logger.fine("archivos seleccionados"+files); //$NON-NLS-1$
 
 		try {
 			if(files!=null && files.size()>0){
@@ -162,7 +165,7 @@ public class FileHelper {
 		}catch(Exception e){
 			e.printStackTrace();
 		}
-		System.out.println("retornando archivos"); //$NON-NLS-1$
+		logger.fine("retornando archivos"); //$NON-NLS-1$
 		return files;
 	}
 
@@ -270,7 +273,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println("archivo seleccionado para guardar"+file); //$NON-NLS-1$
+		logger.fine("archivo seleccionado para guardar"+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -314,7 +317,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println("archivo seleccionado para guardar"+file); //$NON-NLS-1$
+		logger.fine("archivo seleccionado para guardar"+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -357,7 +360,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println("archivo seleccionado para guardar"+file); //$NON-NLS-1$
+		logger.fine("archivo seleccionado para guardar"+file); //$NON-NLS-1$
 
 		return file;
 	}
@@ -373,11 +376,11 @@ public class FileHelper {
 		fileChooser.getExtensionFilters().add(
 				new FileChooser.ExtensionFilter(ext.toUpperCase(), ext)); //$NON-NLS-1$ //$NON-NLS-2$
 		File lastFile = new File(path);
-		System.out.println("proyecto actual "+lastFile);
+		logger.fine("proyecto actual "+lastFile);
 		Configuracion config = JFXMain.config;
 		if(lastFile==null||!lastFile.exists()) {			
 			String lastFileName = config.getPropertyOrDefault(Configuracion.LAST_FILE,null);
-			System.out.println("lasfFile era "+lastFileName);
+			logger.fine("lasfFile era "+lastFileName);
 			if(lastFileName != null){
 				lastFile = new File(lastFileName);
 			}
@@ -392,7 +395,7 @@ public class FileHelper {
 			config.setProperty(Configuracion.LAST_FILE, file.getAbsolutePath());
 			config.save();
 		}
-		System.out.println("archivo seleccionado para guardar"+file); 
+		logger.fine("archivo seleccionado para guardar"+file); 
 
 		return file;
 	}

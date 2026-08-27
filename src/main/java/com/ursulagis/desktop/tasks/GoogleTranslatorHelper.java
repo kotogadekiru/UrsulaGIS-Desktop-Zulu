@@ -34,10 +34,13 @@ import com.ursulagis.desktop.dao.config.Configuracion;
 import gov.nasa.worldwind.geom.Position;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.tasks.ProgresibleTask;
+import java.util.logging.Logger;
 /**
  * Clase que toma un archivo messages_[locale].properties y lo traduce al locale indicado usando google translator
  */
 public class GoogleTranslatorHelper extends ProgresibleTask<File>{
+	private static final Logger logger = Logger.getLogger(GoogleTranslatorHelper.class.getName());
+
 	private static String key ="AIzaSyC6m54rSOpbe5Tar_b2O2XWGkxCn7BImnU";
 	private static String project = "UrsulaGIS";
 	private static String GEOCODE_API_GOOGLE_URL ="https://maps.googleapis.com/maps/api/geocode/json";//?address=";
@@ -167,7 +170,7 @@ public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 			
 			HttpResponse response = makeRequest(url);
 			if (response == null) {
-				System.err.println("Failed to get response from Google Translate API");
+				logger.warning("Failed to get response from Google Translate API");
 				return s;
 			}
 			
@@ -187,10 +190,10 @@ public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 				}
 			}
 			
-			System.err.println("Failed to parse translation response");
+			logger.warning("Failed to parse translation response");
 			return s;
 		} catch (Exception e) {
-			System.err.println("Error translating with Google Cloud Translate API: " + e.getMessage());
+			logger.warning("Error translating with Google Cloud Translate API: " + e.getMessage());
 			e.printStackTrace();
 			// Fallback: return original text if translation fails
 			return s;
@@ -202,7 +205,7 @@ public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 		// TODO generate messages_[loc].properties File
 		//Configuracion config = Configuracion.getInstance();
 		String fileName = Configuracion.ursulaGISFolder+"\\messages_"+outLocale.getLanguage()+".properties";
-		System.out.println("writing file "+fileName);
+		logger.fine("writing file "+fileName);
 		File ret = new File(fileName);
 		//todo recorrer outlocale 
 		Enumeration<String> keys = baseBoundle.getKeys();
@@ -219,7 +222,7 @@ public class GoogleTranslatorHelper extends ProgresibleTask<File>{
 				super.updateProgress(keyList.indexOf(key)+1,keyList.size());
 			}
 		} catch (Exception e) {
-			System.err.println("Error writing translation file: " + e.getMessage());
+			logger.warning("Error writing translation file: " + e.getMessage());
 			e.printStackTrace();
 		}
 		//traducir lo que viene despues del =

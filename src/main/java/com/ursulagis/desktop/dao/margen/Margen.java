@@ -22,9 +22,12 @@ import javafx.beans.property.StringProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import java.util.logging.Logger;
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
 public class Margen extends Labor<MargenItem> {
+	private static final Logger logger = Logger.getLogger(Margen.class.getName());
+
 	public static final String COLUMNA_RENTABILIDAD = "RENTA";
 	public static final String COLUMNA_MARGEN = "MARGEN";
 	private static final String COLUMNA_COSTO_TOTAL = "COSTO_T";
@@ -85,7 +88,7 @@ public class Margen extends Labor<MargenItem> {
 	//el controller de la configuracion. creo que setea las variables pero nunca las graba a menos 
 	//que las grabe el controller
 	protected void initConfig() {
-		System.out.println("inicioando la configuracion de CosechLabor");
+		logger.fine("inicioando la configuracion de CosechLabor");
 		List<String> availableColums = this.getAvailableColumns();		
 
 		Configuracion properties = getConfigLabor().getConfigProperties();
@@ -101,7 +104,7 @@ public class Margen extends Labor<MargenItem> {
 		
 		this.colAmount=PropertyHelper.initStringProperty(Margen.AMOUNT_COLUMN_KEY, properties, availableColums);
 		
-		System.out.println("colAmount de Margen en initConfig es "+colAmount.get());
+		logger.fine("colAmount de Margen en initConfig es "+colAmount.get());
 		this.costoFleteProperty=PropertyHelper.initDoubleProperty(Margen.COSTO_FLETE_KEY, "0", properties);
 		this.costoTnProperty=PropertyHelper.initDoubleProperty(Margen.COSTO_TN_KEY, "0", properties);
 		this.costoFijoHaProperty = PropertyHelper.initDoubleProperty(Margen.COSTO_FIJO_KEY, "0", properties);

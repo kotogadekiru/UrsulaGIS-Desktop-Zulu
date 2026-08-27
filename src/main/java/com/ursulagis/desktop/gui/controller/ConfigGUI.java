@@ -129,6 +129,8 @@ import com.ursulagis.desktop.utils.ExcelHelper;
 import com.ursulagis.desktop.utils.FileHelper;
 
 public class ConfigGUI extends AbstractGUIController{
+	private static final Logger logger = Logger.getLogger(ConfigGUI.class.getName());
+
 	private static final String DD_MM_YYYY = "dd/MM/yyyy";
 	private boolean snakeIsActive=false;
 
@@ -282,10 +284,10 @@ public class ConfigGUI extends AbstractGUIController{
 		snakeIsActive=false;
 		//SnakesLayer layer = new SnakesLayer(getWwd());	     
 		//insertBeforeCompass(getWwd(), layer);
-		System.out.println("cerrando snake");
+		logger.fine("cerrando snake");
 		List<?> layers = main.getLayersOfClass(SnakesLayer.class);
 		if(layers.isEmpty()) {
-			System.out.println("No encontre snakesLayer");
+			logger.fine("No encontre snakesLayer");
 		}
 		for(Object o : layers) {
 			if(o instanceof SnakesLayer) {
@@ -332,7 +334,7 @@ public class ConfigGUI extends AbstractGUIController{
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_PURCHASE_ORDER_GENERATED);
 			playSound();
 			doShowOrdenCompraItems(ret);
-			System.out.println("SiembraFertTask succeded"); 
+			logger.fine("SiembraFertTask succeded"); 
 		});
 		executorPool.execute(gOCTask);
 	}
@@ -341,7 +343,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 
 	public void doProcessMargin() {		
-		System.out.println("processingMargins"); 
+		logger.fine("processingMargins"); 
 
 		Margen margen = new Margen();
 		margen.setLayer(new LaborLayer());
@@ -365,7 +367,7 @@ public class ConfigGUI extends AbstractGUIController{
 
 		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);
 		if(!margenConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con el calculo de los margenes"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con el calculo de los margenes"); 
 			return;
 		}							
 
@@ -380,7 +382,7 @@ public class ConfigGUI extends AbstractGUIController{
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_MARGEN_CALCULATED_FROM_LABORS);
 			playSound();
 			viewGoTo(ret);
-			System.out.println("ProcessMarginTask succeeded"); 
+			logger.fine("ProcessMarginTask succeeded"); 
 		});
 		executorPool.execute(uMmTask);
 	}
@@ -393,7 +395,7 @@ public class ConfigGUI extends AbstractGUIController{
 				labor.setLayer(new LaborLayer());
 				Optional<Margen> cosechaConfigured= MargenConfigDialogController.config(labor);
 				if(!cosechaConfigured.isPresent()){//
-					System.out.println("el dialogo termino con cancel asi que no continuo con la fertilización"); 
+					logger.fine("el dialogo termino con cancel asi que no continuo con la fertilización"); 
 					continue;
 				}							
 
@@ -407,7 +409,7 @@ public class ConfigGUI extends AbstractGUIController{
 					this.getLayerPanel().update(this.getWwd());
 					umTask.uninstallProgressBar();
 					viewGoTo(ret);
-					System.out.println("OpenSoilMapTask succeeded"); 
+					logger.fine("OpenSoilMapTask succeeded"); 
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_MARGEN_IMPORTED);
 					playSound();
 				});//fin del OnSucceeded
@@ -556,8 +558,8 @@ public class ConfigGUI extends AbstractGUIController{
 		System.setErr(customErr);
 		
 		// Add some test messages
-		System.out.println("Log viewer opened - capturing console output");
-		System.err.println("This error message should appear in the log");
+		logger.fine("Log viewer opened - capturing console output");
+		logger.warning("This error message should appear in the log");
 		
 		// Set up the dialog
 		alert.getDialogPane().setContent(textArea);
@@ -633,7 +635,7 @@ public class ConfigGUI extends AbstractGUIController{
 					list->{
 						Platform.runLater(()->{		
 							try {
-								System.out.println("removing fertilizantes "+list.size());
+								logger.fine("removing fertilizantes "+list.size());
 								List<Object> objs = new ArrayList<>(list);
 								DAH.removeAll(objs);
 								DAH.commitTransaction();
@@ -770,9 +772,9 @@ public class ConfigGUI extends AbstractGUIController{
 						ndviPoli.stream().forEach(n->{
 							n.setContorno(null);
 							DAH.save(n);
-							System.out.println("quitando poligono de "+n);
+							logger.fine("quitando poligono de "+n);
 						});
-						System.out.println("eliminando "+p);
+						logger.fine("eliminando "+p);
 
 					});
 					List<Object> toRemove = new ArrayList<Object>();
@@ -781,7 +783,7 @@ public class ConfigGUI extends AbstractGUIController{
 					DAH.commitTransaction();
 				}catch(Exception e) {
 
-					System.out.println("no se pudo borrar");
+					logger.fine("no se pudo borrar");
 					e.printStackTrace();					
 				}
 				//});
@@ -980,7 +982,7 @@ public class ConfigGUI extends AbstractGUIController{
 			oc.calcImporteTotal();
 			Double total = oc.getImporteTotal();
 			if(total == null) {
-				System.out.println("total es null");
+				logger.fine("total es null");
 				total=0.0;
 			}
 			DoubleProperty dp = new SimpleDoubleProperty();

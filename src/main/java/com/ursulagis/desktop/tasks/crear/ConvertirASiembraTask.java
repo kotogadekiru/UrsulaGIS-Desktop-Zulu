@@ -30,12 +30,15 @@ import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 
+import java.util.logging.Logger;
 /**
  * task que genera una siembra con dosis fija a partir de un poligono
  * @author quero
  *
  */
 public class ConvertirASiembraTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
+	private static final Logger logger = Logger.getLogger(ConvertirASiembraTask.class.getName());
+
 	Map<String,Double[]> plantasM2ObjetivoMap = null;//0.0;
 	CosechaLabor cosecha=null;
 
@@ -49,7 +52,7 @@ public class ConvertirASiembraTask extends ProcessMapTask<SiembraItem,SiembraLab
 	public void doProcess() throws IOException {
 		//labor.setContorno(cosecha.getContorno());
 		Semilla semilla = labor.getSemilla();
-		System.out.println("semilla es "+semilla);
+		logger.fine("semilla es "+semilla);
 		double entresurco = labor.getEntreSurco();
 		double pmil = semilla.getPesoDeMil();
 		double pg = semilla.getPG();
@@ -148,7 +151,7 @@ public class ConvertirASiembraTask extends ProcessMapTask<SiembraItem,SiembraLab
 		String tooltipText = new String(Messages.getString("ProcessSiembraMapTask.1")+ df.format(siembraFeature.getDosisML()) + Messages.getString("ProcessSiembraMapTask.2")); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if(labor.getEntreSurco()>0) {
-			System.out.println("Entre surco es "+labor.getEntreSurco());
+			logger.fine("Entre surco es "+labor.getEntreSurco());
 			Double seedsSup= siembraFeature.getDosisML()/labor.getEntreSurco();
 			if(seedsSup<100) {//plantas por m2
 				int digits =df.getMaximumFractionDigits();
@@ -163,7 +166,7 @@ public class ConvertirASiembraTask extends ProcessMapTask<SiembraItem,SiembraLab
 						+ " s/"+Messages.getString("ProcessSiembraMapTask.10")); // "s/m2"
 			}
 		}else {
-			System.out.println("Enrtesurco es cero o menos "+labor.getEntreSurco());
+			logger.fine("Enrtesurco es cero o menos "+labor.getEntreSurco());
 		}
 		//kg semillas por ha
 		tooltipText=tooltipText.concat(Messages.getString("ProcessSiembraMapTask.3") + df.format(siembraFeature.getDosisHa()) + Messages.getString("ProcessSiembraMapTask.4")); //$NON-NLS-1$ //$NON-NLS-2$

@@ -58,7 +58,10 @@ import javafx.scene.paint.Color;
 import com.ursulagis.desktop.utils.DAH;
 
 
+import java.util.logging.Logger;
 public class UpdateRecorridaTask extends Task<String> {
+	private static final Logger logger = Logger.getLogger(UpdateRecorridaTask.class.getName());
+
 
 
 	//private static final String GET_RECORRIDAS_BY_ID_URL = "https://www.ursulagis.com/api/recorridas/id/";
@@ -83,8 +86,8 @@ public class UpdateRecorridaTask extends Task<String> {
 	public UpdateRecorridaTask(Recorrida recorrida) {
 		this.recorrida = recorrida;
 
-		System.out.println("actualizando recorrida "+recorrida.getNombre());
-		System.out.println("muestras "+recorrida.getMuestras().size());
+		logger.fine("actualizando recorrida "+recorrida.getNombre());
+		logger.fine("muestras "+recorrida.getMuestras().size());
 	}
 
 	@Override
@@ -150,7 +153,7 @@ public class UpdateRecorridaTask extends Task<String> {
 
 	private static List<Muestra> extractRemoteMuestras(Gson gson, JsonElement data, Recorrida remoteRecorrida) {
 		List<Muestra> muestras = remoteRecorrida.getMuestras();
-		System.out.println("muestras remotas "+muestras);
+		logger.fine("muestras remotas "+muestras);
 		if (muestras != null && !muestras.isEmpty()) {
 			return muestras;
 		}
@@ -220,7 +223,7 @@ public class UpdateRecorridaTask extends Task<String> {
 	 * @return HttResponse
 	 */
 	private static HttpResponse makeGetRequest(GenericUrl url){
-		System.out.println("calling get "+url);
+		logger.fine("calling get "+url);
 		HttpResponse response = null;
 		HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 		JsonFactory JSON_FACTORY = new JacksonFactory();
@@ -238,7 +241,7 @@ public class UpdateRecorridaTask extends Task<String> {
 			HttpRequest request = requestFactory.buildGetRequest(url);
 			response= request.execute();
 		} catch (Exception e) {			
-			System.err.println("Fallo el getUrl "+url);
+			logger.warning("Fallo el getUrl "+url);
 			e.printStackTrace();
 
 			return null;
@@ -296,7 +299,7 @@ public class UpdateRecorridaTask extends Task<String> {
 
 		Button cancel = new Button();
 		cancel.setOnAction(ae->{
-			System.out.println("cancelando el ProcessMapTask");
+			logger.fine("cancelando el ProcessMapTask");
 			this.cancel();
 			this.uninstallProgressBar();
 		});

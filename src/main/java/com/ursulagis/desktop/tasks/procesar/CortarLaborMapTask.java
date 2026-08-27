@@ -45,7 +45,10 @@ import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class CortarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem>> {
+	private static final Logger logger = Logger.getLogger(CortarLaborMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -178,7 +181,7 @@ public class CortarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem
 				try{
 					buffered = colectionCat.buffer(bufer);
 				}catch(Exception e){
-					System.out.println("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
+					logger.fine("hubo una excepción uniendo las geometrias. Procediendo con precision"); //$NON-NLS-1$
 					try{
 					buffered= EnhancedPrecisionOp.buffer(colectionCat, bufer);
 					}catch(Exception e2){
@@ -204,7 +207,7 @@ public class CortarLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborItem
 
 				boolean ret = nf != null && labor.outCollection.add(nf);
 				if(!ret){
-					System.out.println("no se pudo agregar la feature "+f);
+					logger.fine("no se pudo agregar la feature "+f);
 				}
 				updateProgress(this.featureNumber++, featureCount);
 			}

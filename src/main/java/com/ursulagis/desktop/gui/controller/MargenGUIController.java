@@ -16,7 +16,10 @@ import com.ursulagis.desktop.gui.nww.LayerAction;
 import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.tasks.procesar.SumarMargenesMapTask;
 
+import java.util.logging.Logger;
 public class MargenGUIController extends AbstractGUIController {
+	private static final Logger logger = Logger.getLogger(MargenGUIController.class.getName());
+
 
 
 	public MargenGUIController(JFXMain _main) {
@@ -75,10 +78,10 @@ public class MargenGUIController extends AbstractGUIController {
 	}
 	
 	private void doEditMargin(Margen margen) {		
-		System.out.println("editingMargins"); 
+		logger.fine("editingMargins"); 
 		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);
 		if(!margenConfigured.isPresent()){//
-			System.out.println("el dialogo termino con cancel asi que no continuo con el calculo de los margenes"); 
+			logger.fine("el dialogo termino con cancel asi que no continuo con el calculo de los margenes"); 
 			return;
 		}							
 		OpenMargenMapTask uMmTask = new OpenMargenMapTask(margen);
@@ -87,7 +90,7 @@ public class MargenGUIController extends AbstractGUIController {
 			this.getLayerPanel().update(this.getWwd());
 			uMmTask.uninstallProgressBar();
 			this.main.wwjPanel.repaint();
-			System.out.println("EditMarginTask succeeded"); 
+			logger.fine("EditMarginTask succeeded"); 
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_MARGEN_EDITED);
 			playSound();
 		});
@@ -96,7 +99,7 @@ public class MargenGUIController extends AbstractGUIController {
 	
 	private String doSumarMargenes(Layer l) {
 		List<Margen> margenes = main.getMargenesSeleccionados();
-		System.out.println("editingMargins"); 
+		logger.fine("editingMargins"); 
 							
 		SumarMargenesMapTask uMmTask = new SumarMargenesMapTask(margenes);
 		uMmTask.installProgressBar(progressBox);

@@ -33,7 +33,10 @@ import com.ursulagis.desktop.tasks.crear.CrearSueloMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class ProcessBalanceDeNutrientes2 extends ProcessMapTask<SueloItem,Suelo> {
+	private static final Logger logger = Logger.getLogger(ProcessBalanceDeNutrientes2.class.getName());
+
 	double distanciaAvanceMax = 0;
 	double anchoMax = 0;
 
@@ -208,7 +211,7 @@ public class ProcessBalanceDeNutrientes2 extends ProcessMapTask<SueloItem,Suelo>
 			areaSup=ProyectionConstants.A_HAS(geomSup.getArea());
 		}
 		if(!(areaSup>0)) {
-			System.err.println("descargando "+geomSup);
+			logger.warning("descargando "+geomSup);
 			return null;
 		}else {
 			areaQuery=areaSup;
@@ -535,7 +538,7 @@ public class ProcessBalanceDeNutrientes2 extends ProcessMapTask<SueloItem,Suelo>
 //						}
 					}				
 					}else {
-						System.out.println("cFert es null para "+fertilizante.getNombre());
+						logger.fine("cFert es null para "+fertilizante.getNombre());
 					}
 				//	if(item.getElevacion()>10) {
 						addValueToMap(n.parametros,SueloParametro.Elevacion,fertItem.getElevacion()*area);				

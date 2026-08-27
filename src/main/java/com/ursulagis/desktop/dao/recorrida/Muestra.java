@@ -24,6 +24,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.logging.Logger;
 /**
  * clase que representa una observacion
  * @author quero
@@ -40,6 +41,8 @@ import lombok.Setter;
 }) 
 
 public class Muestra {
+	private static final Logger logger = Logger.getLogger(Muestra.class.getName());
+
 	public static final String FIND_ALL = "Muestra.findAll";
 	public static final String FIND_NAME = "Muestra.findName";
 
@@ -131,7 +134,7 @@ public class Muestra {
 					}
 					//dValue=Double.parseDouble((String)value);
 				}catch(Exception e) {
-					System.err.println("error en k: "+k+" tratando de parsear \""+value+"\" reemplazo por 0");
+					logger.warning("error en k: "+k+" tratando de parsear \""+value+"\" reemplazo por 0");
 					e.printStackTrace();
 				}
 				props.put(k, dValue);//ojo number format exception

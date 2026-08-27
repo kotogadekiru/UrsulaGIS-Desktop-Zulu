@@ -57,7 +57,10 @@ import com.ursulagis.desktop.gui.JFXMain;
 import javafx.application.Platform;
 
 
+import java.util.logging.Logger;
 public class DAH {
+	private static final Logger logger = Logger.getLogger(DAH.class.getName());
+
 	private static final String NO = "NO";
 	private static final String DAH_AGROQUIMICOS_INICIALIZADOS = "DAH.AgroquimicosInicializados";
 	private static final String OBJECTDB_DB_URSULAGIS_ODB = "$ursulaGIS.odb";
@@ -99,7 +102,7 @@ public class DAH {
 			String currentUsersHomeDir = Configuracion.getApplicationDataRoot();
 			String ursulaGISFolder = currentUsersHomeDir + File.separator + Configuracion.URSULA_GIS_APPDATA_FOLDER;
 			String  db_url = ursulaGISFolder + File.separator + OBJECTDB_DB_URSULAGIS_ODB;		
-			System.out.println("abriendo la base de datos de: "+db_url);
+			logger.fine("abriendo la base de datos de: "+db_url);
 			EntityManagerFactory emf =
 					Persistence.createEntityManagerFactory(db_url);		     
 
@@ -132,21 +135,21 @@ public class DAH {
 			String absoluteDbPath = sqliteDBFile.getAbsolutePath();
 			String jdbcUrl = "jdbc:h2:" + absoluteDbPath + AUTO_SERVE;
 
-			System.out.println("loading project " + jdbcUrl);
+			logger.fine("loading project " + jdbcUrl);
 			
 			// Ensure the database directory exists
 			File dbDir = sqliteDBFile.getParentFile();
 			if (dbDir != null && !dbDir.exists()) {
-				System.out.println("Creating database directory: " + dbDir.getAbsolutePath());
+				logger.fine("Creating database directory: " + dbDir.getAbsolutePath());
 				boolean created = dbDir.mkdirs();
 				if (!created) {
 					String errorMsg = "Failed to create database directory: " + dbDir.getAbsolutePath();
-					System.err.println(errorMsg);
+					logger.warning(errorMsg);
 				}
 			}
 			
 			if(!sqliteDBFile.exists()){
-				System.out.println("need to migrate from ObjectDB");
+				logger.fine("need to migrate from ObjectDB");
 			}
 
 			Map<String,String> properties = new HashMap<>();
@@ -208,10 +211,10 @@ public class DAH {
 		@SuppressWarnings("unchecked")
 		List<String> results =(List<String>) q.getResultList();
 		results.stream().forEach((tableName)->{
-			System.out.println("cheking "+tableName);
+			logger.fine("cheking "+tableName);
 			Query q2 = emLite.createNativeQuery("SELECT TABLE_NAME FROM information_schema.columns as c where c.TABLE_NAME='"+tableName+"' AND c.COLUMN_NAME='"+col+"'");
 			if(!(q2.getResultList().size()>0)) {
-				System.out.println("no hay uuids, creando");
+				logger.fine("no hay uuids, creando");
 				//ALTER TABLE TABLE_NAME ADD COLUMN IF NOT EXISTS COLUMN_NAME VARCHAR(50);
 				Query q3 = emLite.createNativeQuery("ALTER TABLE "+table+" ADD COLUMN IF NOT EXISTS "+col+" VARCHAR(36)");
 				q3.executeUpdate();
@@ -274,7 +277,7 @@ public class DAH {
 
 	public static void save(Object entidad) {	
 		if (entidad.getClass().getAnnotation(Entity.class) == null) {	
-			System.out.println("no se guardan las clases que no son entidades "+entidad);
+			logger.fine("no se guardan las clases que no son entidades "+entidad);
 			return;
 		}
 		// if(Platform.isFxApplicationThread()) {//me aseguro no bloquear la interfaz de usuario
@@ -293,7 +296,7 @@ public class DAH {
 					em.getTransaction().rollback();
 				}
 			}catch(javax.persistence.RollbackException rbe){
-				System.err.println("error al hacer rollback de la transaccion activa");
+				logger.warning("error al hacer rollback de la transaccion activa");
 			}
 			try{
 				em.getTransaction().begin();		
@@ -318,9 +321,9 @@ public class DAH {
 		} else{
 			if(em.contains(entidad)) {
 				em.merge(entidad);
-				System.out.println("merging entidad "+entidad);
+				logger.fine("merging entidad "+entidad);
 			}else {
-				System.out.println("persistiendo entidad "+entidad);
+				logger.fine("persistiendo entidad "+entidad);
 				em.persist(entidad);			
 			}
 		}
@@ -621,7 +624,7 @@ public class DAH {
 			String ini = conf.getPropertyOrDefault(DAH_AGROQUIMICOS_INICIALIZADOS, NO);
 			if(NO.equals(ini)) {
 				//results = new ArrayList<Agroquimico>();
-				System.out.println("guardando los agroquimicos default");
+				logger.fine("guardando los agroquimicos default");
 				DAH.beginTransaction();
 				ExcelHelper h = new ExcelHelper();
 				h.readAgroquimicosFile();
@@ -657,7 +660,7 @@ public class DAH {
 		List<Semilla> results = query.getResultList();
 		if(results.size()==0){
 			Semilla.getSemillasDefault().values().forEach((d)->{
-				System.out.println("guardando semilla default "+d);					
+				logger.fine("guardando semilla default "+d);					
 				DAH.save(d);
 				results.add(d);
 			});
@@ -781,7 +784,7 @@ public class DAH {
     	TypedQuery<Poligono> query = em().createNamedQuery(Poligono.FIND_BY_LOTE, Poligono.class);
 		query.setParameter("lote", lote);
 		List<Poligono> results = query.getResultList();
-		System.out.println("getPoligonos for lote "+lote+" "+Arrays.toString(results.toArray()));
+		logger.fine("getPoligonos for lote "+lote+" "+Arrays.toString(results.toArray()));
 		return results;
     }
 

@@ -115,7 +115,7 @@ public class UrsulaJenksNaturalBreaksFunction extends ClassificationFunction {
                     if (!e.isInfinite() && !e.isNaN()) {
                     	Geometry g= (Geometry) feature.getDefaultGeometry();
                     	double times = Math.max(1, g.getArea()/this.areaRef);
-                    	System.out.println("multiplicando el feature "+ e+ " por " + times);
+                    	logger.fine("multiplicando el feature "+ e+ " por " + times);
                     	  
                     	for(int t=0; t<times;t++) {
                     		data.add(Double.valueOf(e));
@@ -129,7 +129,7 @@ public class UrsulaJenksNaturalBreaksFunction extends ClassificationFunction {
         Collections.sort(data);
         final int k = this.numClases;
         final int m = data.size();
-    	System.out.println("data size "+ m);
+    	logger.fine("data size "+ m);
         if (k == m) {
             logger.info("Number of classes (" + k + ") is equal to number of data points (" + m
                     + ") " + "unique classification returned");
@@ -187,7 +187,7 @@ public class UrsulaJenksNaturalBreaksFunction extends ClassificationFunction {
                     // not the last value
                     for (int j = 2; j <= k; j++) {
                         // for each class compare current value to var + previous value
-                         System.out.println("\tis "+varianzaDatoClase[i][j]+" >= "+(var + varianzaDatoClase[ik][j - 1]));
+                         logger.fine("\tis "+varianzaDatoClase[i][j]+" >= "+(var + varianzaDatoClase[ik][j - 1]));
                         if (varianzaDatoClase[i][j] >= (var + varianzaDatoClase[ik][j - 1])) {
                             // if it is greater or equal update classification
                             indiceDatoClase[i][j] = i3 - 1;

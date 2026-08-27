@@ -35,12 +35,15 @@ import javafx.util.StringConverter;
 import com.ursulagis.desktop.utils.DAH;
 
 
+import java.util.logging.Logger;
 /**
  * clase que toma una objeto de configuracion lo muestra y permite editarlo y lo devuelve
  * @author tomas
  *
  */
 public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLabor>{
+	private static final Logger logger = Logger.getLogger(FertilizacionConfigDialogController.class.getName());
+
 	private static final String FERT_CONFIG_DIALOG_FXML = "FertilizacionConfigDialog.fxml"; //$NON-NLS-1$
 
 	@FXML
@@ -89,7 +92,7 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 
 	public FertilizacionConfigDialogController() {
 		super();
-		System.out.println("construyendo el controller"); //$NON-NLS-1$
+		logger.fine("construyendo el controller"); //$NON-NLS-1$
 
 		this.setTitle(Messages.getString("FertilizacionConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
@@ -102,7 +105,7 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 		final Button btOk = (Button) this.getDialogPane().lookupButton(ButtonType.OK);
 		btOk.addEventFilter(ActionEvent.ACTION, event -> {
 			if (!validarDialog()) {
-				System.out.println("la configuracion es incorrecta"); //$NON-NLS-1$
+				logger.fine("la configuracion es incorrecta"); //$NON-NLS-1$
 				event.consume();
 			}
 		});
@@ -358,7 +361,7 @@ public class FertilizacionConfigDialogController  extends Dialog<FertilizacionLa
 			controller.init();
 			ret = controller.showAndWait();
 		} catch (IOException e1) {
-			System.err.println("no se pudo levantar el fxml "+FERT_CONFIG_DIALOG_FXML); //$NON-NLS-1$
+			logger.warning("no se pudo levantar el fxml "+FERT_CONFIG_DIALOG_FXML); //$NON-NLS-1$
 			e1.printStackTrace();
 			System.exit(0);
 		}

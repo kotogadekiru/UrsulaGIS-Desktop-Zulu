@@ -18,7 +18,10 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.WeakListChangeListener;
 
+import java.util.logging.Logger;
 public class WeakAdapter {
+	private static final Logger logger = Logger.getLogger(WeakAdapter.class.getName());
+
 
     ArrayList<Object> listenerRefs = new ArrayList<>();
     Map<WeakReference<Observable>,ChangeListener<?>> map = new HashMap<>();
@@ -77,7 +80,7 @@ public class WeakAdapter {
 	public void releaseCleared() {
 		for(WeakReference<Observable> key:map.keySet()) {
 			if(key.isEnqueued()||key.get()==null) {
-				System.out.println("removing listener for enqueued "+key.get());
+				logger.fine("removing listener for enqueued "+key.get());
 				ChangeListener<?> l = map.get(key);
 				listenerRefs.remove(l);
 				map.remove(key);

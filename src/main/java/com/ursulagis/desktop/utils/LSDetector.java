@@ -88,6 +88,7 @@ import java.awt.image.BufferedImage;
 import javafx.scene.shape.Line;
 import javafx.concurrent.Task;
 
+import java.util.logging.Logger;
 /*----------------------------------------------------------------------------*/
 /** Rectangle points iterator.
   The integer coordinates of pixels inside a rectangle are
@@ -179,6 +180,8 @@ class coorlist {
 };
 
 public class LSDetector extends Task<BufferedImage> {
+	private static final Logger logger = Logger.getLogger(LSDetector.class.getName());
+
 	private static final double DEFAULT_SIGMA_SCALE = 0.6;//0.6
 	private static final double DEFAULT_MAX_NFA = 1.0;//2.0
 	private static final double DEFAULT_GRADIENT_TOLERANCE = 22.5*3;//22.5
@@ -234,7 +237,7 @@ public class LSDetector extends Task<BufferedImage> {
 	};
 
 	void error(String msg) {
-		System.err.println("LSD Error: " + msg);
+		logger.warning("LSD Error: " + msg);
 		throw new RuntimeException("major error");
 	}
 
@@ -2311,7 +2314,7 @@ public class LSDetector extends Task<BufferedImage> {
 
 			double [] arr2 = new double[x*y];
 
-			System.out.println(arr.length);
+			logger.fine(Integer.toString(arr.length));
 			int c=0;
 			for(int i = 0; i < arr.length-bands; i+=bands) {
 				double B = arr[i];
@@ -2331,7 +2334,7 @@ public class LSDetector extends Task<BufferedImage> {
 			for(int i = 0; i < lsd.n_out; i++) {
 //				for (int jota = 0; jota < 7; jota++){//XXX que es este 7?? es el tamaño de la tupla en la que se ponen los datos
 					int	indiceJ=NTUPLE_LIST_SIZE*i;
-					System.out.println("agregando la linea para out["+indiceJ+"]");
+					logger.fine("agregando la linea para out["+indiceJ+"]");
 					lines.add(new Line(
 							out[indiceJ + 0], 
 							out[indiceJ + 1],

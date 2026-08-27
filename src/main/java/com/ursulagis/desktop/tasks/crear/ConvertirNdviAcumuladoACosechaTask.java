@@ -25,10 +25,13 @@ import com.ursulagis.desktop.tasks.procesar.SumarCosechasMapTask;
 import com.ursulagis.desktop.utils.DaylightCalculator;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 /**
  * Task que toma una lista de ndvis y los convierte a cosecha haciendo la acumulacion de ndvi por su fecha
  */
 public class ConvertirNdviAcumuladoACosechaTask extends ProcessMapTask<CosechaItem,CosechaLabor> {
+	private static final Logger logger = Logger.getLogger(ConvertirNdviAcumuladoACosechaTask.class.getName());
+
 //	private static  double NDVI_RINDE_CERO = ShowNDVITifFileTask.MIN_VALUE;//0.2;
 	Double diasNdviPorTn = 0.0;
 	List<Ndvi> ndvis = null;
@@ -149,12 +152,12 @@ public class ConvertirNdviAcumuladoACosechaTask extends ProcessMapTask<CosechaIt
 			}
 		}
 		if(size == 0){
-			System.err.println("no hay puntos iterables para obtener el promedio");
+			logger.warning("no hay puntos iterables para obtener el promedio");
 			return 0.0;
 		}
 		this.featureCount=size;
 		Double averageNdvi = Double.valueOf(sum/size);
-		System.out.println("el promedio de los ndvi es "+averageNdvi);
+		logger.fine("el promedio de los ndvi es "+averageNdvi);
 		return averageNdvi;
 	}
 

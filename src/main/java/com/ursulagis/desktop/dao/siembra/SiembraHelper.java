@@ -4,7 +4,10 @@ import java.util.function.ToDoubleFunction;
 
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 public class SiembraHelper {
+	private static final Logger logger = Logger.getLogger(SiembraHelper.class.getName());
+
 	public static final ToDoubleFunction<SiembraItem> getSemillaCantMethod() {
 		ToDoubleFunction<SiembraItem> getCantSemilla=new ToDoubleFunction<SiembraItem>() {
 			@Override
@@ -23,7 +26,7 @@ public class SiembraHelper {
 			public double applyAsDouble(SiembraItem item) {
 				Double has = ProyectionConstants.A_HAS(item.getGeometry().getArea());
 				Double cant = item.getDosisFertLinea();
-				System.out.println("getFertLCantMethod="+has*cant);
+				logger.fine("getFertLCantMethod="+has*cant);
 				return has*cant;
 			}			    	
 		};

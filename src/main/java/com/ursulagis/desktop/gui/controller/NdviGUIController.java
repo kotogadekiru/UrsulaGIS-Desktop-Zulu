@@ -76,7 +76,10 @@ import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
+import java.util.logging.Logger;
 public class NdviGUIController extends AbstractGUIController{
+	private static final Logger logger = Logger.getLogger(NdviGUIController.class.getName());
+
 
 
 	public List<Ndvi> ndviActivos=null;//secargan en el init de JFXMain
@@ -159,7 +162,7 @@ public class NdviGUIController extends AbstractGUIController{
 //							}
 //						}
 					}catch(Exception e) {
-						System.err.println("Error al guardar los poligonos"); 
+						logger.warning("Error al guardar los poligonos"); 
 						e.printStackTrace();
 					}
 				});
@@ -320,7 +323,7 @@ public class NdviGUIController extends AbstractGUIController{
 					return histoChart;
 				}catch(Throwable t){
 					t.printStackTrace();
-					System.out.println("no hay ningun ndvi para mostrar"); 
+					logger.fine("no hay ningun ndvi para mostrar"); 
 					return new VBox(new Label(Messages.getString("NdviGUIController.upps"))); 
 				}
 			}			
@@ -406,7 +409,7 @@ public class NdviGUIController extends AbstractGUIController{
 				this.getLayerPanel().update(this.getWwd());
 				pmtask.uninstallProgressBar();
 				main.wwjPanel.repaint();
-				System.out.println("EditHarvestMapTask succeeded"); 
+				logger.fine("EditHarvestMapTask succeeded"); 
 				playSound();
 				main.viewGoTo(ret);
 			});
@@ -471,7 +474,7 @@ public class NdviGUIController extends AbstractGUIController{
 			main.viewGoTo(ret);
 			umTask.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_ACUM_TO_HARVEST);
-			System.out.println("crear ndvis a cosecha acumulada exito"); 
+			logger.fine("crear ndvis a cosecha acumulada exito"); 
 			playSound();
 	
 			
@@ -502,11 +505,11 @@ public class NdviGUIController extends AbstractGUIController{
 				low = LocalDate.now().minusMonths(1),
 				high=LocalDate.now().minusMonths(1);
 		List<Ndvi> ndviCargados = (List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class);
-		System.out.println("ndvi cargados "+ndviCargados.size());
+		logger.fine("ndvi cargados "+ndviCargados.size());
 		for(Ndvi n:ndviCargados) {
 			
 			LocalDate fecha =n.getFecha();
-			System.out.println("revisando ndvi con fecha "+fecha);
+			logger.fine("revisando ndvi con fecha "+fecha);
 			if(max==null || max.isBefore(fecha)) {
 				max=fecha;
 			}
@@ -514,7 +517,7 @@ public class NdviGUIController extends AbstractGUIController{
 				min=fecha;
 			} 
 		}
-		System.out.println("creando filtro min "+min+" max "+max);
+		logger.fine("creando filtro min "+min+" max "+max);
 		low=min;
 		high=max;
 		DateRangeSlider slider = new DateRangeSlider(min,max, low,high);
@@ -523,7 +526,7 @@ public class NdviGUIController extends AbstractGUIController{
 		slider.setOnUpdate((Void)->{
 			LocalDate nlow=slider.getLow();
 			LocalDate nhigh=slider.getHigh();
-			System.out.println("filtre por fecha low "+nlow+" high "+nhigh);
+			logger.fine("filtre por fecha low "+nlow+" high "+nhigh);
 			for(Ndvi n:ndviCargados) {
 				LocalDate fecha =n.getFecha();
 				n.getLayer().setEnabled(true);
@@ -550,11 +553,11 @@ public class NdviGUIController extends AbstractGUIController{
 				low = 0.0,
 				high = 100.0;
 		List<Ndvi> ndviCargados = (List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class);
-		System.out.println("ndvi cargados " + ndviCargados.size());
+		logger.fine("ndvi cargados " + ndviCargados.size());
 		for (Ndvi n : ndviCargados) {
 
 			Double porcNubes = n.getPorcNubes() == null ? 0.0 : n.getPorcNubes() * 100.0;
-			System.out.println("revisando ndvi con porcNubes " + porcNubes);
+			logger.fine("revisando ndvi con porcNubes " + porcNubes);
 			if (max == null || max < porcNubes) {
 				max = porcNubes;
 			}
@@ -562,7 +565,7 @@ public class NdviGUIController extends AbstractGUIController{
 				min = porcNubes;
 			}
 		}
-		System.out.println("creando filtro nublado min " + min + " max " + max);
+		logger.fine("creando filtro nublado min " + min + " max " + max);
 		if (min == null || max == null) {
 			min = 0.0;
 			max = 100.0;
@@ -578,7 +581,7 @@ public class NdviGUIController extends AbstractGUIController{
 		slider.setOnUpdate((Void) -> {
 			Double nlow = slider.getLow();
 			Double nhigh = slider.getHigh();
-			System.out.println("filtre por nublado low " + nlow + " high " + nhigh);
+			logger.fine("filtre por nublado low " + nlow + " high " + nhigh);
 			for (Ndvi n : ndviCargados) {
 				Double porcNubes = n.getPorcNubes() == null ? 0.0 : n.getPorcNubes() * 100.0;
 				n.getLayer().setEnabled(true);
@@ -623,7 +626,7 @@ public class NdviGUIController extends AbstractGUIController{
 			dMaxDialog.setContentText(Messages.getString("NdviGUIController.fertMax")); 
 			dMaxDialog.initOwner(JFXMain.stage);
 			Optional<String> dMaxOpt = dMaxDialog.showAndWait();
-			System.out.println("opt max "+ dMaxOpt.get());
+			logger.fine("opt max "+ dMaxOpt.get());
 			dosisMax = format.parse(dMaxOpt.get()).doubleValue();
 		}catch(java.lang.NumberFormatException | ParseException e) {
 			DecimalFormatSymbols symbols=format.getDecimalFormatSymbols();
@@ -732,7 +735,7 @@ public class NdviGUIController extends AbstractGUIController{
 			main.viewGoTo(ret);
 			umTask.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_TO_FERTILIZATION);
-			System.out.println("convertir a fertiliacion tuvo exito"); 
+			logger.fine("convertir a fertiliacion tuvo exito"); 
 			playSound();
 			ndvi.getLayer().setEnabled(false);
 		});//fin del OnSucceeded
@@ -744,7 +747,7 @@ public class NdviGUIController extends AbstractGUIController{
 	}
 
 	public void showNdvi( Object placementObject,Ndvi _ndvi,boolean goTo) {
-		if(_ndvi!=null)System.out.println("showing ndvi "+_ndvi.getNombre());
+		if(_ndvi!=null)logger.fine("showing ndvi "+_ndvi.getNombre());
 		ShowNDVITifFileTask task = new ShowNDVITifFileTask(_ndvi);
 		if( placementObject!=null && Poligono.class.isAssignableFrom(placementObject.getClass())){
 			task.setPoligono((Poligono) placementObject);
@@ -785,7 +788,7 @@ public class NdviGUIController extends AbstractGUIController{
 			Ndvi ndvi = ndviActivos.get(i);
 			boolean isLast = i==(ndviActivos.size()-1);
 
-			if(ndvi!=null)System.out.println("showing ndvi "+ndvi.getNombre());
+			if(ndvi!=null)logger.fine("showing ndvi "+ndvi.getNombre());
 			Platform.runLater(()->{
 			showNdvi(null,ndvi,isLast);
 			});
@@ -854,14 +857,14 @@ public class NdviGUIController extends AbstractGUIController{
 			task.setFinDate(ndviDpDLG.finalDate);
 			task.setIgnoreNDVI((List<Ndvi>) main.getObjectFromLayersOfClass(Ndvi.class));
 
-			System.out.println("procesando los datos entre "+ndviDpDLG.initialDate+" y "+ ndviDpDLG.finalDate);//hasta aca ok!
+			logger.fine("procesando los datos entre "+ndviDpDLG.initialDate+" y "+ ndviDpDLG.finalDate);//hasta aca ok!
 			task.installProgressBar(progressBox);
 			task.setOnSucceeded(handler -> {
 				if(plo instanceof Poligono){
 					((Poligono)plo).getLayer().setEnabled(false);
 				}
 				task.uninstallProgressBar();
-				System.out.println("termine de descargar todos los ndvi de "+plo);
+				logger.fine("termine de descargar todos los ndvi de "+plo);
 			});
 			executorPool.submit(task);
 		}

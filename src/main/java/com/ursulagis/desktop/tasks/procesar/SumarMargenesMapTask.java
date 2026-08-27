@@ -26,7 +26,10 @@ import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.GeometryHelper;
 
+import java.util.logging.Logger;
 public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
+	private static final Logger logger = Logger.getLogger(SumarMargenesMapTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -116,7 +119,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 		
 		List<Polygon>  grilla = GrillarCosechasMapTask.construirGrilla(unionEnvelope, labor.getConfig().getAnchoGrilla());
 
-		System.out.println("creando una grilla con"+grilla.size()+" elementos"); //$NON-NLS-1$ //$NON-NLS-2$
+		logger.fine("creando una grilla con"+grilla.size()+" elementos"); //$NON-NLS-1$ //$NON-NLS-2$
 		// 3 recorrer cada pixel de la grilla sumando los valores y generando los nuevos items de la cosecha
 
 		featureCount = grilla.size();
@@ -148,7 +151,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 								if(f!=null){		
 										boolean res = features.add(f);
 										if(!res){
-											System.out.println("no se pudo agregar la feature"+f); //$NON-NLS-1$
+											logger.fine("no se pudo agregar la feature"+f); //$NON-NLS-1$
 										}		
 								}
 							}
@@ -156,7 +159,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 							updateProgress( this.featureNumber, featureCount);
 
 						}catch(Exception e){
-							System.err.println("error al construir un elemento de la grilla"); //$NON-NLS-1$
+							logger.warning("error al construir un elemento de la grilla"); //$NON-NLS-1$
 							e.printStackTrace();
 						}
 						},
@@ -168,7 +171,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 		for(Margen c:margenes){
 			c.clearCache();
 		}
-		System.out.println("cree una union de"+byPolygon.size()+" elementos"); //$NON-NLS-1$ //$NON-NLS-2$
+		logger.fine("cree una union de"+byPolygon.size()+" elementos"); //$NON-NLS-1$ //$NON-NLS-2$
 
 //FIXME esto hace que la grilla no tenga memoria
 		if(labor.inCollection == null){
@@ -177,7 +180,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
 		if(!ret){//XXX si esto falla es probablemente porque se estan creando mas de una feature con el mismo id
-			System.out.println("no se pudieron agregar las features al outCollection");
+			logger.fine("no se pudieron agregar las features al outCollection");
 		}
 
 		//TODO 4 mostrar la cosecha sintetica creada
@@ -186,7 +189,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 		runLater(byPolygon.values());
 		updateProgress(0, featureCount);
 		long time=System.currentTimeMillis()-init;
-		System.out.println("tarde"+time+" milisegundos en unir las siembras. es"+time/featureCount+" milisegundos por polígono"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		logger.fine("tarde"+time+" milisegundos en unir las siembras. es"+time/featureCount+" milisegundos por polígono"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	/**
@@ -217,7 +220,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 				areasIntersecciones.put(cPoly,areaInterseccion);
 				intersections.add(g);			
 			}catch(Exception e){
-				System.err.println("no se pudo hacer la intersección entre"+poly+""+g); //$NON-NLS-1$ //$NON-NLS-2$
+				logger.warning("no se pudo hacer la intersección entre"+poly+""+g); //$NON-NLS-1$ //$NON-NLS-2$
 			}		
 		}
 		Geometry union2 = null;

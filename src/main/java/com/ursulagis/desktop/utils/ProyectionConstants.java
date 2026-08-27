@@ -18,6 +18,7 @@ import org.geotools.api.feature.simple.SimpleFeature;
 import org.geotools.api.referencing.FactoryException;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
+import java.util.logging.Logger;
 /**
  * web para probar poligonos
  * http://arthur-e.github.io/Wicket/sandbox-gmaps3.html
@@ -25,6 +26,8 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
  *
  */
 public class ProyectionConstants {
+	private static final Logger logger = Logger.getLogger(ProyectionConstants.class.getName());
+
 	//segun wgs84
 	public static final double RADIO_TERRESTRE_ECUATORIAL = 6378137/1.021891112380502;//para que el area del pixel de landsat sea 100m2 pero me parece que es mas grande 2%
 	public static final double RADIO_TERRESTRE_POLAR =  6356752.3;//6356752;
@@ -127,13 +130,13 @@ public class ProyectionConstants {
 		try {
 			crs = CRS.decode(crsID);
 		} catch (FactoryException e) {			
-			System.err.println("Failed to create CRS for: " + crsID);
+			logger.warning("Failed to create CRS for: " + crsID);
 			e.printStackTrace();
 			// Try to create a default WGS84 CRS as fallback
 			try {
 				crs = CRS.decode("EPSG:4326", true); // lenient mode
 			} catch (FactoryException e2) {
-				System.err.println("Failed to create fallback CRS");
+				logger.warning("Failed to create fallback CRS");
 				e2.printStackTrace();
 			}
 		}
@@ -199,13 +202,13 @@ public class ProyectionConstants {
 		double delta=-1;//1grado en el ecuador dist = 111319.4907932264 azimut=90.0
 		Point start = fact.createPoint(new Coordinate(lon,lat));
 		Point dest =fact.createPoint(new Coordinate(lon+delta,lat));
-		System.out.println("start="+start+" dest="+dest);//dist 57.8mts vs  57.87768844431185
+		logger.fine("start="+start+" dest="+dest);//dist 57.8mts vs  57.87768844431185
 		double dist = getDistancia(start,dest);
 
 		double azimut=getRumbo(start, dest);
-		System.out.println("dist = "+dist+" azimut="+azimut);
+		logger.fine("dist = "+dist+" azimut="+azimut);
 		Point point = getPoint(start,45,10);
-		System.out.println("start="+start+" +10a45="+point);//dist 57.8mts vs  57.87768844431185
+		logger.fine("start="+start+" +10a45="+point);//dist 57.8mts vs  57.87768844431185
 
 	}
 

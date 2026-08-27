@@ -33,8 +33,11 @@ import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
+import java.util.logging.Logger;
 @Deprecated
 public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo> {
+	private static final Logger logger = Logger.getLogger(GenerarMuestreoDirigidoTask.class.getName());
+
 	/**
 	 * la lista de las cosechas a unir
 	 */
@@ -67,7 +70,7 @@ public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo>
 		String nombre =null;
 		//ancho me permite controlar la distancia minima entre los puntos y entre el punto y la frontera
 		double ancho = 1 + Math.sqrt(superficieMinimaAMuestrear*ProyectionConstants.METROS2_POR_HA)/10;
-		System.out.println("ancho="+ancho); //ancho=86.60254037844386
+		logger.fine("ancho="+ancho); //ancho=86.60254037844386
 		featureCount = 100;//TODO estimar cantidad a procesar
 		//List<SueloItem> features = Collections.synchronizedList(new ArrayList<SueloItem>());
 		for(Labor<? extends LaborItem> c:aMuestrear){			
@@ -213,7 +216,7 @@ public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo>
 	 * @param itemsToShow
 	 */
 	private void createMuestreoPathLayer(List<SueloItem> itemsToShow) {
-		System.out.println("items "+itemsToShow.size());
+		logger.fine("items "+itemsToShow.size());
 		List<Position> positions = itemsToShow.stream().map(sueloItem->{
 			Point p = sueloItem.getGeometry().getCentroid();
 			Position pos = Position.fromDegrees(p.getY(),p.getX());
@@ -233,12 +236,12 @@ public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo>
 				Position pos = Position.fromDegrees(p.getY(),p.getX());
 				if(pos.latitude.equals(np.latitude)&& pos.longitude.equals(np.longitude)) {
 					newItems.add(s);
-					System.out.println("insertando "+pos+" suelo de "+itemsToShow.indexOf(s)+" en "+newItems.indexOf(s));
+					logger.fine("insertando "+pos+" suelo de "+itemsToShow.indexOf(s)+" en "+newItems.indexOf(s));
 					break;	
 				}
 			}
 		}
-		System.out.println("newItems "+newItems.size());
+		logger.fine("newItems "+newItems.size());
 		itemsToShow.clear();
 		itemsToShow.addAll(newItems);	
 	}

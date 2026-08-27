@@ -5,7 +5,10 @@ import com.ursulagis.desktop.dao.cosecha.CosechaConfig;
 import javafx.beans.property.SimpleObjectProperty;
 
 
+import java.util.logging.Logger;
 public class SiembraConfig extends CosechaConfig {
+	private static final Logger logger = Logger.getLogger(SiembraConfig.class.getName());
+
 	//TODO agregar las keys a las propiedades especificas de la labor de fertilizacion
 	//ej: costo pasada, precioFert
 	public static enum Unidad {kgHa,milPlaHa,pla10MtLineal,pla1MtLineal,plaMetroCuadrado, Kg, Bolsa}
@@ -20,14 +23,14 @@ public class SiembraConfig extends CosechaConfig {
 	public SiembraConfig(){
 		super();
 		if(config == null) {
-			System.out.println("iniciando config con la instancia en SiembraConfig porque era null");
+			logger.fine("iniciando config con la instancia en SiembraConfig porque era null");
 			config = Configuracion.getInstance();
 		}
 
 		Unidad configuredDosis = Unidad.kgHa;
 		String defaultDosisUnit =config.getPropertyOrDefault(DOSIS_UNIDAD_KEY,Unidad.kgHa.name()); 
 		if(defaultDosisUnit!=null) {
-			System.out.println("default unit Dosis es "+ defaultDosisUnit);
+			logger.fine("default unit Dosis es "+ defaultDosisUnit);
 			configuredDosis= Unidad.valueOf(defaultDosisUnit);
 		}
 		dosisUnitProperty = new SimpleObjectProperty<Unidad>(configuredDosis);
@@ -38,7 +41,7 @@ public class SiembraConfig extends CosechaConfig {
 		Unidad insumoUnidad = Unidad.Kg;
 		String defaultinsumoUnidad =config.getPropertyOrDefault(INSUMO_UNIDAD_KEY,Unidad.Kg.name()); 
 		if(defaultinsumoUnidad!=null) {
-			System.out.println("default unit Dosis es "+ defaultinsumoUnidad);
+			logger.fine("default unit Dosis es "+ defaultinsumoUnidad);
 			insumoUnidad= Unidad.valueOf(defaultinsumoUnidad);
 		}
 		precioInsumoUnitProperty = new SimpleObjectProperty<Unidad>(insumoUnidad);

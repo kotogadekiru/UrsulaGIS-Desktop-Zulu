@@ -25,10 +25,13 @@ import lombok.Getter;
 import lombok.Setter;
 import com.ursulagis.desktop.utils.DAH;
 
+import java.util.logging.Logger;
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
 //@Entity @Access(AccessType.FIELD)//variable (el default depende de donde pongas el @Id)
 public class FertilizacionLabor extends Labor<FertilizacionItem> {
+	private static final Logger logger = Logger.getLogger(FertilizacionLabor.class.getName());
+
 	public static final String COLUMNA_KG_HA = "Kg_FertHa";
 	public static final String COLUMNA_PRECIO_FERT = "Precio Kg Fert";
 	public static final String COLUMNA_PRECIO_PASADA = "Precio labor/Ha";	
@@ -113,7 +116,7 @@ public class FertilizacionLabor extends Labor<FertilizacionItem> {
 			fi.setDosistHa( LaborItem.getDoubleFromObj(o));
 		} else {
 			fi.setDosistHa( 0.0);
-			System.err.print("leyendo la columna "+kgHaCol+" devolvio null?=> "+o+"  "+next);
+			logger.warning("leyendo la columna "+kgHaCol+" devolvio null?=> "+o+"  "+next);
 		}
 		setPropiedadesLabor(fi);
 		return fi;
@@ -135,7 +138,7 @@ public class FertilizacionLabor extends Labor<FertilizacionItem> {
 			fi.setDosistHa( LaborItem.getDoubleFromObj(o));
 		} else {
 			fi.setDosistHa( 0.0);
-			System.err.print("leyendo la columna "+kgHaCol+" devolvio null?=> "+o+"  "+next);
+			logger.warning("leyendo la columna "+kgHaCol+" devolvio null?=> "+o+"  "+next);
 		}
 		
 
