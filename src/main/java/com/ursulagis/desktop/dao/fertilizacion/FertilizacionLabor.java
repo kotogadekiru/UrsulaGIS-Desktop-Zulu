@@ -5,6 +5,8 @@ import java.util.List;
 import javax.persistence.Access;
 import javax.persistence.AccessType;
 import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import org.geotools.api.data.FileDataStore;
 import org.geotools.api.feature.simple.SimpleFeature;
@@ -28,7 +30,7 @@ import com.ursulagis.desktop.utils.DAH;
 import java.util.logging.Logger;
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
-//@Entity @Access(AccessType.FIELD)//variable (el default depende de donde pongas el @Id)
+@Entity @Access(AccessType.FIELD)
 public class FertilizacionLabor extends Labor<FertilizacionItem> {
 	private static final Logger logger = Logger.getLogger(FertilizacionLabor.class.getName());
 
@@ -43,12 +45,17 @@ public class FertilizacionLabor extends Labor<FertilizacionItem> {
 
 	public static final String COSTO_LABOR_FERTILIZACION = "costoLaborFertilizacion";
 
+	@Transient
 	public StringProperty colKgHaProperty;
 
+	@ManyToOne
 	public Fertilizante fertilizante=null;
 
 	public FertilizacionLabor() {
-		initConfig();
+		super();
+		if (!DAH.shouldSkipEntityInit()) {
+			initConfig();
+		}
 	}
 
 	public FertilizacionLabor(FileDataStore store) {

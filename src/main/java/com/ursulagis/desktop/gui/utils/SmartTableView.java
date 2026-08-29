@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -675,6 +676,8 @@ public class SmartTableView<T> extends TableView<T> {
 					getBooleanColumn(clazz, method, name, fieldType, setMethodName);				
 				}else if(Calendar.class.isAssignableFrom(fieldType)){
 					getCalendarColumn(clazz, method, name, fieldType, setMethodName);
+				}else if(Date.class.isAssignableFrom(fieldType)){
+					getUtilDateColumn(clazz, method, name, fieldType, setMethodName);
 				}else if(LocalDate.class.isAssignableFrom(fieldType)){
 					getLocalDateColumn(clazz, method, name, fieldType, setMethodName);
 				} else if(Empresa.class.isAssignableFrom(fieldType)){					
@@ -1046,6 +1049,38 @@ public class SmartTableView<T> extends TableView<T> {
 					DAH.save(p);
 					refresh();
 				} catch (Exception e) {e.printStackTrace();}
+				});
+		dColumn.setId(propName);
+		this.getColumns().add(dColumn);
+	}
+
+	private void getUtilDateColumn(Class<?> clazz, Method method, String name, Class<?> fieldType,
+			String setMethodName) {
+		String propName = name.replace("Property", "");
+		DateTableColumn<T> dColumn = new DateTableColumn<T>(propName,
+				(p) -> {
+					try {
+						Date date = (Date) method.invoke(p, (Object[]) null);
+						if (date == null) {
+							return null;
+						}
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(date);
+						return cal;
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					return null;
+				},
+				(p, cal) -> {
+					try {
+						Method setMethod = clazz.getMethod(setMethodName, fieldType);
+						setMethod.invoke(p, cal == null ? null : cal.getTime());
+						DAH.save(p);
+						refresh();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				});
 		dColumn.setId(propName);
 		this.getColumns().add(dColumn);

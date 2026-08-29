@@ -2,6 +2,9 @@ package com.ursulagis.desktop.dao.margen;
 
 import java.util.List;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Entity;
 import javax.persistence.Transient;
 
 import org.geotools.api.data.FileDataStore;
@@ -22,9 +25,11 @@ import javafx.beans.property.StringProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import com.ursulagis.desktop.utils.DAH;
 import java.util.logging.Logger;
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
+@Entity @Access(AccessType.FIELD)
 public class Margen extends Labor<MargenItem> {
 	private static final Logger logger = Logger.getLogger(Margen.class.getName());
 
@@ -76,7 +81,9 @@ public class Margen extends Labor<MargenItem> {
 	
 	public Margen() {
 		super();
-		initConfig();
+		if (!DAH.shouldSkipEntityInit()) {
+			initConfig();
+		}
 	}
 
 	public Margen(FileDataStore store) {

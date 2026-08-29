@@ -446,6 +446,31 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		}
 	}
 
+	/**
+	 * Ensures layer + geometry (content blob → inStore/outCollection) before Process*MapTask.
+	 * @return false if there is no geometry to show
+	 */
+	public boolean prepareLaborForShow(Labor<?> labor) {
+		if (labor == null) {
+			return false;
+		}
+		if (labor.getLayer() == null) {
+			labor.setLayer(new LaborLayer());
+		}
+		if (labor.getInStore() == null) {
+			FileHelper.expandLaborOutCollection(labor);
+		}
+		if (labor.getInStore() == null
+				&& (labor.outCollection == null || labor.outCollection.isEmpty())) {
+			byte[] content = labor.getContent();
+			logger.warning("No hay geometria para mostrar la labor " + labor.getNombre()
+					+ " (tipo=" + labor.getTipo()
+					+ ", content=" + (content == null ? "null" : content.length + " bytes") + ")");
+			return false;
+		}
+		return true;
+	}
+
 	public void showLabor(Labor<?> labor) {
 		if (labor == null) {
 			return;
@@ -454,13 +479,29 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			main.cosechaGUIController.showCosechaLabor((CosechaLabor) labor);
 			return;
 		}
-		// Fallback for labor types not yet wired to their import task
-		if (labor.getLayer() == null) {
-			labor.setLayer(new LaborLayer());
+		if (labor instanceof SiembraLabor) {
+			main.siembraGUIController.showSiembraLabor((SiembraLabor) labor);
+			return;
 		}
-		if (labor.getInStore() == null
-				&& (labor.outCollection == null || labor.outCollection.isEmpty())) {
-			FileHelper.expandLaborOutCollection(labor);
+		if (labor instanceof FertilizacionLabor) {
+			main.fertilizacionGUIController.showFertilizacionLabor((FertilizacionLabor) labor);
+			return;
+		}
+		if (labor instanceof PulverizacionLabor) {
+			main.pulverizacionGUIController.showPulverizacionLabor((PulverizacionLabor) labor);
+			return;
+		}
+		if (labor instanceof Suelo) {
+			main.sueloGUIController.showSueloLabor((Suelo) labor);
+			return;
+		}
+		if (labor instanceof Margen) {
+			main.margenGUIController.showMargenLabor((Margen) labor);
+			return;
+		}
+		// Fallback for unexpected Labor subtypes
+		if (!prepareLaborForShow(labor)) {
+			return;
 		}
 		ShowLaborMapTask task = new ShowLaborMapTask(labor);
 		task.installProgressBar(progressBox);

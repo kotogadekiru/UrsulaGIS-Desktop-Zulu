@@ -3,6 +3,8 @@ package com.ursulagis.desktop.dao.pulverizacion;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
@@ -33,7 +35,7 @@ import com.ursulagis.desktop.utils.DAH;
 
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
-//@Entity
+@Entity @Access(AccessType.FIELD)
 public class PulverizacionLabor extends Labor<PulverizacionItem> {
 	public static final String COLUMNA_DOSIS = "Dosis";
 
@@ -51,11 +53,14 @@ public class PulverizacionLabor extends Labor<PulverizacionItem> {
 	//	@Transient
 	//	public Property<Agroquimico> agroquimico=null;
 
+	@Transient
 	public List<CaldoItem> items= new ArrayList<CaldoItem>();;
 
 	public PulverizacionLabor() {
 		super();
-		initConfig();
+		if (!DAH.shouldSkipEntityInit()) {
+			initConfig();
+		}
 	}
 
 	public PulverizacionLabor(FileDataStore store) {

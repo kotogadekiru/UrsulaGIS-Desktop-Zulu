@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 
@@ -32,7 +35,7 @@ import com.ursulagis.desktop.utils.ProyectionConstants;
 
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
-//@Entity @Access(AccessType.FIELD)
+@Entity @Access(AccessType.FIELD)
 public class SiembraLabor extends Labor<SiembraItem> {
 //	private static final String SEMILLAS_POR_BOLSA_KEY = "SEMILLAS_POR_BOLSA";
 
@@ -82,7 +85,9 @@ public class SiembraLabor extends Labor<SiembraItem> {
 	
 	public SiembraLabor() {
 		super();
-		initConfig();
+		if (!DAH.shouldSkipEntityInit()) {
+			initConfig();
+		}
 	}
 
 	public SiembraLabor(FileDataStore store) {

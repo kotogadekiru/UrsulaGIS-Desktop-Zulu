@@ -96,6 +96,26 @@ public class MargenGUIController extends AbstractGUIController {
 		});
 		executorPool.execute(uMmTask);
 	}
+
+	/** Shows a persisted margen using the same {@link OpenMargenMapTask} path as edit/import. */
+	public void showMargenLabor(Margen labor) {
+		if (labor == null) {
+			return;
+		}
+		if (!main.genericGUIController.prepareLaborForShow(labor)) {
+			return;
+		}
+		OpenMargenMapTask uMmTask = new OpenMargenMapTask(labor);
+		uMmTask.installProgressBar(progressBox);
+		uMmTask.setOnSucceeded(handler -> {
+			insertBeforeCompass(getWwd(), labor.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			viewGoTo(labor);
+			uMmTask.uninstallProgressBar();
+			playSound();
+		});
+		executorPool.execute(uMmTask);
+	}
 	
 	private String doSumarMargenes(Layer l) {
 		List<Margen> margenes = main.getMargenesSeleccionados();

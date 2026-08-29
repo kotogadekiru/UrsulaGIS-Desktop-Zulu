@@ -362,6 +362,30 @@ public class SiembraGUIController {
 		}//if stores != null
 	}
 
+	/** Shows a persisted siembra using the same {@link ProcessSiembraMapTask} path as import. */
+	public void showSiembraLabor(SiembraLabor labor) {
+		if (labor == null) {
+			return;
+		}
+		if (!main.genericGUIController.prepareLaborForShow(labor)) {
+			return;
+		}
+		if (labor.colAmount == null || labor.colAmount.get() == null || labor.colAmount.get().isBlank()) {
+			labor.colAmount.set(SiembraLabor.COLUMNA_KG_SEMILLA);
+		}
+		ProcessSiembraMapTask umTask = new ProcessSiembraMapTask(labor);
+		umTask.installProgressBar(progressBox);
+		umTask.setOnSucceeded(handler -> {
+			SiembraLabor ret = (SiembraLabor) handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			viewGoTo(ret);
+			umTask.uninstallProgressBar();
+			playSound();
+		});
+		JFXMain.executorPool.execute(umTask);
+	}
+
 	private String selectUnidadSiembra() {
 		//preguntar en que unidad exportar la dosis de semilla
 				Dialog<String> d= new Dialog<String>();

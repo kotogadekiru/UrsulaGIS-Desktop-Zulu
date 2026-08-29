@@ -236,5 +236,26 @@ public class SueloGUIController extends AbstractGUIController{
 		}//if stores != null
 	}
 
+	/** Shows a persisted suelo using the same {@link OpenSoilMapTask} path as import. */
+	public void showSueloLabor(Suelo labor) {
+		if (labor == null) {
+			return;
+		}
+		if (!main.genericGUIController.prepareLaborForShow(labor)) {
+			return;
+		}
+		OpenSoilMapTask umTask = new OpenSoilMapTask(labor);
+		umTask.installProgressBar(main.progressBox);
+		umTask.setOnSucceeded(handler -> {
+			Suelo ret = (Suelo) handler.getSource().getValue();
+			JFXMain.insertBeforeCompass(main.getWwd(), ret.getLayer());
+			main.getLayerPanel().update(main.getWwd());
+			main.viewGoTo(ret);
+			umTask.uninstallProgressBar();
+			main.playSound();
+		});
+		JFXMain.executorPool.execute(umTask);
+	}
+
 
 }

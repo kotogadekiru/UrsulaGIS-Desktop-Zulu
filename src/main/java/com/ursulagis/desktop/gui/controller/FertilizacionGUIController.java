@@ -411,6 +411,30 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		}//if stores != null
 	}
 
+	/** Shows a persisted fertilizacion using the same {@link ProcessFertMapTask} path as import. */
+	public void showFertilizacionLabor(FertilizacionLabor labor) {
+		if (labor == null) {
+			return;
+		}
+		if (!main.genericGUIController.prepareLaborForShow(labor)) {
+			return;
+		}
+		if (labor.colAmount == null || labor.colAmount.get() == null || labor.colAmount.get().isBlank()) {
+			labor.colAmount.set(FertilizacionLabor.COLUMNA_KG_HA);
+		}
+		ProcessFertMapTask umTask = new ProcessFertMapTask(labor);
+		umTask.installProgressBar(progressBox);
+		umTask.setOnSucceeded(handler -> {
+			FertilizacionLabor ret = (FertilizacionLabor) handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			viewGoTo(ret);
+			umTask.uninstallProgressBar();
+			playSound();
+		});
+		JFXMain.executorPool.execute(umTask);
+	}
+
 	private void doUnirFertilizaciones(FertilizacionLabor fertilizacionLabor) {
 		List<FertilizacionLabor> fertilizacionesAUnir = new ArrayList<FertilizacionLabor>();
 		if(fertilizacionLabor == null){

@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.persistence.Access;
+import javax.persistence.AccessType;
+import javax.persistence.Entity;
 import javax.persistence.Transient;
 
 import org.geotools.api.data.FileDataStore;
@@ -21,12 +24,13 @@ import javafx.beans.property.StringProperty;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 import java.util.logging.Logger;
 @Getter
 @Setter(value = AccessLevel.PUBLIC)
-//@Entity
+@Entity @Access(AccessType.FIELD)
 public class Suelo extends Labor<SueloItem>{
 	private static final Logger logger = Logger.getLogger(Suelo.class.getName());
 
@@ -73,7 +77,10 @@ public class Suelo extends Labor<SueloItem>{
 	public StringProperty colAguaPerfProperty;
 	
 	public Suelo() {
-		initConfig();
+		super();
+		if (!DAH.shouldSkipEntityInit()) {
+			initConfig();
+		}
 	}
 
 	public Suelo(FileDataStore store) {

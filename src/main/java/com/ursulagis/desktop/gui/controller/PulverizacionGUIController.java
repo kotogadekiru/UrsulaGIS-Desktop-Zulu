@@ -271,6 +271,30 @@ public class PulverizacionGUIController {
 
 			}//if stores != null
 		}
+
+		/** Shows a persisted pulverizacion using the same {@link ProcessPulvMapTask} path as import. */
+		public void showPulverizacionLabor(PulverizacionLabor labor) {
+			if (labor == null) {
+				return;
+			}
+			if (!main.genericGUIController.prepareLaborForShow(labor)) {
+				return;
+			}
+			if (labor.colAmount == null || labor.colAmount.get() == null || labor.colAmount.get().isBlank()) {
+				labor.colAmount.set(PulverizacionLabor.COLUMNA_DOSIS);
+			}
+			ProcessPulvMapTask umTask = new ProcessPulvMapTask(labor);
+			umTask.installProgressBar(main.progressBox);
+			umTask.setOnSucceeded(handler -> {
+				PulverizacionLabor ret = (PulverizacionLabor) handler.getSource().getValue();
+				JFXMain.insertBeforeCompass(main.getWwd(), ret.getLayer());
+				main.getLayerPanel().update(main.getWwd());
+				main.viewGoTo(ret);
+				umTask.uninstallProgressBar();
+				main.playSound();
+			});
+			JFXMain.executorPool.execute(umTask);
+		}
 		
 		private void doUnirPulverizaciones(PulverizacionLabor pulverizacionLabor) {
 			List<PulverizacionLabor> pulverizacionesAUnir = new ArrayList<PulverizacionLabor>();

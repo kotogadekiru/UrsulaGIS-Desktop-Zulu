@@ -1166,9 +1166,18 @@ public class ConfigGUI extends AbstractGUIController{
 							"ColAmount","ColElevacion","ColAncho","ColCurso","ColDistancia",
 							"ColRendimientoValue","CorreccionCosecha","MaxRinde","MinRinde",
 							"ColRendimiento","CorreccionCosechaProperty","MaxRindeProperty","MinRindeProperty",
-							"Cultivo","CostoCosechaTn","Configuracion","ProductoLabor"),
-					Arrays.asList("Activo","Tipo","Nombre","Fecha",
-							"PrecioLabor","PrecioInsumo","CantidadLabor","CantidadInsumo")
+							"Cultivo","CostoCosechaTn","Configuracion","ProductoLabor",
+							"PrecioLabor","PrecioInsumo","MinAmount","MaxAmount","MinElev","MaxElev",
+							"ColDosisSemilla","Semilla","FertLinea","FertCostado","EntreSurco","PlantasPorMetro",
+							"ColKgHaProperty","Fertilizante",
+							"ColDosisProperty","Items",
+							"ColRentabilidad","ColMargen","ColCostoTotal","ColIngreso",
+							"ColCostoFertilizacion","ColCostoPulverizacion","ColCostoSiembra","ColCostoFijo",
+							"CostoFijoHaProperty","CostoTnProperty","CostoFleteProperty",
+							"Fertilizaciones","Siembras","Cosechas","Pulverizaciones",
+							"ColNProperty","ColPProperty","ColKProperty","ColSProperty","ColMOProperty",
+							"ColProfNapaProperty","ColDensidadProperty","ColAguaPerfProperty"),
+					Arrays.asList("Activo","Tipo","Nombre","Fecha","CantidadInsumo","CantidadLabor")
 					);
 			table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 			table.setEditable(true);
