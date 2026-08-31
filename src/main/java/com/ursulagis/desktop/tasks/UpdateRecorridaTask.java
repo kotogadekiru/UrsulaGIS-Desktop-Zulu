@@ -72,6 +72,8 @@ public class UpdateRecorridaTask extends Task<String> {
 	//public static final String BASE_URL="http://localhost:5000/";
 	public static final String BASE_URL="https://www.ursulagis.com";
 	private static final String API_RECORRIDAS_UUID = "/api/recorridas/uuid/";
+	/** Mismo endpoint que usa la pagina web para listar muestras (altas/bajas). */
+	private static final String API_GET_MUESTRAS = "/api/recorridas/getMuestras/";
 	//public static final String DOWNLOAD_URL = BASE_URL+API_RECORRIDAS_UUID;
 	//public static final String INSERT_URL = "http://localhost:5000/api/recorridas/insert/";
 	private ProgressBar progressBarTask;
@@ -122,7 +124,20 @@ public class UpdateRecorridaTask extends Task<String> {
 					recorrida.setLatitude(remoteRecorrida.getLatitude());
 					recorrida.setLongitude(remoteRecorrida.getLongitude());
 					recorrida.setObservacion(remoteRecorrida.getObservacion());
-					applyRemoteMuestras(recorrida, extractRemoteMuestras(gson, data, remoteRecorrida));
+
+					// La pagina web carga muestras desde getMuestras/{id}/; el GET por uuid suele devolver [].
+					Long remoteId = extractRemoteId(data);
+					List<Muestra> remoteMuestras = fetchRemoteMuestras(baseUlr, remoteId, gson);
+					if (remoteMuestras == null) {
+						remoteMuestras = extractRemoteMuestras(gson, data, remoteRecorrida);
+						if (remoteMuestras == null || remoteMuestras.isEmpty()) {
+							logger.warning("No se pudieron obtener muestras remotas; se conservan las locales");
+						} else {
+							applyRemoteMuestras(recorrida, remoteMuestras);
+						}
+					} else {
+						applyRemoteMuestras(recorrida, remoteMuestras);
+					}
 
 					String urlGoto =dbUrl;// GET_RECORRIDAS_BY_ID_URL+id+"/";
 					return urlGoto;
@@ -151,9 +166,84 @@ public class UpdateRecorridaTask extends Task<String> {
 		return baseUlr;
 	}
 
+	private static Long extractRemoteId(JsonElement data) {
+		if (data == null || !data.isJsonObject()) {
+			return null;
+		}
+		JsonElement idEl = data.getAsJsonObject().get("id");
+		if (idEl == null || idEl.isJsonNull() || !idEl.isJsonPrimitive()) {
+			return null;
+		}
+		try {
+			return idEl.getAsLong();
+		} catch (Exception e) {
+			logger.warning("No se pudo leer id remoto de recorrida: " + e.getMessage());
+			return null;
+		}
+	}
+
+	/**
+	 * Descarga muestras desde el mismo endpoint que usa la pagina web.
+	 * @return lista (posiblemente vacia) si el request fue OK; null si fallo
+	 */
+	private List<Muestra> fetchRemoteMuestras(String baseUrl, Long remoteId, Gson gson) {
+		if (remoteId == null) {
+			return null;
+		}
+		GenericUrl url = new GenericUrl(baseUrl + API_GET_MUESTRAS + remoteId + "/");
+		HttpResponse response = makeGetRequest(url);
+		if (response == null) {
+			return null;
+		}
+		try (Reader reader = new InputStreamReader(response.getContent())) {
+			JsonElement root = com.google.gson.JsonParser.parseReader(reader);
+			JsonElement arrayEl = root;
+			if (root.isJsonObject()) {
+				JsonObject obj = root.getAsJsonObject();
+				if (obj.has("data")) {
+					arrayEl = obj.get("data");
+				} else if (obj.has("muestras")) {
+					arrayEl = obj.get("muestras");
+				}
+			}
+			if (arrayEl == null || !arrayEl.isJsonArray()) {
+				logger.warning("getMuestras no devolvio un array: " + root);
+				return null;
+			}
+			List<Muestra> muestras = new ArrayList<>();
+			for (JsonElement el : arrayEl.getAsJsonArray()) {
+				muestras.add(parseRemoteMuestra(gson, el));
+			}
+			logger.fine("muestras remotas via getMuestras: " + muestras.size());
+			return muestras;
+		} catch (Exception e) {
+			logger.warning("Error leyendo getMuestras/" + remoteId + ": " + e.getMessage());
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private static Muestra parseRemoteMuestra(Gson gson, JsonElement el) {
+		Muestra muestra = gson.fromJson(el, Muestra.class);
+		if (muestra == null) {
+			muestra = new Muestra();
+		}
+		if (el != null && el.isJsonObject()) {
+			JsonObject obj = el.getAsJsonObject();
+			// La web suele enriquecer observacion en observacionJSON
+			JsonElement obsJson = obj.get("observacionJSON");
+			if (obsJson != null && !obsJson.isJsonNull()) {
+				muestra.setObservacion(obsJson.isJsonPrimitive() ? obsJson.getAsString() : obsJson.toString());
+			} else if (obj.has("observacion") && obj.get("observacion").isJsonObject()) {
+				muestra.setObservacion(obj.get("observacion").toString());
+			}
+		}
+		return muestra;
+	}
+
 	private static List<Muestra> extractRemoteMuestras(Gson gson, JsonElement data, Recorrida remoteRecorrida) {
 		List<Muestra> muestras = remoteRecorrida.getMuestras();
-		logger.fine("muestras remotas "+muestras);
+		logger.fine("muestras remotas embebidas "+muestras);
 		if (muestras != null && !muestras.isEmpty()) {
 			return muestras;
 		}
@@ -170,9 +260,13 @@ public class UpdateRecorridaTask extends Task<String> {
 		return muestras != null ? muestras : new ArrayList<>();
 	}
 
+	/**
+	 * Reemplaza la lista local con la remota: agrega nuevas, actualiza existentes y
+	 * elimina las que ya no estan en el servidor (orphanRemoval al guardar).
+	 */
 	private static void applyRemoteMuestras(Recorrida recorrida, List<Muestra> remoteMuestras) {
-		if (remoteMuestras == null || remoteMuestras.isEmpty()) {
-			return;
+		if (remoteMuestras == null) {
+			remoteMuestras = new ArrayList<>();
 		}
 		Map<String, Muestra> localByKey = new LinkedHashMap<>();
 		for (Muestra m : recorrida.getMuestras()) {
@@ -192,11 +286,14 @@ public class UpdateRecorridaTask extends Task<String> {
 			muestra.setRecorrida(recorrida);
 			recorrida.getMuestras().add(muestra);
 		}
+		logger.fine("muestras locales tras sync: " + recorrida.getMuestras().size()
+				+ " (remotas=" + remoteMuestras.size() + ", huerfanas locales=" + localByKey.size() + ")");
 	}
 
 	private static String muestraKey(Muestra m) {
+		String nombre = m.getNombre() == null ? "" : m.getNombre();
 		String subNombre = m.getSubNombre() == null ? "" : m.getSubNombre();
-		return m.getNombre() + "\0" + subNombre;
+		return nombre + "\0" + subNombre;
 	}
 
 	private ExclusionStrategy getJSonStrategy() {

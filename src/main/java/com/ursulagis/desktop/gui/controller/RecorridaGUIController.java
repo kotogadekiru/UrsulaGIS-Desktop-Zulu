@@ -327,11 +327,15 @@ public class RecorridaGUIController extends AbstractGUIController {
 				recorrida.setUrl(ret);
 			}
 			DAH.save(recorrida);
+			Layer layer = findLayerForRecorrida(recorrida);
+			if (layer instanceof RenderableLayer) {
+				GenerarRecorridaDirigidaTask.renderRecorrida((RenderableLayer) layer, recorrida);
+			}
 			main.getLayerPanel().update(main.getWwd());
 			task.uninstallProgressBar();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SYNCED_FROM_CLOUD);
 		});
-		logger.fine("ejecutando Compartir Recorrida"); 
+		logger.fine("ejecutando Update Recorrida"); 
 		executorPool.execute(task);
 	}
 
