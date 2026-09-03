@@ -725,9 +725,9 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 			//creando un ndvi con fecha Thu Jan 04 00:00:00 ART 2018
 
 			layer.setValue(Labor.LABOR_LAYER_IDENTIFICATOR, ndvi);
-			layer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, ndvi.getClass());
+			layer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, Ndvi.class);
 
-			layer.setValue(ProcessMapTask.ZOOM_TO_KEY, pointPosition);		
+			layer.setValue(ProcessMapTask.ZOOM_TO_KEY, pointPosition);
 
 			return layer;
 

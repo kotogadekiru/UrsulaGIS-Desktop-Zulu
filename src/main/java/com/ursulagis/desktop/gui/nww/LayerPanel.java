@@ -31,6 +31,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -185,17 +186,17 @@ public class LayerPanel extends VBox {
 			CheckBoxTreeItem<Layer> checkBoxTreeItem = new CheckBoxTreeItem<Layer>(layer);
 
 			Object value = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-			Object clazz = layer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
-			Class<?> layerClass =null;
-			if(value!=null) {
+			Class<?> layerClass = null;
+			Object classIdentificator = layer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
+			if (classIdentificator instanceof Class<?>) {
+				layerClass = (Class<?>) classIdentificator;
+			} else if (value != null) {
 				layerClass = value.getClass();
-			}else if(clazz!=null) {
-				layerClass = (Class<?>) clazz;
 			}
 
 			// Resolver la clase al nodo raíz registrado (p. ej. CosechaLabor.class aunque value sea proxy/subclase)
 			// para que todas las capas del mismo tipo queden bajo el mismo nodo en el árbol.
-			Class<?> branchClass = layerClass;//resolveBranchClass(layerClass);
+			Class<?> branchClass = resolveBranchClass(layerClass);
 			CheckBoxTreeItem<Layer> branchItem = branchClass != null ? rootItems.get(branchClass) : null;
 			if(branchItem!=null) {
 				branchItem.getChildren().add(checkBoxTreeItem);
@@ -217,12 +218,14 @@ public class LayerPanel extends VBox {
 				rootItemIcons.put(layerClass, "map.png");
 				rootItems.put(layerClass,newBranchItem);
 				rootItem.getChildren().add(newBranchItem);
+				newBranchItem.setExpanded(true);
 				newBranchItem.getChildren().add(checkBoxTreeItem);
 			}
 
 			checkBoxTreeItem.setSelected(layer.isEnabled());
 			checkBoxTreeItem.selectedProperty().addListener((ob,old,nu)->{
-				layer.setEnabled(nu);//aca se repinta el layer?
+				layer.setEnabled(nu);
+				requestTreeRelayout();
 			});
 		}
 
@@ -271,7 +274,9 @@ public class LayerPanel extends VBox {
 			VBox.setVgrow(tree, Priority.ALWAYS);
 			//	tree.prefHeightProperty().bind(layersPanel.heightProperty());
 		} else{
-			tree.setRoot(rootItem);
+			if (tree.getRoot() != rootItem) {
+				tree.setRoot(rootItem);
+			}
 		}
 
 		// Asegura que todas las ramas raíz tengan su icono configurado,
@@ -283,12 +288,10 @@ public class LayerPanel extends VBox {
 			}
 		});
 
-		// Fuerza a JavaFX a repintar las celdas del árbol para que
-		// se apliquen inmediatamente los gráficos sin necesidad de
-		// colapsar/expandir manualmente las ramas.
-		if (tree != null) {
-			Platform.runLater(() -> tree.refresh());
-		}
+		// Fuerza re-layout del árbol para corregir indentación tras cambios de estado
+		// (p. ej. activar/desactivar capas NDVI). tree.refresh() recrea celdas y empeora
+		// el bug de indentación de JavaFX en TreeView con CheckBoxTreeCell.
+		requestTreeRelayout();
 
 	}
 
@@ -311,17 +314,18 @@ public class LayerPanel extends VBox {
 	 * bajo el mismo nodo raíz (p. ej. CosechaLabor) en lugar de crear ramas duplicadas.
 	 */
 	// private Class<?> resolveBranchClass(Class<?> layerClass) {
-	// 	if (layerClass == null) return null;
-	// 	if (rootItems.containsKey(layerClass)) return layerClass;
-	// 	Class<?> best = null;
-	// 	for (Class<?> key : rootItems.keySet()) {
-	// 		if (key.isAssignableFrom(layerClass)) {
-	// 			if (best == null || key.isAssignableFrom(best))
-	// 				best = key;
-	// 		}
-	// 	}
-	// 	return best;
-	// }
+	private Class<?> resolveBranchClass(Class<?> layerClass) {
+		if (layerClass == null) return null;
+		if (rootItems.containsKey(layerClass)) return layerClass;
+		Class<?> best = null;
+		for (Class<?> key : rootItems.keySet()) {
+			if (key.isAssignableFrom(layerClass)) {
+				if (best == null || key.isAssignableFrom(best))
+					best = key;
+			}
+		}
+		return best != null ? best : layerClass;
+	}
 
 	private void constructRootItem() {//construye el nodo capas con los nodos de las clases de labor
 		RenderableLayer rootLayer = createRenderableLayer();
@@ -412,7 +416,8 @@ public class LayerPanel extends VBox {
 	//TODO permitir agrupar por establecimiento campania y lote
 	private TreeView<Layer> constructTreeView(CheckBoxTreeItem<Layer> rootItem) {
 		final TreeView<Layer> tree = new TreeView<Layer>(rootItem);
-		tree.addEventHandler(TreeItem.branchExpandedEvent(), e -> Platform.runLater(tree::refresh));
+		tree.addEventHandler(TreeItem.branchExpandedEvent(), e -> requestTreeRelayout());
+		tree.addEventHandler(TreeItem.branchCollapsedEvent(), e -> requestTreeRelayout());
 		//tree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		//los puedo seleccionar pero no puedo actuar sobre mas de uno  a la vez por que set on action es del item en foco.
 		//tendria que poner acciones en los nodos y buscar los subitems seleccionados y ahi aplicar
@@ -723,6 +728,24 @@ public class LayerPanel extends VBox {
 
 	public void addAccionesClase(List<LayerAction> cosechasP,Class<?> clazz) {
 		layerActions.put(clazz, cosechasP);
+	}
+
+	/**
+	 * Corrige la indentación del TreeView tras cambios que alteran el ancho del
+	 * nodo de disclosure (expandir ramas, togglear checkboxes). Evita tree.refresh()
+	 * que recrea celdas y desalinea la jerarquía visual en JavaFX 17+.
+	 */
+	private void requestTreeRelayout() {
+		if (tree == null) {
+			return;
+		}
+		Platform.runLater(() -> {
+			Node sheet = tree.lookup(".sheet");
+			if (sheet instanceof Parent parent) {
+				parent.requestLayout();
+			}
+			tree.requestLayout();
+		});
 	}
 
 
