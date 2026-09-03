@@ -81,7 +81,16 @@ public class GoogleGeocodingHelper {
 	private static Position parseGeoCodeResponse(HttpResponse response) throws IOException {
 		GenericJson content = response.parseAs(GenericJson.class);
 		logger.fine("response content:\n"+content);
-		
+
+		// Check status before attempting to parse results
+		Object status = content.get("status");
+		if (!"OK".equals(status)) {
+			Object errorMsg = content.get("error_message");
+			logger.warning("Geocoding request failed - status: " + status
+					+ (errorMsg != null ? " - " + errorMsg : ""));
+			return null;
+		}
+
 		//{"results":[{"address_components":[{"long_name":"Pehuaj�","short_name":"Pehuaj�","types":["locality","political"]},{"long_name":"Pehuaj� Partido","short_name":"Pehuaj� Partido","types":["administrative_area_level_2","political"]},{"long_name":"Buenos Aires Province","short_name":"Buenos Aires Province","types":["administrative_area_level_1","political"]},{"long_name":"Argentina","short_name":"AR","types":["country","political"]}],"formatted_address":"Pehuaj�, Buenos Aires Province, Argentina","geometry":{"bounds":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}},"location":{"lat":-35.8107166,"lng":-61.8987832},"location_type":"APPROXIMATE","viewport":{"northeast":{"lat":-35.7909625,"lng":-61.8469892},"southwest":{"lat":-35.8613171,"lng":-61.9405142}}},"place_id":"ChIJ86BrWCz4wJURA89cs7G_REg","types":["locality","political"]}],"status":"OK"}
 			ArrayMap<String,Object> data = (ArrayMap<String,Object>) content.getUnknownKeys();
 		for(String key :data.keySet()){
