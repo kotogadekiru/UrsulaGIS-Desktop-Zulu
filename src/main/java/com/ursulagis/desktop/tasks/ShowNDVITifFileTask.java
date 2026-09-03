@@ -728,6 +728,7 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 			layer.setValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR, Ndvi.class);
 
 			layer.setValue(ProcessMapTask.ZOOM_TO_KEY, pointPosition);
+			layer.setValue(ProcessMapTask.LAYER_SECTOR_KEY, sector);
 
 			return layer;
 

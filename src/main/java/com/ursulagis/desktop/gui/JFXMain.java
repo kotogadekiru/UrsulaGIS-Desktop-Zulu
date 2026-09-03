@@ -1104,6 +1104,19 @@ public class JFXMain extends Application {
 
 	public void viewGoTo(Layer layer) {
 		try {
+			// Prefer fitting the camera to the full layer extent when a sector is available
+			Sector sector = (Sector) layer.getValue(ProcessMapTask.LAYER_SECTOR_KEY);
+			if (sector == null) {
+				// legacy key used by NDVI layers before LAYER_SECTOR_KEY was introduced
+				sector = (Sector) layer.getValue(ProcessMapTask.NDVI_SECTOR_KEY);
+			}
+			if (sector != null) {
+				WorldWindow wwd = getWwd();
+				if (wwd != null) {
+					ExampleUtil.goTo(wwd, sector);
+					return;
+				}
+			}
 			Position position=(Position) layer.getValue(ProcessMapTask.ZOOM_TO_KEY);
 			viewGoTo(position);
 		} catch (Exception e) {

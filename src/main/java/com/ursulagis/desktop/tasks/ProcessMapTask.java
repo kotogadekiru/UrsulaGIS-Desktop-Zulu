@@ -94,6 +94,11 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 	private static final int TARGET_LOW_RES_TIME = 2000;
 	//private static final String TASK_CLOSE_ICON = "/gui/event-close.png";
 	public static final String ZOOM_TO_KEY = "ZOOM_TO";
+	/** Sector (gov.nasa.worldwind.geom.Sector) stored on a layer so viewGoTo can fit the camera to its extent. */
+	public static final String LAYER_SECTOR_KEY = "LAYER_SECTOR";
+	/** @deprecated use LAYER_SECTOR_KEY */
+	@Deprecated
+	public static final String NDVI_SECTOR_KEY = "NDVI_SECTOR";
 //	/**
 //	 * cantidad de features a procesar
 //	 */
@@ -1550,7 +1555,20 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			Coordinate centre = labor.outCollection.getBounds().centre();
 			Position centerPosition = Position.fromDegrees(
 					centre.y,centre.x);
-			labor.getLayer().setValue(ZOOM_TO_KEY, centerPosition);		
+			labor.getLayer().setValue(ZOOM_TO_KEY, centerPosition);
+
+			// Store the bounding sector so viewGoTo(Layer) can fit the camera to the full extent
+			try {
+				org.geotools.geometry.jts.ReferencedEnvelope bounds = labor.outCollection.getBounds();
+				if (bounds != null && (bounds.getWidth() > 0 || bounds.getHeight() > 0)) {
+					Sector sector = Sector.fromDegrees(
+							bounds.getMinY(), bounds.getMaxY(),
+							bounds.getMinX(), bounds.getMaxX());
+					labor.getLayer().setValue(LAYER_SECTOR_KEY, sector);
+				}
+			} catch (Exception e) {
+				logger.fine("could not store sector for layer: " + e.getMessage());
+			}
 		}
 	}
 

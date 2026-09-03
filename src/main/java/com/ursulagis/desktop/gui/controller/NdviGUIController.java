@@ -797,6 +797,10 @@ public class NdviGUIController extends AbstractGUIController{
 
 
 	public void showNdviTiffFile(File file, Object placementObject) {
+		showNdviTiffFile(file, placementObject, true);
+	}
+
+	public void showNdviTiffFile(File file, Object placementObject, boolean goTo) {
 		//if(_ndvi!=null)System.out.println("showing ndvi "+_ndvi.getNombre());
 		ShowNDVITifFileTask task = new ShowNDVITifFileTask(file);
 		if( placementObject!=null && Poligono.class.isAssignableFrom(placementObject.getClass())){
@@ -807,7 +811,9 @@ public class NdviGUIController extends AbstractGUIController{
 			if(ndviLayer != null) {
 				insertBeforeCompass(getWwd(), ndviLayer);
 				this.getLayerPanel().update(this.getWwd());
-				viewGoTo(ndviLayer);
+				if (goTo) {
+					viewGoTo(ndviLayer);
+				}
 				playSound();	
 			}
 		});
@@ -877,9 +883,13 @@ public class NdviGUIController extends AbstractGUIController{
 	 */
 	public void doOpenNDVITiffFiles() {
 		List<File>	files =FileHelper.chooseFiles("TIF","*.tif");  
-		if(files!=null)	files.forEach((file)->{
-			showNdviTiffFile(file,null);
-		});//fin del foreach
+		if(files!=null) {
+			for (int i = 0; i < files.size(); i++) {
+				final boolean isLast = i == (files.size() - 1);
+				final File file = files.get(i);
+				showNdviTiffFile(file, null, isLast);
+			}
+		}
 	}
 	/**
 	 * metodo que muestra una tabla con poligonos que se pueden seleccionar para descargar el valor de los ndvi
