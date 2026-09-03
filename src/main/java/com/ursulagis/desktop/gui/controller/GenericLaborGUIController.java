@@ -44,6 +44,7 @@ import com.ursulagis.desktop.tasks.ShowLaborMapTask;
 import com.ursulagis.desktop.tasks.importar.OpenMargenMapTask;
 import com.ursulagis.desktop.tasks.procesar.ClonarLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.JuntarShapefilesTask;
+import com.ursulagis.desktop.tasks.procesar.AccentuateMeanLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.OutliersLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.ResumirLaborMapTask;
 import com.ursulagis.desktop.utils.DAH;
@@ -125,6 +126,16 @@ public class GenericLaborGUIController extends AbstractGUIController {
 				doOutliersLabor((Labor<LaborItem>) layerObject);
 			}
 			return "filtre outliers labor " + layer.getName();
+		}));
+
+		laboresP.add(LayerAction.constructPredicate(Messages.getString("GenericLaborGUIController.AccentuateMeanLabor"),(layer)->{
+
+			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if (layerObject==null){
+			}else if(Labor.class.isAssignableFrom(layerObject.getClass())){
+				doAccentuateMeanLabor((Labor<LaborItem>) layerObject);
+			}
+			return "accentuate mean labor " + layer.getName();
 		}));
 
 
@@ -344,6 +355,18 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		map.put("VALUE", value);
 		return map;
 	}
+
+	private Double getParamValue(List<Map<String,Object>> data, String key, Double defaultValue) {
+		for (Map<String,Object> row : data) {
+			if (key.equals(row.get("KEY"))) {
+				Object v = row.get("VALUE");
+				if (v instanceof Number) {
+					return ((Number) v).doubleValue();
+				}
+			}
+		}
+		return defaultValue;
+	}
 	
 	private void doOutliersLabor(Labor<LaborItem> labor) {
 		Double anchoFiltroOuliers=50.0;
@@ -377,6 +400,11 @@ public class GenericLaborGUIController extends AbstractGUIController {
 
 		tablaStage.showAndWait();
 
+		anchoFiltroOuliers = getParamValue(data, "Ancho Filtro", anchoFiltroOuliers);
+		minValue = getParamValue(data, "Min Value", minValue);
+		maxValue = getParamValue(data, "Max Value", maxValue);
+		toleranciaCoeficienteVariacion = getParamValue(data, "Tolerancia", toleranciaCoeficienteVariacion);
+
 		OutliersLaborMapTask uMmTask = new OutliersLaborMapTask(
 				labor,
 				anchoFiltroOuliers,
@@ -397,6 +425,42 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			logger.fine("hice outliers en la labor"); 
 		});
 		executorPool.execute(uMmTask);
+	}
+
+	private void doAccentuateMeanLabor(Labor<LaborItem> labor) {
+		List<Map<String,Object>> data = new ArrayList<>();
+		data.add(createMap(Messages.getString("GenericLaborGUIController.AccentuateMeanGain"), 2.0));
+
+		TableView<Map<String,Object>> tabla = new TableView<>(
+				FXCollections.observableArrayList(data));
+		tabla.setEditable(true);
+		NombreTableColumn nombreColl = new NombreTableColumn("KEY");
+		nombreColl.setText("Parametro");
+		tabla.getColumns().add(nombreColl);
+		DoubleTableColumn<Map<String, Object>> gainColl = DoubleTableColumn.createMapTableColumn("VALUE");
+		gainColl.setText("Valor");
+		tabla.getColumns().add(gainColl);
+
+		Scene scene = new Scene(tabla, 400, 150);
+		Stage tablaStage = new Stage();
+		tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
+		tablaStage.setTitle(Messages.getString("GenericLaborGUIController.AccentuateMeanParams"));
+		tablaStage.setScene(scene);
+		tablaStage.showAndWait();
+
+		Double gain = getParamValue(data, Messages.getString("GenericLaborGUIController.AccentuateMeanGain"), 2.0);
+
+		AccentuateMeanLaborMapTask task = new AccentuateMeanLaborMapTask(labor, gain);
+		task.installProgressBar(progressBox);
+		task.setOnSucceeded(handler -> {
+			Labor<?> ret = (Labor<?>) handler.getSource().getValue();
+			task.uninstallProgressBar();
+			this.getLayerPanel().update(this.getWwd());
+			playSound();
+			viewGoTo(ret);
+			logger.fine("accentuated mean on labor");
+		});
+		executorPool.execute(task);
 	}
 	
 
