@@ -1,12 +1,16 @@
 package com.ursulagis.desktop.gui.nww;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -15,6 +19,9 @@ import java.io.InputStream;
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.Ndvi;
 import com.ursulagis.desktop.dao.Poligono;
+import com.ursulagis.desktop.dao.config.Campania;
+import com.ursulagis.desktop.dao.config.Establecimiento;
+import com.ursulagis.desktop.dao.config.Lote;
 import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
 import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
@@ -24,18 +31,23 @@ import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.utils.WeakAdapter;
+import com.ursulagis.desktop.utils.DAH;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WeakChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.CheckBoxTreeItem;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
@@ -48,6 +60,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
+import org.controlsfx.control.CheckComboBox;
 
 import java.util.logging.Logger;
 public class LayerPanel extends VBox {
@@ -72,6 +85,15 @@ public class LayerPanel extends VBox {
 
 	private WeakAdapter listenersAdapter = new WeakAdapter();
 
+	private WorldWindow currentWwd = null;
+	private VBox filterBox = null;
+	private TextField nombreFilterField = null;
+	private ComboBox<Establecimiento> establecimientoFilterCombo = null;
+	private CheckComboBox<Campania> campaniaFilterCombo = null;
+	private ComboBox<Lote> loteFilterCombo = null;
+	private boolean updatingFilterUi = false;
+	private ListChangeListener<Campania> campaniaCheckListener = null;
+
 	/**
 	 * Create a panel with a size.
 	 *
@@ -95,6 +117,7 @@ public class LayerPanel extends VBox {
 	 * @param height
 	 */
 	protected void makePanel(WorldWindow wwd, ReadOnlyDoubleProperty width,ReadOnlyDoubleProperty height){//, Dimension size)
+		this.currentWwd = wwd;
 		this.fill(wwd);//crea treeView
 
 		// Must put the layer grid in a container to prevent scroll panel from stretching their vertical spacing.
@@ -106,6 +129,9 @@ public class LayerPanel extends VBox {
 		//this.layersPanel.prefWidthProperty().bind(width);
 		
 
+		this.filterBox = constructFilterBox();
+		this.getChildren().add(filterBox);
+
 		// Put the name panel in a scroll bar.
 		this.scrollPane = new ScrollPane(tree);
 		scrollPane.setFitToHeight(true);
@@ -114,6 +140,441 @@ public class LayerPanel extends VBox {
 		this.getChildren().add(scrollPane);
 
 		Messages.registerLocaleChangeListener(getLocaleChangeHandler(wwd));
+	}
+
+	private VBox constructFilterBox() {
+		VBox box = new VBox(4);
+		box.setPadding(new Insets(6, 6, 4, 6));
+
+		nombreFilterField = new TextField();
+		nombreFilterField.setMaxWidth(Double.MAX_VALUE);
+		nombreFilterField.textProperty().addListener((obs, oldV, newV) -> onFiltersChanged());
+
+		establecimientoFilterCombo = new ComboBox<>();
+		establecimientoFilterCombo.setMaxWidth(Double.MAX_VALUE);
+		establecimientoFilterCombo.setConverter(establecimientoConverter());
+		establecimientoFilterCombo.valueProperty().addListener((obs, oldV, newV) -> {
+			if (!updatingFilterUi) {
+				refreshLoteFilterChoices();
+				onFiltersChanged();
+			}
+		});
+		establecimientoFilterCombo.setOnShowing(e -> {
+			if (establecimientoFilterCombo.getItems().size() <= 1) {
+				refreshFilterChoices();
+			}
+		});
+
+		campaniaFilterCombo = new CheckComboBox<>();
+		campaniaFilterCombo.setMaxWidth(Double.MAX_VALUE);
+		campaniaFilterCombo.setConverter(campaniaConverter());
+		campaniaFilterCombo.setShowCheckedCount(true);
+		campaniaCheckListener = c -> {
+			if (!updatingFilterUi) {
+				onFiltersChanged();
+			}
+		};
+		campaniaFilterCombo.getCheckModel().getCheckedItems().addListener(campaniaCheckListener);
+
+		loteFilterCombo = new ComboBox<>();
+		loteFilterCombo.setMaxWidth(Double.MAX_VALUE);
+		loteFilterCombo.setConverter(loteConverter());
+		loteFilterCombo.valueProperty().addListener((obs, oldV, newV) -> onFiltersChanged());
+		loteFilterCombo.setOnShowing(e -> {
+			if (loteFilterCombo.getItems().size() <= 1) {
+				refreshFilterChoices();
+			}
+		});
+
+		updateFilterPrompts();
+		refreshFilterChoices();
+
+		box.getChildren().addAll(nombreFilterField, establecimientoFilterCombo, campaniaFilterCombo, loteFilterCombo);
+		return box;
+	}
+
+	private StringConverter<Campania> campaniaConverter() {
+		return new StringConverter<Campania>() {
+			@Override
+			public String toString(Campania object) {
+				if (object == null) {
+					return "";
+				}
+				return object.getNombre() != null ? object.getNombre() : "";
+			}
+
+			@Override
+			public Campania fromString(String string) {
+				return null;
+			}
+		};
+	}
+
+	private StringConverter<Establecimiento> establecimientoConverter() {
+		return new StringConverter<Establecimiento>() {
+			@Override
+			public String toString(Establecimiento object) {
+				if (object == null) {
+					return Messages.getString("LayerPanel.filterAllEstablecimiento");
+				}
+				return object.getNombre() != null ? object.getNombre() : "";
+			}
+
+			@Override
+			public Establecimiento fromString(String string) {
+				return null;
+			}
+		};
+	}
+
+	private StringConverter<Lote> loteConverter() {
+		return new StringConverter<Lote>() {
+			@Override
+			public String toString(Lote object) {
+				if (object == null) {
+					return Messages.getString("LayerPanel.filterAllLote");
+				}
+				return object.getNombre() != null ? object.getNombre() : "";
+			}
+
+			@Override
+			public Lote fromString(String string) {
+				return null;
+			}
+		};
+	}
+
+	private void updateFilterPrompts() {
+		if (nombreFilterField != null) {
+			nombreFilterField.setPromptText(Messages.getString("LayerPanel.filterNombrePrompt"));
+		}
+		if (establecimientoFilterCombo != null) {
+			establecimientoFilterCombo.setPromptText(Messages.getString("LayerPanel.filterEstablecimientoPrompt"));
+			establecimientoFilterCombo.setConverter(establecimientoConverter());
+		}
+		if (campaniaFilterCombo != null) {
+			campaniaFilterCombo.setTitle(Messages.getString("LayerPanel.filterCampaniaPrompt"));
+			campaniaFilterCombo.setConverter(campaniaConverter());
+		}
+		if (loteFilterCombo != null) {
+			loteFilterCombo.setPromptText(Messages.getString("LayerPanel.filterLotePrompt"));
+			loteFilterCombo.setConverter(loteConverter());
+		}
+	}
+
+	private void refreshFilterChoices() {
+		if (campaniaFilterCombo == null || loteFilterCombo == null || establecimientoFilterCombo == null) {
+			return;
+		}
+		updatingFilterUi = true;
+		try {
+			List<Campania> previouslyChecked = new ArrayList<>(campaniaFilterCombo.getCheckModel().getCheckedItems());
+			Establecimiento selectedEstablecimiento = establecimientoFilterCombo.getValue();
+			Lote selectedLote = loteFilterCombo.getValue();
+
+			List<Campania> campanias = new ArrayList<>();
+			List<Establecimiento> establecimientos = new ArrayList<>();
+			List<Lote> lotes = new ArrayList<>();
+			try {
+				campanias.addAll(DAH.getAllCampanias());
+			} catch (Exception e) {
+				logger.fine("No se pudieron cargar campañas para el filtro: " + e.getMessage());
+			}
+			try {
+				establecimientos.addAll(DAH.getAllEstablecimientos());
+			} catch (Exception e) {
+				logger.fine("No se pudieron cargar establecimientos para el filtro: " + e.getMessage());
+			}
+			try {
+				lotes.addAll(DAH.getAllLotes());
+			} catch (Exception e) {
+				logger.fine("No se pudieron cargar lotes para el filtro: " + e.getMessage());
+			}
+
+			Collections.sort(campanias);
+			Collections.sort(establecimientos);
+			Collections.sort(lotes);
+
+			campaniaFilterCombo.getCheckModel().clearChecks();
+			campaniaFilterCombo.getItems().setAll(campanias);
+			for (Campania selected : previouslyChecked) {
+				Campania match = findSameCampania(selected, campanias);
+				if (match != null) {
+					campaniaFilterCombo.getCheckModel().check(match);
+				}
+			}
+
+			List<Establecimiento> establecimientoItems = new ArrayList<>();
+			establecimientoItems.add(null);
+			establecimientoItems.addAll(establecimientos);
+			establecimientoFilterCombo.setItems(FXCollections.observableArrayList(establecimientoItems));
+			Establecimiento matchedEstablecimiento = findSameEstablecimiento(selectedEstablecimiento, establecimientos);
+			establecimientoFilterCombo.setValue(matchedEstablecimiento);
+
+			setLoteFilterItems(lotes, matchedEstablecimiento, selectedLote);
+		} finally {
+			updatingFilterUi = false;
+		}
+	}
+
+	/** Actualiza solo el combo de lotes según el establecimiento seleccionado. */
+	private void refreshLoteFilterChoices() {
+		if (loteFilterCombo == null) {
+			return;
+		}
+		updatingFilterUi = true;
+		try {
+			Lote selectedLote = loteFilterCombo.getValue();
+			Establecimiento selectedEstablecimiento = establecimientoFilterCombo != null
+					? establecimientoFilterCombo.getValue()
+					: null;
+			List<Lote> lotes = new ArrayList<>();
+			try {
+				lotes.addAll(DAH.getAllLotes());
+			} catch (Exception e) {
+				logger.fine("No se pudieron cargar lotes para el filtro: " + e.getMessage());
+			}
+			Collections.sort(lotes);
+			setLoteFilterItems(lotes, selectedEstablecimiento, selectedLote);
+		} finally {
+			updatingFilterUi = false;
+		}
+	}
+
+	private void setLoteFilterItems(List<Lote> allLotes, Establecimiento establecimiento, Lote previouslySelected) {
+		List<Lote> filtered = allLotes;
+		if (establecimiento != null) {
+			filtered = allLotes.stream()
+					.filter(l -> belongsToEstablecimiento(l, establecimiento))
+					.collect(Collectors.toList());
+		}
+		List<Lote> loteItems = new ArrayList<>();
+		loteItems.add(null);
+		loteItems.addAll(filtered);
+		loteFilterCombo.setItems(FXCollections.observableArrayList(loteItems));
+		Lote match = findSameLote(previouslySelected, filtered);
+		loteFilterCombo.setValue(match);
+	}
+
+	private boolean belongsToEstablecimiento(Lote lote, Establecimiento establecimiento) {
+		if (lote == null || establecimiento == null || lote.getEstablecimiento() == null) {
+			return false;
+		}
+		Establecimiento loteEst = lote.getEstablecimiento();
+		return Objects.equals(loteEst.getId(), establecimiento.getId())
+				|| (loteEst.getNombre() != null && establecimiento.getNombre() != null
+						&& loteEst.getNombre().equalsIgnoreCase(establecimiento.getNombre()));
+	}
+
+	private Campania findSameCampania(Campania selected, List<Campania> campanias) {
+		if (selected == null) {
+			return null;
+		}
+		for (Campania c : campanias) {
+			if (Objects.equals(c.getId(), selected.getId())
+					|| (c.getNombre() != null && c.getNombre().equalsIgnoreCase(selected.getNombre()))) {
+				return c;
+			}
+		}
+		return null;
+	}
+
+	private Establecimiento findSameEstablecimiento(Establecimiento selected, List<Establecimiento> establecimientos) {
+		if (selected == null) {
+			return null;
+		}
+		for (Establecimiento e : establecimientos) {
+			if (Objects.equals(e.getId(), selected.getId())
+					|| (e.getNombre() != null && e.getNombre().equalsIgnoreCase(selected.getNombre()))) {
+				return e;
+			}
+		}
+		return null;
+	}
+
+	private Lote findSameLote(Lote selected, List<Lote> lotes) {
+		if (selected == null) {
+			return null;
+		}
+		for (Lote l : lotes) {
+			if (Objects.equals(l.getId(), selected.getId())
+					|| (l.getNombre() != null && l.getNombre().equalsIgnoreCase(selected.getNombre()))) {
+				return l;
+			}
+		}
+		return null;
+	}
+
+	private void onFiltersChanged() {
+		if (updatingFilterUi) {
+			return;
+		}
+		if (currentWwd != null) {
+			fill(currentWwd);
+		}
+	}
+
+	private List<Campania> getSelectedCampanias() {
+		if (campaniaFilterCombo == null) {
+			return List.of();
+		}
+		return List.copyOf(campaniaFilterCombo.getCheckModel().getCheckedItems());
+	}
+
+	private boolean hasActiveFilters() {
+		String nombre = nombreFilterField != null ? nombreFilterField.getText() : null;
+		Establecimiento establecimiento = establecimientoFilterCombo != null
+				? establecimientoFilterCombo.getValue()
+				: null;
+		Lote lote = loteFilterCombo != null ? loteFilterCombo.getValue() : null;
+		return (nombre != null && !nombre.isBlank())
+				|| establecimiento != null
+				|| !getSelectedCampanias().isEmpty()
+				|| lote != null;
+	}
+
+	private boolean matchesFilters(Layer layer, Object layerEntity) {
+		if (!hasActiveFilters()) {
+			return true;
+		}
+		String layerName = resolveLayerDisplayName(layer, layerEntity);
+		String nombreFilter = nombreFilterField != null ? nombreFilterField.getText() : null;
+		if (nombreFilter != null && !nombreFilter.isBlank()) {
+			if (layerName == null || !normalize(layerName).contains(normalize(nombreFilter))) {
+				return false;
+			}
+		}
+
+		Establecimiento establecimientoFilter = establecimientoFilterCombo != null
+				? establecimientoFilterCombo.getValue()
+				: null;
+		if (establecimientoFilter != null) {
+			if (!matchesEstablecimientoFilter(layerName, layerEntity, establecimientoFilter)) {
+				return false;
+			}
+		}
+
+		Lote loteFilter = loteFilterCombo != null ? loteFilterCombo.getValue() : null;
+		if (loteFilter != null) {
+			if (!matchesLoteFilter(layerName, layerEntity, loteFilter)) {
+				return false;
+			}
+		}
+
+		List<Campania> campanias = getSelectedCampanias();
+		if (!campanias.isEmpty()) {
+			if (!matchesCampaniaFilter(layerEntity, campanias)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean matchesEstablecimientoFilter(String layerName, Object layerEntity, Establecimiento establecimientoFilter) {
+		Lote layerLote = resolveLayerLote(layerEntity);
+		if (belongsToEstablecimiento(layerLote, establecimientoFilter)) {
+			return true;
+		}
+		String estNombre = establecimientoFilter.getNombre();
+		return estNombre != null && layerName != null
+				&& normalize(layerName).contains(normalize(estNombre));
+	}
+
+	private boolean matchesLoteFilter(String layerName, Object layerEntity, Lote loteFilter) {
+		Lote layerLote = resolveLayerLote(layerEntity);
+		if (layerLote != null) {
+			if (Objects.equals(layerLote.getId(), loteFilter.getId())) {
+				return true;
+			}
+			if (layerLote.getNombre() != null && loteFilter.getNombre() != null
+					&& layerLote.getNombre().equalsIgnoreCase(loteFilter.getNombre())) {
+				return true;
+			}
+		}
+		String loteNombre = loteFilter.getNombre();
+		return loteNombre != null && layerName != null
+				&& normalize(layerName).contains(normalize(loteNombre));
+	}
+
+	/**
+	 * True si la fecha del elemento asociado a la capa cae dentro del período
+	 * de alguna de las campañas seleccionadas.
+	 */
+	private boolean matchesCampaniaFilter(Object layerEntity, List<Campania> campanias) {
+		LocalDate layerDate = resolveLayerDate(layerEntity);
+		if (layerDate == null) {
+			return false;
+		}
+		for (Campania campania : campanias) {
+			if (dateInCampania(layerDate, campania)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private Lote resolveLayerLote(Object layerEntity) {
+		if (layerEntity instanceof Poligono poligono) {
+			return poligono.getLote();
+		}
+		if (layerEntity instanceof Ndvi ndvi && ndvi.getContorno() != null) {
+			return ndvi.getContorno().getLote();
+		}
+		return null;
+	}
+
+	private LocalDate resolveLayerDate(Object layerEntity) {
+		if (layerEntity instanceof Ndvi ndvi) {
+			return ndvi.getFecha();
+		}
+		if (layerEntity instanceof Labor<?> labor && labor.getFecha() != null) {
+			Date fecha = labor.getFecha();
+			if (fecha instanceof java.sql.Date sqlDate) {
+				return sqlDate.toLocalDate();
+			}
+			return fecha.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		}
+		return null;
+	}
+
+	private boolean dateInCampania(LocalDate date, Campania campania) {
+		if (date == null || campania == null || campania.getInicio() == null || campania.getFin() == null) {
+			return false;
+		}
+		LocalDate inicio = toLocalDate(campania.getInicio());
+		LocalDate fin = toLocalDate(campania.getFin());
+		if (inicio == null || fin == null) {
+			return false;
+		}
+		return !date.isBefore(inicio) && !date.isAfter(fin);
+	}
+
+	private LocalDate toLocalDate(Calendar calendar) {
+		if (calendar == null) {
+			return null;
+		}
+		return LocalDate.of(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1,
+				calendar.get(Calendar.DAY_OF_MONTH));
+	}
+
+	private String resolveLayerDisplayName(Layer layer, Object layerEntity) {
+		if (layerEntity instanceof Labor<?> labor && labor.getNombre() != null && !labor.getNombre().isBlank()) {
+			return labor.getNombre();
+		}
+		if (layerEntity instanceof Ndvi ndvi && ndvi.getNombre() != null && !ndvi.getNombre().isBlank()) {
+			return ndvi.getNombre();
+		}
+		if (layerEntity instanceof Poligono poligono && poligono.getNombre() != null && !poligono.getNombre().isBlank()) {
+			return poligono.getNombre();
+		}
+		return layer != null ? layer.getName() : null;
+	}
+
+	private static String normalize(String value) {
+		if (value == null) {
+			return "";
+		}
+		return value.toLowerCase(Locale.ROOT).trim();
 	}
 
 	private Consumer<Locale> getLocaleChangeHandler(WorldWindow wwd){
@@ -130,6 +591,8 @@ public class LayerPanel extends VBox {
 				rootItem.setValue(null);
 				rootItem = null;
 				constructRootItem();
+				updateFilterPrompts();
+				refreshFilterChoices();
 				fill(wwd);
 			}
 		};
@@ -146,6 +609,7 @@ public class LayerPanel extends VBox {
 	protected void fill(WorldWindow wwd) {
 		// Fill the layers panel with the titles of all layers in the world
 		// window's current model.
+		this.currentWwd = wwd;
 
 		if(rootItem==null){//TODO si cambio el locale reconstriur el root item
 			constructRootItem();  
@@ -183,9 +647,13 @@ public class LayerPanel extends VBox {
 					"Compass".equalsIgnoreCase(nombre)||
 					"Capas".equalsIgnoreCase(nombre))continue; 
 
+			Object value = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if (!matchesFilters(layer, value)) {
+				continue;
+			}
+
 			CheckBoxTreeItem<Layer> checkBoxTreeItem = new CheckBoxTreeItem<Layer>(layer);
 
-			Object value = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 			Class<?> layerClass = null;
 			Object classIdentificator = layer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
 			if (classIdentificator instanceof Class<?>) {
