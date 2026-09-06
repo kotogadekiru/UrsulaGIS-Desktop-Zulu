@@ -9,7 +9,7 @@
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
@@ -124,7 +124,7 @@
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                             <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                               <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-                              <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                              <RowConstraints minHeight="10.0" prefHeight="48.0" vgrow="SOMETIMES" />
                               <RowConstraints maxHeight="56.0" minHeight="10.0" prefHeight="56.0" vgrow="SOMETIMES" />
                           </rowConstraints>
                            <children>
@@ -151,15 +151,9 @@
                                  <GridPane.margin>
                                     <Insets left="5.0" />
                                  </GridPane.margin>
-                                 <tooltip>
-                                    <Tooltip autoHide="true" text="El coeficiente de variacion se calcula entre los datos que esten dentro de un rectangulo centrado sobre el dato del ancho ingresado" wrapText="true" />
-                                 </tooltip>
                               </TextField>
                               <Label text="%HarvestConfigDialogController.supMinLabel" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                               <TextField id="textSupMin" fx:id="textSupMin" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                 <tooltip>
-                                    <Tooltip text="Si un dato corresponde a una superficie menor a la ingresada es descartado" />
-                                 </tooltip>
                                  <GridPane.margin>
                                     <Insets left="5.0" right="5.0" />
                                  </GridPane.margin>
@@ -188,7 +182,7 @@
                               <Label text="%HarvestConfigDialogController.clasificadorLabel" wrapText="true" GridPane.columnIndex="2" GridPane.rowIndex="5" />
                               <CheckBox id="chkFlow" fx:id="chkFlow" mnemonicParsing="false" text="%HarvestConfigDialogController.rindeFlowChk" wrapText="true" GridPane.columnIndex="3" GridPane.rowIndex="3" GridPane.rowSpan="2" />
                               <ComboBox fx:id="comboClasificador" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="5" />
-                              <TextField fx:id="textClasesClasificador" GridPane.columnIndex="4" GridPane.rowIndex="5" />
+                              <Slider fx:id="sliderClasesClasificador" blockIncrement="1.0" majorTickUnit="1.0" max="9.0" min="1.0" minorTickCount="0" prefWidth="150.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" value="5.0" GridPane.columnIndex="4" GridPane.rowIndex="5" />
                               <ChoiceBox fx:id="cbMetrosPorUnidad" prefWidth="150.0" GridPane.columnIndex="4" GridPane.rowIndex="2" />
                            </children>
                         </GridPane>

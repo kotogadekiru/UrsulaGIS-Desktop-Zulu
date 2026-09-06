@@ -13,7 +13,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import org.geotools.api.data.FileDataStore;
+import org.geotools.api.feature.type.GeometryDescriptor;
+import org.locationtech.jts.geom.MultiPoint;
+import org.locationtech.jts.geom.Point;
+
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -27,11 +33,13 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
 import javafx.util.converter.NumberStringConverter;
 import javafx.util.converter.PercentageStringConverter;
@@ -119,7 +127,7 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 	private TextField textMinRinde;
 
 	@FXML
-	private TextField textClasesClasificador;
+	private Slider sliderClasesClasificador;
 
 	@FXML
 	private CheckBox chkDemora;//ok
@@ -436,7 +444,7 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 
 		Bindings.bindBidirectional(this.textDistTolera.textProperty(), labor.getConfigLabor().cantDistanciasToleraProperty(), converter);
 
-		Bindings.bindBidirectional(this.textClasesClasificador.textProperty(), labor.clasificador.clasesClasificadorProperty, converter);
+		bindClasesClasificadorSlider(labor.clasificador.clasesClasificadorProperty);
 
 		this.comboClasificador.setItems(FXCollections.observableArrayList(Clasificador.clasficicadores));
 		this.comboClasificador.valueProperty().bindBidirectional(labor.clasificador.tipoClasificadorProperty);
@@ -451,7 +459,6 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 		chkOutlayers.selectedProperty().bindBidirectional(cosechaConfig.correccionOutlayersProperty());
 		chkAncho.selectedProperty().bindBidirectional(cosechaConfig.correccionAnchoProperty());
 		chkDemora.selectedProperty().bindBidirectional(cosechaConfig.correccionDemoraPesadaProperty());
-		chkDemora.setTooltip(new Tooltip(Messages.getString("HarvestConfigDialogController.16"))); //-NLS-1$
 		chkRinde.selectedProperty().bindBidirectional(cosechaConfig.correccionRindeProperty());
 		chkSuperposicion.selectedProperty().bindBidirectional(cosechaConfig.correccionSuperposicionProperty());
 		chkDistancia.selectedProperty().bindBidirectional(cosechaConfig.correccionDistanciaProperty());
@@ -460,12 +467,133 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 
 		chkResumirGeometrias.selectedProperty().bindBidirectional(cosechaConfig.resumirGeometriasProperty());
 
+		initOpcionesTooltips();
+
+		if (!isPointGeometryLabor()) {
+			disablePointOnlyFilters(cosechaConfig);
+		}
+
 		PropertyHelper.bindDateToObjectProperty(
 				labor::getFecha,
 				labor::setFecha,
 				datePickerFecha.valueProperty(),
 				labor.getConfigLabor().getConfigProperties(),
 				Labor.FECHA_KEY);
+	}
+
+	private void initOpcionesTooltips() {
+		chkSuperposicion.setTooltip(tooltip("HarvestConfigDialogController.tooltipSuperposiciones"));
+		textSupMin.setTooltip(tooltip("HarvestConfigDialogController.tooltipSupMin"));
+
+		chkDistancia.setTooltip(tooltip("HarvestConfigDialogController.tooltipDistancia"));
+		textDistTolera.setTooltip(tooltip("HarvestConfigDialogController.tooltipDistTolera"));
+		cbMetrosPorUnidad.setTooltip(tooltip("HarvestConfigDialogController.tooltipUnidadDist"));
+
+		chkAncho.setTooltip(tooltip("HarvestConfigDialogController.tooltipAncho"));
+		textAnchoDef.setTooltip(tooltip("HarvestConfigDialogController.tooltipAnchoDefault"));
+		chkFlow.setTooltip(tooltip("HarvestConfigDialogController.tooltipFlow"));
+
+		chkOutlayers.setTooltip(tooltip("HarvestConfigDialogController.tooltipOutliers"));
+		textToleranciaCV.setTooltip(tooltip("HarvestConfigDialogController.tooltipTolOutliers"));
+		textAnchoFiltro.setTooltip(tooltip("HarvestConfigDialogController.tooltipAnchoFiltro"));
+
+		chkRinde.setTooltip(tooltip("HarvestConfigDialogController.tooltipRindeSinSup"));
+		chkResumirGeometrias.setTooltip(tooltip("HarvestConfigDialogController.tooltipResumirAmbientes"));
+		comboClasificador.setTooltip(tooltip("HarvestConfigDialogController.tooltipClasificador", 420));
+		sliderClasesClasificador.setTooltip(tooltip("HarvestConfigDialogController.tooltipClasesClasificador"));
+
+		chkDemora.setTooltip(tooltip("HarvestConfigDialogController.tooltipDemora"));
+		textCorrimientoPesada.setTooltip(tooltip("HarvestConfigDialogController.tooltipCorrimientoPesada"));
+		textDistanciasRegimen.setTooltip(tooltip("HarvestConfigDialogController.tooltipEntradaRegimen"));
+	}
+
+	private static Tooltip tooltip(String messageKey) {
+		return tooltip(messageKey, 360);
+	}
+
+	private static Tooltip tooltip(String messageKey, double maxWidth) {
+		Tooltip tip = new Tooltip(Messages.getString(messageKey));
+		tip.setWrapText(true);
+		tip.setMaxWidth(maxWidth);
+		tip.setStyle("-fx-font-size: 14px;");
+		tip.setShowDelay(Duration.millis(400));
+		tip.setShowDuration(Duration.seconds(60));
+		tip.setHideDelay(Duration.millis(300));
+		return tip;
+	}
+
+	private void bindClasesClasificadorSlider(IntegerProperty clasesProperty) {
+		int value = clasesProperty.get();
+		if (value < 1) {
+			value = 1;
+		} else if (value > 9) {
+			value = 9;
+		}
+		sliderClasesClasificador.setValue(value);
+		sliderClasesClasificador.valueProperty().addListener((obs, oldV, newV) -> {
+			int rounded = (int) Math.round(newV.doubleValue());
+			if (rounded < 1) {
+				rounded = 1;
+			} else if (rounded > 9) {
+				rounded = 9;
+			}
+			if (clasesProperty.get() != rounded) {
+				clasesProperty.set(rounded);
+			}
+		});
+		clasesProperty.addListener((obs, oldV, newV) -> {
+			int next = newV.intValue();
+			if (next < 1) {
+				next = 1;
+			} else if (next > 9) {
+				next = 9;
+			}
+			if (Math.round(sliderClasesClasificador.getValue()) != next) {
+				sliderClasesClasificador.setValue(next);
+			}
+		});
+	}
+
+	/**
+	 * Superposiciones, ancho, distancia, demora y rinde sin superposiciones
+	 * solo aplican al poligonizar cosechas de puntos.
+	 */
+	private boolean isPointGeometryLabor() {
+		try {
+			FileDataStore store = labor.getInStore();
+			if (store == null) {
+				return false;
+			}
+			GeometryDescriptor geomDesc = store.getSchema().getGeometryDescriptor();
+			if (geomDesc == null) {
+				return false;
+			}
+			Class<?> binding = geomDesc.getType().getBinding();
+			return Point.class.isAssignableFrom(binding)
+					|| MultiPoint.class.isAssignableFrom(binding);
+		} catch (Exception e) {
+			logger.fine("No se pudo determinar el tipo de geometría de la cosecha: " + e.getMessage());
+			return false;
+		}
+	}
+
+	private void disablePointOnlyFilters(CosechaConfig cosechaConfig) {
+		cosechaConfig.correccionSuperposicionProperty().set(false);
+		cosechaConfig.correccionAnchoProperty().set(false);
+		cosechaConfig.correccionDistanciaProperty().set(false);
+		cosechaConfig.correccionDemoraPesadaProperty().set(false);
+		cosechaConfig.correccionRindeProperty().set(false);
+
+		chkSuperposicion.setDisable(true);
+		chkAncho.setDisable(true);
+		chkDistancia.setDisable(true);
+		chkDemora.setDisable(true);
+		chkRinde.setDisable(true);
+
+		textAnchoDef.setDisable(true);
+		textDistTolera.setDisable(true);
+		textCorrimientoPesada.setDisable(true);
+		textDistanciasRegimen.setDisable(true);
 	}
 
 
