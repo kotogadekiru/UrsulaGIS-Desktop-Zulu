@@ -48,6 +48,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
@@ -756,10 +757,26 @@ public class LayerPanel extends VBox {
 			}
 		});
 
-		// Fuerza re-layout del árbol para corregir indentación tras cambios de estado
-		// (p. ej. activar/desactivar capas NDVI). tree.refresh() recrea celdas y empeora
-		// el bug de indentación de JavaFX en TreeView con CheckBoxTreeCell.
-		requestTreeRelayout();
+		// Workaround JDK-8288665: si se agregan muchas hojas a una rama ya
+		// expandida, la indentación visual queda corta (hojas al nivel de la
+		// rama). Colapsar y reexpandir con los hijos ya cargados corrige el layout.
+		List<TreeItem<Layer>> expandedBranches = new ArrayList<>();
+		for (TreeItem<Layer> item : rootItem.getChildren()) {
+			if (item.isExpanded() && !item.getChildren().isEmpty()) {
+				expandedBranches.add(item);
+				item.setExpanded(false);
+			}
+		}
+		if (!expandedBranches.isEmpty()) {
+			Platform.runLater(() -> {
+				for (TreeItem<Layer> item : expandedBranches) {
+					item.setExpanded(true);
+				}
+				requestTreeRelayout();
+			});
+		} else {
+			requestTreeRelayout();
+		}
 
 	}
 
@@ -892,7 +909,10 @@ public class LayerPanel extends VBox {
 
 		tree.setEditable(false);
 		tree.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
-		tree.setStyle("-fx-background-color:transparent;");//-fx-focus-color: -fx-control-inner-background ; -fx-faint-focus-color: -fx-control-inner-background ; 
+		// Ancho fijo del disclosure evita el desalineado de indentación de JavaFX 17+
+		// (JDK-8288665 / JDK-8340344) cuando hay muchas hojas bajo una rama expandida.
+		tree.setStyle("-fx-background-color:transparent;");
+		applyTreeIndentStyles(tree);
 		//tree.setShowRoot(false);
 		//tree.setCellFactory(CheckBoxTreeCell.<String>forTreeView());   
 		
@@ -928,6 +948,30 @@ public class LayerPanel extends VBox {
 
 		return tree;
 	}
+
+	/**
+	 * Estabiliza el ancho del nodo de disclosure para evitar que las hojas
+	 * queden visualmente al nivel de su rama (bug de indentación JavaFX).
+	 */
+	private void applyTreeIndentStyles(TreeView<Layer> treeView) {
+		java.net.URL cssUrl = LayerPanel.class.getResource("layer-tree.css");
+		if (cssUrl != null) {
+			String css = cssUrl.toExternalForm();
+			if (!treeView.getStylesheets().contains(css)) {
+				treeView.getStylesheets().add(css);
+			}
+			return;
+		}
+		// Fallback si el CSS aún no está en el classpath (p. ej. run sin process-resources)
+		String inline = "data:text/css,"
+				+ ".tree-cell > .tree-disclosure-node {"
+				+ "-fx-min-width:18;-fx-pref-width:18;-fx-max-width:18;-fx-padding:4 6 4 8;}"
+				+ ".tree-cell{-fx-indent:20;}";
+		if (!treeView.getStylesheets().contains(inline)) {
+			treeView.getStylesheets().add(inline);
+		}
+	}
+
 	private ChangeListener<Layer> constructLayerObjectPropertyListener( CheckBoxTreeCell<Layer> cell) {	 
 		ChangeListener<Layer> listener = new ChangeListener<Layer>() {
 			@Override
@@ -1200,20 +1244,39 @@ public class LayerPanel extends VBox {
 
 	/**
 	 * Corrige la indentación del TreeView tras cambios que alteran el ancho del
-	 * nodo de disclosure (expandir ramas, togglear checkboxes). Evita tree.refresh()
-	 * que recrea celdas y desalinea la jerarquía visual en JavaFX 17+.
+	 * nodo de disclosure (expandir ramas, togglear checkboxes, rellenar hojas).
+	 * Evita tree.refresh() que recrea celdas y empeora el bug de JavaFX 17+
+	 * (JDK-8288665). Fuerza layout de todas las celdas visibles del sheet,
+	 * como el arreglo de JDK-8340344.
 	 */
 	private void requestTreeRelayout() {
 		if (tree == null) {
 			return;
 		}
+		// Dos pulsos: el ancho del disclosure suele estabilizarse recién en el
+		// segundo layout tras expandir una rama con muchas hojas.
 		Platform.runLater(() -> {
-			Node sheet = tree.lookup(".sheet");
-			if (sheet instanceof Parent parent) {
-				parent.requestLayout();
-			}
-			tree.requestLayout();
+			relayoutTreeCells();
+			Platform.runLater(this::relayoutTreeCells);
 		});
+	}
+
+	private void relayoutTreeCells() {
+		if (tree == null) {
+			return;
+		}
+		Node sheet = tree.lookup(".sheet");
+		if (sheet instanceof Parent parent) {
+			for (Node child : parent.getChildrenUnmodifiable()) {
+				if (child instanceof TreeCell<?> cell && !cell.isEmpty()) {
+					cell.requestLayout();
+					cell.layout();
+				}
+			}
+			parent.requestLayout();
+			parent.layout();
+		}
+		tree.requestLayout();
 	}
 
 

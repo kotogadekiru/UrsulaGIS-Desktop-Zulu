@@ -393,6 +393,7 @@
                     <include>**/*.wav</include>
                     <include>**/*.xml</include>
                     <include>**/*.fxml</include>
+                    <include>**/*.css</include>
                     <include>**/*.png</include>
                     <include>**/*.ico</include>
                     <include>**/*.jpg</include>

@@ -115,8 +115,6 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 
 		this.setTitle(Messages.getString("SiembraConfigDialogController.title")); //$NON-NLS-1$
 		Stage stage = ((Stage)this.getDialogPane().getScene().getWindow());
-		stage.setMinWidth(1000);
-		stage.setMinHeight(600);
 		stage.getIcons().addAll(JFXMain.stage.getIcons());
 
 		this.getDialogPane().getButtonTypes().add(ButtonType.OK);
@@ -444,7 +442,7 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 
 	public void init() {
 		this.getDialogPane().setContent(content);
-
+		this.getDialogPane().getScene().getWindow().sizeToScene();
 	}
 
 	/** Pre-selects seed and row spacing before the user confirms the dialog. */

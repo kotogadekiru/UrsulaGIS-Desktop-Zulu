@@ -1,0 +1,12 @@
+/* Workaround for JavaFX TreeView indent drift (JDK-8288665 / JDK-8340344):
+   keep disclosure node width stable so leaf indent under expanded branches stays correct. */
+.tree-cell > .tree-disclosure-node {
+    -fx-min-width: 18;
+    -fx-pref-width: 18;
+    -fx-max-width: 18;
+    -fx-padding: 4 6 4 8;
+}
+
+.tree-cell {
+    -fx-indent: 20;
+}
