@@ -978,20 +978,19 @@ public class LayerPanel extends VBox {
 			public void changed(ObservableValue<? extends Layer> o, Layer old, Layer nuLayer) {
 				//crea menu items para los layers de base
 				if(nuLayer==null) {
-//					if(old!=null) {//esto hace que no se me muestren las acciones correctamente
-//						System.out.println("old no era null pero el nuevo si removiendo el listener");
-//						o.removeListener(this);					
-//					}
-					return;//nuLayer no puede ser null			
+					clearCellContextMenu(cell);
+					return;
 				}
 
 				Object layerObject = nuLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
 				Object layerObjectClass = nuLayer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
 
-				//Se Agrega un layer vacio para contener el root del arbol
+				// Nodo raíz "Capas" (u otras capas WW): sin acciones. Hay que limpiar el
+				// menú porque las celdas del TreeView se reutilizan y pueden conservar
+				// el ContextMenu de una rama anterior (p. ej. "Importar").
 				if(layerObject==null && layerObjectClass==null) {
-					//System.out.println(nuLayer.getName()+" no es de ursula "+nuLayer.getClass().getName());
-					return;//no es un layer de ursula. es de world wind
+					clearCellContextMenu(cell);
+					return;
 				}
 
 				if(layerObject == null && layerObjectClass!=null){//es un root node
@@ -1159,12 +1158,37 @@ public class LayerPanel extends VBox {
 	}
 
 	/**
+	 * Quita el ContextMenu de la celda y recicla sus MenuItem al pool.
+	 * Necesario al reutilizar celdas para nodos sin acciones (p. ej. "Capas").
+	 */
+	private void clearCellContextMenu(CheckBoxTreeCell<Layer> cell) {
+		ContextMenu menu = cell.getContextMenu();
+		if (menu == null) {
+			return;
+		}
+		menu.getItems().forEach(mi -> {
+			mi.setOnAction(null);
+			mi.setText("cleared MI");
+			if (menuItemsPool.size() < 50) {
+				menuItemsPool.add(mi);
+			}
+		});
+		menu.getItems().clear();
+		cell.setContextMenu(null);
+	}
+
+	/**
 	 * metodo que crea los menu items para las acciones layer y menu indicados
 	 * @param nuLayer layer para el cual se va a generar el menu
 	 * @param menu menu al cual agregar las acciones
 	 * @param actions acciones a agregar
 	 */
-	private void constructMenuItem(Layer nuLayer, CheckBoxTreeCell<Layer> cell, List<LayerAction> actions) {		
+	private void constructMenuItem(Layer nuLayer, CheckBoxTreeCell<Layer> cell, List<LayerAction> actions) {
+		if (actions == null || actions.isEmpty()) {
+			clearCellContextMenu(cell);
+			return;
+		}
+
 		ContextMenu menu = cell.getContextMenu();		
 		if( menu == null){		
 			menu = new ContextMenu();
