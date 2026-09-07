@@ -1,4 +1,4 @@
-﻿package com.ursulagis.desktop.gui.controller;
+package com.ursulagis.desktop.gui.controller;
 
 import java.io.File;
 import java.text.NumberFormat;
@@ -55,9 +55,11 @@ import com.ursulagis.desktop.tasks.importar.ProcessHarvestMapTask;
 import com.ursulagis.desktop.tasks.procesar.ExportarCosechaDePuntosTask;
 import com.ursulagis.desktop.tasks.procesar.GenerarRecorridaDirigidaTask;
 import com.ursulagis.desktop.tasks.procesar.GrillarCosechasMapTask;
+import com.ursulagis.desktop.tasks.procesar.RecomendFertKFromHarvestMapTask;
 import com.ursulagis.desktop.tasks.procesar.RecomendFertNFromHarvestMapTask;
 import com.ursulagis.desktop.tasks.procesar.RecomendFertPAbsFromHarvestMapTask;
 import com.ursulagis.desktop.tasks.procesar.RecomendFertPFromHarvestMapTask;
+import com.ursulagis.desktop.tasks.procesar.RecomendFertSFromHarvestMapTask;
 import com.ursulagis.desktop.tasks.procesar.SumarCosechasMapTask;
 import com.ursulagis.desktop.tasks.procesar.UnirCosechasMapTask;
 import com.ursulagis.desktop.tasks.procesar.UnirFertilizacionesMapTask;
@@ -204,11 +206,27 @@ public class CosechaGUIController extends AbstractGUIController {
 			}},recPBalanceNombre));
 
 		/**
-		 * Accion permite crear una fertilizacion P para reponer lo extraido por la cosecha
+		 * Accion permite crear una fertilizacion N segun absorcion del cultivo
 		 */
 		cosechasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.recomendarFertN"),(layer)->{
 			doRecomendFertNFromHarvest((CosechaLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
 			return "Fertilizacion N Creada" + layer.getName(); 
+		}));
+
+		/**
+		 * Accion permite crear una fertilizacion K segun absorcion del cultivo
+		 */
+		cosechasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.recomendarFertK"),(layer)->{
+			doRecomendFertKFromHarvest((CosechaLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+			return "Fertilizacion K Creada" + layer.getName(); 
+		}));
+
+		/**
+		 * Accion permite crear una fertilizacion S segun absorcion del cultivo
+		 */
+		cosechasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.recomendarFertS"),(layer)->{
+			doRecomendFertSFromHarvest((CosechaLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+			return "Fertilizacion S Creada" + layer.getName(); 
 		}));
 
 		/**
@@ -803,6 +821,148 @@ public class CosechaGUIController extends AbstractGUIController {
 			playSound();
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_N_FERTILIZATION_RECOMMENDED);
 		});//fin del OnSucceeded
+		JFXMain.executorPool.execute(umTask);
+	}
+
+	/**
+	 * genera un layer de fertilizacion K a partir de una cosecha (misma lógica que N)
+	 */
+	private void doRecomendFertKFromHarvest(CosechaLabor cosecha) {
+		List<Suelo> suelosEnabled = main.getSuelosSeleccionados();
+		List<FertilizacionLabor> fertEnabled = main.getFertilizacionesSeleccionadas();
+
+		FertilizacionLabor fertK = new FertilizacionLabor();
+		fertK.setLayer(new LaborLayer());
+
+		fertK.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionK")); 
+		Optional<FertilizacionLabor> fertConfigured= FertilizacionConfigDialogController.config(fertK);
+		if(!fertConfigured.isPresent()){
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			return;
+		}							
+
+		Alert minMaxDialog = new Alert(AlertType.CONFIRMATION);
+		NumberFormat df=Messages.getNumberFormat();
+		TextField min = new TextField(df.format(0));
+		TextField max = new TextField(df.format(0));
+
+		VBox vb = new VBox();
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMin")),min)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMax")),max)); 
+
+		minMaxDialog.setGraphic(vb);
+		minMaxDialog.setTitle(Messages.getString("CosechaGUIController.configureMaximoMinimoDosis")); 
+		minMaxDialog.setContentText(Messages.getString("CosechaGUIController.ceroParaIgnorar")); 
+		minMaxDialog.initOwner(JFXMain.stage);
+		Optional<ButtonType> res = minMaxDialog.showAndWait();
+		Double minFert =null,maxFert=null; 
+		if(res.get().equals(ButtonType.OK)){
+			try {
+				minFert=df.parse(min.getText()).doubleValue();
+				if(minFert==0)minFert=null;
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+			try {
+				maxFert=df.parse(max.getText()).doubleValue();
+				if(maxFert==0)maxFert=null;
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		} else {
+			return;
+		}
+
+		RecomendFertKFromHarvestMapTask umTask = 
+				new RecomendFertKFromHarvestMapTask(
+						fertK, cosecha,
+						suelosEnabled, fertEnabled);
+		umTask.setMinFert(minFert);
+		umTask.setMaxFert(maxFert);
+		umTask.installProgressBar(progressBox);
+
+		umTask.setOnSucceeded(handler -> {
+			fertEnabled.stream().forEach(l->l.getLayer().setEnabled(false));
+			suelosEnabled.stream().forEach(l->l.getLayer().setEnabled(false));
+			FertilizacionLabor ret = (FertilizacionLabor)handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			umTask.uninstallProgressBar();
+			viewGoTo(ret);
+			logger.fine("RecomendFertKFromHarvestMapTask succeeded"); 
+			playSound();
+		});
+		JFXMain.executorPool.execute(umTask);
+	}
+
+	/**
+	 * genera un layer de fertilizacion S a partir de una cosecha (misma lógica que N)
+	 */
+	private void doRecomendFertSFromHarvest(CosechaLabor cosecha) {
+		List<Suelo> suelosEnabled = main.getSuelosSeleccionados();
+		List<FertilizacionLabor> fertEnabled = main.getFertilizacionesSeleccionadas();
+
+		FertilizacionLabor fertS = new FertilizacionLabor();
+		fertS.setLayer(new LaborLayer());
+
+		fertS.setNombre(cosecha.getNombre()+Messages.getString("CosechaGUIController.prescripcionS")); 
+		Optional<FertilizacionLabor> fertConfigured= FertilizacionConfigDialogController.config(fertS);
+		if(!fertConfigured.isPresent()){
+			logger.fine("el dialogo termino con cancel asi que no continuo con la cosecha"); 
+			return;
+		}							
+
+		Alert minMaxDialog = new Alert(AlertType.CONFIRMATION);
+		NumberFormat df=Messages.getNumberFormat();
+		TextField min = new TextField(df.format(0));
+		TextField max = new TextField(df.format(0));
+
+		VBox vb = new VBox();
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMin")),min)); 
+		vb.getChildren().add(new HBox(new Label(Messages.getString("CosechaGUIController.fertMax")),max)); 
+
+		minMaxDialog.setGraphic(vb);
+		minMaxDialog.setTitle(Messages.getString("CosechaGUIController.configureMaximoMinimoDosis")); 
+		minMaxDialog.setContentText(Messages.getString("CosechaGUIController.ceroParaIgnorar")); 
+		minMaxDialog.initOwner(JFXMain.stage);
+		Optional<ButtonType> res = minMaxDialog.showAndWait();
+		Double minFert =null,maxFert=null; 
+		if(res.get().equals(ButtonType.OK)){
+			try {
+				minFert=df.parse(min.getText()).doubleValue();
+				if(minFert==0)minFert=null;
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+			try {
+				maxFert=df.parse(max.getText()).doubleValue();
+				if(maxFert==0)maxFert=null;
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		} else {
+			return;
+		}
+
+		RecomendFertSFromHarvestMapTask umTask = 
+				new RecomendFertSFromHarvestMapTask(
+						fertS, cosecha,
+						suelosEnabled, fertEnabled);
+		umTask.setMinFert(minFert);
+		umTask.setMaxFert(maxFert);
+		umTask.installProgressBar(progressBox);
+
+		umTask.setOnSucceeded(handler -> {
+			fertEnabled.stream().forEach(l->l.getLayer().setEnabled(false));
+			suelosEnabled.stream().forEach(l->l.getLayer().setEnabled(false));
+			FertilizacionLabor ret = (FertilizacionLabor)handler.getSource().getValue();
+			insertBeforeCompass(getWwd(), ret.getLayer());
+			this.getLayerPanel().update(this.getWwd());
+			umTask.uninstallProgressBar();
+			viewGoTo(ret);
+			logger.fine("RecomendFertSFromHarvestMapTask succeeded"); 
+			playSound();
+		});
 		JFXMain.executorPool.execute(umTask);
 	}
 	
