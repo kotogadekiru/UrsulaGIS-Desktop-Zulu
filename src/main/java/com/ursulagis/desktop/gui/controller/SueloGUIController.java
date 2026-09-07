@@ -42,7 +42,11 @@ public class SueloGUIController extends AbstractGUIController{
 	}
 	
 	public void addAccionesSuelos(Map<Class<?>, List<LayerAction>> predicates) {
-		List<LayerAction> rootNodeSuelo = new ArrayList<LayerAction>();		
+		List<LayerAction> rootNodeSuelo = new ArrayList<LayerAction>();
+		rootNodeSuelo.add(new LayerAction((layer)->{
+			doOpenSoilMap(null);
+			return "opened";
+		},Messages.getString("JFXMain.importar")));
 		rootNodeSuelo.add(LayerAction.constructPredicate(
 				Messages.getString("JFXMain.balanceNutrientes"),
 				(a)->{
