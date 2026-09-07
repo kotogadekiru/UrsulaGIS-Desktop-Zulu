@@ -75,9 +75,17 @@ class AsignacionNdviRequestTest {
 		AsignacionNdviRequest req = AsignacionNdviRequest.parse(query);
 		assertEquals("trigo", req.cultivoName());
 		assertTrue(req.hasPeriod());
-		assertTrue(req.campaniaName() != null && !req.campaniaName().isBlank());
 		assertTrue(req.end().compareTo(LocalDate.now()) <= 0);
 		assertTrue(req.begin().isBefore(req.end()));
+		// Campaign comes from the DB when available; CI runners often have none.
+		var latestCampania = AsignacionNdviRequest.resolveLatestCampaniaName();
+		if (latestCampania.isPresent()) {
+			assertEquals(latestCampania.get(), req.campaniaName());
+		} else {
+			assertTrue(req.campaniaName() == null || req.campaniaName().isBlank());
+			assertEquals(LocalDate.now().minusMonths(1), req.begin());
+			assertEquals(LocalDate.now(), req.end());
+		}
 	}
 
 	@Test
