@@ -110,6 +110,22 @@ public class TarjetaHelper {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * Uploads {@code f} under {@code destDir} (e.g. {@code /labores}) and returns the relative path
+	 * used by orden payloads (e.g. {@code /labores/foo.png}). Returns {@code null} if the file is missing.
+	 */
+	public static String uploadFileToDir(File f, String destDir) {
+		if (f == null || !f.exists()) {
+			return null;
+		}
+		String dir = destDir == null ? "" : destDir;
+		while (dir.endsWith("/")) {
+			dir = dir.substring(0, dir.length() - 1);
+		}
+		uploadFile(f, dir);
+		return dir + "/" + f.getName();
+	}
 	
 	private static String getUuidTarjeta() {		
 		return Configuracion.getInstance().getPropertyOrDefault(UUID_TARJETA, NONEFOUND);

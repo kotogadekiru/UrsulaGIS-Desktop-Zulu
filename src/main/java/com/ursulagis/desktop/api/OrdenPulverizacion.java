@@ -37,6 +37,8 @@ public class OrdenPulverizacion extends AbstractBaseEntity {
 	
 	public String url=new String();
 	private String ordenShpZipUrl =null;
+	/** Relative path of the labor map preview image on the file server (e.g. /labores/foo.png). */
+	private String imagenUrl = null;
 	
 	private String nombreIngeniero="default";
 	private String numeroOrden="default";

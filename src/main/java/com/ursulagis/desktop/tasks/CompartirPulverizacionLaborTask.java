@@ -86,11 +86,17 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 
 	private PulverizacionLabor pulverizacionLabor =null;
 	private OrdenPulverizacion ordenPulverizacion;
+	private File laborImageFile = null;
 
 
 	public CompartirPulverizacionLaborTask(PulverizacionLabor pulverizacionLabor,OrdenPulverizacion ordenPulv) {
+		this(pulverizacionLabor, ordenPulv, null);
+	}
+
+	public CompartirPulverizacionLaborTask(PulverizacionLabor pulverizacionLabor, OrdenPulverizacion ordenPulv, File laborImageFile) {
 		this.pulverizacionLabor = pulverizacionLabor;
 		this.ordenPulverizacion = ordenPulv;
+		this.laborImageFile = laborImageFile;
 		logger.fine("compartiendo PulverizacionLabor "+pulverizacionLabor);
 		logger.fine("items "+pulverizacionLabor.getItems().size());
 	}
@@ -101,6 +107,10 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 		//OrdenPulverizacion ordenPulv = constructOrdenPulverizacion(this.pulverizacionLabor);
 		String ordenUrl = uploadLaborFile(this.pulverizacionLabor);
 		this.ordenPulverizacion.setOrdenShpZipUrl(ordenUrl);
+		String imagenUrl = TarjetaHelper.uploadFileToDir(this.laborImageFile, "/labores");
+		if (imagenUrl != null) {
+			this.ordenPulverizacion.setImagenUrl(imagenUrl);
+		}
 		this.updateProgress(1, 10);
 		try {
 			// TODO call www.ursulagis.com/api/recorridas/insert/

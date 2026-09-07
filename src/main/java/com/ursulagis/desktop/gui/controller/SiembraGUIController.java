@@ -486,7 +486,8 @@ public class SiembraGUIController {
 		OrdenSiembra op = CompartirSiembraLaborTask.constructOrdenSiembra(value);
 		if(op==null)return;
 		DAH.save(op);
-		CompartirSiembraLaborTask task = new CompartirSiembraLaborTask(value,op);			
+		main.genericGUIController.captureLaborMapImage(value, imageFile -> {
+			CompartirSiembraLaborTask task = new CompartirSiembraLaborTask(value, op, imageFile);
 			task.installProgressBar(main.progressBox);
 			task.setOnFailed((handler)->{
 				logger.fine("task failed");
@@ -498,33 +499,18 @@ public class SiembraGUIController {
 				if(ret!=null && !ret.isEmpty() ) {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_SHARED);
-				} else { 
+				} else {
 					logger.fine("ret es null asi que no hay url para mostrar qr");
 				}
-				task.uninstallProgressBar();			
+				task.uninstallProgressBar();
 			});
-			
-			task.stateProperty().addListener((ob,ov,nv)->{//observable, oldValue, newValue
+
+			task.stateProperty().addListener((ob,ov,nv)->{
 				logger.fine("state changed to "+nv);
 			});
-		    //stateProperty for Task:
-//		    task.stateProperty().addListener(new ChangeListener<Worker.State>() {
-//
-//		        @Override
-//		        public void changed(ObservableValue<? extends State> observable,
-//		                State oldValue, Worker.State newState) {
-//		            if(newState==Worker.State.SUCCEEDED){
-//		                loadPanels(root);
-//		            }
-//		        }
-//		    });
-
-		    //start Task
-		    new Thread(task).start();
-		    
+			new Thread(task).start();
 			logger.fine("ejecutando Compartir Siembra");
-			//task.run();
-			//JFXMain.executorPool.submit(task);		
+		});
 	}
 	/**
 	 * toma una cosecha, pregunta las densidades deseadas para cada ambiente

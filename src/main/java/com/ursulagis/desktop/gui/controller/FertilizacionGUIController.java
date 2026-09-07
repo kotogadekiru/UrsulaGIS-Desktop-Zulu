@@ -361,7 +361,8 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		OrdenFertilizacion op = CompartirFertilizacionLaborTask.constructOrdenFertilizacion(value);
 		if(op==null)return;
 		DAH.save(op);
-		CompartirFertilizacionLaborTask task = new CompartirFertilizacionLaborTask(value,op);			
+		main.genericGUIController.captureLaborMapImage(value, imageFile -> {
+			CompartirFertilizacionLaborTask task = new CompartirFertilizacionLaborTask(value, op, imageFile);
 			task.installProgressBar(main.progressBox);
 			task.setOnSucceeded(handler -> {
 				String ret = (String)handler.getSource().getValue();
@@ -370,10 +371,11 @@ public class FertilizacionGUIController extends AbstractGUIController {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_SHARED);
 				}
-				task.uninstallProgressBar();			
+				task.uninstallProgressBar();
 			});
 			logger.fine("ejecutando Compartir Fertilizacion");
-			JFXMain.executorPool.submit(task);		
+			JFXMain.executorPool.submit(task);
+		});
 	}
 	
 	/**

@@ -123,7 +123,8 @@ public class PulverizacionGUIController {
 		OrdenPulverizacion op = CompartirPulverizacionLaborTask.constructOrdenPulverizacion(value);
 		if(op==null)return;
 		DAH.save(op);
-		CompartirPulverizacionLaborTask task = new CompartirPulverizacionLaborTask(value,op);			
+		main.genericGUIController.captureLaborMapImage(value, imageFile -> {
+			CompartirPulverizacionLaborTask task = new CompartirPulverizacionLaborTask(value, op, imageFile);
 			task.installProgressBar(main.progressBox);
 			task.setOnSucceeded(handler -> {
 				String ret = (String)handler.getSource().getValue();
@@ -132,10 +133,11 @@ public class PulverizacionGUIController {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_SHARED);
 				}
-				task.uninstallProgressBar();			
+				task.uninstallProgressBar();
 			});
 			logger.fine("ejecutando Compartir Recorrida");
-			JFXMain.executorPool.submit(task);		
+			JFXMain.executorPool.submit(task);
+		});
 	}
 	
 	public void doEditPulverizacion(PulverizacionLabor cConfigured ) {

@@ -8,7 +8,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import javax.imageio.ImageIO;
 
 import org.geotools.api.data.FileDataStore;
 
@@ -631,6 +634,77 @@ public class GenericLaborGUIController extends AbstractGUIController {
 	 */
 	private void doShowDataTable(Labor<?> labor) {		   
 		SmartTableView.showLaborTable(labor);
+	}
+
+	/**
+	 * Centers the map on {@code labor}, captures a PNG of the map panel, and invokes
+	 * {@code onCaptured} with the temp file (or {@code null} if capture failed).
+	 * Other labor layers are temporarily hidden for a clean preview, then restored.
+	 * Safe to call from any thread; work runs on the JavaFX application thread.
+	 */
+	public void captureLaborMapImage(Labor<?> labor, Consumer<File> onCaptured) {
+		Runnable work = () -> {
+			if (labor == null || labor.getLayer() == null) {
+				onCaptured.accept(null);
+				return;
+			}
+			LayerList layers = this.getWwd().getModel().getLayers();
+			List<Layer> previouslyEnabledLabors = new ArrayList<>();
+			layers.stream().filter(l -> {
+				Object o = l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+				return l.isEnabled() && o != null;
+			}).forEach(l -> {
+				previouslyEnabledLabors.add(l);
+				l.setEnabled(false);
+			});
+
+			labor.getLayer().setEnabled(true);
+			main.viewGoToFit(labor);
+			getWwd().redraw();
+			main.wwjPanel.repaint();
+
+			Platform.runLater(() -> {
+				try {
+					Thread.sleep(1500);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				Platform.runLater(() -> {
+					File imageFile = null;
+					try {
+						SnapshotParameters params = new SnapshotParameters();
+						params.setFill(Color.TRANSPARENT);
+						javafx.scene.Node mapNode = main.getMapSnapshotNode();
+						if (mapNode == null) {
+							mapNode = main.getSplitPane();
+						}
+						WritableImage mapWritable = mapNode.snapshot(params, null);
+						if (mapWritable != null) {
+							BufferedImage mapBuf = SwingFXUtils.fromFXImage(mapWritable, null);
+							String safeName = labor.getNombre() == null ? "labor"
+									: labor.getNombre().replaceAll("[^a-zA-Z0-9._-]", "_");
+							if (safeName.length() > 40) {
+								safeName = safeName.substring(0, 40);
+							}
+							imageFile = new File(System.getProperty("java.io.tmpdir"),
+									"labor_" + safeName + "_" + System.currentTimeMillis() + ".png");
+							ImageIO.write(mapBuf, "png", imageFile);
+						}
+					} catch (Exception e) {
+						logger.warning("No se pudo capturar imagen de labor: " + e.getMessage());
+						e.printStackTrace();
+					} finally {
+						previouslyEnabledLabors.forEach(l -> l.setEnabled(true));
+					}
+					onCaptured.accept(imageFile);
+				});
+			});
+		};
+		if (Platform.isFxApplicationThread()) {
+			work.run();
+		} else {
+			Platform.runLater(work);
+		}
 	}
 
 	/**

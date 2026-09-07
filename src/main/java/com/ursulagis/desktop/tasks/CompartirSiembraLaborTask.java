@@ -88,10 +88,16 @@ public class CompartirSiembraLaborTask extends Task<String> {
 
 	private SiembraLabor siembraLabor = null;
 	private OrdenSiembra ordenSiembra = null;
+	private File laborImageFile = null;
 
 	public CompartirSiembraLaborTask(SiembraLabor siembraLabor,OrdenSiembra orden) {
+		this(siembraLabor, orden, null);
+	}
+
+	public CompartirSiembraLaborTask(SiembraLabor siembraLabor, OrdenSiembra orden, File laborImageFile) {
 		this.siembraLabor = siembraLabor;
 		this.ordenSiembra = orden;
+		this.laborImageFile = laborImageFile;
 		logger.fine("compartiendo SiembraLabor "+siembraLabor);
 		//System.out.println("items "+siembraLabor.getItems().size());
 	}
@@ -114,6 +120,10 @@ public class CompartirSiembraLaborTask extends Task<String> {
 
 		String ordenUrl = uploadLaborFile(this.siembraLabor);
 		this.ordenSiembra.setOrdenShpZipUrl(ordenUrl);
+		String imagenUrl = TarjetaHelper.uploadFileToDir(this.laborImageFile, "/labores");
+		if (imagenUrl != null) {
+			this.ordenSiembra.setImagenUrl(imagenUrl);
+		}
 		this.updateProgress(1, 10);
 		try {
 			// TODO call www.ursulagis.com/api/recorridas/insert/

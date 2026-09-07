@@ -1,4 +1,4 @@
-package com.ursulagis.desktop.gui.controller;
+﻿package com.ursulagis.desktop.gui.controller;
 
 import java.io.File;
 import java.text.NumberFormat;
@@ -413,7 +413,8 @@ public class CosechaGUIController extends AbstractGUIController {
 		OrdenCosecha op = CompartirCosechaLaborTask.constructOrdenCosecha(value);
 		if(op==null)return;
 		DAH.save(op);
-		CompartirCosechaLaborTask task = new CompartirCosechaLaborTask(value,op);			
+		main.genericGUIController.captureLaborMapImage(value, imageFile -> {
+			CompartirCosechaLaborTask task = new CompartirCosechaLaborTask(value, op, imageFile);
 			task.installProgressBar(main.progressBox);
 			task.setOnSucceeded(handler -> {
 				String ret = (String)handler.getSource().getValue();
@@ -422,10 +423,11 @@ public class CosechaGUIController extends AbstractGUIController {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_SHARED);
 				}
-				task.uninstallProgressBar();			
+				task.uninstallProgressBar();
 			});
 			logger.fine("ejecutando Compartir Fertilizacion");
-			JFXMain.executorPool.submit(task);		
+			JFXMain.executorPool.submit(task);
+		});
 	}
 	
 	public void showAmountVsElevacionChart(Labor<?> cosechaLabor) {

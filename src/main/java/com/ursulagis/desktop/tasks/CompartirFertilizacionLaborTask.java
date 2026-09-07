@@ -86,11 +86,17 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 
 	private FertilizacionLabor fertilizacionLabor =null;
 	private OrdenFertilizacion ordenFertilizacion;
+	private File laborImageFile = null;
 
 
 	public CompartirFertilizacionLaborTask(FertilizacionLabor fertilizacionLabor,OrdenFertilizacion ordenFert) {
+		this(fertilizacionLabor, ordenFert, null);
+	}
+
+	public CompartirFertilizacionLaborTask(FertilizacionLabor fertilizacionLabor, OrdenFertilizacion ordenFert, File laborImageFile) {
 		this.fertilizacionLabor = fertilizacionLabor;
 		this.ordenFertilizacion = ordenFert;
+		this.laborImageFile = laborImageFile;
 		logger.fine("compartiendo FertilizacionLabor " + fertilizacionLabor);
 		logger.fine("item " + fertilizacionLabor.getProductoLabor());
 	}
@@ -101,6 +107,10 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 		//OrdenFertilizacion ordenFert = constructOrdenFertilizacion(this.fertilizacionLabor);
 		String ordenUrl = uploadLaborFile(this.fertilizacionLabor);
 		this.ordenFertilizacion.setOrdenShpZipUrl(ordenUrl);
+		String imagenUrl = TarjetaHelper.uploadFileToDir(this.laborImageFile, "/labores");
+		if (imagenUrl != null) {
+			this.ordenFertilizacion.setImagenUrl(imagenUrl);
+		}
 		this.updateProgress(1, 10);
 		try {
 			// TODO call www.ursulagis.com/api/recorridas/insert/
