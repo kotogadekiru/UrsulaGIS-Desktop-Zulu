@@ -27,7 +27,7 @@ During `mvn package` on Windows, files from `libs/voyager2/` are copied into the
 At runtime, `Voyager2Settings` resolves paths automatically:
 
 1. `config.properties` overrides (`VOYAGER2_SDK_PATH`, `VOYAGER2_NATIVE_LIB_PATH`) — optional
-2. Installed app folder (`jpackage.app-path` → `app/voyager2/…`)
+2. Installed app folder (parent of `jpackage.app-path` exe, or parent of `java.home` → `app/voyager2/…`)
 3. Development tree (`libs/voyager2/…` relative to the project root)
 
 The license key is embedded in the application for this legacy path.
@@ -97,6 +97,7 @@ Maven step (Windows profile only): `bundle-voyager2-legacy` in `pom.xml` copies 
 
 | Symptom | Likely cause |
 |---|---|
+| `Voyager 2 SDK path is not configured` | Old build that mis-resolved `jpackage.app-path` (exe vs folder), or MSI without `app/voyager2` — update/reinstall Windows MSI |
 | `Voyager 2 SDK path does not exist` | MSI built without bundle, or corrupt install — reinstall |
 | `CNHVoyager2JNI.dll not found` | Missing `libs/voyager2/native` in build — refresh bundle and rebuild |
 | `ERROR_HOSTFXR_LOAD_FAILED` | Install .NET 8 Desktop Runtime x64 |

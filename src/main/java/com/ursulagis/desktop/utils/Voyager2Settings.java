@@ -8,6 +8,8 @@ import java.nio.file.Files;
 
 import java.nio.file.Path;
 
+import java.util.ArrayList;
+
 
 
 import com.ursulagis.desktop.dao.config.Configuracion;
@@ -192,17 +194,115 @@ public class Voyager2Settings {
 
     private static String resolveBundledPath(String subdir) {
 
-        String appPath = System.getProperty("jpackage.app-path");
+        for (Path installRoot : candidateInstallRoots()) {
 
-        if (appPath == null || appPath.isBlank()) {
+            if (installRoot == null) {
 
-            return null;
+                continue;
+
+            }
+
+            // Standard jpackage layout: <install>/app/voyager2/{sdk|native}
+
+            Path underApp = installRoot.resolve("app").resolve(BUNDLED_ROOT).resolve(subdir)
+
+                    .toAbsolutePath()
+
+                    .normalize();
+
+            if (isUsablePath(underApp, subdir)) {
+
+                return underApp.toString();
+
+            }
+
+            // If the root is already the app/ folder
+
+            Path direct = installRoot.resolve(BUNDLED_ROOT).resolve(subdir)
+
+                    .toAbsolutePath()
+
+                    .normalize();
+
+            if (isUsablePath(direct, subdir)) {
+
+                return direct.toString();
+
+            }
 
         }
 
-        Path candidate = Path.of(appPath, "app", BUNDLED_ROOT, subdir).toAbsolutePath().normalize();
+        return null;
 
-        return isUsablePath(candidate, subdir) ? candidate.toString() : null;
+    }
+
+
+
+    /**
+
+     * Resolves the jpackage install directory. {@code jpackage.app-path} is the launcher
+
+     * executable (e.g. {@code ...\UrsulaGIS.exe}), not the {@code app/} folder.
+
+     */
+
+    private static Path[] candidateInstallRoots() {
+
+        ArrayList<Path> roots = new ArrayList<>(2);
+
+        String appPath = System.getProperty("jpackage.app-path");
+
+        if (appPath != null && !appPath.isBlank()) {
+
+            Path p = Path.of(appPath);
+
+            if (Files.isRegularFile(p) || looksLikeExecutable(p)) {
+
+                if (p.getParent() != null) {
+
+                    roots.add(p.getParent());
+
+                }
+
+            } else if (Files.isDirectory(p)) {
+
+                roots.add(p);
+
+            } else if (p.getParent() != null) {
+
+                roots.add(p.getParent());
+
+            }
+
+        }
+
+        // Windows/Linux jpackage: java.home is <install>/runtime → parent is install root
+
+        String javaHome = System.getProperty("java.home");
+
+        if (javaHome != null && !javaHome.isBlank()) {
+
+            Path runtime = Path.of(javaHome);
+
+            if (runtime.getParent() != null) {
+
+                roots.add(runtime.getParent());
+
+            }
+
+        }
+
+        return roots.toArray(Path[]::new);
+
+    }
+
+
+
+    private static boolean looksLikeExecutable(Path p) {
+
+        String name = p.getFileName() != null ? p.getFileName().toString().toLowerCase() : "";
+
+        return name.endsWith(".exe") || name.endsWith(".bat") || !name.contains(".");
 
     }
 
