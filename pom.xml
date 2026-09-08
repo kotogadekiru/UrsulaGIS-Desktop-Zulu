@@ -76,6 +76,13 @@
             <groupId>com.dooapp.fxform2</groupId>
             <artifactId>core</artifactId>
             <version>11.0.0</version> <!-- Or use a version for Java 8 like 8.2.11 -->
+            <!-- JavaFX comes from Liberica jdk+fx; OpenJFX 22 has no win-x86 classifier and breaks 32-bit CI. -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>     
         <!-- https://mvnrepository.com/artifact/org.controlsfx/controlsfx -->
         <dependency>
