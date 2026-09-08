@@ -95,11 +95,21 @@ public class SueloItem extends LaborItem { //suelo item no es labor item. le sob
 
 	@Override
 	public Double getAmount() {
-		return getPpmP();//FIXME depende de que se este dibujando
+		if (labor != null && labor.colAmount != null && labor.colAmount.get() != null) {
+			Double v = Suelo.getDoubleForColumn(this, labor.colAmount.get());
+			if (v != null) {
+				return v;
+			}
+		}
+		return getPpmP();
 	}
 	
-	public void setAmount(Double amount) {		
-		setPpmP(amount);		
+	public void setAmount(Double amount) {
+		if (labor != null && labor.colAmount != null && labor.colAmount.get() != null) {
+			Suelo.setDoubleForColumn(this, labor.colAmount.get(), amount);
+		} else {
+			setPpmP(amount);
+		}
 	}
 	
 	@Override

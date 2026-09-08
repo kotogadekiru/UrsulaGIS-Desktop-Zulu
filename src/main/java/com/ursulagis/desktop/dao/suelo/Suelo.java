@@ -136,14 +136,7 @@ public class Suelo extends Labor<SueloItem>{
 	 */
 	@Override
 	public SueloItem constructFeatureContainerStandar(SimpleFeature next, boolean newIDS) {
-		Labor<SueloItem> lab=this;
-		SueloItem si = new SueloItem(next) {
-			@Override
-			public Double getAmount() {		
-				
-				return LaborItem.getDoubleFromObj(next.getAttribute(lab.getColAmount().get()));				
-			}
-		};
+		SueloItem si = new SueloItem(next);
 		super.constructFeatureContainerStandar(si,next,newIDS);
 		si.setPpmNO3(LaborItem.getDoubleFromObj(next.getAttribute(COLUMNA_N)));
 		si.setPpmP(LaborItem.getDoubleFromObj(next.getAttribute(COLUMNA_P)));
@@ -184,14 +177,7 @@ public class Suelo extends Labor<SueloItem>{
 	 */
 	@Override
 	public SueloItem constructFeatureContainer(SimpleFeature next) {
-		Labor<SueloItem> lab=this;
-		SueloItem si = new SueloItem(next) {
-			@Override
-			public Double getAmount() {		
-				
-				return LaborItem.getDoubleFromObj(next.getAttribute(lab.getColAmount().get()));				
-			}
-		};
+		SueloItem si = new SueloItem(next);
 		super.constructFeatureContainer(si,next);
 		si.setPpmNO3(LaborItem.getDoubleFromObj(next.getAttribute(this.colNProperty.get())));
 		si.setPpmP(LaborItem.getDoubleFromObj(next.getAttribute(this.colPProperty.get())));
@@ -432,23 +418,101 @@ public class Suelo extends Labor<SueloItem>{
 	
 	public static void setPpm(SueloParametro p,SueloItem item,Double ppm) {		
 		switch(p) {
-		case Nitrogeno:  item.setPpmNO3(ppm);
-		case Fosforo:  item.setPpmP(ppm);
-		case Potasio:  item.setPpmK(ppm);
-		case Azufre:  item.setPpmS(ppm);
-		case Calcio:  item.setPpmCa(ppm);
-		case Magnecio:  item.setPpmMg(ppm);
-		case Boro:  item.setPpmB(ppm);
-		case Cloro:  item.setPpmCl(ppm);
-		case Cobalto:  item.setPpmCo(ppm);
-		case Cobre:  item.setPpmCu(ppm);
-		case Hierro:  item.setPpmFe(ppm);
-		case Manganeso:  item.setPpmMn(ppm);
-		case Molibdeno:  item.setPpmMo(ppm);
-		case Zinc:  item.setPpmZn(ppm);	
-
+		case Nitrogeno:  item.setPpmNO3(ppm); break;
+		case Fosforo:  item.setPpmP(ppm); break;
+		case Potasio:  item.setPpmK(ppm); break;
+		case Azufre:  item.setPpmS(ppm); break;
+		case Calcio:  item.setPpmCa(ppm); break;
+		case Magnecio:  item.setPpmMg(ppm); break;
+		case Boro:  item.setPpmB(ppm); break;
+		case Cloro:  item.setPpmCl(ppm); break;
+		case Cobalto:  item.setPpmCo(ppm); break;
+		case Cobre:  item.setPpmCu(ppm); break;
+		case Hierro:  item.setPpmFe(ppm); break;
+		case Manganeso:  item.setPpmMn(ppm); break;
+		case Molibdeno:  item.setPpmMo(ppm); break;
+		case Zinc:  item.setPpmZn(ppm); break;
 		default: break;		
 		}		
+	}
+
+	/** Columnas numericas de suelo a promediar en outliers (sin Textura). */
+	public static final String[] NUMERIC_COLUMNS = {
+			COLUMNA_N, COLUMNA_P, COLUMNA_K, COLUMNA_S,
+			SueloItem.Calcio.replace(" ","_"),
+			SueloItem.Magnecio.replace(" ","_"),
+			SueloItem.Boro.replace(" ","_"),
+			SueloItem.Cloro.replace(" ","_"),
+			SueloItem.Cobalto.replace(" ","_"),
+			SueloItem.Cobre.replace(" ","_"),
+			SueloItem.Hierro.replace(" ","_"),
+			SueloItem.Manganeso.replace(" ","_"),
+			SueloItem.Molibdeno.replace(" ","_"),
+			SueloItem.Zinc.replace(" ","_"),
+			COLUMNA_MO, COLUMNA_DENSIDAD,
+			COLUMNA_PROF_NAPA, COLUMNA_AGUA_PERFIL,
+			COLUMNA_POROSIDAD, COLUMNA_CAPACIDAD_CAMPO,
+			COLUMNA_ELEVACION
+	};
+
+	public static Double getDoubleForColumn(SueloItem item, String col) {
+		if (item == null || col == null) {
+			return null;
+		}
+		switch (col) {
+		case COLUMNA_N: return item.getPpmNO3();
+		case COLUMNA_P: return item.getPpmP();
+		case COLUMNA_K: return item.getPpmK();
+		case COLUMNA_S: return item.getPpmS();
+		case "PPM_Ca": return item.getPpmCa();
+		case "PPM_Mg": return item.getPpmMg();
+		case "PPM_B": return item.getPpmB();
+		case "PPM_Cl": return item.getPpmCl();
+		case "PPM_Co": return item.getPpmCo();
+		case "PPM_Cu": return item.getPpmCu();
+		case "PPM_Fe": return item.getPpmFe();
+		case "PPM_Mn": return item.getPpmMn();
+		case "PPM_Mo": return item.getPpmMo();
+		case "PPM_Zn": return item.getPpmZn();
+		case COLUMNA_MO: return item.getPorcMO();
+		case COLUMNA_DENSIDAD: return item.getDensAp();
+		case COLUMNA_PROF_NAPA: return item.getProfNapa();
+		case COLUMNA_AGUA_PERFIL: return item.getAguaPerfil();
+		case COLUMNA_POROSIDAD: return item.getPorosidad();
+		case COLUMNA_CAPACIDAD_CAMPO: return item.getPorcCC();
+		case COLUMNA_ELEVACION: return item.getElevacion();
+		default: return null;
+		}
+	}
+
+	public static void setDoubleForColumn(SueloItem item, String col, Double value) {
+		if (item == null || col == null || value == null) {
+			return;
+		}
+		switch (col) {
+		case COLUMNA_N: item.setPpmNO3(value); break;
+		case COLUMNA_P: item.setPpmP(value); break;
+		case COLUMNA_K: item.setPpmK(value); break;
+		case COLUMNA_S: item.setPpmS(value); break;
+		case "PPM_Ca": item.setPpmCa(value); break;
+		case "PPM_Mg": item.setPpmMg(value); break;
+		case "PPM_B": item.setPpmB(value); break;
+		case "PPM_Cl": item.setPpmCl(value); break;
+		case "PPM_Co": item.setPpmCo(value); break;
+		case "PPM_Cu": item.setPpmCu(value); break;
+		case "PPM_Fe": item.setPpmFe(value); break;
+		case "PPM_Mn": item.setPpmMn(value); break;
+		case "PPM_Mo": item.setPpmMo(value); break;
+		case "PPM_Zn": item.setPpmZn(value); break;
+		case COLUMNA_MO: item.setPorcMO(value); break;
+		case COLUMNA_DENSIDAD: item.setDensAp(value); break;
+		case COLUMNA_PROF_NAPA: item.setProfNapa(value); break;
+		case COLUMNA_AGUA_PERFIL: item.setAguaPerfil(value); break;
+		case COLUMNA_POROSIDAD: item.setPorosidad(value); break;
+		case COLUMNA_CAPACIDAD_CAMPO: item.setPorcCC(value); break;
+		case COLUMNA_ELEVACION: item.setElevacion(value); break;
+		default: break;
+		}
 	}
 	
 	public double calcPpm_0_20(Double densidad,Double kgPHa) {

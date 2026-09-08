@@ -29,6 +29,7 @@ import com.ursulagis.desktop.dao.margen.Margen;
 import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.dao.suelo.Suelo;
+import com.ursulagis.desktop.dao.suelo.SueloItem;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import javafx.beans.property.DoubleProperty;
@@ -164,6 +165,9 @@ public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIt
 		double sumatoriaRinde = 0;			
 		double sumatoriaAltura = 0;				
 		double divisor = 0;
+		boolean isSuelo = cosechaFeature instanceof SueloItem;
+		Map<String, Double> sumSueloCols = isSuelo ? new HashMap<>() : null;
+		Map<String, Double> divSueloCols = isSuelo ? new HashMap<>() : null;
 		// cambiar el promedio directo por el metodo de kriging de interpolacion. ponderando los rindes por su distancia al cuadrado de la muestra
 		double ancho = this.anchoFiltroOuliers;
 		//la distancia no deberia ser mayor que 2^1/2*ancho, me tomo un factor de 10 por seguridad e invierto la escala para tener mejor representatividad
@@ -189,7 +193,10 @@ public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIt
 			if(isBetweenMaxMin(cantidadCosecha)){
 				sumatoriaAltura+=cosecha.getElevacion()*weight;
 				sumatoriaRinde+=cantidadCosecha*weight;
-				divisor+=weight;		
+				divisor+=weight;
+				if (isSuelo && cosecha instanceof SueloItem) {
+					accumulateSueloAverages((SueloItem) cosecha, weight, sumSueloCols, divSueloCols);
+				}
 			}			
 		}
 		boolean rindeEnRango = isBetweenMaxMin(rindeCosechaFeature);
@@ -213,15 +220,40 @@ public class OutliersLaborMapTask extends ProcessMapTask<LaborItem,Labor<LaborIt
 			//cosechaFeature.setDesvioRinde(coefVariacionCosechaFeature);
 
 			if(coefVariacionCosechaFeature > toleranciaCoeficienteVariacion ||!rindeEnRango){//si el coeficiente de variacion es mayor al 20% no es homogeneo
-				//El valor esta fuera de los parametros y modifico el valor por el promedio
-					// System.out.println("reemplazo "+cosechaFeature.getAmount()+" por "+promedioRinde);
-				cosechaFeature.setAmount(promedioRinde);
-
-				cosechaFeature.setElevacion(promedioAltura);
+				if (isSuelo) {
+					applySueloAverages((SueloItem) cosechaFeature, sumSueloCols, divSueloCols);
+				} else {
+					cosechaFeature.setAmount(promedioRinde);
+					cosechaFeature.setElevacion(promedioAltura);
+				}
 				ret=true;
 			}
 		}
 		return ret;
+	}
+
+	private void accumulateSueloAverages(SueloItem item, double weight,
+			Map<String, Double> sums, Map<String, Double> divisors) {
+		for (String col : Suelo.NUMERIC_COLUMNS) {
+			Double v = Suelo.getDoubleForColumn(item, col);
+			if (v == null || Double.isNaN(v)) {
+				continue;
+			}
+			sums.merge(col, v * weight, Double::sum);
+			divisors.merge(col, weight, Double::sum);
+		}
+	}
+
+	private void applySueloAverages(SueloItem item,
+			Map<String, Double> sums, Map<String, Double> divisors) {
+		for (String col : Suelo.NUMERIC_COLUMNS) {
+			Double sum = sums.get(col);
+			Double div = divisors.get(col);
+			if (sum == null || div == null || div <= 0) {
+				continue;
+			}
+			Suelo.setDoubleForColumn(item, col, sum / div);
+		}
 	}
 
 	/**
