@@ -25,13 +25,22 @@ env:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            arch: x64
+          - os: windows-latest
+            arch: x64
+          - os: windows-latest
+            arch: x86
+          - os: macos-latest
+            arch: x64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Download and extract Wix
         uses: robinraju/release-downloader@v1.13
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.os, 'windows')
         with:
           repository: wixtoolset/wix3
           tag: wix3112rtm
@@ -41,7 +50,7 @@ jobs:
           extract-path: target/wix
       - name: Add Wix to Path
         run: echo "$HOME/target/wix" >> $GITHUB_PATH
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.os, 'windows')
       - name: Checkout code
         uses: actions/checkout@v5
       - name: Set up JDK 17
@@ -50,9 +59,10 @@ jobs:
           java-version: 17
           distribution: 'liberica'
           java-package: jdk+fx
+          architecture: ${{ matrix.arch }}
           cache: 'maven'
       - name: "Build with Maven (Windows)"
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.os, 'windows')
         run: mvn -B clean install --file pom.xml
         env:
           MAVEN_OPTS: "-Dos.detected.name=windows"
@@ -70,7 +80,7 @@ jobs:
           MAVEN_OPTS: "-Dos.detected.name=osx"
       
       - name: "List build artifacts (Windows)"
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.os, 'windows')
         run: |
           echo "Build artifacts in target directory:"
           dir target
@@ -94,10 +104,10 @@ jobs:
           ls -la target/*.dmg
       
       - name: "Upload Windows Installer"
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.os, 'windows')
         uses: actions/upload-artifact@v4
         with:
-          name: UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_Win_x64_Installer
+          name: UrsulaGIS-Desktop_Zulu-${{ env.APP_VERSION }}_Win_${{ matrix.arch }}_Installer
           path: target/*.msi
           retention-days: 30
       
@@ -167,18 +177,19 @@ jobs:
       #   with:
       #     product-path: ${{ env.DMG_PATH }}
       - name: "Create Release (Windows)"
-        if: matrix.os == 'windows-latest' && github.ref == 'refs/heads/main'
+        if: startsWith(matrix.os, 'windows') && github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: UrsulaGIS-Desktop_Zulu_Win_x64_Installer-${{ env.APP_VERSION }}
-          name: Windows Installer Build -${{ env.APP_VERSION }}
+          tag_name: UrsulaGIS-Desktop_Zulu_Win_${{ matrix.arch }}_Installer-${{ env.APP_VERSION }}
+          name: Windows ${{ matrix.arch }} Installer Build -${{ env.APP_VERSION }}
           body: |
-            Windows MSI installer built from commit ${{ github.sha }}
+            Windows ${{ matrix.arch }} MSI installer built from commit ${{ github.sha }}
             
             **Build Info:**
             - Commit: ${{ github.sha }}
             - Branch: ${{ github.ref_name }}
             - Run: ${{ github.run_number }}
+            - Arch: ${{ matrix.arch }}
             - Date: ${{ github.event.head_commit.timestamp }}
           files: |
             target/*.msi

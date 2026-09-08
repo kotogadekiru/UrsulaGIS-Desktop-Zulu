@@ -65,6 +65,7 @@ import com.ursulagis.desktop.tasks.procesar.UnirCosechasMapTask;
 import com.ursulagis.desktop.tasks.procesar.UnirFertilizacionesMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
+import com.ursulagis.desktop.utils.Voyager2Settings;
 
 import java.util.logging.Logger;
 public class CosechaGUIController extends AbstractGUIController {
@@ -83,12 +84,14 @@ public class CosechaGUIController extends AbstractGUIController {
 				return "opened";	
 				},Messages.getString("JFXMain.importar")));
 
-		rootNodeP.add(new LayerAction(
-				(layer)->{
-					this.doOpenCosechaVoyager();
-					return "voyager opened";
-				},
-				Messages.getString("CosechaGUIController.importarVoyager")));
+		if (Voyager2Settings.isImportSupported(JFXMain.config)) {
+			rootNodeP.add(new LayerAction(
+					(layer)->{
+						this.doOpenCosechaVoyager();
+						return "voyager opened";
+					},
+					Messages.getString("CosechaGUIController.importarVoyager")));
+		}
 
 		rootNodeP.add(new LayerAction(
 				Messages.getString("JFXMain.unirCosechas"),
@@ -288,8 +291,15 @@ public class CosechaGUIController extends AbstractGUIController {
 	 */
 	/**
 	 * Import harvest from a Case IH Voyager 2 card (.vy1) via the CNHVoyager2 Java wrapper.
+	 * No-op (with an error dialog) when the runtime does not support Voyager 2.
 	 */
 	public void doOpenCosechaVoyager() {
+		String unsupported = Voyager2Settings.unsupportedReason(JFXMain.config);
+		if (unsupported != null) {
+			showVoyagerImportError(new IllegalStateException(
+					Messages.getString("CosechaGUIController.importarVoyagerUnsupported") + "\n" + unsupported));
+			return;
+		}
 		File vy1File = FileHelper.chooseVoyagerCardFile();
 		if (vy1File == null) {
 			return;

@@ -18,6 +18,7 @@ import com.ursulagis.desktop.dao.cosecha.CosechaLabor;
 import com.ursulagis.desktop.dao.recorrida.Recorrida;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import com.ursulagis.desktop.gui.JFXMain;
+import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.controller.ConfigGUI;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import com.ursulagis.desktop.tasks.ExportLaborMapTask;
@@ -25,6 +26,7 @@ import com.ursulagis.desktop.tasks.procesar.ClonarLaborMapTask;
 import com.ursulagis.desktop.tasks.procesar.ResumirLaborMapTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
+import com.ursulagis.desktop.utils.Voyager2Settings;
 
 /**
  * Executes a {@link ParsedIntent} by resolving map targets and calling the
@@ -60,6 +62,12 @@ public class ChatActionExecutor {
 			}
 			case IMPORT_SIEMBRA -> importSiembra(ctx, false);
 			case IMPORT_COSECHA_VOYAGER -> {
+				String unsupported = Voyager2Settings.unsupportedReason(JFXMain.config);
+				if (unsupported != null) {
+					yield ActionExecutionResult.notLaunched(
+							Messages.getString("CosechaGUIController.importarVoyagerUnsupported")
+									+ " " + unsupported);
+				}
 				main.cosechaGUIController.doOpenCosechaVoyager();
 				yield ActionExecutionResult.launched("Importación Voyager iniciada.");
 			}

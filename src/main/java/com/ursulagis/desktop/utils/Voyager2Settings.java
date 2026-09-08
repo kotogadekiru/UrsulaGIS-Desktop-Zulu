@@ -1,374 +1,224 @@
 package com.ursulagis.desktop.utils;
 
-
-
 import java.io.File;
-
 import java.nio.file.Files;
-
 import java.nio.file.Path;
-
 import java.util.ArrayList;
-
-
+import java.util.Locale;
 
 import com.ursulagis.desktop.dao.config.Configuracion;
 
-
-
 /**
-
  * Paths for the legacy CNH Voyager 2 Java wrapper.
-
  * <p>
-
  * The CN1SDK project is obsolete; binaries are bundled under {@code libs/voyager2/} and
-
  * shipped inside the Windows installer at {@code app/voyager2/} for compatibility with old machines.
-
+ * Native DLLs are Windows x64 only.
  */
-
 public class Voyager2Settings {
 
-
-
     public static final String SDK_PATH_KEY = "VOYAGER2_SDK_PATH";
-
     public static final String LICENSE_KEY_KEY = "VOYAGER2_LICENSE_KEY";
-
     public static final String NATIVE_LIB_PATH_KEY = "VOYAGER2_NATIVE_LIB_PATH";
 
-
-
     private static final String EMBEDDED_LICENSE_KEY = "1C675C9A-93C4-469A-8248-91E27587733A";
-
     private static final String BUNDLED_ROOT = "voyager2";
-
     private static final String SDK_SUBDIR = "sdk";
-
     private static final String NATIVE_SUBDIR = "native";
 
-
-
     private final String sdkBasePath;
-
     private final String licenseKey;
-
     private final String nativeLibPath;
 
-
-
     public Voyager2Settings(String sdkBasePath, String licenseKey, String nativeLibPath) {
-
         this.sdkBasePath = sdkBasePath;
-
         this.licenseKey = licenseKey;
-
         this.nativeLibPath = nativeLibPath;
-
     }
-
-
 
     public static Voyager2Settings fromConfig(Configuracion config) {
-
         config.loadProperties();
-
         String sdk = firstNonBlank(
-
                 config.getPropertyOrDefault(SDK_PATH_KEY, ""),
-
                 resolveBundledPath(SDK_SUBDIR),
-
                 resolveDevPath(SDK_SUBDIR));
-
         String natives = firstNonBlank(
-
                 config.getPropertyOrDefault(NATIVE_LIB_PATH_KEY, ""),
-
                 resolveBundledPath(NATIVE_SUBDIR),
-
                 resolveDevPath(NATIVE_SUBDIR));
-
         String license = firstNonBlank(
-
                 config.getPropertyOrDefault(LICENSE_KEY_KEY, ""),
-
                 EMBEDDED_LICENSE_KEY);
-
         return new Voyager2Settings(sdk, license, natives);
-
     }
-
-
-
-    public String getSdkBasePath() {
-
-        return sdkBasePath;
-
-    }
-
-
-
-    public String getLicenseKey() {
-
-        return licenseKey;
-
-    }
-
-
-
-    public String getNativeLibPath() {
-
-        return nativeLibPath;
-
-    }
-
-
-
-    public void validateForImport() throws IllegalStateException {
-
-        if (licenseKey == null || licenseKey.isBlank()) {
-
-            throw new IllegalStateException(
-
-                    "Voyager 2 license key is not configured. Set " + LICENSE_KEY_KEY + " in config.properties.");
-
-        }
-
-        if (sdkBasePath == null || sdkBasePath.isBlank()) {
-
-            throw new IllegalStateException(
-
-                    "Voyager 2 SDK path is not configured. Reinstall the Windows build or set "
-
-                            + SDK_PATH_KEY + " in config.properties.");
-
-        }
-
-        File sdk = new File(sdkBasePath);
-
-        if (!sdk.isDirectory()) {
-
-            throw new IllegalStateException("Voyager 2 SDK path does not exist: " + sdkBasePath);
-
-        }
-
-        File dll = new File(sdk, "CNHVoyager2.dll");
-
-        if (!dll.isFile()) {
-
-            throw new IllegalStateException("CNHVoyager2.dll not found under: " + sdkBasePath);
-
-        }
-
-        if (nativeLibPath == null || nativeLibPath.isBlank()) {
-
-            throw new IllegalStateException(
-
-                    "Voyager 2 native library path is not configured. Reinstall the Windows build or set "
-
-                            + NATIVE_LIB_PATH_KEY + " in config.properties.");
-
-        }
-
-        Path nativeDir = Path.of(nativeLibPath);
-
-        if (!Files.isDirectory(nativeDir)) {
-
-            throw new IllegalStateException("Voyager 2 native library folder not found: " + nativeLibPath);
-
-        }
-
-        if (!Files.isRegularFile(nativeDir.resolve("CNHVoyager2JNI.dll"))) {
-
-            throw new IllegalStateException(
-
-                    "CNHVoyager2JNI.dll not found in " + nativeLibPath);
-
-        }
-
-    }
-
-
-
-    private static String resolveBundledPath(String subdir) {
-
-        for (Path installRoot : candidateInstallRoots()) {
-
-            if (installRoot == null) {
-
-                continue;
-
-            }
-
-            // Standard jpackage layout: <install>/app/voyager2/{sdk|native}
-
-            Path underApp = installRoot.resolve("app").resolve(BUNDLED_ROOT).resolve(subdir)
-
-                    .toAbsolutePath()
-
-                    .normalize();
-
-            if (isUsablePath(underApp, subdir)) {
-
-                return underApp.toString();
-
-            }
-
-            // If the root is already the app/ folder
-
-            Path direct = installRoot.resolve(BUNDLED_ROOT).resolve(subdir)
-
-                    .toAbsolutePath()
-
-                    .normalize();
-
-            if (isUsablePath(direct, subdir)) {
-
-                return direct.toString();
-
-            }
-
-        }
-
-        return null;
-
-    }
-
-
 
     /**
-
-     * Resolves the jpackage install directory. {@code jpackage.app-path} is the launcher
-
-     * executable (e.g. {@code ...\UrsulaGIS.exe}), not the {@code app/} folder.
-
+     * True when this JVM can run Voyager 2 import (Windows x64 with SDK + native DLLs available).
      */
-
-    private static Path[] candidateInstallRoots() {
-
-        ArrayList<Path> roots = new ArrayList<>(2);
-
-        String appPath = System.getProperty("jpackage.app-path");
-
-        if (appPath != null && !appPath.isBlank()) {
-
-            Path p = Path.of(appPath);
-
-            if (Files.isRegularFile(p) || looksLikeExecutable(p)) {
-
-                if (p.getParent() != null) {
-
-                    roots.add(p.getParent());
-
-                }
-
-            } else if (Files.isDirectory(p)) {
-
-                roots.add(p);
-
-            } else if (p.getParent() != null) {
-
-                roots.add(p.getParent());
-
-            }
-
-        }
-
-        // Windows/Linux jpackage: java.home is <install>/runtime → parent is install root
-
-        String javaHome = System.getProperty("java.home");
-
-        if (javaHome != null && !javaHome.isBlank()) {
-
-            Path runtime = Path.of(javaHome);
-
-            if (runtime.getParent() != null) {
-
-                roots.add(runtime.getParent());
-
-            }
-
-        }
-
-        return roots.toArray(Path[]::new);
-
+    public static boolean isImportSupported(Configuracion config) {
+        return unsupportedReason(config) == null;
     }
 
+    /**
+     * Human-readable reason import is unavailable, or {@code null} when supported.
+     */
+    public static String unsupportedReason(Configuracion config) {
+        if (!isWindowsOs()) {
+            return "Voyager 2 import is only available on Windows.";
+        }
+        if (!isWindowsX64()) {
+            return "Voyager 2 import requires 64-bit Windows.";
+        }
+        try {
+            fromConfig(config).validateForImport();
+            return null;
+        } catch (IllegalStateException e) {
+            return e.getMessage();
+        }
+    }
 
+    public static boolean isWindowsOs() {
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        return os.contains("windows");
+    }
+
+    public static boolean isWindowsX64() {
+        String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
+        return "amd64".equals(arch) || "x86_64".equals(arch);
+    }
+
+    public String getSdkBasePath() {
+        return sdkBasePath;
+    }
+
+    public String getLicenseKey() {
+        return licenseKey;
+    }
+
+    public String getNativeLibPath() {
+        return nativeLibPath;
+    }
+
+    public void validateForImport() throws IllegalStateException {
+        if (licenseKey == null || licenseKey.isBlank()) {
+            throw new IllegalStateException(
+                    "Voyager 2 license key is not configured. Set " + LICENSE_KEY_KEY + " in config.properties.");
+        }
+        if (sdkBasePath == null || sdkBasePath.isBlank()) {
+            throw new IllegalStateException(
+                    "Voyager 2 SDK path is not configured. Reinstall the Windows build or set "
+                            + SDK_PATH_KEY + " in config.properties.");
+        }
+        File sdk = new File(sdkBasePath);
+        if (!sdk.isDirectory()) {
+            throw new IllegalStateException("Voyager 2 SDK path does not exist: " + sdkBasePath);
+        }
+        File dll = new File(sdk, "CNHVoyager2.dll");
+        if (!dll.isFile()) {
+            throw new IllegalStateException("CNHVoyager2.dll not found under: " + sdkBasePath);
+        }
+        if (nativeLibPath == null || nativeLibPath.isBlank()) {
+            throw new IllegalStateException(
+                    "Voyager 2 native library path is not configured. Reinstall the Windows build or set "
+                            + NATIVE_LIB_PATH_KEY + " in config.properties.");
+        }
+        Path nativeDir = Path.of(nativeLibPath);
+        if (!Files.isDirectory(nativeDir)) {
+            throw new IllegalStateException("Voyager 2 native library folder not found: " + nativeLibPath);
+        }
+        if (!Files.isRegularFile(nativeDir.resolve("CNHVoyager2JNI.dll"))) {
+            throw new IllegalStateException(
+                    "CNHVoyager2JNI.dll not found in " + nativeLibPath);
+        }
+    }
+
+    private static String resolveBundledPath(String subdir) {
+        for (Path installRoot : candidateInstallRoots()) {
+            if (installRoot == null) {
+                continue;
+            }
+            // Standard jpackage layout: <install>/app/voyager2/{sdk|native}
+            Path underApp = installRoot.resolve("app").resolve(BUNDLED_ROOT).resolve(subdir)
+                    .toAbsolutePath()
+                    .normalize();
+            if (isUsablePath(underApp, subdir)) {
+                return underApp.toString();
+            }
+            // If the root is already the app/ folder
+            Path direct = installRoot.resolve(BUNDLED_ROOT).resolve(subdir)
+                    .toAbsolutePath()
+                    .normalize();
+            if (isUsablePath(direct, subdir)) {
+                return direct.toString();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolves the jpackage install directory. {@code jpackage.app-path} is the launcher
+     * executable (e.g. {@code ...\UrsulaGIS.exe}), not the {@code app/} folder.
+     */
+    private static Path[] candidateInstallRoots() {
+        ArrayList<Path> roots = new ArrayList<>(2);
+        String appPath = System.getProperty("jpackage.app-path");
+        if (appPath != null && !appPath.isBlank()) {
+            Path p = Path.of(appPath);
+            if (Files.isRegularFile(p) || looksLikeExecutable(p)) {
+                if (p.getParent() != null) {
+                    roots.add(p.getParent());
+                }
+            } else if (Files.isDirectory(p)) {
+                roots.add(p);
+            } else if (p.getParent() != null) {
+                roots.add(p.getParent());
+            }
+        }
+        // Windows/Linux jpackage: java.home is <install>/runtime → parent is install root
+        String javaHome = System.getProperty("java.home");
+        if (javaHome != null && !javaHome.isBlank()) {
+            Path runtime = Path.of(javaHome);
+            if (runtime.getParent() != null) {
+                roots.add(runtime.getParent());
+            }
+        }
+        return roots.toArray(Path[]::new);
+    }
 
     private static boolean looksLikeExecutable(Path p) {
-
         String name = p.getFileName() != null ? p.getFileName().toString().toLowerCase() : "";
-
         return name.endsWith(".exe") || name.endsWith(".bat") || !name.contains(".");
-
     }
-
-
 
     private static String resolveDevPath(String subdir) {
-
         Path candidate = Path.of(System.getProperty("user.dir"), "libs", BUNDLED_ROOT, subdir)
-
                 .toAbsolutePath()
-
                 .normalize();
-
         return isUsablePath(candidate, subdir) ? candidate.toString() : null;
-
     }
-
-
 
     private static boolean isUsablePath(Path dir, String subdir) {
-
         if (!Files.isDirectory(dir)) {
-
             return false;
-
         }
-
         if (SDK_SUBDIR.equals(subdir)) {
-
             return Files.isRegularFile(dir.resolve("CNHVoyager2.dll"));
-
         }
-
         if (NATIVE_SUBDIR.equals(subdir)) {
-
             return Files.isRegularFile(dir.resolve("CNHVoyager2JNI.dll"));
-
         }
-
         return false;
-
     }
-
-
 
     private static String firstNonBlank(String... values) {
-
         if (values == null) {
-
             return null;
-
         }
-
         for (String value : values) {
-
             if (value != null && !value.isBlank()) {
-
                 return value;
-
             }
-
         }
-
         return null;
-
     }
-
 }
-
