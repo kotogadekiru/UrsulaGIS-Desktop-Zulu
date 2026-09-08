@@ -557,18 +557,31 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 	/**
 	 * Superposiciones, ancho, distancia, demora y rinde sin superposiciones
 	 * solo aplican al poligonizar cosechas de puntos.
+	 * Voyager (.vy1) y otras importaciones en memoria dejan los puntos en
+	 * {@code inCollection} con {@code inStore == null}; hay que mirar ambos.
+	 * Sin fuente de geometría (config previa al import Voyager) se asume puntos.
 	 */
 	private boolean isPointGeometryLabor() {
 		try {
+			Class<?> binding = null;
 			FileDataStore store = labor.getInStore();
-			if (store == null) {
+			if (store != null) {
+				GeometryDescriptor geomDesc = store.getSchema().getGeometryDescriptor();
+				if (geomDesc != null) {
+					binding = geomDesc.getType().getBinding();
+				}
+			} else if (labor.getInCollection() != null) {
+				GeometryDescriptor geomDesc = labor.getInCollection().getSchema().getGeometryDescriptor();
+				if (geomDesc != null) {
+					binding = geomDesc.getType().getBinding();
+				}
+			} else {
+				// Config dialog before Voyager import has neither store nor collection.
+				return true;
+			}
+			if (binding == null) {
 				return false;
 			}
-			GeometryDescriptor geomDesc = store.getSchema().getGeometryDescriptor();
-			if (geomDesc == null) {
-				return false;
-			}
-			Class<?> binding = geomDesc.getType().getBinding();
 			return Point.class.isAssignableFrom(binding)
 					|| MultiPoint.class.isAssignableFrom(binding);
 		} catch (Exception e) {
