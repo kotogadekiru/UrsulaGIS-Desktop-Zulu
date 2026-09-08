@@ -1,6 +1,5 @@
 package com.ursulagis.desktop.dao.recorrida;
 
-import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,6 +17,7 @@ import javax.persistence.Transient;
 import com.google.gson.Gson;
 
 import com.ursulagis.desktop.dao.suelo.SueloItem;
+import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import gov.nasa.worldwind.geom.Position;
 import com.ursulagis.desktop.gui.Messages;
 import lombok.AccessLevel;
@@ -118,7 +118,6 @@ public class Muestra {
 	@Transient
 	public Map<String,Double> getProps(){
 		String obs = this.getObservacion();
-		NumberFormat nf = Messages.getNumberFormat();
 		@SuppressWarnings("unchecked")
 		Map<String,String> map = new Gson().fromJson(obs, Map.class);	 
 
@@ -130,9 +129,8 @@ public class Muestra {
 				try {					
 					if(value != null 
 							&& !"".equals(value)) {
-						dValue = nf.parse((String)value).doubleValue(); 
+						dValue = PropertyHelper.parseDouble((String)value).doubleValue();
 					}
-					//dValue=Double.parseDouble((String)value);
 				}catch(Exception e) {
 					logger.warning("error en k: "+k+" tratando de parsear \""+value+"\" reemplazo por 0");
 					e.printStackTrace();
