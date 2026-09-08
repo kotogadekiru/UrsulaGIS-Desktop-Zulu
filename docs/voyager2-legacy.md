@@ -99,7 +99,8 @@ Maven step (Windows profile only): `bundle-voyager2-legacy` in `pom.xml` copies 
 |---|---|
 | `Voyager 2 SDK path is not configured` | Old build that mis-resolved `jpackage.app-path` (exe vs folder), or MSI without `app/voyager2` — update/reinstall Windows MSI |
 | `Voyager 2 SDK path does not exist` | MSI built without bundle, or corrupt install — reinstall |
-| `CNHVoyager2JNI.dll not found` | Missing `libs/voyager2/native` in build — refresh bundle and rebuild |
+| `CNHVoyager2JNI.dll not found` | Missing `app/voyager2/native` in install, or an old `cnh-voyager2-java-wrapper` JAR that hardcodes a developer path — rebuild/replace the wrapper JAR and MSI |
+| `CNHVoyager2JNI.dll not found in D:\worskpaces\CN1SDK_...` | Broken wrapper JAR ignoring the runtime path; update `libs/cnh-voyager2-java-wrapper-1.0.0.jar` |
 | `ERROR_HOSTFXR_LOAD_FAILED` | Install .NET 8 Desktop Runtime x64 |
 | `No harvest dataset found on card` | Card has no harvest data, or wrong folder selected |
 | Import menu missing on Linux/macOS | Expected — Windows-only legacy feature |

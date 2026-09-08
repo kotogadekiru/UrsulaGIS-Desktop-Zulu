@@ -39,7 +39,10 @@ public final class Voyager2NativeLoader {
             }
 
             String dirPath = dir.toString();
-            System.setProperty(CNHVoyager2Native.NATIVE_DIR_PROPERTY, dirPath);
+            // Set property via literal BEFORE touching CNHVoyager2Native: reading
+            // NATIVE_DIR_PROPERTY would load the class and run its static initializer
+            // before the property is set.
+            System.setProperty("cnh.voyager2.native.dir", dirPath);
             CNHVoyager2Native.ensureNativeLibrariesLoaded(dirPath);
             loaded = true;
         }
