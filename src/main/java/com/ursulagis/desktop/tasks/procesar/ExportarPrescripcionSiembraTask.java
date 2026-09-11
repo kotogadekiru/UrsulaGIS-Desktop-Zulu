@@ -172,6 +172,9 @@ public class ExportarPrescripcionSiembraTask extends ProgresibleTask<File>{
 						semilla = Math.rint(fi.getDosisHa());
 					} else if(SiembraLabor.COLUMNA_MILES_SEM_HA.equals(unidad)) {
 						semilla = Math.rint(fi.getDosisML()*(10/laborToExport.getEntreSurco()));
+					} else if(SiembraLabor.COLUMNA_SEM_HA.equals(unidad)) {
+						// semillas/ha = sem/m lineal * (m2/ha / entreSurco)
+						semilla = Math.rint(fi.getDosisML()*(ProyectionConstants.METROS2_POR_HA/laborToExport.getEntreSurco()));
 					} else if(SiembraLabor.COLUMNA_SEM_ML.equals(unidad)) {
 						semilla = fi.getDosisML();
 						logger.fine("Exportando prescripcion con dosis ML "+semilla);
