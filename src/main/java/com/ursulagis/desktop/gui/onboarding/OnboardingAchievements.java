@@ -1,6 +1,9 @@
 package com.ursulagis.desktop.gui.onboarding;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.prefs.Preferences;
@@ -511,6 +514,33 @@ public final class OnboardingAchievements {
     /** Returns all achievement IDs in display order. */
     public String[] getAllAchievementIds() {
         return ALL_ACHIEVEMENT_IDS.clone();
+    }
+
+    /** Returns unlocked achievement IDs in the same display order as {@link #getAllAchievementIds()}. */
+    public List<String> getUnlockedAchievementIds() {
+        List<String> unlocked = new ArrayList<>();
+        for (String id : ALL_ACHIEVEMENT_IDS) {
+            if (isUnlocked(id)) {
+                unlocked.add(id);
+            }
+        }
+        return Collections.unmodifiableList(unlocked);
+    }
+
+    /** Count of unlocked achievements. */
+    public int getUnlockedCount() {
+        int count = 0;
+        for (String id : ALL_ACHIEVEMENT_IDS) {
+            if (isUnlocked(id)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Total number of defined achievements. */
+    public int getTotalCount() {
+        return ALL_ACHIEVEMENT_IDS.length;
     }
 
     /** Returns the controller/group id for an achievement, or null if unknown. */

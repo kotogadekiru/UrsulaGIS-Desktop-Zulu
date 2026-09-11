@@ -33,6 +33,7 @@ import com.google.api.client.json.jackson.JacksonFactory;
 import com.ursulagis.desktop.dao.config.Configuracion;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
+import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
@@ -291,6 +292,23 @@ public class UpdateTask  extends Task<File>{
 	}
 
 	/**
+	 * Adds unlocked-achievement telemetry to the update check URL:
+	 * {@code ACHIEVEMENTS} (comma-separated IDs), {@code ACHIEVED} (count),
+	 * {@code ACHIEVEMENTS_TOTAL} (defined total).
+	 */
+	private static void putAchievementQueryParams(GenericUrl url) {
+		try {
+			OnboardingAchievements achievements = OnboardingAchievements.getInstance();
+			List<String> unlocked = achievements.getUnlockedAchievementIds();
+			url.put("ACHIEVEMENTS", String.join(",", unlocked));
+			url.put("ACHIEVED", Integer.toString(unlocked.size()));
+			url.put("ACHIEVEMENTS_TOTAL", Integer.toString(achievements.getTotalCount()));
+		} catch (Exception e) {
+			logger.fine("Could not attach achievements to update check: " + e.getMessage());
+		}
+	}
+
+	/**
 	 * Value for the {@code PLATFORM} update URL parameter: OS family and CPU word size
 	 * (e.g. {@code windows_x64}, {@code mac_aarch64}, {@code linux_x64}).
 	 */
@@ -337,6 +355,7 @@ public class UpdateTask  extends Task<File>{
 			String usr = getUserNumber();
 			url.put("USER", usr);
 			url.put("PLATFORM", platformQueryValue());
+			putAchievementQueryParams(url);
 			
 			logger.fine("calling url=> "+url);
 			//http://localhost:5000/update?VERSION=0.2.26&USER=693,468
