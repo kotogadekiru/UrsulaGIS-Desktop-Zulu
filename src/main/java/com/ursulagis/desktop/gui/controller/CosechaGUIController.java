@@ -91,6 +91,8 @@ public class CosechaGUIController extends AbstractGUIController {
 						return "voyager opened";
 					},
 					Messages.getString("CosechaGUIController.importarVoyager")));
+		} else {
+			logger.warning("Voyager2 import not supported: " + Voyager2Settings.unsupportedReason(JFXMain.config));
 		}
 
 		rootNodeP.add(new LayerAction(

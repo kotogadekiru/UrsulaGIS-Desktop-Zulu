@@ -14,6 +14,15 @@ import com.ursulagis.desktop.dao.config.Configuracion;
  * The CN1SDK project is obsolete; binaries are bundled under {@code libs/voyager2/} and
  * shipped inside the Windows installer at {@code app/voyager2/} for compatibility with old machines.
  * Native DLLs are Windows x64 only.
+ * <p>
+ * Layout:
+ * <pre>
+ *   voyager2/
+ *     sdk/      CNHVoyager2.dll and .NET dependencies
+ *     native/   CNHVoyager2JNI.dll, CNHVoyager2Bridge.dll, nethost.dll
+ * </pre>
+ * Config overrides may point at either the {@code sdk}/{@code native} folder or the
+ * {@code voyager2} parent; broken overrides are ignored in favour of the bundled layout.
  */
 public class Voyager2Settings {
 
@@ -25,6 +34,8 @@ public class Voyager2Settings {
     private static final String BUNDLED_ROOT = "voyager2";
     private static final String SDK_SUBDIR = "sdk";
     private static final String NATIVE_SUBDIR = "native";
+    private static final String SDK_DLL = "CNHVoyager2.dll";
+    private static final String NATIVE_DLL = "CNHVoyager2JNI.dll";
 
     private final String sdkBasePath;
     private final String licenseKey;
@@ -38,12 +49,12 @@ public class Voyager2Settings {
 
     public static Voyager2Settings fromConfig(Configuracion config) {
         config.loadProperties();
-        String sdk = firstNonBlank(
-                config.getPropertyOrDefault(SDK_PATH_KEY, ""),
+        String sdk = firstUsable(
+                normalizeSdkPath(config.getPropertyOrDefault(SDK_PATH_KEY, "")),
                 resolveBundledPath(SDK_SUBDIR),
                 resolveDevPath(SDK_SUBDIR));
-        String natives = firstNonBlank(
-                config.getPropertyOrDefault(NATIVE_LIB_PATH_KEY, ""),
+        String natives = firstUsable(
+                normalizeNativePath(config.getPropertyOrDefault(NATIVE_LIB_PATH_KEY, "")),
                 resolveBundledPath(NATIVE_SUBDIR),
                 resolveDevPath(NATIVE_SUBDIR));
         String license = firstNonBlank(
@@ -113,9 +124,10 @@ public class Voyager2Settings {
         if (!sdk.isDirectory()) {
             throw new IllegalStateException("Voyager 2 SDK path does not exist: " + sdkBasePath);
         }
-        File dll = new File(sdk, "CNHVoyager2.dll");
+        File dll = new File(sdk, SDK_DLL);
         if (!dll.isFile()) {
-            throw new IllegalStateException("CNHVoyager2.dll not found under: " + sdkBasePath);
+            throw new IllegalStateException(SDK_DLL + " not found under: " + sdkBasePath
+                    + " (expected .../voyager2/sdk/" + SDK_DLL + ")");
         }
         if (nativeLibPath == null || nativeLibPath.isBlank()) {
             throw new IllegalStateException(
@@ -126,10 +138,49 @@ public class Voyager2Settings {
         if (!Files.isDirectory(nativeDir)) {
             throw new IllegalStateException("Voyager 2 native library folder not found: " + nativeLibPath);
         }
-        if (!Files.isRegularFile(nativeDir.resolve("CNHVoyager2JNI.dll"))) {
+        if (!Files.isRegularFile(nativeDir.resolve(NATIVE_DLL))) {
             throw new IllegalStateException(
-                    "CNHVoyager2JNI.dll not found in " + nativeLibPath);
+                    NATIVE_DLL + " not found in " + nativeLibPath
+                            + " (expected .../voyager2/native/" + NATIVE_DLL + ")");
         }
+    }
+
+    /**
+     * Accepts either the folder that contains {@code CNHVoyager2.dll}, or the parent
+     * {@code voyager2} folder (appends {@code sdk/}). Returns {@code null} if unusable.
+     */
+    static String normalizeSdkPath(String configured) {
+        if (configured == null || configured.isBlank()) {
+            return null;
+        }
+        Path path = Path.of(configured).toAbsolutePath().normalize();
+        if (isUsablePath(path, SDK_SUBDIR)) {
+            return path.toString();
+        }
+        Path asSdkChild = path.resolve(SDK_SUBDIR);
+        if (isUsablePath(asSdkChild, SDK_SUBDIR)) {
+            return asSdkChild.toString();
+        }
+        return null;
+    }
+
+    /**
+     * Accepts either the folder that contains {@code CNHVoyager2JNI.dll}, or the parent
+     * {@code voyager2} folder (appends {@code native/}). Returns {@code null} if unusable.
+     */
+    static String normalizeNativePath(String configured) {
+        if (configured == null || configured.isBlank()) {
+            return null;
+        }
+        Path path = Path.of(configured).toAbsolutePath().normalize();
+        if (isUsablePath(path, NATIVE_SUBDIR)) {
+            return path.toString();
+        }
+        Path asNativeChild = path.resolve(NATIVE_SUBDIR);
+        if (isUsablePath(asNativeChild, NATIVE_SUBDIR)) {
+            return asNativeChild.toString();
+        }
+        return null;
     }
 
     private static String resolveBundledPath(String subdir) {
@@ -150,6 +201,11 @@ public class Voyager2Settings {
                     .normalize();
             if (isUsablePath(direct, subdir)) {
                 return direct.toString();
+            }
+            // Misconfigured install root pointing at voyager2 itself
+            Path asChild = installRoot.resolve(subdir).toAbsolutePath().normalize();
+            if (isUsablePath(asChild, subdir)) {
+                return asChild.toString();
             }
         }
         return null;
@@ -202,15 +258,15 @@ public class Voyager2Settings {
             return false;
         }
         if (SDK_SUBDIR.equals(subdir)) {
-            return Files.isRegularFile(dir.resolve("CNHVoyager2.dll"));
+            return Files.isRegularFile(dir.resolve(SDK_DLL));
         }
         if (NATIVE_SUBDIR.equals(subdir)) {
-            return Files.isRegularFile(dir.resolve("CNHVoyager2JNI.dll"));
+            return Files.isRegularFile(dir.resolve(NATIVE_DLL));
         }
         return false;
     }
 
-    private static String firstNonBlank(String... values) {
+    private static String firstUsable(String... values) {
         if (values == null) {
             return null;
         }
@@ -220,5 +276,9 @@ public class Voyager2Settings {
             }
         }
         return null;
+    }
+
+    private static String firstNonBlank(String... values) {
+        return firstUsable(values);
     }
 }
