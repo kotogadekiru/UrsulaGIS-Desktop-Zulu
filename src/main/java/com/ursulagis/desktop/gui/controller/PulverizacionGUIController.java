@@ -298,6 +298,11 @@ public class PulverizacionGUIController {
 			JFXMain.executorPool.execute(umTask);
 		}
 		
+		/** Entry point for chat / scripting. */
+		public void chatUnirPulverizaciones(PulverizacionLabor pulverizacionLabor) {
+			doUnirPulverizaciones(pulverizacionLabor);
+		}
+
 		private void doUnirPulverizaciones(PulverizacionLabor pulverizacionLabor) {
 			List<PulverizacionLabor> pulverizacionesAUnir = new ArrayList<PulverizacionLabor>();
 			if(pulverizacionLabor == null){

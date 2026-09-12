@@ -3,6 +3,7 @@ package com.ursulagis.desktop.gui.chat;
 import com.ursulagis.desktop.chat.ChatPendingFollowUp;
 import com.ursulagis.desktop.chat.AchievementIntentCatalog;
 import com.ursulagis.desktop.chat.AchievementIntentMatch;
+import com.ursulagis.desktop.chat.ActionChainParser;
 import com.ursulagis.desktop.chat.ActionExecutionResult;
 import com.ursulagis.desktop.chat.ChatActionExecutor;
 import com.ursulagis.desktop.chat.ChatGuidanceService;
@@ -23,6 +24,7 @@ import com.ursulagis.desktop.chat.workflow.ChatWorkflowSession;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
 
+import java.util.List;
 import java.util.Optional;
 
 import javafx.application.Platform;
@@ -158,7 +160,14 @@ public class ChatController {
 					}
 				}
 				var catalogMatch = AchievementIntentCatalog.match(text.trim());
-				if (catalogMatch.isPresent()) {
+				List<UrsulaAction> chain = ActionChainParser.parse(text.trim());
+				if (chain.size() > 1 && chain.get(0) != UrsulaAction.UNKNOWN) {
+					String target = LaborTargetResolver.sanitizeTargetName(intent.getTargetName());
+					String reply = catalogMatch.map(AchievementIntentMatch::suggestedReply)
+							.orElse("¡Dale! Encadeno " + chain.size() + " pasos.");
+					intent = new ParsedIntent(chain, target, 0.95, reply, null, null, null, null, text.trim())
+							.enrichFromUserText(text.trim());
+				} else if (catalogMatch.isPresent()) {
 					AchievementIntentMatch m = catalogMatch.get();
 					// Strong phrase matches beat a wrong LLM action (e.g. exportar pantalla → recorrida).
 					if (intent.getAction() == UrsulaAction.UNKNOWN || m.score() >= 10.0) {
@@ -187,7 +196,7 @@ public class ChatController {
 					panel.setStatus(msg("Chat.statusReady", "Ready"));
 					return;
 				}
-				ActionExecutionResult result = executor.execute(parsed.intent(), parsed.layerContext());
+				ActionExecutionResult result = executor.executeAll(parsed.intent(), parsed.layerContext());
 				panel.appendMessage(UrsulaPersonality.roleName(),
 						formatReply(parsed.intent(), result.message()));
 				panel.setStatus(msg("Chat.statusReady", "Ready"));
@@ -215,7 +224,7 @@ public class ChatController {
 			return false;
 		}
 		ParsedIntent intent = resumed.get();
-		ActionExecutionResult result = executor.execute(intent, layerContext);
+		ActionExecutionResult result = executor.executeAll(intent, layerContext);
 		panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
 		panel.setStatus(msg("Chat.statusReady", "Ready"));
 		if (result.launched()) {
@@ -225,6 +234,19 @@ public class ChatController {
 	}
 
 	private boolean tryExecuteLocalIntent(String userText, MapLayerContext layerContext) {
+		List<UrsulaAction> chain = ActionChainParser.parse(userText);
+		if (chain.size() > 1 && chain.get(0) != UrsulaAction.UNKNOWN) {
+			ParsedIntent intent = new ParsedIntent(chain, null, 0.95,
+					"¡Dale! Encadeno " + chain.size() + " pasos.",
+					null, null, null, null, userText);
+			ActionExecutionResult result = executor.executeAll(intent, layerContext);
+			panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
+			panel.setStatus(msg("Chat.statusReady", "Ready"));
+			if (result.launched()) {
+				UrsulaChatWindow.yieldToMainStage();
+			}
+			return true;
+		}
 		if (tryActivatePolygons(userText, layerContext)) {
 			return true;
 		}
@@ -248,7 +270,7 @@ public class ChatController {
 		AchievementIntentMatch m = match.get();
 		ParsedIntent intent = new ParsedIntent(m.action(), null, m.score(), m.suggestedReply())
 				.enrichFromUserText(userText);
-		ActionExecutionResult result = executor.execute(intent, layerContext);
+		ActionExecutionResult result = executor.executeAll(intent, layerContext);
 		panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
 		panel.setStatus(msg("Chat.statusReady", "Ready"));
 		if (result.launched()) {
@@ -267,7 +289,7 @@ public class ChatController {
 		}
 		AchievementIntentMatch m = match.get();
 		ParsedIntent intent = new ParsedIntent(m.action(), null, m.score(), m.suggestedReply());
-		ActionExecutionResult result = executor.execute(intent, layerContext);
+		ActionExecutionResult result = executor.executeAll(intent, layerContext);
 		panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
 		panel.setStatus(msg("Chat.statusReady", "Ready"));
 		if (result.launched()) {
@@ -286,7 +308,7 @@ public class ChatController {
 		}
 		AchievementIntentMatch m = match.get();
 		ParsedIntent intent = new ParsedIntent(m.action(), null, m.score(), m.suggestedReply());
-		ActionExecutionResult result = executor.execute(intent, layerContext);
+		ActionExecutionResult result = executor.executeAll(intent, layerContext);
 		panel.appendMessage(UrsulaPersonality.roleName(), formatReply(intent, result.message()));
 		panel.setStatus(msg("Chat.statusReady", "Ready"));
 		if (result.launched()) {
@@ -315,14 +337,14 @@ public class ChatController {
 				return false;
 			}
 			intent = new ParsedIntent(match.get().action(), null, match.get().score(), match.get().suggestedReply());
-			result = executor.execute(intent, layerContext);
+			result = executor.executeAll(intent, layerContext);
 		} else if (load) {
 			Optional<AchievementIntentMatch> match = AchievementIntentCatalog.match(userText);
 			if (match.isEmpty() || match.get().action() != UrsulaAction.IMPORT_SIEMBRA) {
 				return false;
 			}
 			intent = new ParsedIntent(match.get().action(), null, match.get().score(), match.get().suggestedReply());
-			result = executor.execute(intent, layerContext);
+			result = executor.executeAll(intent, layerContext);
 		} else {
 			return false;
 		}

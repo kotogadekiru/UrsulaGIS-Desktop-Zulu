@@ -1249,6 +1249,7 @@ public class JFXMain extends Application {
 
 						// Set the view to look at the imported image.
 						ExampleUtil.goTo(getWwd(), sector);
+						OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_IMAGERY_IMPORTED);
 					});
 				}
 				catch (Exception e){

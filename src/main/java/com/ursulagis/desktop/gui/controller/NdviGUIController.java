@@ -171,6 +171,52 @@ public class NdviGUIController extends AbstractGUIController{
 		getLayerPanel().addAccionesClase(rootNodeNDVI,Ndvi.class);
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatShowNdviEvolution() {
+		ShowNDVIEvolution sEvo = new ShowNDVIEvolution(this.getWwd(), this.getLayerPanel());
+		sEvo.doShowNDVIEvolution();
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_EVOLUTION_VIEWED);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatShowNdviChart() {
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_CHART_VIEWED);
+		doShowNdviChart();
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatShowNdviAcumChart() {
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_ACUM_CHART_VIEWED);
+		doShowNdviAcumChart();
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatExportNdviExcel() {
+		ExportNDVIToExcel sEvo = new ExportNDVIToExcel(this.getWwd(), getLayerPanel());
+		sEvo.exportToExcel();
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_EXPORTED);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatSaveSelectedNdvi() {
+		executorPool.submit(() -> {
+			try {
+				List<Ndvi> ndviToSave = main.getNdviSeleccionados();
+				DAH.saveAll(ndviToSave);
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_SAVED);
+			} catch (Exception e) {
+				logger.warning("Error al guardar los poligonos");
+				e.printStackTrace();
+			}
+		});
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatFiltrarFecha() {
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DATE_FILTERED);
+		doFiltrarFecha(null);
+	}
+
 	public String doShowNdviAcumChart() {
 		Platform.runLater(()->{
 			NDVIChart sChart= new NDVIChart(this.getWwd());
@@ -210,21 +256,8 @@ public class NdviGUIController extends AbstractGUIController{
 
 		ndviP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.editarLayer"),(layer)->{
 			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-			if(layerObject!=null && Ndvi.class.isAssignableFrom(layerObject.getClass())){
-				//mostrar un dialogo para editar el nombre del poligono
-				Ndvi ndvi =(Ndvi)layerObject;
-				TextInputDialog nombreDialog = new TextInputDialog(ndvi.getNombre());
-				nombreDialog.initOwner(main.stage);
-				nombreDialog.setTitle(Messages.getString("JFXMain.editarLayerDialogTitle")); 
-				nombreDialog.setContentText(Messages.getString("JFXMain.editarLayerNDVIName")); 
-
-				Optional<String> nombreOptional = nombreDialog.showAndWait();
-				if(nombreOptional.isPresent()){
-					ndvi.setNombre(nombreOptional.get());
-					NumberFormat df = Messages.getNumberFormat();
-					layer.setName(ndvi.getNombre()+" "+df.format(ndvi.getPorcNubes()*100)+"% Nublado");
-					this.getLayerPanel().update(this.getWwd());
-				}
+			if(layerObject instanceof Ndvi){
+				doEditarNdvi((Ndvi) layerObject, layer);
 			}
 			return "edite ndvi"; 
 		}));
@@ -303,6 +336,12 @@ public class NdviGUIController extends AbstractGUIController{
 	}
 
 
+	/** Entry point for chat / scripting. */
+	public void chatExportarTiffFile(Ndvi ndvi) {
+		doExportarTiffFile(ndvi);
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_EXPORTED_TIFF);
+	}
+
 	private void doExportarTiffFile(Ndvi ndvi) {
 		File dir =FileHelper.getNewTiffFile(ndvi.getFileName());
 		try{
@@ -312,6 +351,12 @@ public class NdviGUIController extends AbstractGUIController{
 		}catch(Exception e){
 			e.printStackTrace();
 		}
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatShowHistoNDVI(Ndvi ndvi) {
+		showHistoNDVI(ndvi);
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_HISTOGRAM_VIEWED);
 	}
 
 	private void showHistoNDVI(Ndvi  ndvi) {
@@ -416,6 +461,11 @@ public class NdviGUIController extends AbstractGUIController{
 			pmtask.run();
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatConvertirNdviAcumuladoACosecha() {
+		doConvertirNdviAcumuladoACosecha();
 	}
 
 	private void doConvertirNdviAcumuladoACosecha() {
@@ -545,6 +595,33 @@ public class NdviGUIController extends AbstractGUIController{
 		
 	}
 
+	/** Entry point for chat / scripting. */
+	public String chatFiltrarNublado() {
+		return doFiltrarNublado(null);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatEditarNdvi(Ndvi ndvi) {
+		if (ndvi != null && ndvi.getLayer() != null) {
+			doEditarNdvi(ndvi, ndvi.getLayer());
+		}
+	}
+
+	private void doEditarNdvi(Ndvi ndvi, Layer layer) {
+		TextInputDialog nombreDialog = new TextInputDialog(ndvi.getNombre());
+		nombreDialog.initOwner(main.stage);
+		nombreDialog.setTitle(Messages.getString("JFXMain.editarLayerDialogTitle"));
+		nombreDialog.setContentText(Messages.getString("JFXMain.editarLayerNDVIName"));
+
+		Optional<String> nombreOptional = nombreDialog.showAndWait();
+		if (nombreOptional.isPresent()) {
+			ndvi.setNombre(nombreOptional.get());
+			NumberFormat df = Messages.getNumberFormat();
+			layer.setName(ndvi.getNombre() + " " + df.format(ndvi.getPorcNubes() * 100) + "% Nublado");
+			this.getLayerPanel().update(this.getWwd());
+		}
+	}
+
 	//TODO obtener un rango de % nublado a activar y desactivar los layers fuera de ese rango
 	private String doFiltrarNublado(Layer layer) {
 
@@ -596,7 +673,13 @@ public class NdviGUIController extends AbstractGUIController{
 		});
 
 		slider.showSlider();
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_CLOUD_FILTERED);
 		return "filtre por nublado low " + low + " high " + high;
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatConvertirNdviAFertilizacion(Ndvi ndvi) {
+		doConvertirNdviAFertilizacion(ndvi);
 	}
 
 	private void doConvertirNdviAFertilizacion(Ndvi ndvi) {
@@ -814,7 +897,8 @@ public class NdviGUIController extends AbstractGUIController{
 				if (goTo) {
 					viewGoTo(ndviLayer);
 				}
-				playSound();	
+				playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_IMPORTED);
 			}
 		});
 		executorPool.execute(task);
@@ -870,6 +954,7 @@ public class NdviGUIController extends AbstractGUIController{
 					((Poligono)plo).getLayer().setEnabled(false);
 				}
 				task.uninstallProgressBar();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_DOWNLOADED);
 				logger.fine("termine de descargar todos los ndvi de "+plo);
 			});
 			executorPool.submit(task);
@@ -898,6 +983,7 @@ public class NdviGUIController extends AbstractGUIController{
 	public void doBulkNDVIDownload() {
 		BulkNdviDownloadGUI gui = new BulkNdviDownloadGUI();
 		gui.show();
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_NDVI_BULK_DOWNLOADED);
 	}
 
 	//metodos de conveniencia para el refactor

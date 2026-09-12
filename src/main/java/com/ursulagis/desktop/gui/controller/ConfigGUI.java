@@ -268,6 +268,11 @@ public class ConfigGUI extends AbstractGUIController{
 			}
 		});
 	}	
+	/** Entry point for chat / scripting. */
+	public void chatCorrelacionarCapas() {
+		doCorrelacionarCapas();
+	}
+
 	//TODO seleccionar capas y columnas para armar un grafico de x,y
 	private void doCorrelacionarCapas() {
 		//TODO seleccionar labor x
@@ -438,6 +443,11 @@ public class ConfigGUI extends AbstractGUIController{
 		}
 	}
 
+	/** Entry point for chat / scripting. */
+	public String chatSelectDB() {
+		return doSelectDB();
+	}
+
 	/**
 	 * metodo que permite crear una base de datos en una ubicacion deseada
 	 * @return
@@ -495,6 +505,11 @@ public class ConfigGUI extends AbstractGUIController{
 		//  alert.showAndWait();
 		acercaDe.setResizable(true);
 		acercaDe.show();
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatShowLog() {
+		doShowLog();
 	}
 
 	/**
@@ -637,6 +652,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.cultivos")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_CULTIVOS_OPENED);
 			tablaStage.show();	 
 		});
 
@@ -686,6 +702,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.fertilizantes")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_FERTILIZANTES_OPENED);
 			tablaStage.show();	 
 		});
 	}
@@ -735,6 +752,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.agroquimicos")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_AGROQUIMICOS_OPENED);
 			tablaStage.show();	 
 		});
 
@@ -779,6 +797,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.campanias")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_CAMPANIA_OPENED);
 			tablaStage.show();	 
 
 		});	
@@ -855,6 +874,7 @@ public class ConfigGUI extends AbstractGUIController{
 				main.getLayerPanel().update(main.getWwd());
 				//getWwd().redraw();
 			});
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_POLIGONOS_TABLE_OPENED);
 			try {
 				tablaStage.show();	 
 			}catch(Exception e){
@@ -1133,6 +1153,11 @@ public class ConfigGUI extends AbstractGUIController{
 
 	}
 
+	/** Entry point for chat / scripting. Opens purchase-order table where online quote can be completed. */
+	public void chatShowOrdenesCompra() {
+		doShowOrdenesCompra();
+	}
+
 	public void doShowOrdenesCompra() {		
 		Platform.runLater(()->{		
 			final ObservableList<OrdenCompra> data =
@@ -1181,6 +1206,7 @@ public class ConfigGUI extends AbstractGUIController{
 			//				main.getLayerPanel().update(main.getWwd());				
 			//			});
 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ORDENES_COMPRA_OPENED);
 			tablaStage.show();	 
 		});
 	}
@@ -1232,6 +1258,7 @@ public class ConfigGUI extends AbstractGUIController{
 				main.getLayerPanel().update(main.getWwd());
 			});
 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_LABORES_TABLE_OPENED);
 			tablaStage.show();
 		});
 	}
@@ -1293,8 +1320,14 @@ public class ConfigGUI extends AbstractGUIController{
 				//getWwd().redraw();
 			});
 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ORDENES_SIEMBRA_OPENED);
 			tablaStage.show();	 
 		});	
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatShowConfiguracionTable() {
+		doShowConfiguracionTable();
 	}
 
 	private void doShowConfiguracionTable() {
@@ -1380,6 +1413,7 @@ public class ConfigGUI extends AbstractGUIController{
 		accept.setOnAction((e)->{tablaStage.close();});
 
 
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_PROPERTIES_TABLE_OPENED);
 		tablaStage.showAndWait();	 
 
 		for(Map<String,String> ma : data) {
@@ -1446,6 +1480,7 @@ public class ConfigGUI extends AbstractGUIController{
 				//getWwd().redraw();
 			});
 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ORDENES_PULVERIZACION_OPENED);
 			tablaStage.show();	 
 		});	
 	}
@@ -1507,6 +1542,7 @@ public class ConfigGUI extends AbstractGUIController{
 				//getWwd().redraw();
 			});
 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ORDENES_FERTILIZACION_OPENED);
 			tablaStage.show();	 
 		});	
 	}
@@ -1547,6 +1583,7 @@ public class ConfigGUI extends AbstractGUIController{
 				//getWwd().redraw();
 			});
 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_NDVI_TABLE_OPENED);
 			tablaStage.show();	 
 		});	
 	}
@@ -1630,6 +1667,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.establecimientos")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ESTABLECIMIENTO_OPENED);
 			tablaStage.show();	 
 
 		});	
@@ -1656,6 +1694,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.lotes")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_LOTE_OPENED);
 			tablaStage.show();	 
 
 		});	
@@ -1719,6 +1758,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.empresas")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_EMPRESA_OPENED);
 			tablaStage.show();	 
 
 		});	
@@ -1745,6 +1785,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.semillas"));
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_SEMILLAS_OPENED);
 			tablaStage.show();	 
 		});
 	}
@@ -1796,6 +1837,7 @@ public class ConfigGUI extends AbstractGUIController{
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configPlagaMI")); //
 			tablaStage.setScene(scene);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_PLAGA_OPENED);
 			tablaStage.show();	 
 		});	
 	}
@@ -1864,6 +1906,11 @@ public class ConfigGUI extends AbstractGUIController{
 		a.getDialogPane().setPrefWidth(image.getWidth());
 		//a.setContentText(ret);
 		a.show();
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatUpdate() {
+		doUpdate();
 	}
 
 	private void doUpdate() {

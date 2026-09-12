@@ -1,15 +1,15 @@
 package com.ursulagis.desktop.chat;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
- * Structured chat intent produced by the AI (or by follow-up resume): which
- * {@link UrsulaAction} to run, optional layer target, confidence, reply text,
- * and campaign/crop/date fields used by NDVI-asignación downloads.
+ * Structured chat intent: one or more {@link UrsulaAction}s to run in order,
+ * optional layer target, confidence, reply text, and NDVI filter fields.
  */
 public class ParsedIntent {
 
-	private final UrsulaAction action;
+	private final List<UrsulaAction> actions;
 	private final String targetName;
 	private final double confidence;
 	private final String message;
@@ -19,24 +19,11 @@ public class ParsedIntent {
 	private final LocalDate endDate;
 	private final String sourceUserText;
 
-	/** Minimal constructor used when campaign/date fields are not needed. */
 	public ParsedIntent(UrsulaAction action, String targetName, double confidence, String message) {
-		this(action, targetName, confidence, message, null, null, null, null, null);
+		this(List.of(action != null ? action : UrsulaAction.UNKNOWN),
+				targetName, confidence, message, null, null, null, null, null);
 	}
 
-	/**
-	 * Full intent including filters for NDVI-by-assignment and the original user text.
-	 *
-	 * @param action         action id to execute
-	 * @param targetName     optional layer name from the model
-	 * @param confidence     0–1 confidence from the model (heuristics may ignore it)
-	 * @param message        short reply already in Ursula's voice
-	 * @param campaniaName   campaign name if provided in JSON
-	 * @param cultivoName    crop name if provided in JSON
-	 * @param beginDate      NDVI period start if provided
-	 * @param endDate        NDVI period end if provided
-	 * @param sourceUserText original user utterance (used to re-parse filters)
-	 */
 	public ParsedIntent(
 			UrsulaAction action,
 			String targetName,
@@ -47,7 +34,25 @@ public class ParsedIntent {
 			LocalDate beginDate,
 			LocalDate endDate,
 			String sourceUserText) {
-		this.action = action;
+		this(List.of(action != null ? action : UrsulaAction.UNKNOWN),
+				targetName, confidence, message, campaniaName, cultivoName, beginDate, endDate, sourceUserText);
+	}
+
+	public ParsedIntent(
+			List<UrsulaAction> actions,
+			String targetName,
+			double confidence,
+			String message,
+			String campaniaName,
+			String cultivoName,
+			LocalDate beginDate,
+			LocalDate endDate,
+			String sourceUserText) {
+		if (actions == null || actions.isEmpty()) {
+			this.actions = List.of(UrsulaAction.UNKNOWN);
+		} else {
+			this.actions = List.copyOf(actions);
+		}
 		this.targetName = targetName;
 		this.confidence = confidence;
 		this.message = message;
@@ -58,63 +63,86 @@ public class ParsedIntent {
 		this.sourceUserText = sourceUserText;
 	}
 
-	/** Action the executor should attempt. */
+	/** First (or only) action — kept for callers that expect a single action. */
 	public UrsulaAction getAction() {
-		return action;
+		return actions.get(0);
 	}
 
-	/** Layer or entity name the user/model referred to, if any. */
+	/** Ordered chain of actions to execute (size ≥ 1). */
+	public List<UrsulaAction> getActions() {
+		return actions;
+	}
+
+	/** Whether more than one action should run in sequence. */
+	public boolean isChain() {
+		return actions.size() > 1;
+	}
+
 	public String getTargetName() {
 		return targetName;
 	}
 
-	/** Model confidence in the chosen action (0–1). */
 	public double getConfidence() {
 		return confidence;
 	}
 
-	/** Chat reply to show alongside or instead of launching UI. */
 	public String getMessage() {
 		return message;
 	}
 
-	/** Campaign filter for {@link UrsulaAction#DOWNLOAD_NDVI_ASIGNACIONES}. */
 	public String getCampaniaName() {
 		return campaniaName;
 	}
 
-	/** Crop filter for assignment-based NDVI downloads. */
 	public String getCultivoName() {
 		return cultivoName;
 	}
 
-	/** Inclusive start of the NDVI imagery window when known. */
 	public LocalDate getBeginDate() {
 		return beginDate;
 	}
 
-	/** Inclusive end of the NDVI imagery window when known. */
 	public LocalDate getEndDate() {
 		return endDate;
 	}
 
-	/**
-	 * Original user text that produced this intent; preferred when re-parsing
-	 * campaign/crop/dates for NDVI or recorrida loads.
-	 */
 	public String getSourceUserText() {
 		return sourceUserText;
 	}
 
-	/**
-	 * Fills missing campaña/cultivo/date fields by re-parsing {@code userText}
-	 * (and any existing fields) through {@link AsignacionNdviRequest}.
-	 */
+	/** Copy with a single action replaced (used when executing one step of a chain). */
+	public ParsedIntent withAction(UrsulaAction action) {
+		return new ParsedIntent(
+				action,
+				targetName,
+				confidence,
+				message,
+				campaniaName,
+				cultivoName,
+				beginDate,
+				endDate,
+				sourceUserText);
+	}
+
+	/** Copy with a full action chain. */
+	public ParsedIntent withActions(List<UrsulaAction> newActions) {
+		return new ParsedIntent(
+				newActions,
+				targetName,
+				confidence,
+				message,
+				campaniaName,
+				cultivoName,
+				beginDate,
+				endDate,
+				sourceUserText);
+	}
+
 	public ParsedIntent enrichFromUserText(String userText) {
 		AsignacionNdviRequest req = AsignacionNdviRequest.parse(
 				userText, campaniaName, cultivoName, beginDate, endDate);
 		return new ParsedIntent(
-				action,
+				actions,
 				targetName,
 				confidence,
 				message,

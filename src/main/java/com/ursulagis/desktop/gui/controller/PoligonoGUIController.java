@@ -229,30 +229,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 
 		//guardar poligono
 		rootNodeP.add(new LayerAction((layer)->{
-			List<Poligono> poligonos = main.getPoligonosSeleccionados();
-			executorPool.submit(()->{			
-				poligonos.stream().forEach(p -> {
-					PoligonLayerFactory.syncPoligonoFromMeasureTool(p);
-					p.setActivo(true);
-				});
-				DAH.saveAll(poligonos);
-//				try {
-//					LayerList layers = this.getWwd().getModel().getLayers();
-//					for (Layer l : layers) {
-//						Object o = l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-//						if (l.isEnabled() && o instanceof Poligono){
-//							Poligono p = (Poligono)o;
-//							p.setActivo(true);
-//							DAH.save(p);							
-//						}
-//					}
-//
-//				}catch(Exception e) {
-//					System.err.println("Error al guardar los poligonos"); //-NLS-1$
-//					e.printStackTrace();
-//				}
-			});
-
+			chatGuardarPoligonosSeleccionados();
 			return "Guarde los poligonos"; //-NLS-1$
 		},Messages.getString("JFXMain.saveAction")));
 
@@ -451,6 +428,23 @@ public class PoligonoGUIController extends AbstractGUIController{
 		}));
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatAcortarCamino(Object layerObject) {
+		if (layerObject instanceof Camino) {
+			Camino camino = (Camino) layerObject;
+			if (camino.getLayer() != null) {
+				doAcortarCamino(camino.getLayer(), camino);
+			}
+		}
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatEditarCamino(Object layerObject) {
+		if (layerObject instanceof Camino) {
+			doEditarCamino(layerObject);
+		}
+	}
+
 	public void doAcortarCamino(Layer layer, Object layerObject) {
 		layer.setEnabled(false);
 		//mostrar un dialogo para editar el nombre del poligono
@@ -465,6 +459,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			Platform.runLater(()->{
 				insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 				this.getLayerPanel().update(this.getWwd());
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PATH_SHORTENED);
 			});					
 		});
 	}
@@ -481,6 +476,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		if(nombreOptional.isPresent()){
 			p.setNombre(nombreOptional.get());
 			this.getLayerPanel().update(this.getWwd());
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PATH_EDITED);
 		}
 	}
 
@@ -513,6 +509,14 @@ public class PoligonoGUIController extends AbstractGUIController{
 		main.recorridaGUIController.doShowRecorrida(recorrida);
 
 		this.getLayerPanel().update(this.getWwd());
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_RECORRIDA);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatEditarPoligono(Object layerObject) {
+		if (layerObject instanceof Poligono) {
+			doEditarPoligono(layerObject);
+		}
 	}
 
 	public void doEditarPoligono(Object layerObject) {
@@ -530,6 +534,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		});
 
 		pd.show();
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_EDITED);
 	
 		// if(op.isPresent()) {
 	
@@ -701,6 +706,11 @@ public class PoligonoGUIController extends AbstractGUIController{
 	}
 
 
+	/** Entry point for chat / scripting. */
+	public void chatCrearSueloFromPoligono(Poligono poli) {
+		doCrearSuelo(poli);
+	}
+
 	private void doCrearSuelo(Poligono poli) {
 		Suelo labor = new Suelo();
 		labor.setNombre(poli.getNombre());
@@ -772,10 +782,33 @@ public class PoligonoGUIController extends AbstractGUIController{
 		JFXMain.executorPool.execute(umTask);		
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatGuardarPoligonosSeleccionados() {
+		List<Poligono> poligonos = main.getPoligonosSeleccionados();
+		executorPool.submit(()->{
+			poligonos.stream().forEach(p -> {
+				PoligonLayerFactory.syncPoligonoFromMeasureTool(p);
+				p.setActivo(true);
+			});
+			DAH.saveAll(poligonos);
+		});
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatGuardarPoligono(Poligono p) {
+		doGuardarPoligono(p);
+	}
+
 	private void doGuardarPoligono(Poligono p){
 		PoligonLayerFactory.syncPoligonoFromMeasureTool(p);
 		p.setActivo(true);
 		DAH.save(p);
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_SAVED);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatGetNdviTiffFile(Object placementObject) {
+		doGetNdviTiffFile(placementObject);
 	}
 
 	/**
@@ -887,6 +920,11 @@ public class PoligonoGUIController extends AbstractGUIController{
 	/**
 	 * metodo que toma un poligono lo clona y lo agrega a los layers de main
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatClonarPoligono(Poligono p) {
+		doClonarPoligono(p);
+	}
+
 	private void doClonarPoligono(Poligono p) {
 		Poligono clon = new Poligono();
 		clon.setNombre(p.getNombre()+" clon");
@@ -896,7 +934,8 @@ public class PoligonoGUIController extends AbstractGUIController{
 		MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(clon, this.getWwd(), this.getLayerPanel());	
 		measureTool.setCreationMode(false);
 		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
-		this.getLayerPanel().update(this.getWwd());	
+		this.getLayerPanel().update(this.getWwd());
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_CLONED);
 	}
 	
 	public void doExtraerPoligonos(Labor<?> labor ) {	
@@ -930,6 +969,11 @@ public class PoligonoGUIController extends AbstractGUIController{
 	/**
 	 * Crea un poligono independiente por cada parte del multipoligono original.
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatExplotarPoligono(Poligono p) {
+		doExplotarPoligono(p);
+	}
+
 	private void doExplotarPoligono(Poligono p) {
 		List<Poligono> partes = GeometryHelper.explotarPoligono(p);
 		if(partes.isEmpty()) {
@@ -947,11 +991,17 @@ public class PoligonoGUIController extends AbstractGUIController{
 		}
 		showPoligonos(partes);
 		playSound();
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_EXPLODED);
 	}
 
 	/**
 	 * metodo que reemplaza los puntos por una version interpolada
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatSimplificarPoligono(Poligono p) {
+		doSimplificarPoligono(p);
+	}
+
 	private void doSimplificarPoligono(Poligono p) {
 		//TODO en vez de mover los puntos agregar los puntos que hagan que las lineas sean suaves
 		//que significa que una linea sea suave? 
@@ -961,6 +1011,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 		JFXMain.executorPool.submit(()->{
 			GeometryHelper.simplificarPoligono(p);
 		});
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_SIMPLIFIED);
 		//		List<? extends Position> positions = measureTool.getPositions();//p.getPositions();
 		//		List<Position> interpolated = new ArrayList<Position>();
 		//		System.out.println("poligon size "+positions.size());
@@ -1005,6 +1056,7 @@ public class PoligonoGUIController extends AbstractGUIController{
 			Geometry cirGeom = GeometryHelper.createCircle(center, radius);
 			Poligono circPol= GeometryHelper.constructPoligono(cirGeom);
 			this.showPoligonos(Arrays.asList(circPol));
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_TO_CIRCLE);
 		}
 	}
 
@@ -1037,6 +1089,11 @@ public class PoligonoGUIController extends AbstractGUIController{
 		});
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatCortarLaborPorPoligono(Labor<?> laborACortar) {
+		doCortarLaborPorPoligono(laborACortar);
+	}
+
 	public void doCortarLaborPorPoligono(Labor<?> laborACortar) {
 		List<Poligono> geometriasActivas = getEnabledPoligonos();
 
@@ -1054,9 +1111,20 @@ public class PoligonoGUIController extends AbstractGUIController{
 				viewGoTo(ret);
 				logger.fine("ProcessUniteHarvestMapsTask succeeded"); 
 				playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_CUT_BY_POLYGON);
 			});//fin del OnSucceeded
 			JFXMain.executorPool.execute(umTask);
 		});
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatUnirPoligonos() {
+		doUnirPoligonos();
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatIntersectarPoligonos() {
+		doIntersectarPoligonos();
 	}
 
 	/**
@@ -1660,6 +1728,9 @@ public class PoligonoGUIController extends AbstractGUIController{
 		}
 		if (getLayerPanel() != null && getWwd() != null) {
 			getLayerPanel().update(getWwd());
+		}
+		if (enabled > 0) {
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGONS_AREA_ACTIVATED);
 		}
 		return enabled;
 	}

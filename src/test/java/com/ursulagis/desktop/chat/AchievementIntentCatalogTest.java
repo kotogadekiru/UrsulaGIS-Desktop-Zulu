@@ -33,6 +33,26 @@ class AchievementIntentCatalogTest {
 	}
 
 	@Test
+	@DisplayName("\"importar mapa de cosecha vy1\" maps to IMPORT_COSECHA_VOYAGER not SHP")
+	void mapsImportHarvestVoyagerVy1() {
+		String query = "importar mapa de cosecha vy1";
+		assertTrue(AchievementIntentCatalog.isVoyagerHarvestQuery(query));
+		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
+
+		assertEquals(UrsulaAction.IMPORT_COSECHA_VOYAGER, match.action());
+		assertEquals(OnboardingAchievements.FIRST_HARVEST_IMPORTED, match.achievementId());
+	}
+
+	@Test
+	@DisplayName("\"importar cosecha voyager\" maps to IMPORT_COSECHA_VOYAGER")
+	void mapsImportHarvestVoyager() {
+		AchievementIntentMatch match = AchievementIntentCatalog.match("importar cosecha voyager")
+				.orElseThrow();
+
+		assertEquals(UrsulaAction.IMPORT_COSECHA_VOYAGER, match.action());
+	}
+
+	@Test
 	@DisplayName("\"como genero un mapa de margenes\" maps to GENERAR_MARGEN via logro")
 	void mapsGenerateMarginMap() {
 		AchievementIntentMatch match = AchievementIntentCatalog.match("como genero un mapa de margenes")

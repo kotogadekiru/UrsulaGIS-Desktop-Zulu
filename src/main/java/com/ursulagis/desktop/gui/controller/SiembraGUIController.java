@@ -152,6 +152,11 @@ public class SiembraGUIController {
 	//	}
 
 
+	/** Entry point for chat / scripting. */
+	public void chatEditSiembra(SiembraLabor cConfigured) {
+		doEditSiembra(cConfigured);
+	}
+
 	private void doEditSiembra(SiembraLabor cConfigured ) {
 		Optional<SiembraLabor> cosechaConfigured=SiembraConfigDialogController.config(cConfigured);
 		if(cosechaConfigured.isPresent()){
@@ -171,6 +176,11 @@ public class SiembraGUIController {
 		}
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatUnirSiembras(SiembraLabor siembraLabor) {
+		doUnirSiembras(siembraLabor);
+	}
+
 	// junta 2 o mas cosechas en una 
 	private void doUnirSiembras(SiembraLabor siembraLabor) {
 		List<SiembraLabor> siemrbasAUnir = new ArrayList<SiembraLabor>();
@@ -205,6 +215,11 @@ public class SiembraGUIController {
 		JFXMain.executorPool.execute(umTask);
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatGrillarSiembras(SiembraLabor siembraAGrillar) {
+		doGrillarSiembras(siembraAGrillar);
+	}
+
 	private void doGrillarSiembras(SiembraLabor siembraAGrillar) {
 		List<SiembraLabor> siembrasAUnir = new ArrayList<SiembraLabor>();
 		if(siembraAGrillar == null){
@@ -382,6 +397,11 @@ public class SiembraGUIController {
 	 * productos es la semilla; los otros dos van a Fert L y Fert C. Luego convierte
 	 * a shapefile y abre por el camino normal de importacion.
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatImportSiembraSrm() {
+		doImportSiembraSrm();
+	}
+
 	private void doImportSiembraSrm() {
 		List<File> files = FileHelper.chooseFiles("SRM", "*.srm");
 		if(files == null) {
@@ -401,6 +421,7 @@ public class SiembraGUIController {
 					logger.warning("no pude convertir "+srm+" a shapefile");
 					return;
 				}
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_SRM_IMPORTED);
 				doOpenSiembraMap(Collections.singletonList(shapeFile), null);
 			});
 			task.setOnFailed(handler -> {
@@ -506,6 +527,11 @@ public class SiembraGUIController {
 		return availableColums;
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatExportPrescripcionSiembra(SiembraLabor laborToExport) {
+		doExportPrescripcionSiembra(laborToExport);
+	}
+
 	private void doExportPrescripcionSiembra(SiembraLabor laborToExport) {
 		String unidad = this.selectUnidadSiembra();
 		
@@ -533,6 +559,11 @@ public class SiembraGUIController {
 	 * Exporta la prescripcion al formato .srm que leen los monitores TIM, sin pasar por ProMAP.
 	 * Escribe miles de semillas por hectarea (el entero del archivo, sin escalar).
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatExportPrescripcionSiembraSrm(SiembraLabor laborToExport) {
+		doExportPrescripcionSiembraSrm(laborToExport);
+	}
+
 	private void doExportPrescripcionSiembraSrm(SiembraLabor laborToExport) {
 		File srmFile = FileHelper.getNewFile(laborToExport.getNombre(), "srm");
 		if(srmFile == null) {
@@ -551,7 +582,7 @@ public class SiembraGUIController {
 				return;//la task ya aviso el motivo
 			}
 			playSound();
-			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_EXPORTED);
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_SRM_EXPORTED);
 			Alert a = new Alert(Alert.AlertType.INFORMATION);
 			a.initOwner(JFXMain.stage);
 			a.setHeaderText(Messages.getString("JFXMain.exportarSiembraSrmAction"));

@@ -264,6 +264,20 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		stage.show();
 	}	
 
+	/** Entry point for chat / scripting. */
+	public void chatRemoveLabor(Labor<?> labor) {
+		if (labor != null && labor.getLayer() != null) {
+			doRemoveLayer(labor.getLayer());
+		}
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatShowTransparencia(Labor<?> labor) {
+		if (labor != null && labor.getLayer() != null) {
+			showTransparenciaSlider(labor.getLayer());
+		}
+	}
+
 	private String doRemoveLayer(Layer layer) {
 		List<Object> toPersist = new ArrayList<>();
 		removeLayerFromMap(layer, toPersist);
@@ -371,6 +385,11 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		return defaultValue;
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatOutliersLabor(Labor<LaborItem> labor) {
+		doOutliersLabor(labor);
+	}
+
 	private void doOutliersLabor(Labor<LaborItem> labor) {
 		Double anchoFiltroOuliers=50.0;
 		Double minValue=Double.MIN_VALUE;
@@ -430,6 +449,11 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		executorPool.execute(uMmTask);
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatAccentuateMeanLabor(Labor<LaborItem> labor) {
+		doAccentuateMeanLabor(labor);
+	}
+
 	private void doAccentuateMeanLabor(Labor<LaborItem> labor) {
 		List<Map<String,Object>> data = new ArrayList<>();
 		data.add(createMap(Messages.getString("GenericLaborGUIController.AccentuateMeanGain"), 2.0));
@@ -462,6 +486,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			playSound();
 			viewGoTo(ret);
 			logger.fine("accentuated mean on labor");
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_MEAN_ACCENTUATED);
 		});
 		executorPool.execute(task);
 	}
@@ -483,6 +508,11 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			logger.fine("ProcessMarginTask succeeded"); 
 		});
 		executorPool.execute(uMmTask);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatGuardarLabor(Labor<?> labor) {
+		doGuardarLabor(labor);
 	}
 
 	private void doGuardarLabor(Labor<?> labor) {
@@ -599,6 +629,11 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		executorPool.execute(task);
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatShowHistoLabor(Labor<?> cosechaLabor) {
+		showHistoLabor(cosechaLabor);
+	}
+
 	private void showHistoLabor(Labor<?> cosechaLabor) {	
 		Platform.runLater(()->{
 			CosechaHistoChart histoChart = new CosechaHistoChart(cosechaLabor);
@@ -610,6 +645,7 @@ public class GenericLaborGUIController extends AbstractGUIController {
 			histoStage.setScene(scene);
 			histoStage.initOwner(JFXMain.stage);
 			histoStage.show();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_HISTOGRAM_VIEWED);
 		});
 	}
 
@@ -632,6 +668,11 @@ public class GenericLaborGUIController extends AbstractGUIController {
 	 * metodo que toma una labor y muestra una tabla con los campos de la labor
 	 * @param labor
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatShowDataTable(Labor<?> labor) {
+		doShowDataTable(labor);
+	}
+
 	private void doShowDataTable(Labor<?> labor) {		   
 		SmartTableView.showLaborTable(labor);
 	}
@@ -705,6 +746,11 @@ public class GenericLaborGUIController extends AbstractGUIController {
 		} else {
 			Platform.runLater(work);
 		}
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatGenerarReportePDF(Labor<?> labor) {
+		doGenerarReportePDF(labor);
 	}
 
 	/**

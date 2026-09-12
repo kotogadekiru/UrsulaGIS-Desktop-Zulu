@@ -460,6 +460,11 @@ public class CosechaGUIController extends AbstractGUIController {
 		});
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatShowCosechaElevationChart(Labor<?> cosechaLabor) {
+		showAmountVsElevacionChart(cosechaLabor);
+	}
+
 	public void showAmountVsElevacionChart(Labor<?> cosechaLabor) {
 		TextInputDialog anchoDialog = new TextInputDialog("20"); 
 		anchoDialog.setTitle(Messages.getString("JFXMain.heightVsAmountDialogTitle")); 
@@ -505,6 +510,7 @@ public class CosechaGUIController extends AbstractGUIController {
 				logger.fine("termine de crear el grafico rinde vs altura"); 
 				histoStage.initOwner(JFXMain.stage);
 				histoStage.show();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_ELEVATION_CHART_VIEWED);
 				logger.fine("histoChart.show();"); 
 			}else{
 				Alert error = new Alert(AlertType.ERROR);
@@ -516,6 +522,11 @@ public class CosechaGUIController extends AbstractGUIController {
 		executorPool.execute(pfMapTask);
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatSumarCosechas() {
+		doSumarCosechas();
+	}
+
 	private void doSumarCosechas() {
 		List<CosechaLabor> cosechasASumar = main.getCosechasSeleccionadas();//si no hago esto me da un concurrent modification exception al modificar layers en paralelo
 		SumarCosechasMapTask umTask = new SumarCosechasMapTask(cosechasASumar);
@@ -535,6 +546,11 @@ public class CosechaGUIController extends AbstractGUIController {
 		JFXMain.executorPool.execute(umTask);
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatUnirCosechas(CosechaLabor cosechaLabor) {
+		doUnirCosechas(cosechaLabor);
+	}
+
 	// junta 2 o mas cosechas en una 
 	private void doUnirCosechas(CosechaLabor cosechaLabor) {
 		List<CosechaLabor> cosechasAUnir = new ArrayList<CosechaLabor>();
@@ -575,8 +591,14 @@ public class CosechaGUIController extends AbstractGUIController {
 
 			logger.fine("ProcessUniteHarvestMapsTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_JOINED);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatEditCosecha(CosechaLabor cConfigured) {
+		doEditCosecha(cConfigured);
 	}
 
 	private void doEditCosecha(CosechaLabor cConfigured ) {
@@ -600,9 +622,15 @@ public class CosechaGUIController extends AbstractGUIController {
 				main.wwjPanel.repaint();
 				logger.fine("EditHarvestMapTask succeeded"); 
 				playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_EDITED);
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
 		}
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatGrillarCosechas(CosechaLabor cosechaAGrillar) {
+		doGrillarCosechas(cosechaAGrillar);
 	}
 
 	private void doGrillarCosechas(CosechaLabor cosechaAGrillar) {
@@ -719,6 +747,11 @@ public class CosechaGUIController extends AbstractGUIController {
 	 * permitir configurar superficie minima relevante
 	 * @param l una Labor
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatGenerarRecorridaDirigida(Labor<?> l) {
+		doGenerarRecorridaDirigida(l);
+	}
+
 	private void doGenerarRecorridaDirigida(Labor<?> l) {
 		double superficieMinimaAMuestrear=0;
 		double densidadDeMuestrasDeseada=0;
@@ -756,6 +789,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			umTask.uninstallProgressBar();
 			main.viewGoTo(ret);
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_DIRIGIDA_GENERATED);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(umTask);		
 	}
@@ -766,6 +800,11 @@ public class CosechaGUIController extends AbstractGUIController {
 	 * que producto aplico y en que densidad por hectarea
 	 * @param cosecha
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatRecomendFertNFromHarvest(CosechaLabor cosecha) {
+		doRecomendFertNFromHarvest(cosecha);
+	}
+
 	private void doRecomendFertNFromHarvest(CosechaLabor cosecha) {
 		List<Suelo> suelosEnabled = main.getSuelosSeleccionados();
 		List<FertilizacionLabor> fertEnabled = main.getFertilizacionesSeleccionadas();
@@ -839,6 +878,11 @@ public class CosechaGUIController extends AbstractGUIController {
 	/**
 	 * genera un layer de fertilizacion K a partir de una cosecha (misma lógica que N)
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatRecomendFertKFromHarvest(CosechaLabor cosecha) {
+		doRecomendFertKFromHarvest(cosecha);
+	}
+
 	private void doRecomendFertKFromHarvest(CosechaLabor cosecha) {
 		List<Suelo> suelosEnabled = main.getSuelosSeleccionados();
 		List<FertilizacionLabor> fertEnabled = main.getFertilizacionesSeleccionadas();
@@ -903,6 +947,7 @@ public class CosechaGUIController extends AbstractGUIController {
 			viewGoTo(ret);
 			logger.fine("RecomendFertKFromHarvestMapTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_K_FERTILIZATION_RECOMMENDED);
 		});
 		JFXMain.executorPool.execute(umTask);
 	}
@@ -910,6 +955,11 @@ public class CosechaGUIController extends AbstractGUIController {
 	/**
 	 * genera un layer de fertilizacion S a partir de una cosecha (misma lógica que N)
 	 */
+	/** Entry point for chat / scripting. */
+	public void chatRecomendFertSFromHarvest(CosechaLabor cosecha) {
+		doRecomendFertSFromHarvest(cosecha);
+	}
+
 	private void doRecomendFertSFromHarvest(CosechaLabor cosecha) {
 		List<Suelo> suelosEnabled = main.getSuelosSeleccionados();
 		List<FertilizacionLabor> fertEnabled = main.getFertilizacionesSeleccionadas();
@@ -974,10 +1024,16 @@ public class CosechaGUIController extends AbstractGUIController {
 			viewGoTo(ret);
 			logger.fine("RecomendFertSFromHarvestMapTask succeeded"); 
 			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_S_FERTILIZATION_RECOMMENDED);
 		});
 		JFXMain.executorPool.execute(umTask);
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatRecomendFertPAbsFromHarvest(CosechaLabor cosecha) {
+		doRecomendFertPAbsFromHarvest(cosecha);
+	}
+
 	private void doRecomendFertPAbsFromHarvest(CosechaLabor cosecha) {
 
 		List<Suelo> suelosEnabled = main.getSuelosSeleccionados();
@@ -1061,6 +1117,11 @@ public class CosechaGUIController extends AbstractGUIController {
 		JFXMain.executorPool.execute(umTask);
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatRecomendFertPRepFromHarvest(CosechaLabor cosecha) {
+		doRecomendFertPRepFromHarvest(cosecha);
+	}
+
 	//generar un layer de fertilizacion a partir de una cosecha
 	//el proceso consiste el levantar las geometrias de la cosecha y preguntarle la usuario
 	//que producto aplico y en que densidad por hectarea
@@ -1128,6 +1189,11 @@ public class CosechaGUIController extends AbstractGUIController {
 		JFXMain.executorPool.execute(umTask);
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatCrearSueloFromHarvest(CosechaLabor cosecha) {
+		doCrearSuelo(cosecha);
+	}
+
 	/**
 	 * toma una cosecha, pregunta los resultados de los analisis para las clases de la cosecha
 	 * y crea un mapa de suelo teniendo la informacion ingresada y la categoria a la que pertenece cada poligono
@@ -1169,6 +1235,11 @@ public class CosechaGUIController extends AbstractGUIController {
 
 
 
+	/** Entry point for chat / scripting. */
+	public void chatCrearFertilizacionFromHarvest(CosechaLabor cosecha) {
+		doCrearFertilizacion(cosecha);
+	}
+
 	/**
 	 * toma una cosecha, pregunta las densidades deseadas para cada ambiente
 	 * y crea una siembra teniendo la informacion ingresada y la categoria a la que pertenece cada poligono
@@ -1199,6 +1270,11 @@ public class CosechaGUIController extends AbstractGUIController {
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_FROM_HARVEST);
 		});//fin del OnSucceeded
 		JFXMain.executorPool.execute(csTask);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatCrearPulverizacionFromHarvest(CosechaLabor cosecha) {
+		doCrearPulverizacion(cosecha);
 	}
 
 	/**
@@ -1235,6 +1311,11 @@ public class CosechaGUIController extends AbstractGUIController {
 		JFXMain.executorPool.execute(csTask);
 	}
 
+	/** Entry point for chat / scripting. */
+	public void chatExportHarvestDePuntos(CosechaLabor laborToExport) {
+		doExportHarvestDePuntos(laborToExport);
+	}
+
 	private void doExportHarvestDePuntos(CosechaLabor laborToExport) {
 		String nombre = laborToExport.getNombre();
 		File shapeFile =  FileHelper.getNewShapeFile(nombre);
@@ -1252,6 +1333,11 @@ public class CosechaGUIController extends AbstractGUIController {
 //		String nombre = laborToExport.getNombre();
 //		File shapeFile = FileHelper.getNewShapeFile(nombre);
 //		executorPool.execute(()->ExportarCosechaDePuntosTask.run(laborToExport, shapeFile));
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatCrearCosechaDesdeCosecha(CosechaLabor cosecha) {
+		doCrearCosechaDesdeCosecha(cosecha);
 	}
 
 	/**

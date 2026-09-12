@@ -111,6 +111,11 @@ public class SueloGUIController extends AbstractGUIController{
 		JFXMain.executorPool.execute(balanceNutrientesTask);
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatEditSuelo(Suelo cConfigured) {
+		doEditSuelo(cConfigured);
+	}
+
 	private void doEditSuelo(Suelo cConfigured) {			
 		Optional<Suelo> cosechaConfigured= SueloConfigDialogController.config(cConfigured);
 		if(cosechaConfigured.isPresent()){
@@ -129,6 +134,11 @@ public class SueloGUIController extends AbstractGUIController{
 		}
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatEstimarPotencialRendimiento(Suelo suelo) {
+		doEstimarPotencialRendimiento(suelo);
+	}
+
 	//TODO tomar un suelo y una configuracion de cosecha 
 	//y crear un mapa de potencial de rendimiento segun el agua en el perfil
 	private void doEstimarPotencialRendimiento(Suelo suelo) {

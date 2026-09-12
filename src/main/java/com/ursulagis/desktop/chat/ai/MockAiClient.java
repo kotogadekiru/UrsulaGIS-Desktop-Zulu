@@ -1,5 +1,6 @@
 package com.ursulagis.desktop.chat.ai;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -7,8 +8,10 @@ import java.util.regex.Pattern;
 
 import com.ursulagis.desktop.chat.AchievementIntentCatalog;
 import com.ursulagis.desktop.chat.AchievementIntentMatch;
+import com.ursulagis.desktop.chat.ActionChainParser;
 import com.ursulagis.desktop.chat.ChatGuidanceService;
 import com.ursulagis.desktop.chat.MapLayerContext;
+import com.ursulagis.desktop.chat.UrsulaAction;
 import com.ursulagis.desktop.chat.UrsulaPersonality;
 
 /**
@@ -91,16 +94,22 @@ public class MockAiClient implements AiClient {
 					"Con gusto te cuento todo lo que puedo hacer por vos hoy.");
 		}
 
+		if (AchievementIntentCatalog.isVoyagerHarvestQuery(userPrompt)) {
+			return intentJson("IMPORT_COSECHA_VOYAGER", target, 0.95,
+					"¡Dale! Abro la importación de cosecha desde Voyager (.vy1).");
+		}
+
+		List<UrsulaAction> chain = ActionChainParser.parse(userPrompt);
+		if (chain.size() > 1 && chain.get(0) != UrsulaAction.UNKNOWN) {
+			return intentJsonChain(chain, target, 0.95,
+					"¡Dale! Encadeno " + chain.size() + " pasos.");
+		}
+
 		Optional<AchievementIntentMatch> achievementMatch = AchievementIntentCatalog.match(userPrompt);
 		if (achievementMatch.isPresent()) {
 			AchievementIntentMatch match = achievementMatch.get();
 			double confidence = Math.min(0.98, 0.75 + (match.score() / 40.0));
 			return intentJson(match.action().name(), target, confidence, match.suggestedReply());
-		}
-
-		if (containsAny(text, "voyager")) {
-			return intentJson("IMPORT_COSECHA_VOYAGER", target, 0.95,
-					"Abriendo importación desde Voyager.");
 		}
 		if (containsAny(text, "importar ndvi", "abrir ndvi", "import ndvi")) {
 			return intentJson("IMPORT_NDVI", target, 0.9,
@@ -197,6 +206,26 @@ public class MockAiClient implements AiClient {
 	static String intentJson(String action, String targetName, double confidence, String message) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("{\"action\":\"").append(escape(action)).append("\"");
+		if (targetName != null && !targetName.isBlank()) {
+			sb.append(",\"targetName\":\"").append(escape(targetName)).append("\"");
+		}
+		sb.append(",\"confidence\":").append(confidence);
+		sb.append(",\"message\":\"").append(escape(message)).append("\"}");
+		return sb.toString();
+	}
+
+	/** Intent JSON with an ordered {@code actions} array for multi-step requests. */
+	static String intentJsonChain(List<UrsulaAction> actions, String targetName, double confidence, String message) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("{\"action\":\"").append(escape(actions.get(0).name())).append("\"");
+		sb.append(",\"actions\":[");
+		for (int i = 0; i < actions.size(); i++) {
+			if (i > 0) {
+				sb.append(',');
+			}
+			sb.append('"').append(escape(actions.get(i).name())).append('"');
+		}
+		sb.append(']');
 		if (targetName != null && !targetName.isBlank()) {
 			sb.append(",\"targetName\":\"").append(escape(targetName)).append("\"");
 		}

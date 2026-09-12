@@ -45,6 +45,16 @@ class IntentParserTest {
 	}
 
 	@Test
+	@DisplayName("\"importar mapa de cosecha vy1\" maps to IMPORT_COSECHA_VOYAGER")
+	void mapsImportCosechaVy1ToVoyager() {
+		IntentParser parser = new IntentParser(new MockAiClient(), MapLayerContext.empty());
+
+		ParsedIntent intent = parser.parse("importar mapa de cosecha vy1");
+
+		assertEquals(UrsulaAction.IMPORT_COSECHA_VOYAGER, intent.getAction());
+	}
+
+	@Test
 	@DisplayName("parses JSON messages that contain escaped quotes")
 	void parsesMessageWithEscapedQuotes() {
 		String json = "{\"action\":\"UNKNOWN\",\"confidence\":0.3,"

@@ -77,6 +77,11 @@ public class MargenGUIController extends AbstractGUIController {
 //		}));
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatEditMargin(Margen margen) {
+		doEditMargin(margen);
+	}
+
 	private void doEditMargin(Margen margen) {		
 		logger.fine("editingMargins"); 
 		Optional<Margen> margenConfigured= MargenConfigDialogController.config(margen);
@@ -117,6 +122,11 @@ public class MargenGUIController extends AbstractGUIController {
 		executorPool.execute(uMmTask);
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatSumarMargenes() {
+		doSumarMargenes(null);
+	}
+
 	private String doSumarMargenes(Layer l) {
 		List<Margen> margenes = main.getMargenesSeleccionados();
 		logger.fine("editingMargins"); 

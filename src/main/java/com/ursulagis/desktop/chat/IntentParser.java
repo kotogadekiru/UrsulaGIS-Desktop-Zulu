@@ -2,6 +2,8 @@ package com.ursulagis.desktop.chat;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,15 +84,19 @@ public class IntentParser {
 	public String buildSystemPrompt() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(UrsulaPersonality.systemPromptPreamble()).append('\n');
-		sb.append("Map user requests to one action id.\n");
-		sb.append("Respond ONLY with JSON: {\"action\":\"ACTION_ID\",\"targetName\":\"optional\",");
+		sb.append("Map user requests to one or more action ids.\n");
+		sb.append("Respond ONLY with JSON: {\"action\":\"ACTION_ID\",\"actions\":[\"ACTION_ID\"],\"targetName\":\"optional\",");
 		sb.append("\"campaniaName\":\"optional\",\"cultivoName\":\"optional\",");
 		sb.append("\"beginDate\":\"yyyy-MM-dd optional\",\"endDate\":\"yyyy-MM-dd optional\",");
 		sb.append("\"confidence\":0.0-1.0,\"message\":\"short reply in Ursula's voice\"}\n");
+		sb.append("When the user asks for several steps in one message (e.g. import and then share), ");
+		sb.append("fill \"actions\" with the ordered list of action ids; also set \"action\" to the first one.\n");
 		sb.append("For DOWNLOAD_NDVI_ASIGNACIONES fill campaniaName/cultivoName/beginDate/endDate when the user provides them.\n");
 		sb.append("CRITICAL: recorrida/recorridas means scouting routes, NOT satellite NDVI. ");
 		sb.append("If the user says recorrida(s), choose LOAD_RECORRIDAS (saved routes) or IMPORT_RECORRIDA (shapefile) — ");
 		sb.append("never DOWNLOAD_NDVI_ASIGNACIONES / DOWNLOAD_NDVI unless they also say NDVI or imágenes satelitales.\n");
+		sb.append("CRITICAL: if the user mentions Voyager, .vy1 or vy1 for harvest/cosecha, choose IMPORT_COSECHA_VOYAGER ");
+		sb.append("(not IMPORT_COSECHA, which is shapefile only).\n");
 		sb.append("Use the achievement hints below to choose the correct action. ");
 		sb.append("Converting polygons on the map is not the same as importing a shapefile.\n");
 		sb.append("If no action applies, respond with action UNKNOWN.\n");
@@ -108,6 +114,9 @@ public class IntentParser {
 		return sb.toString();
 	}
 
+	private static final Pattern ACTIONS_ARRAY_PATTERN = Pattern.compile(
+			"\"actions\"\\s*:\\s*\\[([^\\]]*)]");
+
 	/**
 	 * Best-effort parse of the model's JSON (regex field extraction).
 	 * Invalid/empty input becomes {@link UrsulaAction#UNKNOWN}.
@@ -117,6 +126,7 @@ public class IntentParser {
 			return new ParsedIntent(UrsulaAction.UNKNOWN, null, 0, "Empty AI response.");
 		}
 		String actionId = extract(ACTION_PATTERN, json);
+		List<UrsulaAction> actions = extractActionsArray(json);
 		String target = extract(TARGET_PATTERN, json);
 		String campania = extract(CAMPANIA_PATTERN, json);
 		String cultivo = extract(CULTIVO_PATTERN, json);
@@ -135,10 +145,36 @@ public class IntentParser {
 		}
 
 		UrsulaAction action = UrsulaAction.fromId(actionId).orElse(UrsulaAction.UNKNOWN);
-		if (message == null || message.isBlank()) {
-			message = action.getDescription();
+		if (actions.isEmpty()) {
+			actions = List.of(action);
+		} else if (action != UrsulaAction.UNKNOWN && actions.get(0) != action) {
+			List<UrsulaAction> merged = new ArrayList<>();
+			merged.add(action);
+			for (UrsulaAction a : actions) {
+				if (a != action) {
+					merged.add(a);
+				}
+			}
+			actions = merged;
 		}
-		return new ParsedIntent(action, target, confidence, message, campania, cultivo, begin, end, null);
+		if (message == null || message.isBlank()) {
+			message = actions.get(0).getDescription();
+		}
+		return new ParsedIntent(actions, target, confidence, message, campania, cultivo, begin, end, null);
+	}
+
+	/** Parses optional {@code "actions":["A","B"]} from the model JSON. */
+	private static List<UrsulaAction> extractActionsArray(String json) {
+		Matcher m = ACTIONS_ARRAY_PATTERN.matcher(json);
+		if (!m.find()) {
+			return List.of();
+		}
+		List<UrsulaAction> out = new ArrayList<>();
+		Matcher ids = Pattern.compile("\"([A-Z0-9_]+)\"").matcher(m.group(1));
+		while (ids.find()) {
+			UrsulaAction.fromId(ids.group(1)).ifPresent(out::add);
+		}
+		return out;
 	}
 
 	/** Parses an ISO date string; returns null on blank or invalid input. */

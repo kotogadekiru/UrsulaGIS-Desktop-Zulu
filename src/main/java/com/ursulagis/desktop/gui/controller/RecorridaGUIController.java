@@ -153,6 +153,28 @@ public class RecorridaGUIController extends AbstractGUIController {
 	}
 
 
+	/** Entry point for chat / scripting. */
+	public void chatInterpolarRecorrida(Recorrida recorrida) {
+		Layer layer = findLayerForRecorrida(recorrida);
+		doInterpolarRecorrida(recorrida, layer);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatSaveRecorrida(Recorrida recorrida) {
+		DAH.save(recorrida);
+		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_RECORRIDA_SAVED_LOCAL);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatGoToRecorrida(Recorrida recorrida) {
+		doGoToRecorrida(recorrida);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatEditarRecorridaTabla(Recorrida recorrida) {
+		doShowRecorridaTable(List.of(recorrida));
+	}
+
 	/**
 	 * metodo que toma las muestras de una recorrida y interpola los puntos en 
 	 * una grilla contenida dentro de un poligono seleccionado
@@ -385,6 +407,7 @@ public class RecorridaGUIController extends AbstractGUIController {
 				//getWwd().redraw();
 			});
 
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_RECORRIDAS_TABLE_OPENED);
 			tablaStage.showAndWait();
 	//	});	
 

@@ -118,6 +118,11 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatEditFertilizacion(FertilizacionLabor cConfigured) {
+		doEditFertilizacion(cConfigured);
+	}
+
 	private void doEditFertilizacion(FertilizacionLabor cConfigured ) {
 		Optional<FertilizacionLabor> cosechaConfigured=FertilizacionConfigDialogController.config(cConfigured);
 		if(cosechaConfigured.isPresent()){
@@ -131,11 +136,17 @@ public class FertilizacionGUIController extends AbstractGUIController {
 				//this.wwjPanel.repaint();//null pointer
 				logger.fine("doEditFertilización succeeded"); 
 				playSound();
+				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_FERTILIZATION_EDITED);
 			});//fin del OnSucceeded						
 			JFXMain.executorPool.execute(umTask);
 		}
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatPartirFertilizacion(FertilizacionLabor fAPartir) {
+		doPartirFertilizacion(fAPartir);
+	}
+
 	//TODO tomar una fertilizacion y partirla en 2 preguntando que % asignar a la primera
 	private void doPartirFertilizacion(FertilizacionLabor fAPartir ) {
 	//	Optional<FertilizacionLabor> cosechaConfigured=FertilizacionConfigDialogController.config(fConfigured);
@@ -242,6 +253,11 @@ public class FertilizacionGUIController extends AbstractGUIController {
 		
 	}
 	
+	/** Entry point for chat / scripting. */
+	public void chatGenerarSiembraDesdeFertilizacion(FertilizacionLabor fertilizacionLabor) {
+		doGenerarSiembraDesdeFertilizacion(fertilizacionLabor);
+	}
+
 	private void doGenerarSiembraDesdeFertilizacion(FertilizacionLabor fertilizacionLabor) {
 		SiembraLabor labor = new SiembraLabor();
 		LaborLayer layer = new LaborLayer();
@@ -435,6 +451,11 @@ public class FertilizacionGUIController extends AbstractGUIController {
 			playSound();
 		});
 		JFXMain.executorPool.execute(umTask);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatUnirFertilizaciones(FertilizacionLabor fertilizacionLabor) {
+		doUnirFertilizaciones(fertilizacionLabor);
 	}
 
 	private void doUnirFertilizaciones(FertilizacionLabor fertilizacionLabor) {
