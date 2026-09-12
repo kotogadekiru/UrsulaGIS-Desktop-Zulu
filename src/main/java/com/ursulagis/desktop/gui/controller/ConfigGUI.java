@@ -19,7 +19,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import java.util.stream.Collectors;
 
 import org.controlsfx.control.HyperlinkLabel;
@@ -66,7 +70,6 @@ import com.ursulagis.desktop.gui.MultiLayerHistoChart;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
 import com.ursulagis.desktop.gui.snake.SnakesLayer;
 import com.ursulagis.desktop.gui.utils.DoubleTableColumn;
-import com.ursulagis.desktop.gui.utils.LoggingOutputStream;
 import com.ursulagis.desktop.gui.utils.OpenBrowserUrl;
 import com.ursulagis.desktop.gui.utils.SmartTableView;
 import javafx.application.Platform;
@@ -495,7 +498,7 @@ public class ConfigGUI extends AbstractGUIController{
 	}
 
 	/**
-	 * open an alert with te console log dump into a text area
+	 * open an alert with the console / JUL log dump into a text area
 	 */
 	private void doShowLog() {
 		Alert alert = new Alert(AlertType.INFORMATION);
@@ -505,73 +508,105 @@ public class ConfigGUI extends AbstractGUIController{
 		TextArea textArea = new TextArea();
 		textArea.setEditable(false);
 		textArea.setWrapText(true);
-		
-		// Store original streams
+
 		PrintStream originalOut = System.out;
 		PrintStream originalErr = System.err;
-		
-		// Create custom output streams that capture to textArea
+
 		PrintStream customOut = new PrintStream(new OutputStream() {
-			private StringBuilder buffer = new StringBuilder();
-			
+			private final StringBuilder buffer = new StringBuilder();
+
 			@Override
-			public void write(int b) throws IOException {
+			public void write(int b) {
 				char c = (char) b;
 				if (c == '\n') {
 					String line = buffer.toString();
-					buffer = new StringBuilder();
+					buffer.setLength(0);
 					Platform.runLater(() -> {
 						textArea.appendText(line + "\n");
 						textArea.setScrollTop(Double.MAX_VALUE);
 					});
-					// Also write to original stream
 					originalOut.println(line);
 				} else if (c != '\r') {
 					buffer.append(c);
 				}
 			}
-		});
-		
+		}, true);
+
 		PrintStream customErr = new PrintStream(new OutputStream() {
-			private StringBuilder buffer = new StringBuilder();
-			
+			private final StringBuilder buffer = new StringBuilder();
+
 			@Override
-			public void write(int b) throws IOException {
+			public void write(int b) {
 				char c = (char) b;
 				if (c == '\n') {
 					String line = buffer.toString();
-					buffer = new StringBuilder();
+					buffer.setLength(0);
 					Platform.runLater(() -> {
 						textArea.appendText(line + "\n");
 						textArea.setScrollTop(Double.MAX_VALUE);
 					});
-					// Also write to original stream
 					originalErr.println(line);
 				} else if (c != '\r') {
 					buffer.append(c);
 				}
 			}
-		});
-		
-		// Redirect System.out and System.err to our custom streams
+		}, true);
+
+		// JUL ConsoleHandler keeps the System.err reference from JVM startup,
+		// so System.setErr alone does not capture Logger output. Attach a UI handler.
+		Handler uiLogHandler = new Handler() {
+			private final SimpleFormatter formatter = new SimpleFormatter();
+
+			@Override
+			public synchronized void publish(LogRecord record) {
+				if (!isLoggable(record)) {
+					return;
+				}
+				String msg = formatter.format(record);
+				Platform.runLater(() -> {
+					textArea.appendText(msg);
+					textArea.setScrollTop(Double.MAX_VALUE);
+				});
+			}
+
+			@Override
+			public void flush() {
+				// no-op
+			}
+
+			@Override
+			public void close() {
+				// no-op
+			}
+		};
+		uiLogHandler.setLevel(Level.ALL);
+
+		Logger rootLogger = Logger.getLogger("");
+		// On some machines the root logger stays at INFO/WARNING, so FINE (and
+		// sometimes even INFO) never reaches the UI handler. Force FINE while open.
+		Level previousRootLevel = rootLogger.getLevel();
+		rootLogger.setLevel(Level.FINE);
+		rootLogger.addHandler(uiLogHandler);
+
 		System.setOut(customOut);
 		System.setErr(customErr);
-		
-		// Add some test messages
-		logger.fine("Log viewer opened - capturing console output");
-		logger.warning("This error message should appear in the log");
-		
-		// Set up the dialog
+
+		logger.info("Log viewer opened - capturing console and Logger output");
+		logger.fine("Log viewer level set to FINE");
+		logger.warning("This warning should appear in the log viewer");
+
 		alert.getDialogPane().setContent(textArea);
 		alert.getDialogPane().setPrefSize(800, 600);
 		alert.setResizable(true);
-		
-		// Restore original streams when dialog is closed
-		alert.setOnCloseRequest(e -> {
+
+		alert.setOnHidden(e -> {
+			rootLogger.removeHandler(uiLogHandler);
+			uiLogHandler.close();
+			rootLogger.setLevel(previousRootLevel);
 			System.setOut(originalOut);
 			System.setErr(originalErr);
 		});
-		
+
 		alert.initModality(Modality.NONE);
 		alert.show();
 	}
