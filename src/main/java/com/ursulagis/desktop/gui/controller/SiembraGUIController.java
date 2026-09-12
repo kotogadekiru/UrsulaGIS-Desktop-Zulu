@@ -37,7 +37,9 @@ import com.ursulagis.desktop.dao.utils.PropertyHelper;
 import com.ursulagis.desktop.gui.utils.NumberInputDialog;
 import com.ursulagis.desktop.tasks.CompartirSiembraLaborTask;
 import com.ursulagis.desktop.tasks.crear.ConvertirASiembraTask;
+import com.ursulagis.desktop.tasks.importar.ImportarSiembraSrmTask;
 import com.ursulagis.desktop.tasks.importar.ProcessSiembraMapTask;
+import com.ursulagis.desktop.tasks.procesar.ExportarPrescripcionSiembraSrmTask;
 import com.ursulagis.desktop.tasks.procesar.ExportarPrescripcionSiembraTask;
 import com.ursulagis.desktop.tasks.procesar.GrillarSiembrasMapTask;
 import com.ursulagis.desktop.tasks.procesar.SiembraFertTask;
@@ -65,6 +67,11 @@ public class SiembraGUIController {
 			this.doOpenSiembraMap(null);
 			return "opened";
 		}, Messages.getString("JFXMain.importar")));
+
+		rootNodeP.add(new LayerAction((layer) -> {
+			this.doImportSiembraSrm();
+			return "srm imported";
+		}, Messages.getString("JFXMain.importarSiembraSrmAction")));
 
 		rootNodeP.add(new LayerAction(Messages.getString("JFXMain.unir"), (layer) -> {
 			this.doUnirSiembras(null);
@@ -104,7 +111,15 @@ public class SiembraGUIController {
 		 */
 		siembrasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.exportarSiembraAction"),(layer)->{
 			doExportPrescripcionSiembra((SiembraLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
-			return "prescripcion Exportada" + layer.getName(); 
+			return "prescripcion Exportada" + layer.getName();
+		}));
+
+		/**
+		 * Accion permite exportar la prescripcion de siembra al formato .srm de los monitores TIM
+		 */
+		siembrasP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.exportarSiembraSrmAction"),(layer)->{
+			doExportPrescripcionSiembraSrm((SiembraLabor) layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR));
+			return "prescripcion srm Exportada" + layer.getName();
 		}));
 		
 		/**
@@ -362,6 +377,70 @@ public class SiembraGUIController {
 		}//if stores != null
 	}
 
+	/**
+	 * Importa una prescripcion .srm de monitores TIM. Pregunta cual de los tres
+	 * productos es la semilla; los otros dos van a Fert L y Fert C. Luego convierte
+	 * a shapefile y abre por el camino normal de importacion.
+	 */
+	private void doImportSiembraSrm() {
+		List<File> files = FileHelper.chooseFiles("SRM", "*.srm");
+		if(files == null) {
+			return;//el usuario cancelo
+		}
+		Integer seedSlot = selectSrmSeedSlot();
+		if(seedSlot == null) {
+			return;
+		}
+		for(File srm : files) {
+			ImportarSiembraSrmTask task = new ImportarSiembraSrmTask(srm, seedSlot);
+			task.installProgressBar(progressBox);
+			task.setOnSucceeded(handler -> {
+				task.uninstallProgressBar();
+				File shapeFile = (File)handler.getSource().getValue();
+				if(shapeFile == null) {
+					logger.warning("no pude convertir "+srm+" a shapefile");
+					return;
+				}
+				doOpenSiembraMap(Collections.singletonList(shapeFile), null);
+			});
+			task.setOnFailed(handler -> {
+				task.uninstallProgressBar();
+				logger.warning("fallo la importacion de "+srm);
+			});
+			executorPool.execute(task);
+		}
+	}
+
+	/**
+	 * Asks which of the three mappable product slots is seed. The other two become
+	 * fert línea and fert costado, in ascending slot order.
+	 */
+	private Integer selectSrmSeedSlot() {
+		Dialog<Integer> d = new Dialog<>();
+		d.initOwner(JFXMain.stage);
+		d.setTitle(Messages.getString("SiembraGUIController.srmSeedSlotTitle"));
+		d.getDialogPane().getButtonTypes().add(ButtonType.OK);
+		d.getDialogPane().getButtonTypes().add(ButtonType.CANCEL);
+		d.setResizable(true);
+
+		ComboBox<String> cb = new ComboBox<>();
+		cb.setItems(FXCollections.observableArrayList(
+				Messages.getString("SiembraGUIController.srmProducto1"),
+				Messages.getString("SiembraGUIController.srmProducto2"),
+				Messages.getString("SiembraGUIController.srmProducto3")));
+		cb.getSelectionModel().select(0);
+		d.getDialogPane().setContent(cb);
+
+		d.setResultConverter(bt -> {
+			if (ButtonType.OK.equals(bt)) {
+				return cb.getSelectionModel().getSelectedIndex();
+			}
+			return null;
+		});
+		d.showAndWait();
+		return d.getResult();
+	}
+
 	/** Shows a persisted siembra using the same {@link ProcessSiembraMapTask} path as import. */
 	public void showSiembraLabor(SiembraLabor labor) {
 		if (labor == null) {
@@ -448,6 +527,42 @@ public class SiembraGUIController {
 			});
 			executorPool.execute(ept);	
 		}
+	}
+
+	/**
+	 * Exporta la prescripcion al formato .srm que leen los monitores TIM, sin pasar por ProMAP.
+	 * Escribe miles de semillas por hectarea (el entero del archivo, sin escalar).
+	 */
+	private void doExportPrescripcionSiembraSrm(SiembraLabor laborToExport) {
+		File srmFile = FileHelper.getNewFile(laborToExport.getNombre(), "srm");
+		if(srmFile == null) {
+			return;//el usuario cancelo
+		}
+		if(!srmFile.getName().toLowerCase().endsWith(".srm")) {
+			srmFile = new File(srmFile.getAbsolutePath() + ".srm");
+		}
+
+		ExportarPrescripcionSiembraSrmTask ept = new ExportarPrescripcionSiembraSrmTask(laborToExport, srmFile);
+		ept.installProgressBar(progressBox);
+		ept.setOnSucceeded(handler -> {
+			ept.uninstallProgressBar();
+			File ret = (File)handler.getSource().getValue();
+			if(ret == null) {
+				return;//la task ya aviso el motivo
+			}
+			playSound();
+			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_EXPORTED);
+			Alert a = new Alert(Alert.AlertType.INFORMATION);
+			a.initOwner(JFXMain.stage);
+			a.setHeaderText(Messages.getString("JFXMain.exportarSiembraSrmAction"));
+			a.setContentText(String.format(Messages.getString("SiembraGUIController.srmExportado"), ret.getName()));
+			a.show();
+		});
+		ept.setOnFailed(handler -> {
+			ept.uninstallProgressBar();
+			logger.warning("fallo la exportacion a .srm");
+		});
+		executorPool.execute(ept);
 	}
 
 
