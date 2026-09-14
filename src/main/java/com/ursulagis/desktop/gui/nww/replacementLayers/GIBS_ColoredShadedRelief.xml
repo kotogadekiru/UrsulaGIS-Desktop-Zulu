@@ -7,7 +7,7 @@
         <GetMapURL>https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?SERVICE=WMS</GetMapURL>
         <LayerNames>ASTER_GDEM_Color_Shaded_Relief</LayerNames>
     </Service>
-    <RetrievePropertiesFromService>true</RetrievePropertiesFromService>
+    <RetrievePropertiesFromService>false</RetrievePropertiesFromService>
     <DataCacheName>Earth/GIBS/GIBS_ShadedReliefColor</DataCacheName>
     <ImageFormat>image/png</ImageFormat>
     <AvailableImageFormats>
