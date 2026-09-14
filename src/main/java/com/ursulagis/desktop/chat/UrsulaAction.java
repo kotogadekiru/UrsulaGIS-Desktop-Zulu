@@ -48,6 +48,7 @@ public enum UrsulaAction {
 	CONVERTIR_POLIGONO_A_PULVERIZACION(false, false, false, "Convert polygons to spray"),
 	CONVERTIR_POLIGONO_A_SUELO(false, false, false, "Convert polygon to soil map"),
 	GUARDAR_POLIGONO(false, false, false, "Save selected polygons locally"),
+	EXPORT_POLIGONO_KMZ(false, false, false, "Export selected polygons to KMZ"),
 	EDITAR_POLIGONO(false, false, false, "Edit selected polygon"),
 	CLONAR_POLIGONO(false, false, false, "Clone selected polygon"),
 	SIMPLIFICAR_POLIGONO(false, false, false, "Simplify selected polygon"),

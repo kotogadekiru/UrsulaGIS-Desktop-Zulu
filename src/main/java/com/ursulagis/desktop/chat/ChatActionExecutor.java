@@ -578,6 +578,17 @@ public class ChatActionExecutor {
 				main.poligonoGUIController.chatGuardarPoligono(polis.get(0));
 				yield ActionExecutionResult.launched("Guardando polígono...");
 			}
+			case EXPORT_POLIGONO_KMZ -> {
+				List<Poligono> polis = main.getPoligonosSeleccionados();
+				if (polis == null || polis.isEmpty()) {
+					polis = main.poligonoGUIController.getEnabledPoligonos();
+				}
+				if (polis == null || polis.isEmpty()) {
+					yield ActionExecutionResult.notLaunched("Seleccioná o activá al menos un polígono para exportar a KMZ.");
+				}
+				main.poligonoGUIController.chatExportarPoligonosAKmz(polis);
+				yield ActionExecutionResult.launched("Exportando polígonos a KMZ...");
+			}
 			case EDITAR_POLIGONO -> {
 				Optional<Poligono> p = resolvePoligono();
 				if (p.isEmpty()) {

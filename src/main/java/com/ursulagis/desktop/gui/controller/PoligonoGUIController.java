@@ -61,6 +61,7 @@ import gov.nasa.worldwind.util.measure.MeasureTool;
 
 import com.ursulagis.desktop.gui.FertilizacionConfigDialogController;
 import com.ursulagis.desktop.gui.onboarding.OnboardingAchievements;
+import com.ursulagis.desktop.gui.ExportPoligonoToKMZ;
 import com.ursulagis.desktop.gui.HarvestConfigDialogController;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.Messages;
@@ -233,6 +234,15 @@ public class PoligonoGUIController extends AbstractGUIController{
 			return "Guarde los poligonos"; //-NLS-1$
 		},Messages.getString("JFXMain.saveAction")));
 
+		//exportar seleccionados a KMZ
+		rootNodeP.add(new LayerAction((layer)->{
+			List<Poligono> poligonos = main.getPoligonosSeleccionados();
+			if (poligonos == null || poligonos.isEmpty()) {
+				poligonos = getEnabledPoligonos();
+			}
+			doExportarPoligonosAKmz(poligonos);
+			return "exportados a kmz"; //-NLS-1$
+		},Messages.getString("JFXMain.exportarPoligonoKMZ")));
 
 		//obtener ndvi
 		rootNodeP.add(new LayerAction((layer)->{
@@ -358,6 +368,14 @@ public class PoligonoGUIController extends AbstractGUIController{
 				doGuardarPoligono((Poligono) layerObject);
 			}
 			return "Guarde Guarde"; //-NLS-1$
+		}));
+
+		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.exportarPoligonoKMZ"),(layer)->{
+			Object layerObject = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+			if(layerObject!=null && Poligono.class.isAssignableFrom(layerObject.getClass())){
+				doExportarPoligonoAKmz((Poligono) layerObject);
+			}
+			return "exportado a kmz"; //-NLS-1$
 		}));
 
 		poligonosP.add(LayerAction.constructPredicate(Messages.getString("JFXMain.goToPoligonoAction"),(layer)->{
@@ -804,6 +822,31 @@ public class PoligonoGUIController extends AbstractGUIController{
 		p.setActivo(true);
 		DAH.save(p);
 		OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_SAVED);
+	}
+
+	/** Entry point for chat / scripting. */
+	public void chatExportarPoligonosAKmz(List<Poligono> poligonos) {
+		doExportarPoligonosAKmz(poligonos);
+	}
+
+	private void doExportarPoligonoAKmz(Poligono p) {
+		doExportarPoligonosAKmz(Collections.singletonList(p));
+	}
+
+	private void doExportarPoligonosAKmz(List<Poligono> poligonos) {
+		if (poligonos == null || poligonos.isEmpty()) {
+			Alert alert = new Alert(Alert.AlertType.WARNING);
+			alert.initOwner(JFXMain.stage);
+			alert.setTitle("UrsulaGIS");
+			alert.setHeaderText(Messages.getString("JFXMain.exportarPoligonoKMZ"));
+			alert.setContentText(Messages.getString("PoligonGUIController.exportKmzSinPoligonos"));
+			alert.showAndWait();
+			return;
+		}
+		File exported = ExportPoligonoToKMZ.export(poligonos);
+		if (exported != null) {
+			logger.info("Polígonos exportados a KMZ: " + exported.getAbsolutePath());
+		}
 	}
 
 	/** Entry point for chat / scripting. */
