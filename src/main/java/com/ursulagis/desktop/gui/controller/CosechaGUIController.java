@@ -455,6 +455,17 @@ public class CosechaGUIController extends AbstractGUIController {
 				}
 				task.uninstallProgressBar();
 			});
+			task.setOnFailed(handler -> {
+				task.uninstallProgressBar();
+				Throwable ex = handler.getSource().getException();
+				String msg = ex != null && ex.getMessage() != null ? ex.getMessage() : "Error al compartir cosecha";
+				Alert error = new Alert(AlertType.ERROR);
+				error.initOwner(JFXMain.stage);
+				error.setTitle("Error al compartir");
+				error.setHeaderText(null);
+				error.setContentText(msg);
+				error.show();
+			});
 			logger.fine("ejecutando Compartir Fertilizacion");
 			JFXMain.executorPool.submit(task);
 		});

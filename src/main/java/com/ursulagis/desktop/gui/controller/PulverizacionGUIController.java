@@ -135,6 +135,17 @@ public class PulverizacionGUIController {
 				}
 				task.uninstallProgressBar();
 			});
+			task.setOnFailed(handler -> {
+				task.uninstallProgressBar();
+				Throwable ex = handler.getSource().getException();
+				String msg = ex != null && ex.getMessage() != null ? ex.getMessage() : "Error al compartir pulverizacion";
+				Alert error = new Alert(Alert.AlertType.ERROR);
+				error.initOwner(JFXMain.stage);
+				error.setTitle("Error al compartir");
+				error.setHeaderText(null);
+				error.setContentText(msg);
+				error.show();
+			});
 			logger.fine("ejecutando Compartir Recorrida");
 			JFXMain.executorPool.submit(task);
 		});

@@ -2,12 +2,9 @@ package com.ursulagis.desktop.utils;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
-
-import org.geotools.data.store.ContentFeatureCollection;
 
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
@@ -22,7 +19,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.http.MultipartContent;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
@@ -30,90 +26,134 @@ import com.google.api.client.json.jackson.JacksonFactory;
 import com.ursulagis.desktop.dao.config.Configuracion;
 
 import java.util.logging.Logger;
+
+/**
+ * File-server tarjeta helpers.
+ * <p>
+ * {@code TokenTarjeta} is stored separately from {@code USER}: it is initialized
+ * once from the current user number, then kept stable so uploads keep working
+ * if {@code USER} later changes. {@code UuidTarjeta} is the tarjeta id returned
+ * by the server for that token.
+ */
 public class TarjetaHelper {
 	private static final Logger logger = Logger.getLogger(TarjetaHelper.class.getName());
 
 	private static final String UUID_TARJETA = "UuidTarjeta";
+	/** Stable token used with the file server; initialized from USER once. */
+	private static final String TOKEN_TARJETA = "TokenTarjeta";
+	private static final String USER_KEY = "USER";
 	private static final String NONEFOUND = "nonefound";
 	public static final String BASE_URL = "https://www.ursulagis.com";
-	//public static final String BASE_URL = "http://localhost:5000";	
+	//public static final String BASE_URL = "http://localhost:5000";
 	//public static final String BASE_URL = "https://sheltered-mesa-69562-dev-514e4d674053.herokuapp.com";
-	
-	public static String REGISTRAR_TARJETA_URL=BASE_URL+"/api/file_server/registrar_tarjeta/";	
-	public static String REGISTRAR_ARCHIVO_URL=BASE_URL+"/api/file_server/upload_file/";
-	
-	public static void initTarjeta() {	//ok funciona	
-		//TODO registrar una tarjeta si no tiene una actualmente
-		//1 llamar a REGISTRAR_TARJETA_URL con post param "token"=userNumber
-		//2 obtener uuid de la tarjeta
-		//3 guardar el uuid en config		
-		String uuidTarjeta = getUuidTarjeta();
-		if(uuidTarjeta.equals(NONEFOUND)) {
-			GenericUrl url = new GenericUrl(REGISTRAR_TARJETA_URL);	
-			url.set("token", Configuracion.getInstance().getPropertyOrDefault("USER", NONEFOUND));
-			logger.fine("llamand la url "+url.build());
-			//llamand la url http://www.ursulagis.com/api/file_server/registrar_tarjeta/?:token=749,586
-			byte[] bytes=null;
-			try {
-				bytes = "register tarjeta".getBytes("UTF8");
-			} catch (UnsupportedEncodingException e) {				
-				e.printStackTrace();
-			}
-			final HttpContent content = new ByteArrayContent("application/json", bytes );
-			HttpResponse res = makeJsonPostRequest(url, content);
-			try {
-				//GenericJson resContent = res.parseAs(GenericJson.class);
-				String tarjetaUuid = res.parseAsString();
-				res.disconnect();
-				Configuracion config = Configuracion.getInstance();
-				config.setProperty(UUID_TARJETA, tarjetaUuid);
-				logger.fine("cree la tarjeta "+tarjetaUuid);
-				config.save();
-			} catch (IOException e) {			
-				e.printStackTrace();
-			}
-			
-		}		
-	}
-	
-	public static void uploadFile(File f,String destUrl) {
-		//hacer un put a REGISTRAR_ARCHIVO_URL 
-		GenericUrl url = new GenericUrl(REGISTRAR_ARCHIVO_URL);	
-		//agregar al param token=userNumber, uuid=uuidTarjeta, url="urlDestino"
-		url.put("token", Configuracion.getInstance().getPropertyOrDefault("USER", NONEFOUND));
-		url.put("uuid", getUuidTarjeta());
-		url.put("url", destUrl);
-		
-		//byte[] byteArray = FileHelper.fileToByteArray(f);		
-		
-		//final HttpContent content = new ByteArrayContent("application/octet-stream", byteArray );
-		try {
-		FileInputStream fin = new FileInputStream(f);
-		MultipartContent.Part part = new MultipartContent.Part()
-	            .setContent(new InputStreamContent("application/octet-stream", fin))
-	            .setHeaders(new HttpHeaders().set(
-	                    "Content-Disposition",
-	                    String.format("form-data; name=\"file\"; filename=\"%s\"", f.getName()) // TODO: escape fileName?
-	            ));
-	    MultipartContent content = new MultipartContent()
-	            .setMediaType(new HttpMediaType("multipart/form-data")
-	            .setParameter("boundary", UUID.randomUUID().toString()))
-	            .addPart(part);
-	    
-		HttpResponse response = makeBinaryPostRequest(url,content,f.getName());
-		if(response != null) {
-			logger.fine("file uploaded to "+f.getName()+" "+response.parseAsString());
-		}else {
-			logger.warning("no se pudo insertar la tarjeta el response fue null");
+
+	public static String REGISTRAR_TARJETA_URL = BASE_URL + "/api/file_server/registrar_tarjeta/";
+	public static String REGISTRAR_ARCHIVO_URL = BASE_URL + "/api/file_server/upload_file/";
+
+	/**
+	 * Ensures {@code TokenTarjeta} and {@code UuidTarjeta} are set.
+	 * Token is copied from {@code USER} only when missing; UUID is registered once.
+	 */
+	public static void initTarjeta() {
+		String tokenTarjeta = ensureTokenTarjeta();
+		if (NONEFOUND.equals(tokenTarjeta)) {
+			logger.warning("no se puede registrar tarjeta: TokenTarjeta/USER no configurado");
+			return;
 		}
-		}catch(Exception e) {
+
+		String uuidTarjeta = getUuidTarjeta();
+		if (!NONEFOUND.equals(uuidTarjeta)) {
+			return;
+		}
+
+		GenericUrl url = new GenericUrl(REGISTRAR_TARJETA_URL);
+		url.set("token", tokenTarjeta);
+		logger.fine("llamand la url " + url.build());
+		byte[] bytes = null;
+		try {
+			bytes = "register tarjeta".getBytes("UTF8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		final HttpContent content = new ByteArrayContent("application/json", bytes);
+		HttpResponse res = makeJsonPostRequest(url, content);
+		if (res == null) {
+			logger.warning("no se pudo registrar la tarjeta: response null");
+			return;
+		}
+		try {
+			String tarjetaUuid = res.parseAsString();
+			res.disconnect();
+			if (tarjetaUuid == null || tarjetaUuid.isBlank()) {
+				logger.warning("registro de tarjeta rechazo: " + tarjetaUuid);
+				return;
+			}
+			Configuracion config = Configuracion.getInstance();
+			config.setProperty(UUID_TARJETA, tarjetaUuid.trim());
+			logger.fine("cree la tarjeta " + tarjetaUuid + " con TokenTarjeta " + tokenTarjeta);
+			config.save();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
+	 * Uploads {@code f} to {@code destUrl} on the file server.
+	 * @return true if the server accepted the file; false otherwise
+	 */
+	public static boolean uploadFile(File f, String destUrl) {
+		if (f == null || !f.exists()) {
+			logger.warning("no se puede subir archivo: file null o inexistente");
+			return false;
+		}
+		initTarjeta();
+		String tokenTarjeta = getTokenTarjeta();
+		String uuidTarjeta = getUuidTarjeta();
+		if (NONEFOUND.equals(tokenTarjeta) || NONEFOUND.equals(uuidTarjeta)) {
+			logger.warning("no se puede subir archivo: TokenTarjeta o UuidTarjeta invalido");
+			return false;
+		}
+
+		GenericUrl url = new GenericUrl(REGISTRAR_ARCHIVO_URL);
+		// Use stored TokenTarjeta (not current USER) so USER changes do not break uploads
+		url.put("token", tokenTarjeta);
+		url.put("uuid", uuidTarjeta);
+		url.put("url", destUrl);
+
+		try (FileInputStream fin = new FileInputStream(f)) {
+			MultipartContent.Part part = new MultipartContent.Part()
+					.setContent(new InputStreamContent("application/octet-stream", fin))
+					.setHeaders(new HttpHeaders().set(
+							"Content-Disposition",
+							String.format("form-data; name=\"file\"; filename=\"%s\"", f.getName())));
+			MultipartContent content = new MultipartContent()
+					.setMediaType(new HttpMediaType("multipart/form-data")
+							.setParameter("boundary", UUID.randomUUID().toString()))
+					.addPart(part);
+
+			HttpResponse response = makeBinaryPostRequest(url, content, f.getName());
+			if (response == null) {
+				logger.warning("no se pudo subir " + f.getName() + ": response null");
+				return false;
+			}
+			String body = response.parseAsString();
+			if (isUploadErrorBody(body)) {
+				logger.warning("no se pudo subir " + f.getName() + ": " + body);
+				return false;
+			}
+			logger.fine("file uploaded to " + f.getName() + " " + body);
+			return true;
+		} catch (Exception e) {
+			logger.warning("no se pudo subir " + f.getName() + ": " + e.getMessage());
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
 	 * Uploads {@code f} under {@code destDir} (e.g. {@code /labores}) and returns the relative path
-	 * used by orden payloads (e.g. {@code /labores/foo.png}). Returns {@code null} if the file is missing.
+	 * used by orden payloads (e.g. {@code /labores/foo.png}).
+	 * Returns {@code null} if the file is missing or the upload fails.
 	 */
 	public static String uploadFileToDir(File f, String destDir) {
 		if (f == null || !f.exists()) {
@@ -123,62 +163,94 @@ public class TarjetaHelper {
 		while (dir.endsWith("/")) {
 			dir = dir.substring(0, dir.length() - 1);
 		}
-		uploadFile(f, dir);
+		if (!uploadFile(f, dir)) {
+			return null;
+		}
 		return dir + "/" + f.getName();
 	}
-	
-	private static String getUuidTarjeta() {		
-		return Configuracion.getInstance().getPropertyOrDefault(UUID_TARJETA, NONEFOUND);
+
+	private static boolean isUploadErrorBody(String body) {
+		if (body == null || body.isBlank()) {
+			return false;
+		}
+		String lower = body.toLowerCase();
+		return lower.contains("bad token") || lower.contains("bad uuid");
 	}
-	
+
 	/**
-	 * metodo que ejecuta un request json
-	 * @param url
-	 * @return HttResponse
+	 * Returns TokenTarjeta, creating it from USER the first time it is missing.
+	 * If a legacy UuidTarjeta exists without TokenTarjeta, clears the UUID so it
+	 * is re-registered with the new stable token (avoids USER/uuid mismatch).
 	 */
-	private static HttpResponse makeBinaryPostRequest(GenericUrl url,HttpContent req_content,String fileName){
+	private static String ensureTokenTarjeta() {
+		String token = getTokenTarjeta();
+		if (!NONEFOUND.equals(token)) {
+			return token;
+		}
+		String user = getConfigValue(USER_KEY);
+		if (NONEFOUND.equals(user)) {
+			return NONEFOUND;
+		}
+		Configuracion config = Configuracion.getInstance();
+		config.setProperty(TOKEN_TARJETA, user);
+		if (!NONEFOUND.equals(getUuidTarjeta())) {
+			logger.info("UuidTarjeta sin TokenTarjeta; se vuelve a registrar con el USER actual");
+			config.setProperty(UUID_TARJETA, "");
+		}
+		config.save();
+		logger.fine("TokenTarjeta inicializado desde USER: " + user);
+		return user;
+	}
+
+	private static String getTokenTarjeta() {
+		return getConfigValue(TOKEN_TARJETA);
+	}
+
+	private static String getUuidTarjeta() {
+		return getConfigValue(UUID_TARJETA);
+	}
+
+	private static String getConfigValue(String key) {
+		String value = Configuracion.getInstance().getPropertyOrDefault(key, NONEFOUND);
+		if (value == null || value.isBlank() || NONEFOUND.equalsIgnoreCase(value.trim())) {
+			return NONEFOUND;
+		}
+		return value.trim();
+	}
+
+	private static HttpResponse makeBinaryPostRequest(GenericUrl url, HttpContent req_content, String fileName) {
 		HttpResponse response = null;
 		HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
-		//JsonFactory JSON_FACTORY = new JacksonFactory();
 		HttpRequestFactory requestFactory =
 				HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
 					@Override
 					public void initialize(HttpRequest request) {
-						//request.setParser(new JsonObjectParser(JSON_FACTORY));
 						request.setReadTimeout(0);
 						request.setConnectTimeout(0);
-						//en el server va response.type("application/octet-stream");
-						HttpHeaders headers = request.getHeaders();//USER=693,468
-						headers.set("USER", Configuracion.getInstance().getPropertyOrDefault("USER", NONEFOUND));
-						String fileLength="0";
+						HttpHeaders headers = request.getHeaders();
+						headers.set("USER", getTokenTarjeta());
+						String fileLength = "0";
 						try {
 							fileLength = Long.toString(req_content.getLength());
-						} catch (IOException e) {							
+						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						headers.set("Content-Disposition", "attachment; filename=\""+fileName+"\"; size="+fileLength);
-
+						headers.set("Content-Disposition", "attachment; filename=\"" + fileName + "\"; size=" + fileLength);
 					}
-				});//java.net.SocketException: Address family not supported by protocol family: connect
+				});
 
 		try {
-			HttpRequest request = requestFactory.buildPostRequest(url, req_content);//(url);
-			//request.getHeaders().set("USER", getUser());
-			response= request.execute();
-		} catch (Exception e) {			
+			HttpRequest request = requestFactory.buildPostRequest(url, req_content);
+			response = request.execute();
+		} catch (Exception e) {
 			e.printStackTrace();
-			return null;// si no se pudo hacer el request devuelvo null. puede ser por falta de conexion u otra cosa
-		}	
+			return null;
+		}
 		return response;
 	}
-	
-	/**
-	 * metodo que ejecuta un request json
-	 * @param url
-	 * @return HttResponse
-	 */
-	private static HttpResponse makeJsonPostRequest(GenericUrl url,HttpContent req_content){
+
+	private static HttpResponse makeJsonPostRequest(GenericUrl url, HttpContent req_content) {
 		HttpResponse response = null;
 		HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
@@ -190,22 +262,18 @@ public class TarjetaHelper {
 						request.setParser(new JsonObjectParser(JSON_FACTORY));
 						request.setReadTimeout(0);
 						request.setConnectTimeout(0);
-						HttpHeaders headers = request.getHeaders();//USER=693,468
-						headers.set("USER", Configuracion.getInstance().getPropertyOrDefault("USER", NONEFOUND));
-						//headers.set("token", Configuracion.getInstance().getPropertyOrDefault("USER", NONEFOUND));
-						//url.set(":token", Configuracion.getInstance().getPropertyOrDefault("USER", NONEFOUND));
-
+						HttpHeaders headers = request.getHeaders();
+						headers.set("USER", getTokenTarjeta());
 					}
-				});//java.net.SocketException: Address family not supported by protocol family: connect
+				});
 
 		try {
-			HttpRequest request = requestFactory.buildPostRequest(url, req_content);//(url);
-			//request.getHeaders().set("USER", getUser());
-			response= request.execute();
-		} catch (Exception e) {			
+			HttpRequest request = requestFactory.buildPostRequest(url, req_content);
+			response = request.execute();
+		} catch (Exception e) {
 			e.printStackTrace();
-			return null;// si no se pudo hacer el request devuelvo null. puede ser por falta de conexion u otra cosa
-		}	
+			return null;
+		}
 		return response;
 	}
 }

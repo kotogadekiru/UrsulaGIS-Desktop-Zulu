@@ -1,6 +1,7 @@
 package com.ursulagis.desktop.tasks;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -102,13 +103,19 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 	}
 
 	@Override
-	protected String call()  {
+	protected String call() throws Exception {
 		this.updateProgress(0, 10);
 		//OrdenPulverizacion ordenPulv = constructOrdenPulverizacion(this.pulverizacionLabor);
 		String ordenUrl = uploadLaborFile(this.pulverizacionLabor);
+		if (ordenUrl == null) {
+			throw new IOException("No se pudo subir el archivo de la labor a la tarjeta");
+		}
 		this.ordenPulverizacion.setOrdenShpZipUrl(ordenUrl);
-		String imagenUrl = TarjetaHelper.uploadFileToDir(this.laborImageFile, "/labores");
-		if (imagenUrl != null) {
+		if (this.laborImageFile != null && this.laborImageFile.exists()) {
+			String imagenUrl = TarjetaHelper.uploadFileToDir(this.laborImageFile, "/labores");
+			if (imagenUrl == null) {
+				throw new IOException("No se pudo subir la imagen de la labor a la tarjeta");
+			}
 			this.ordenPulverizacion.setImagenUrl(imagenUrl);
 		}
 		this.updateProgress(1, 10);
@@ -236,8 +243,14 @@ public class CompartirPulverizacionLaborTask extends Task<String> {
 	 */
 	private String uploadLaborFile(PulverizacionLabor pl) {
 		File zipFile = zipLaborToTmpDir(pl);//ok funciona
+		if (zipFile == null || !zipFile.exists()) {
+			logger.warning("no se pudo crear el zip de la labor " + pl.getNombre());
+			return null;
+		}
 		//TODO subir el zipFile a la tarjeta del usuario
-		TarjetaHelper.uploadFile(zipFile, "/labores");
+		if (!TarjetaHelper.uploadFile(zipFile, "/labores")) {
+			return null;
+		}
 		return "/labores/"+zipFile.getName();
 	}
 

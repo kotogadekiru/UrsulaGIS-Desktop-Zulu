@@ -637,7 +637,15 @@ public class SiembraGUIController {
 			CompartirSiembraLaborTask task = new CompartirSiembraLaborTask(value, op, imageFile);
 			task.installProgressBar(main.progressBox);
 			task.setOnFailed((handler)->{
-				logger.fine("task failed");
+				task.uninstallProgressBar();
+				Throwable ex = handler.getSource().getException();
+				String msg = ex != null && ex.getMessage() != null ? ex.getMessage() : "Error al compartir siembra";
+				Alert error = new Alert(Alert.AlertType.ERROR);
+				error.initOwner(JFXMain.stage);
+				error.setTitle("Error al compartir");
+				error.setHeaderText(null);
+				error.setContentText(msg);
+				error.show();
 			});
 			task.setOnSucceeded(handler -> {
 				logger.fine("task succeeded");
