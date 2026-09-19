@@ -693,37 +693,27 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 	 */
 	private RenderableLayer createAnalyticSurfaceFromQuery(int milis){		
 		ReferencedEnvelope bounds = labor.outCollection.getBounds();
-		//	System.out.println("createAnalyticSurfaceFromQuery");
-		//System.out.println("bounds = "+bounds);
-		double res=  Math.sqrt(bounds.getArea()/(milis));//antes dividia por 10000 cuando eran segundos
-		double	resolution =res;// Math.sqrt(bounds.getArea()/40000)>1?;//como el tiempo por item es 0.1 limito el tiempo de rendering a 2seg
-		// Same meter-space as construirGrilla: cell size in meters, X/Y via long/lat factors
-		final double metersToLong = ProyectionConstants.metersToLong();
-		final double metersToLat = ProyectionConstants.metersToLat();
-		double	ancho = resolution / metersToLong;
-		//	System.out.println("ancho "+ancho);
+		double resolution = Math.sqrt(bounds.getArea()/(milis));
+		if(!(resolution > 0) || !Double.isFinite(resolution)) {
+			resolution = Math.max(bounds.getWidth(), bounds.getHeight()) / Math.max(milis, 1);
+		}
 		double minX = bounds.getMinX();
 		double minY = bounds.getMinY();
 		double maxX = bounds.getMaxX();
 		double maxY = bounds.getMaxY();
-		final double minX_m = minX / metersToLong;
-		final double maxX_m = maxX / metersToLong;
-		final double minY_m = minY / metersToLat;
-		final double maxY_m = maxY / metersToLat;
-		//System.out.println("bounds: "+bounds);
-		//	System.out.println("creando analyticSurface con segs="+segs);
 
 		Double maxElev = Math.max(labor.maxElev,1.0);
 		Double minElev = Math.min(labor.minElev,1.0);
 
-		//System.out.println("maxElev,minElev= "+maxElev+", "+minElev);
-
+		// Degree-uniform grid matching AnalyticSurface sector mapping (avoids
+		// construirGrilla meter cells + centroid re-index mismatch).
 		int offset = 3;//para que quede un lugar a cada lado mas el desplazamiento
-		int width=Math.max((int) ((maxX_m-minX_m)/ancho)+offset,1);
-		int height=Math.max((int) ((maxY_m-minY_m)/ancho)+offset,1);
-		int maxIndex =  width*height;
+		int nCols = Math.max((int) ((maxX-minX)/resolution), 1);
+		int nRows = Math.max((int) ((maxY-minY)/resolution), 1);
+		int width = nCols + offset;
+		int height = nRows + offset;
+		int maxIndex = width * height;
 
-		//System.out.println("width="+width+" height="+height+" maxIndex="+maxIndex);
 		Map<String,GridPointAttributes> gpMap=new HashMap<String,GridPointAttributes>();
 		AnalyticSurface.GridPointAttributes transparent  =  AnalyticSurface.createGridPointAttributes(0, new java.awt.Color(0,0,0,0));
 		LinkedList<AnalyticSurface.GridPointAttributes> attributesList = new LinkedList<AnalyticSurface.GridPointAttributes>();
@@ -731,71 +721,56 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			attributesList.add(transparent);
 		}
 
-		//ReferencedEnvelope unionEnvelope = labor.outCollection.getBounds();
-
-		Consumer<Polygon> polygonConsumer = new Consumer<Polygon>(){
-
-			@Override
-			public void accept(Polygon p) {
-				Point center = p.getCentroid();
-				Coordinate coord = center.getCoordinate();
-				// Index in the same meter-space grid that construirGrilla builds
-				double cx_m = coord.x / metersToLong;
-				double cy_m = coord.y / metersToLat;
-				int col= (int)((cx_m-minX_m) / ancho)+1;
-				int fila = (int)((maxY_m-cy_m) / ancho)+1;
-				int index = (col+fila*width);
-
-				if(index<0 ||index>=maxIndex) {
-					logger.warning("fila="+fila+" col="+col+" index="+index);
-					//System.err.println("index out of range for "+center+" bounds = "+bounds);
-					return;
-				} else { 
-					//System.out.println("procesando index= "+index);
+		GeometryFactory fact = new GeometryFactory();
+		for(int gx = 0; gx < nCols; gx++){
+			double x0 = minX + gx * resolution;
+			double x1 = x0 + resolution;
+			for(int gy = 0; gy < nRows; gy++){
+				double y0 = minY + gy * resolution;
+				double y1 = y0 + resolution;
+				// col/fila from loop index; fila=1 at north (maxY), matching prior formula
+				int col = gx + 1;
+				int fila = nRows - gy;
+				int index = col + fila * width;
+				if(index < 0 || index >= maxIndex) {
+					continue;
 				}
-				Envelope envelope = p.getEnvelopeInternal();
-				//envelope.expandBy(2*resolution);//esto me trae algunos problemas 
-				List<FC> fueaturesToAdd = labor.cachedOutStoreQuery(envelope);
 
-				//promediar
-				GridPointAttributes newGridPoint  = transparent;
+				Coordinate[] coordinates = {
+						new Coordinate(x0, y1),
+						new Coordinate(x1, y1),
+						new Coordinate(x1, y0),
+						new Coordinate(x0, y0),
+						new Coordinate(x0, y1)
+				};
+				Polygon p = fact.createPolygon(coordinates);
+				List<FC> fueaturesToAdd = labor.cachedOutStoreQuery(p.getEnvelopeInternal());
 
-				if(fueaturesToAdd!=null && fueaturesToAdd.size()>0){
-					//float r =0,g = 0,b=0,
-					double elev=0;
-					double amount=0;
-
+				GridPointAttributes newGridPoint = transparent;
+				if(fueaturesToAdd != null && fueaturesToAdd.size() > 0){
+					double elev = 0;
+					double amount = 0;
 					for(FC it : fueaturesToAdd){
-						elev+= it.getElevacion()-minElev;
-						amount+=it.getAmount();
+						elev += it.getElevacion() - minElev;
+						amount += it.getAmount();
 					}
-
 					int n = fueaturesToAdd.size();
-//					Color color = labor.getClasificador().getColorFor(amount/n);
-//					
-//					float r=(float) color.getRed();//0.99607843
-//					float g=(float) color.getGreen();
-//					float b=(float) color.getBlue();
-					String kpKey = getGPKey(elev/n,amount/n);
+					String kpKey = getGPKey(elev/n, amount/n);
 					if(gpMap.containsKey(kpKey)) {
 						newGridPoint = gpMap.get(kpKey);
 					} else {
-					java.awt.Color rgbaColor = labor.getClasificador().getAwtColorFor(amount/n);//new java.awt.Color(r,g,b,1);//IllegalArgumentException - if r, g b or a are outside of the range 0.0 to 1.0, inclusive
-					
-					newGridPoint  =  AnalyticSurface.createGridPointAttributes(elev/n, rgbaColor);
-					gpMap.put(kpKey, newGridPoint);
+						java.awt.Color rgbaColor = labor.getClasificador().getAwtColorFor(amount/n);
+						newGridPoint = AnalyticSurface.createGridPointAttributes(elev/n, rgbaColor);
+						gpMap.put(kpKey, newGridPoint);
 					}
-				} else {
-					//System.out.println("no hay features para fila,columna= "+fila+","+col);
 				}
 				try{
-					attributesList.set(index,newGridPoint);				
+					attributesList.set(index, newGridPoint);
 				}catch(Exception e){
 					logger.fine("excepcion tratando de agregar el index "+index+" size="+attributesList.size());
 				}
 			}
-		};
-		construirGrilla(bounds, ancho,polygonConsumer);
+		}
 
 		/*   creo la superficie  */
 		AnalyticSurfaceAttributes attr = new AnalyticSurfaceAttributes();
