@@ -10,6 +10,7 @@ import com.ursulagis.desktop.chat.AchievementIntentCatalog;
 import com.ursulagis.desktop.chat.AchievementIntentMatch;
 import com.ursulagis.desktop.chat.ActionChainParser;
 import com.ursulagis.desktop.chat.ChatGuidanceService;
+import com.ursulagis.desktop.chat.LaborTargetResolver;
 import com.ursulagis.desktop.chat.MapLayerContext;
 import com.ursulagis.desktop.chat.UrsulaAction;
 import com.ursulagis.desktop.chat.UrsulaPersonality;
@@ -78,6 +79,9 @@ public class MockAiClient implements AiClient {
 	protected String parseIntent(String userPrompt, String systemPrompt) {
 		String text = userPrompt == null ? "" : userPrompt.toLowerCase(Locale.ROOT);
 		String target = extractTarget(userPrompt);
+		if (target == null || target.isBlank()) {
+			target = LaborTargetResolver.extractNameHint(userPrompt);
+		}
 		if ((target == null || target.isBlank()) && refersToActiveLayer(text)) {
 			target = resolveActiveLayerTarget(systemPrompt);
 		}

@@ -26,6 +26,7 @@ public final class ChatUiKnowledge {
 				When the user asks to enable/disable/show/hide all layers of a type, tell them to use the branch checkbox in the layer tree.
 				When the user asks to activate polygons with area/superficie greater than zero, use action ACTIVAR_POLIGONOS_SUPERFICIE (not CREAR_POLIGONO).
 				When the user asks to load/import and share a seeding map (siembra), use IMPORT_SIEMBRA and/or COMPARTIR_SIEMBRA — not GENERAR_MARGEN/Rentabilidades.
+				When the user asks to share a fertilization map (compartir/share fertilización), use COMPARTIR_FERTILIZACION — not RECOMENDAR_FERT_* or GENERAR_MARGEN.
 				The chat may include excerpts from official PDF manuals and video-tutorial transcripts (.txt) in docs/; transcript filenames describe the workflow (e.g. importar_cosecha.txt).
 				""";
 	}

@@ -7,8 +7,9 @@ import java.util.regex.Pattern;
 
 /**
  * Session-scoped memory for the last chat action that asked the user for a
- * clarification (e.g. which campaign). A short follow-up like {@code "26/27"}
- * can then resume the pending {@link UrsulaAction} without re-asking the whole request.
+ * clarification (e.g. which campaign or which labor layer). A short follow-up
+ * like {@code "26/27"} or {@code "the one with jag 21"} can then resume the
+ * pending {@link UrsulaAction} without re-asking the whole request.
  */
 public final class ChatPendingFollowUp {
 
@@ -21,6 +22,9 @@ public final class ChatPendingFollowUp {
 	/** {@link Pending#awaiting()} value when Ursula is waiting for a campaign name. */
 	public static final String AWAIT_CAMPANIA = "campania";
 
+	/** {@link Pending#awaiting()} value when Ursula is waiting for a labor/layer name. */
+	public static final String AWAIT_LABOR = "labor";
+
 	/**
 	 * Snapshot of a paused action waiting for user clarification.
 	 *
@@ -30,7 +34,8 @@ public final class ChatPendingFollowUp {
 	 * @param cultivoName      crop already known, if any
 	 * @param beginDate        NDVI begin already known, if any
 	 * @param endDate          NDVI end already known, if any
-	 * @param awaiting         what is missing ({@link #AWAIT_CAMPANIA}, …)
+	 * @param awaiting         what is missing ({@link #AWAIT_CAMPANIA}, {@link #AWAIT_LABOR}, …)
+	 * @param targetName       layer name already known, if any
 	 */
 	public record Pending(
 			UrsulaAction action,
@@ -39,7 +44,20 @@ public final class ChatPendingFollowUp {
 			String cultivoName,
 			LocalDate beginDate,
 			LocalDate endDate,
-			String awaiting) {
+			String awaiting,
+			String targetName) {
+
+		/** Backward-compatible constructor without target name. */
+		public Pending(
+				UrsulaAction action,
+				String originalUserText,
+				String campaniaName,
+				String cultivoName,
+				LocalDate beginDate,
+				LocalDate endDate,
+				String awaiting) {
+			this(action, originalUserText, campaniaName, cultivoName, beginDate, endDate, awaiting, null);
+		}
 	}
 
 	private static volatile Pending pending;
@@ -68,6 +86,11 @@ public final class ChatPendingFollowUp {
 		return pending != null && AWAIT_CAMPANIA.equals(pending.awaiting());
 	}
 
+	/** Whether Ursula is waiting for a labor/layer name reply. */
+	public static boolean isAwaitingLabor() {
+		return pending != null && AWAIT_LABOR.equals(pending.awaiting());
+	}
+
 	/**
 	 * If there is a pending clarification and {@code userText} answers it,
 	 * returns a resumed {@link ParsedIntent}; otherwise empty.
@@ -93,7 +116,7 @@ public final class ChatPendingFollowUp {
 			String mergedText = mergeOriginalWithCampania(current.originalUserText(), campania);
 			ParsedIntent intent = new ParsedIntent(
 					current.action(),
-					null,
+					current.targetName(),
 					1.0,
 					"Continúo con la campaña " + campania + ".",
 					campania,
@@ -102,6 +125,26 @@ public final class ChatPendingFollowUp {
 					current.endDate(),
 					mergedText);
 			return Optional.of(intent.enrichFromUserText(mergedText));
+		}
+
+		if (AWAIT_LABOR.equals(current.awaiting())) {
+			String laborName = extractLaborNameReply(userText);
+			if (laborName == null || laborName.isBlank()) {
+				return Optional.empty();
+			}
+			clear();
+			String mergedText = mergeOriginalWithLabor(current.originalUserText(), laborName);
+			ParsedIntent intent = new ParsedIntent(
+					current.action(),
+					laborName,
+					1.0,
+					"Continúo con **" + laborName + "**.",
+					current.campaniaName(),
+					current.cultivoName(),
+					current.beginDate(),
+					current.endDate(),
+					mergedText);
+			return Optional.of(intent);
 		}
 
 		return Optional.empty();
@@ -119,6 +162,25 @@ public final class ChatPendingFollowUp {
 				req != null ? req.begin() : null,
 				req != null ? req.end() : null,
 				AWAIT_CAMPANIA));
+	}
+
+	/**
+	 * Remembers a labor-targeting action that still needs the user to name or
+	 * disambiguate a layer (share fert, recommend fert, etc.).
+	 */
+	public static void rememberNeedsLaborTarget(UrsulaAction action, String originalUserText, String targetName) {
+		if (action == null || action == UrsulaAction.UNKNOWN) {
+			return;
+		}
+		set(new Pending(
+				action,
+				originalUserText,
+				null,
+				null,
+				null,
+				null,
+				AWAIT_LABOR,
+				targetName));
 	}
 
 	/**
@@ -150,12 +212,44 @@ public final class ChatPendingFollowUp {
 		return null;
 	}
 
+	/**
+	 * Extracts a layer-name hint from a clarification reply such as
+	 * {@code "the one with jag 21 in the name"} or a pasted layer name.
+	 */
+	static String extractLaborNameReply(String userText) {
+		if (userText == null || userText.isBlank()) {
+			return null;
+		}
+		String n = AchievementIntentCatalog.normalize(userText);
+		n = n.replaceAll(
+				"\\b(the one with|that one with|la que tiene|la de|esa de|aquella|named|llamad[ao]|con nombre)\\b",
+				" ");
+		n = n.replaceAll("\\b(in the name|en el nombre|del nombre)\\b", " ");
+		n = n.replaceAll(
+				"\\b(the|one|with|in|name|la|que|tiene|el|nombre|de|del|esa|capa|labor|mapa|map|layer)\\b",
+				" ");
+		n = n.replaceAll("\\s+", " ").trim();
+		if (n.isBlank()) {
+			return LaborTargetResolver.extractNameHint(userText);
+		}
+		return n;
+	}
+
 	/** Appends the campaign token onto the original request text for re-parsing. */
 	private static String mergeOriginalWithCampania(String original, String campania) {
 		String base = original == null || original.isBlank()
 				? "descargar ndvi de asignaciones"
 				: original.trim();
 		return base + " campaña " + campania;
+	}
+
+	/** Appends the labor name onto the original request text for context. */
+	private static String mergeOriginalWithLabor(String original, String laborName) {
+		String base = original == null || original.isBlank() ? "" : original.trim();
+		if (base.isBlank()) {
+			return laborName;
+		}
+		return base + " " + laborName;
 	}
 
 	/** Detects a full new command so we abandon the pending clarification. */
@@ -165,7 +259,8 @@ public final class ChatPendingFollowUp {
 			return false;
 		}
 		return n.contains("importar") || n.contains("exportar") || n.contains("generar margen")
-				|| n.contains("crear poligono") || n.contains("compartir") || n.contains("ayuda")
+				|| n.contains("crear poligono") || n.contains("compartir") || n.contains("share")
+				|| n.contains("ayuda")
 				|| (n.contains("descargar") && n.contains("ndvi") && n.length() > 40);
 	}
 }

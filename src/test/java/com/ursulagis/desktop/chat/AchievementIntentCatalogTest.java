@@ -150,6 +150,26 @@ class AchievementIntentCatalogTest {
 	}
 
 	@Test
+	@DisplayName("\"share jag 21 fertilizacion\" maps to COMPARTIR_FERTILIZACION not Recommend Fert")
+	void mapsShareFertilizacionMixedLanguage() {
+		String query = "share jag 21 fertilizacion";
+		assertTrue(AchievementIntentCatalog.isFertilizacionShareOrImportQuery(query));
+		AchievementIntentMatch match = AchievementIntentCatalog.match(query).orElseThrow();
+
+		assertEquals(UrsulaAction.COMPARTIR_FERTILIZACION, match.action());
+		assertEquals(OnboardingAchievements.FIRST_FERTILIZATION_SHARED, match.achievementId());
+		assertTrue(match.score() >= 10.0);
+	}
+
+	@Test
+	@DisplayName("\"compartir fertilizacion\" maps to COMPARTIR_FERTILIZACION")
+	void mapsCompartirFertilizacion() {
+		AchievementIntentMatch match = AchievementIntentCatalog.match("compartir fertilizacion")
+				.orElseThrow();
+		assertEquals(UrsulaAction.COMPARTIR_FERTILIZACION, match.action());
+	}
+
+	@Test
 	@DisplayName("\"comparar capas activas\" maps to COMPARE_ACTIVE_LAYERS")
 	void mapsCompareActiveLayers() {
 		AchievementIntentMatch match = AchievementIntentCatalog.match("comparar capas activas")

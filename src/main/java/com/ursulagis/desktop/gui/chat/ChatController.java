@@ -150,6 +150,21 @@ public class ChatController {
 						intent = new ParsedIntent(m.action(), null, m.score(), m.suggestedReply());
 					}
 				}
+				if (isRecommendFertOrMargin(intent.getAction())
+						&& AchievementIntentCatalog.isFertilizacionShareQuery(text.trim())) {
+					var override = AchievementIntentCatalog.match(text.trim());
+					if (override.isPresent()
+							&& (override.get().action() == UrsulaAction.COMPARTIR_FERTILIZACION
+									|| override.get().action() == UrsulaAction.IMPORT_FERTILIZACION)) {
+						AchievementIntentMatch m = override.get();
+						String target = LaborTargetResolver.sanitizeTargetName(intent.getTargetName());
+						if (target == null) {
+							target = LaborTargetResolver.extractNameHint(text.trim());
+						}
+						intent = new ParsedIntent(m.action(), target, m.score(), m.suggestedReply())
+								.enrichFromUserText(text.trim());
+					}
+				}
 				if (intent.getAction() == UrsulaAction.CREAR_POLIGONO
 						&& AchievementIntentCatalog.isActivatePolygonsWithAreaQuery(text.trim())) {
 					var override = AchievementIntentCatalog.match(text.trim());
@@ -163,6 +178,9 @@ public class ChatController {
 				List<UrsulaAction> chain = ActionChainParser.parse(text.trim());
 				if (chain.size() > 1 && chain.get(0) != UrsulaAction.UNKNOWN) {
 					String target = LaborTargetResolver.sanitizeTargetName(intent.getTargetName());
+					if (target == null) {
+						target = LaborTargetResolver.extractNameHint(text.trim());
+					}
 					String reply = catalogMatch.map(AchievementIntentMatch::suggestedReply)
 							.orElse("¡Dale! Encadeno " + chain.size() + " pasos.");
 					intent = new ParsedIntent(chain, target, 0.95, reply, null, null, null, null, text.trim())
@@ -172,6 +190,9 @@ public class ChatController {
 					// Strong phrase matches beat a wrong LLM action (e.g. exportar pantalla → recorrida).
 					if (intent.getAction() == UrsulaAction.UNKNOWN || m.score() >= 10.0) {
 						String target = LaborTargetResolver.sanitizeTargetName(intent.getTargetName());
+						if (target == null) {
+							target = LaborTargetResolver.extractNameHint(text.trim());
+						}
 						intent = new ParsedIntent(m.action(), target, m.score(), m.suggestedReply())
 								.enrichFromUserText(text.trim());
 					} else {
@@ -366,6 +387,16 @@ public class ChatController {
 			return voice;
 		}
 		return executionResult != null ? executionResult : "";
+	}
+
+	/** True when the LLM picked Recommend Fert or margin generate — often confused with share fert. */
+	private static boolean isRecommendFertOrMargin(UrsulaAction action) {
+		return action == UrsulaAction.GENERAR_MARGEN
+				|| action == UrsulaAction.RECOMENDAR_FERT_N
+				|| action == UrsulaAction.RECOMENDAR_FERT_P
+				|| action == UrsulaAction.RECOMENDAR_FERT_P_BALANCE
+				|| action == UrsulaAction.RECOMENDAR_FERT_K
+				|| action == UrsulaAction.RECOMENDAR_FERT_S;
 	}
 
 	private record ParsedIntentResult(

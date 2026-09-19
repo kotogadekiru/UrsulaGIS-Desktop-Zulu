@@ -1,6 +1,8 @@
 package com.ursulagis.desktop.chat;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,6 +24,16 @@ public final class LaborTargetResolver {
 			"fertilizacion", "fertilización", "la fertilizacion", "la fertilización",
 			"labor", "la labor", "labor activa", "capa", "la capa", "capa activa",
 			"activa", "activo", "active layer", "capa activa del mapa");
+
+	/** Tokens stripped when extracting a free-text layer name hint from a full chat request. */
+	private static final Set<String> NAME_HINT_NOISE = Set.of(
+			"share", "compartir", "compartila", "compartirlo", "compartirla",
+			"importar", "abrir", "cargar", "exportar", "export",
+			"fertilizacion", "fertilization", "fert", "prescripcion", "prescription",
+			"cosecha", "harvest", "siembra", "seeding", "pulverizacion", "spray",
+			"labor", "capa", "layer", "mapa", "map", "please", "por", "favor",
+			"la", "el", "de", "del", "una", "un", "the", "a", "an", "and", "y",
+			"activa", "activo", "active", "quiero", "want", "to");
 
 	/** Prevents instantiation. */
 	private LaborTargetResolver() {
@@ -47,6 +59,31 @@ public final class LaborTargetResolver {
 			}
 		}
 		return targetName.trim();
+	}
+
+	/**
+	 * Pulls a concrete layer-name hint from free text by stripping share/import
+	 * verbs and labor-type words (e.g. {@code "share jag 21 fertilizacion"} → {@code "jag 21"}).
+	 */
+	public static String extractNameHint(String userText) {
+		if (userText == null || userText.isBlank()) {
+			return null;
+		}
+		String n = AchievementIntentCatalog.normalize(userText);
+		List<String> kept = new ArrayList<>();
+		for (String tok : n.split("\\s+")) {
+			if (tok.length() < 2) {
+				continue;
+			}
+			if (NAME_HINT_NOISE.contains(tok) || tok.startsWith("fertiliz")) {
+				continue;
+			}
+			kept.add(tok);
+		}
+		if (kept.isEmpty()) {
+			return null;
+		}
+		return String.join(" ", kept);
 	}
 
 	/** Whether the text mentions harvest / cosecha. */
@@ -83,6 +120,23 @@ public final class LaborTargetResolver {
 		return resolveSingleOfType(mapCtx, SiembraLabor.class)
 				.filter(SiembraLabor.class::isInstance)
 				.map(SiembraLabor.class::cast);
+	}
+
+	/**
+	 * Resolves a fertilization layer by name hint, then single active/loaded fert.
+	 * Never returns a harvest/siembra even if the name also matches those layers.
+	 */
+	public static Optional<FertilizacionLabor> resolveFertilizacion(MapLayerContext mapCtx, String targetName) {
+		String effectiveTarget = sanitizeTargetName(targetName);
+		if (effectiveTarget != null && !effectiveTarget.isBlank()) {
+			Optional<FertilizacionLabor> byName = findLaborOfTypeByName(mapCtx, effectiveTarget, FertilizacionLabor.class);
+			if (byName.isPresent()) {
+				return byName;
+			}
+		}
+		return resolveSingleOfType(mapCtx, FertilizacionLabor.class)
+				.filter(FertilizacionLabor.class::isInstance)
+				.map(FertilizacionLabor.class::cast);
 	}
 
 	/**
@@ -163,6 +217,35 @@ public final class LaborTargetResolver {
 		return Optional.empty();
 	}
 
+	/** Name match restricted to labors of {@code type} (exact, then unique partial). */
+	private static <T> Optional<T> findLaborOfTypeByName(
+			MapLayerContext mapCtx, String targetName, Class<T> type) {
+		String needle = targetName.toLowerCase(Locale.ROOT);
+		List<LoadedLayerInfo> ofType = mapCtx.getLabors(false).stream()
+				.filter(info -> type.isInstance(info.getEntity()))
+				.toList();
+
+		Optional<LoadedLayerInfo> exact = ofType.stream()
+				.filter(info -> info.getName() != null && info.getName().equalsIgnoreCase(targetName))
+				.findFirst();
+		if (exact.isPresent()) {
+			return Optional.of(type.cast(exact.get().getEntity()));
+		}
+
+		List<LoadedLayerInfo> partial = ofType.stream()
+				.filter(info -> info.getName() != null
+						&& info.getName().toLowerCase(Locale.ROOT).contains(needle))
+				.toList();
+		if (partial.size() == 1) {
+			return Optional.of(type.cast(partial.get(0).getEntity()));
+		}
+		List<LoadedLayerInfo> activePartial = partial.stream().filter(LoadedLayerInfo::isActive).toList();
+		if (activePartial.size() == 1) {
+			return Optional.of(type.cast(activePartial.get(0).getEntity()));
+		}
+		return Optional.empty();
+	}
+
 	/** Casts the layer entity to {@link Labor}, optionally requiring {@link CosechaLabor}. */
 	private static Optional<Labor<?>> toLabor(LoadedLayerInfo info, boolean cosechaOnly) {
 		Object entity = info.getEntity();
@@ -200,6 +283,19 @@ public final class LaborTargetResolver {
 			return "No hay capas activas. Activá una en el árbol de capas o indicá el nombre: " + options;
 		}
 		return "Hay varias capas cargadas. Activá solo una o indicá el nombre: " + options;
+	}
+
+	/** Spanish clarification when sharing/editing fertilization needs a unique fert layer. */
+	public static String ambiguousFertilizacionMessage(MapLayerContext mapCtx) {
+		List<LoadedLayerInfo> ferts = mapCtx.getLabors(false).stream()
+				.filter(info -> info.getEntity() instanceof FertilizacionLabor)
+				.toList();
+		if (ferts.isEmpty()) {
+			return "No hay fertilizaciones cargadas. Importá un SHP desde el nodo **Fertilizaciones** → **Importar**, o nombrá la capa.";
+		}
+		String options = ferts.stream().map(LoadedLayerInfo::describe)
+				.collect(java.util.stream.Collectors.joining(", "));
+		return "Activá una fertilización en el árbol de capas o indicá el nombre: " + options;
 	}
 
 	/** Spanish clarification when sharing/importing siembra needs a unique seeding layer. */

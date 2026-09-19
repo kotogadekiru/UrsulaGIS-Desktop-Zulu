@@ -58,4 +58,29 @@ class LaborTargetResolverTest {
 		assertTrue(resolved.isPresent());
 		assertEquals(cosecha, resolved.get());
 	}
+
+	@Test
+	@DisplayName("extractNameHint strips share/fertilizacion leaving jag 21")
+	void extractsNameHintFromShareFertQuery() {
+		assertEquals("jag 21", LaborTargetResolver.extractNameHint("share jag 21 fertilizacion"));
+		assertEquals("jag 21", LaborTargetResolver.extractNameHint("compartir fertilizacion jag 21"));
+	}
+
+	@Test
+	@DisplayName("resolveFertilizacion prefers fert layer over harvest with same name hint")
+	void resolveFertilizacionPrefersFertType() {
+		CosechaLabor cosecha = new CosechaLabor();
+		cosecha.setNombre("jag 21 Tr 2627 17-09-2026 Rinde objetivo 5.5");
+		FertilizacionLabor fert = new FertilizacionLabor();
+		fert.setNombre("jag 21 Tr 2627 Prescripcion P");
+
+		MapLayerContext ctx = new MapLayerContext(List.of(
+				new LoadedLayerInfo(cosecha.getNombre(), "CosechaLabor", true, cosecha),
+				new LoadedLayerInfo(fert.getNombre(), "FertilizacionLabor", true, fert)), null);
+
+		Optional<FertilizacionLabor> resolved = LaborTargetResolver.resolveFertilizacion(ctx, "jag 21");
+
+		assertTrue(resolved.isPresent());
+		assertEquals(fert, resolved.get());
+	}
 }

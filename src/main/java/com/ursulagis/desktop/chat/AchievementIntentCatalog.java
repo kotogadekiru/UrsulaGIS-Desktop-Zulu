@@ -95,7 +95,8 @@ public final class AchievementIntentCatalog {
 			new ChatMapping(OnboardingAchievements.FIRST_FERTILIZATION_IMPORTED, UrsulaAction.IMPORT_FERTILIZACION,
 					"importar fertilizacion", "importar fertilización", "abrir fertilizacion", "import fertilization"),
 			new ChatMapping(OnboardingAchievements.FIRST_FERTILIZATION_SHARED, UrsulaAction.COMPARTIR_FERTILIZACION,
-					"compartir fertilizacion", "compartir fertilización", "share fertilization"),
+					"compartir fertilizacion", "compartir fertilización", "share fertilization",
+					"share fertilizacion", "share fertilización", "compartir fert", "share fert"),
 			new ChatMapping(OnboardingAchievements.FIRST_FERTILIZATION_EXPORTED, UrsulaAction.EXPORT_FERTILIZACION,
 					"exportar fertilizacion", "exportar fertilización", "export fertilization"),
 			new ChatMapping(OnboardingAchievements.FIRST_FERTILIZATION_JOINED, UrsulaAction.UNIR_FERTILIZACIONES,
@@ -497,9 +498,39 @@ public final class AchievementIntentCatalog {
 		}
 		String n = normalize(userQuery);
 		boolean siembra = n.contains("siembra");
-		boolean share = n.contains("compartir");
+		boolean share = n.contains("compartir") || n.contains("share");
 		boolean load = n.contains("cargar") || n.contains("importar") || n.contains("abrir");
 		return siembra && (share || load);
+	}
+
+	/**
+	 * True when the user asks to share (or import+share) a fertilization map —
+	 * not recommend fert from harvest.
+	 */
+	public static boolean isFertilizacionShareOrImportQuery(String userQuery) {
+		if (userQuery == null || userQuery.isBlank()) {
+			return false;
+		}
+		String n = normalize(userQuery);
+		boolean fert = n.contains("fertiliz") || n.contains("fertilization")
+				|| n.matches(".*\\bfert\\b.*");
+		boolean share = n.contains("compartir") || n.contains("share");
+		boolean load = n.contains("cargar") || n.contains("importar") || n.contains("abrir");
+		boolean recommend = n.contains("recomend") || n.contains("recommend");
+		return fert && (share || load) && !recommend;
+	}
+
+	/** True when the user explicitly asks to share a fertilization map. */
+	public static boolean isFertilizacionShareQuery(String userQuery) {
+		if (userQuery == null || userQuery.isBlank()) {
+			return false;
+		}
+		String n = normalize(userQuery);
+		boolean fert = n.contains("fertiliz") || n.contains("fertilization")
+				|| n.matches(".*\\bfert\\b.*");
+		boolean share = n.contains("compartir") || n.contains("share");
+		boolean recommend = n.contains("recomend") || n.contains("recommend");
+		return fert && share && !recommend;
 	}
 
 	/**
@@ -625,6 +656,7 @@ public final class AchievementIntentCatalog {
 		score = adjustMarginScore(normalizedUser, mapping.achievementId(), score);
 		score = adjustPolygonActivateScore(normalizedUser, mapping.action(), score);
 		score = adjustSiembraQueryScore(normalizedUser, mapping.action(), score);
+		score = adjustFertilizacionShareScore(normalizedUser, mapping.action(), score);
 		score = adjustVoyagerHarvestScore(normalizedUser, mapping.action(), score);
 		score = adjustExportScreenScore(normalizedUser, mapping.action(), score);
 		score = adjustExportRecorridaScore(normalizedUser, mapping.action(), score);
@@ -687,6 +719,37 @@ public final class AchievementIntentCatalog {
 		}
 		if (action == UrsulaAction.IMPORT_SIEMBRA) {
 			return Math.max(score, 13.0);
+		}
+		return score;
+	}
+
+	/**
+	 * Routes share/import-fertilización away from Recommend Fert / margin when
+	 * the user says share/compartir (including mixed EN/ES like "share fertilizacion").
+	 */
+	private static double adjustFertilizacionShareScore(String normalizedUser, UrsulaAction action, double score) {
+		if (!isFertilizacionShareOrImportQuery(normalizedUser) || mentionsMargin(normalizedUser)) {
+			return score;
+		}
+		boolean share = normalizedUser.contains("compartir") || normalizedUser.contains("share");
+		boolean load = normalizedUser.contains("cargar") || normalizedUser.contains("importar")
+				|| normalizedUser.contains("abrir");
+		if (action == UrsulaAction.COMPARTIR_FERTILIZACION && share) {
+			return Math.max(score, 15.0);
+		}
+		if (action == UrsulaAction.IMPORT_FERTILIZACION && load && !share) {
+			return Math.max(score, 13.0);
+		}
+		if (share && (action == UrsulaAction.GENERAR_MARGEN
+				|| action == UrsulaAction.RECOMENDAR_FERT_N
+				|| action == UrsulaAction.RECOMENDAR_FERT_P
+				|| action == UrsulaAction.RECOMENDAR_FERT_P_BALANCE
+				|| action == UrsulaAction.RECOMENDAR_FERT_K
+				|| action == UrsulaAction.RECOMENDAR_FERT_S
+				|| action == UrsulaAction.COSECHA_A_FERTILIZACION
+				|| action == UrsulaAction.CONVERTIR_NDVI_A_FERTILIZACION
+				|| action == UrsulaAction.IMPORT_FERTILIZACION)) {
+			return score * 0.05;
 		}
 		return score;
 	}
@@ -864,6 +927,9 @@ public final class AchievementIntentCatalog {
 		}
 		if (action == UrsulaAction.COMPARTIR_SIEMBRA) {
 			return "¡Dale! Comparto la siembra activa (prescripción en línea con QR).";
+		}
+		if (action == UrsulaAction.COMPARTIR_FERTILIZACION) {
+			return "¡Dale! Comparto la fertilización (prescripción en línea con QR).";
 		}
 		if (action == UrsulaAction.EXPORT_PANTALLA) {
 			return "¡Dale! Abro Exportar → Pantalla para guardar la captura.";

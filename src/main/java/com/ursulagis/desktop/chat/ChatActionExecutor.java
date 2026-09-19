@@ -159,7 +159,12 @@ public class ChatActionExecutor {
 	 * resolving labor/cosecha/recorrida when the action requires them.
 	 */
 	public ActionExecutionResult execute(ParsedIntent intent, MapLayerContext layerContext) {
-		ActionContext ctx = new ActionContext(main, intent.getTargetName(), layerContext);
+		String targetName = intent.getTargetName();
+		if ((targetName == null || targetName.isBlank()) && intent.getSourceUserText() != null) {
+			targetName = LaborTargetResolver.extractNameHint(intent.getSourceUserText());
+		}
+		ActionContext ctx = new ActionContext(
+				main, targetName, layerContext, intent.getAction(), intent.getSourceUserText());
 		resolveTargets(ctx, intent.getAction());
 
 		return switch (intent.getAction()) {
@@ -839,6 +844,8 @@ public class ChatActionExecutor {
 				|| action == UrsulaAction.GRILLAR_SIEMBRA
 				|| action == UrsulaAction.EDITAR_SIEMBRA) {
 			resolveSiembra(ctx);
+		} else if (isFertilizacionAction(action)) {
+			resolveFertilizacion(ctx);
 		} else if (action.requiresLabor() || action.requiresCosecha()) {
 			resolveLabor(ctx, action.requiresCosecha());
 		}
@@ -847,12 +854,27 @@ public class ChatActionExecutor {
 		}
 	}
 
+	/** Whether {@code action} must target a {@link FertilizacionLabor}, not a harvest. */
+	private static boolean isFertilizacionAction(UrsulaAction action) {
+		return action == UrsulaAction.COMPARTIR_FERTILIZACION
+				|| action == UrsulaAction.EXPORT_FERTILIZACION
+				|| action == UrsulaAction.PARTIR_FERTILIZACION
+				|| action == UrsulaAction.EDITAR_FERTILIZACION
+				|| action == UrsulaAction.SIEMBRA_DESDE_FERTILIZACION;
+	}
+
 	/** Resolves an active or named {@link SiembraLabor} for share-siembra. */
 	private void resolveSiembra(ActionContext ctx) {
 		LaborTargetResolver.resolveActiveSiembra(ctx.getLayerContext())
 				.or(() -> LaborTargetResolver.resolve(ctx.getLayerContext(), ctx.getTargetName(), false)
 						.filter(SiembraLabor.class::isInstance)
 						.map(SiembraLabor.class::cast))
+				.ifPresent(ctx::setLabor);
+	}
+
+	/** Resolves a named or single {@link FertilizacionLabor} for share/export fert. */
+	private void resolveFertilizacion(ActionContext ctx) {
+		LaborTargetResolver.resolveFertilizacion(ctx.getLayerContext(), ctx.getTargetName())
 				.ifPresent(ctx::setLabor);
 	}
 
@@ -941,6 +963,18 @@ public class ChatActionExecutor {
 		return LaborTargetResolver.ambiguousLaborMessage(ctx.getLayerContext(), ctx.getTargetName(), cosechaOnly);
 	}
 
+	/** Stores a pending labor-name follow-up when the target layer could not be resolved. */
+	private static void rememberLaborFollowUp(ActionContext ctx) {
+		if (ctx.getAction() == null) {
+			return;
+		}
+		String source = ctx.getSourceUserText();
+		if (source == null || source.isBlank()) {
+			source = ctx.getTargetName();
+		}
+		ChatPendingFollowUp.rememberNeedsLaborTarget(ctx.getAction(), source, ctx.getTargetName());
+	}
+
 	@FunctionalInterface
 	private interface LaborAction {
 		ActionExecutionResult apply(Labor<?> labor);
@@ -983,6 +1017,7 @@ public class ChatActionExecutor {
 
 	private ActionExecutionResult requireLabor(ActionContext ctx, boolean cosechaOnly, LaborAction action) {
 		if (ctx.getLabor() == null) {
+			rememberLaborFollowUp(ctx);
 			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, cosechaOnly));
 		}
 		return action.apply(ctx.getLabor());
@@ -990,6 +1025,7 @@ public class ChatActionExecutor {
 
 	private ActionExecutionResult requireCosecha(ActionContext ctx, CosechaAction action) {
 		if (ctx.getCosecha() == null) {
+			rememberLaborFollowUp(ctx);
 			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, true));
 		}
 		return action.apply(ctx.getCosecha());
@@ -998,8 +1034,9 @@ public class ChatActionExecutor {
 	private ActionExecutionResult requireFert(ActionContext ctx, FertAction action) {
 		FertilizacionLabor fert = asFert(ctx.getLabor());
 		if (fert == null) {
+			rememberLaborFollowUp(ctx);
 			return ActionExecutionResult.notLaunched(
-					"No encontré una fertilización activa. Activá una o nombrala.");
+					LaborTargetResolver.ambiguousFertilizacionMessage(ctx.getLayerContext()));
 		}
 		return action.apply(fert);
 	}
@@ -1007,6 +1044,7 @@ public class ChatActionExecutor {
 	private ActionExecutionResult requireSiembra(ActionContext ctx, SiembraAction action) {
 		SiembraLabor siembra = asSiembra(ctx.getLabor());
 		if (siembra == null) {
+			rememberLaborFollowUp(ctx);
 			return ActionExecutionResult.notLaunched(LaborTargetResolver.ambiguousSiembraMessage(ctx.getLayerContext()));
 		}
 		return action.apply(siembra);
@@ -1395,6 +1433,7 @@ public class ChatActionExecutor {
 	/** Shares the resolved harvest map online. */
 	private ActionExecutionResult compartirCosecha(ActionContext ctx) {
 		if (ctx.getCosecha() == null) {
+			rememberLaborFollowUp(ctx);
 			return ActionExecutionResult.notLaunched(ambiguousLaborMessage(ctx, true));
 		}
 		main.cosechaGUIController.doCompartirCosecha(ctx.getCosecha());
@@ -1419,6 +1458,7 @@ public class ChatActionExecutor {
 	/** Shares the resolved seeding prescription (QR). */
 	private ActionExecutionResult compartirSiembra(ActionContext ctx) {
 		if (!(ctx.getLabor() instanceof SiembraLabor siembra)) {
+			rememberLaborFollowUp(ctx);
 			return ActionExecutionResult.notLaunched(LaborTargetResolver.ambiguousSiembraMessage(ctx.getLayerContext()));
 		}
 		main.siembraGUIController.doCompartirSiembra(siembra);

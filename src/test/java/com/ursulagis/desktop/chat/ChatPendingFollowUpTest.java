@@ -43,4 +43,27 @@ class ChatPendingFollowUpTest {
 		assertEquals("26/27", ChatPendingFollowUp.extractCampaniaReply("2627"));
 		assertEquals("26/27", ChatPendingFollowUp.extractCampaniaReply("campaña 26/27"));
 	}
+
+	@Test
+	@DisplayName("labor-name clarification resumes pending share fertilizacion")
+	void resumesWithLaborNameReply() {
+		ChatPendingFollowUp.rememberNeedsLaborTarget(
+				UrsulaAction.COMPARTIR_FERTILIZACION,
+				"share jag 21 fertilizacion",
+				"jag 21");
+
+		assertTrue(ChatPendingFollowUp.isAwaitingLabor());
+
+		ParsedIntent resumed = ChatPendingFollowUp.tryResume("the one with jag 21 in the name").orElseThrow();
+		assertEquals(UrsulaAction.COMPARTIR_FERTILIZACION, resumed.getAction());
+		assertEquals("jag 21", resumed.getTargetName());
+		assertFalse(ChatPendingFollowUp.isAwaitingLabor());
+	}
+
+	@Test
+	@DisplayName("extractLaborNameReply understands clarification phrases")
+	void extractsLaborNameFromClarification() {
+		assertEquals("jag 21", ChatPendingFollowUp.extractLaborNameReply("the one with jag 21 in the name"));
+		assertEquals("jag 21", ChatPendingFollowUp.extractLaborNameReply("la que tiene jag 21"));
+	}
 }

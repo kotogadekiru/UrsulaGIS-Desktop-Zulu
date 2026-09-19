@@ -15,6 +15,8 @@ public class ActionContext {
 	private final JFXMain main;
 	private final String targetName;
 	private final MapLayerContext layerContext;
+	private final UrsulaAction action;
+	private final String sourceUserText;
 	private Labor<?> labor;
 	private CosechaLabor cosecha;
 	private Recorrida recorrida;
@@ -25,9 +27,27 @@ public class ActionContext {
 	 * @param layerContext snapshot of loaded map layers (empty if {@code null})
 	 */
 	public ActionContext(JFXMain main, String targetName, MapLayerContext layerContext) {
+		this(main, targetName, layerContext, null, null);
+	}
+
+	/**
+	 * @param main           application main window used to open controllers
+	 * @param targetName     layer name hinted by the intent, or {@code null}
+	 * @param layerContext   snapshot of loaded map layers (empty if {@code null})
+	 * @param action         action being executed (for pending follow-ups)
+	 * @param sourceUserText original user text when available
+	 */
+	public ActionContext(
+			JFXMain main,
+			String targetName,
+			MapLayerContext layerContext,
+			UrsulaAction action,
+			String sourceUserText) {
 		this.main = main;
 		this.targetName = targetName;
 		this.layerContext = layerContext != null ? layerContext : MapLayerContext.empty();
+		this.action = action;
+		this.sourceUserText = sourceUserText;
 	}
 
 	/** Host app used to call GUI controllers and map helpers. */
@@ -43,6 +63,16 @@ public class ActionContext {
 	/** Layers visible on the map when the user sent the message. */
 	public MapLayerContext getLayerContext() {
 		return layerContext;
+	}
+
+	/** Action currently being executed, if known. */
+	public UrsulaAction getAction() {
+		return action;
+	}
+
+	/** Original user message that produced this intent, if known. */
+	public String getSourceUserText() {
+		return sourceUserText;
 	}
 
 	/** Labor resolved for actions that need a map labor layer. */
