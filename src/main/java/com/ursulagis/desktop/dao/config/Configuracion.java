@@ -144,6 +144,26 @@ public class Configuracion{
 		//return LazyHolder.INSTANCE;
 	}
 
+	/**
+	 * Prefers the long-lived UI config ({@code JFXMain.config}) when available
+	 * so saves do not wipe values set on a throwaway {@link #getInstance()} load.
+	 * Falls back to {@link #getInstance()} for headless/tests.
+	 */
+	public static Configuracion activeConfig() {
+		Configuracion activeConfig = null;
+		try {
+			if (com.ursulagis.desktop.gui.JFXMain.config != null) {
+				activeConfig = com.ursulagis.desktop.gui.JFXMain.config;
+			}else{
+				activeConfig = getInstance();
+				com.ursulagis.desktop.gui.JFXMain.config=activeConfig; //set the active config in the JFXMain
+			}
+		} catch (Exception ignored) {
+			// JFXMain not initialized (tests, headless)
+		}
+		return activeConfig;
+	}
+
 	
 	public String getPropertyOrDefault(String key,String def) {
 		String ret = configProp.getProperty(key);

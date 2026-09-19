@@ -70,7 +70,7 @@ public final class AiApiKeys {
 	 * @return {@code true} if the active {@link Configuracion} already stores a DeepSeek key
 	 */
 	public static boolean hasDeepSeekKeyInConfig() {
-		Configuracion config = activeConfig();
+		Configuracion config = Configuracion.activeConfig();
 		return config != null && !readConfigValue(config, DEEPSEEK_CONFIG_KEY).isBlank();
 	}
 
@@ -109,7 +109,7 @@ public final class AiApiKeys {
 
 	/** Reads a config property via the active {@link Configuracion} instance. */
 	private static String readFromConfig(String key) {
-		Configuracion config = activeConfig();
+		Configuracion config = Configuracion.activeConfig();
 		if (config == null) {
 			return "";
 		}
@@ -132,21 +132,6 @@ public final class AiApiKeys {
 	private static String nonBlankConfigValue(Configuracion config, String key) {
 		String value = config.getProperty(key);
 		return value.isBlank() ? "" : value.trim();
-	}
-
-	/**
-	 * Prefers {@code JFXMain.config} when the UI is up; otherwise falls back to
-	 * {@link Configuracion#getInstance()}.
-	 */
-	private static Configuracion activeConfig() {
-		try {
-			if (com.ursulagis.desktop.gui.JFXMain.config != null) {
-				return com.ursulagis.desktop.gui.JFXMain.config;
-			}
-		} catch (Exception ignored) {
-			// JFXMain not initialized (tests, headless)
-		}
-		return Configuracion.getInstance();
 	}
 
 	/** First trimmed non-blank argument, or {@code ""} if all are blank/null. */

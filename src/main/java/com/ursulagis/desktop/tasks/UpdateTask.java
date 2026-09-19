@@ -464,18 +464,28 @@ public class UpdateTask  extends Task<File>{
 		 */
 	}
 
+	/**
+	 * Returns the device USER from configuration. Creates and saves a UUID only
+	 * when {@code USER} is missing or blank; never replaces an existing value.
+	 *
+	 * @return persisted USER, or {@code ""} if configuration is unavailable
+	 */
 	public static String getUserNumber() {
-//		DecimalFormat userNumberFormat = new DecimalFormat("0,000");
-//		userNumberFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(new Locale("EN")));
-//		userNumberFormat.setGroupingUsed(true);
-//		
-//		String userString = userNumberFormat.format(Math.random()*1000*1000);
-		String userString = UUID.randomUUID().toString();
-		Configuracion conf = Configuracion.getInstance();
-		conf.loadProperties();
-		String usr = conf.getPropertyOrDefault("USER", userString);//si no existia la clave se crea una nueva
+		Configuracion conf = Configuracion.activeConfig();
+		if (conf == null) {
+			logger.warning("no se puede obtener USER: configuracion no disponible");
+			return "";
+		}
+
+		String existing = conf.getProperty("USER");
+		if (existing != null && !existing.trim().isEmpty()) {
+			return existing.trim();
+		}
+
+		String created = UUID.randomUUID().toString();
+		conf.setProperty("USER", created);
 		conf.save();
-		return usr;
+		return created;
 	}
 
 	

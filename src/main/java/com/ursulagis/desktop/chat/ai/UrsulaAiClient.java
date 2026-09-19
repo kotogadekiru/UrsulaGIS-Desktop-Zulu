@@ -124,28 +124,13 @@ public class UrsulaAiClient implements AiClient {
 	 * @throws IllegalStateException when USER is missing or a placeholder value
 	 */
 	private static String resolveUserToken() {
-		Configuracion config = activeConfig();
+		Configuracion config = Configuracion.activeConfig();
 		String user = config == null ? "" : config.getPropertyOrDefault(USER_CONFIG_KEY, "").trim();
 		if (user.isBlank() || "nonefound".equalsIgnoreCase(user) || "number not set".equalsIgnoreCase(user)) {
 			throw new IllegalStateException(
 					"USER not set in configuration. Ursula GIS chat requires a configured device USER.");
 		}
 		return user;
-	}
-
-	/**
-	 * Prefers {@code JFXMain.config} when the UI is up; otherwise
-	 * {@link Configuracion#getInstance()}.
-	 */
-	private static Configuracion activeConfig() {
-		try {
-			if (com.ursulagis.desktop.gui.JFXMain.config != null) {
-				return com.ursulagis.desktop.gui.JFXMain.config;
-			}
-		} catch (Exception ignored) {
-			// JFXMain not initialized (tests, headless)
-		}
-		return Configuracion.getInstance();
 	}
 
 	/**

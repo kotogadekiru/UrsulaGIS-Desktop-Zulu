@@ -146,7 +146,7 @@ public class JFXMain extends Application {
 	private static final String GOV_NASA_WORLDWIND_AVKEY_INITIAL_ALTITUDE = "gov.nasa.worldwind.avkey.InitialAltitude"; 
 	private static final String GOV_NASA_WORLDWIND_AVKEY_INITIAL_LONGITUDE = "gov.nasa.worldwind.avkey.InitialLongitude"; 
 	private static final String GOV_NASA_WORLDWIND_AVKEY_INITIAL_LATITUDE = "gov.nasa.worldwind.avkey.InitialLatitude"; 
-	public static Configuracion config = Configuracion.getInstance();
+	public static Configuracion config = null;
 
 
 	public static String buildDate = "12/09/2025";
@@ -219,6 +219,7 @@ public class JFXMain extends Application {
 	@Override
     public void init() throws Exception {
 		appInstance = this;
+		Configuracion.activeConfig();//sets the config in the JFXMain
 		Runtime.getRuntime().addShutdownHook(new Thread(JFXMain::shutdownOnDebugStop, "ursula-shutdown"));
 		notifyPreloader(new Preloader.StateChangeNotification(Preloader.StateChangeNotification.Type.BEFORE_INIT));
         // Perform non-GUI initialization tasks here

@@ -41,8 +41,6 @@ public class TarjetaHelper {
 	private static final String UUID_TARJETA = "UuidTarjeta";
 	/** Stable token used with the file server; initialized from USER once. */
 	private static final String TOKEN_TARJETA = "TokenTarjeta";
-	private static final String USER_KEY = "USER";
-	private static final String NONEFOUND = "nonefound";
 	public static final String BASE_URL = "https://www.ursulagis.com";
 	//public static final String BASE_URL = "http://localhost:5000";
 	//public static final String BASE_URL = "https://sheltered-mesa-69562-dev-514e4d674053.herokuapp.com";
@@ -56,44 +54,41 @@ public class TarjetaHelper {
 	 */
 	public static void initTarjeta() {
 		String tokenTarjeta = ensureTokenTarjeta();
-		if (NONEFOUND.equals(tokenTarjeta)) {
+		if (tokenTarjeta.isBlank()) {
 			logger.warning("no se puede registrar tarjeta: TokenTarjeta/USER no configurado");
-			return;
-		}
-
-		String uuidTarjeta = getUuidTarjeta();
-		if (!NONEFOUND.equals(uuidTarjeta)) {
-			return;
-		}
-
-		GenericUrl url = new GenericUrl(REGISTRAR_TARJETA_URL);
-		url.set("token", tokenTarjeta);
-		logger.fine("llamand la url " + url.build());
-		byte[] bytes = null;
-		try {
-			bytes = "register tarjeta".getBytes("UTF8");
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		final HttpContent content = new ByteArrayContent("application/json", bytes);
-		HttpResponse res = makeJsonPostRequest(url, content);
-		if (res == null) {
-			logger.warning("no se pudo registrar la tarjeta: response null");
-			return;
-		}
-		try {
-			String tarjetaUuid = res.parseAsString();
-			res.disconnect();
-			if (tarjetaUuid == null || tarjetaUuid.isBlank()) {
-				logger.warning("registro de tarjeta rechazo: " + tarjetaUuid);
-				return;
+		} else {
+			String uuidTarjeta = Configuracion.activeConfig().getProperty(UUID_TARJETA).trim();
+			if (uuidTarjeta.isBlank()) {
+				GenericUrl url = new GenericUrl(REGISTRAR_TARJETA_URL);
+				url.set("token", tokenTarjeta);
+				logger.fine("llamand la url " + url.build());
+				byte[] bytes = null;
+				try {
+					bytes = "register tarjeta".getBytes("UTF8");
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+				}
+				final HttpContent content = new ByteArrayContent("application/json", bytes);
+				HttpResponse res = makeJsonPostRequest(url, content);
+				if (res == null) {
+					logger.warning("no se pudo registrar la tarjeta: response null");
+				} else {
+					try {
+						String tarjetaUuid = res.parseAsString();
+						res.disconnect();
+						if (tarjetaUuid == null || tarjetaUuid.isBlank()) {
+							logger.warning("registro de tarjeta rechazo: " + tarjetaUuid);
+						} else {
+							Configuracion config = Configuracion.activeConfig();
+							config.setProperty(UUID_TARJETA, tarjetaUuid.trim());
+							logger.fine("cree la tarjeta " + tarjetaUuid + " con TokenTarjeta " + tokenTarjeta);
+							config.save();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
-			Configuracion config = Configuracion.getInstance();
-			config.setProperty(UUID_TARJETA, tarjetaUuid.trim());
-			logger.fine("cree la tarjeta " + tarjetaUuid + " con TokenTarjeta " + tokenTarjeta);
-			config.save();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -107,9 +102,9 @@ public class TarjetaHelper {
 			return false;
 		}
 		initTarjeta();
-		String tokenTarjeta = getTokenTarjeta();
-		String uuidTarjeta = getUuidTarjeta();
-		if (NONEFOUND.equals(tokenTarjeta) || NONEFOUND.equals(uuidTarjeta)) {
+		String tokenTarjeta = Configuracion.activeConfig().getProperty(TOKEN_TARJETA).trim();
+		String uuidTarjeta = Configuracion.activeConfig().getProperty(UUID_TARJETA).trim();
+		if (tokenTarjeta.isBlank() || uuidTarjeta.isBlank()) {
 			logger.warning("no se puede subir archivo: TokenTarjeta o UuidTarjeta invalido");
 			return false;
 		}
@@ -178,44 +173,36 @@ public class TarjetaHelper {
 	}
 
 	/**
-	 * Returns TokenTarjeta, creating it from USER the first time it is missing.
-	 * If a legacy UuidTarjeta exists without TokenTarjeta, clears the UUID so it
-	 * is re-registered with the new stable token (avoids USER/uuid mismatch).
+	 * Returns TokenTarjeta, creating it from config {@code USER} the first time
+	 * it is missing. Fails if {@code USER} is blank. If a legacy UuidTarjeta
+	 * exists without TokenTarjeta, clears the UUID so it is re-registered.
 	 */
 	private static String ensureTokenTarjeta() {
-		String token = getTokenTarjeta();
-		if (!NONEFOUND.equals(token)) {
+		Configuracion config = Configuracion.activeConfig();
+		String token = config.getProperty(TOKEN_TARJETA).trim();
+		if (!token.isBlank()) {
 			return token;
+		} else {
+			String user = config.getProperty("USER");
+			if (user == null || user.trim().isEmpty()) {
+				logger.severe("no se puede inicializar TokenTarjeta: USER no configurado");
+				return "";
+			} else {
+				user = user.trim();
+				config.setProperty(TOKEN_TARJETA, user);
+				if (!config.getProperty(UUID_TARJETA).trim().isBlank()) {
+					logger.info("UuidTarjeta sin TokenTarjeta; se vuelve a registrar con el USER actual");
+					config.setProperty(UUID_TARJETA, "");
+				}
+				config.save();
+				logger.fine("TokenTarjeta inicializado desde USER: " + user);
+				return user;
+			}
 		}
-		String user = getConfigValue(USER_KEY);
-		if (NONEFOUND.equals(user)) {
-			return NONEFOUND;
-		}
-		Configuracion config = Configuracion.getInstance();
-		config.setProperty(TOKEN_TARJETA, user);
-		if (!NONEFOUND.equals(getUuidTarjeta())) {
-			logger.info("UuidTarjeta sin TokenTarjeta; se vuelve a registrar con el USER actual");
-			config.setProperty(UUID_TARJETA, "");
-		}
-		config.save();
-		logger.fine("TokenTarjeta inicializado desde USER: " + user);
-		return user;
 	}
 
-	private static String getTokenTarjeta() {
-		return getConfigValue(TOKEN_TARJETA);
-	}
-
-	private static String getUuidTarjeta() {
-		return getConfigValue(UUID_TARJETA);
-	}
-
-	private static String getConfigValue(String key) {
-		String value = Configuracion.getInstance().getPropertyOrDefault(key, NONEFOUND);
-		if (value == null || value.isBlank() || NONEFOUND.equalsIgnoreCase(value.trim())) {
-			return NONEFOUND;
-		}
-		return value.trim();
+	private static String tokenTarjeta() {
+		return Configuracion.activeConfig().getProperty(TOKEN_TARJETA).trim();
 	}
 
 	private static HttpResponse makeBinaryPostRequest(GenericUrl url, HttpContent req_content, String fileName) {
@@ -229,7 +216,7 @@ public class TarjetaHelper {
 						request.setReadTimeout(0);
 						request.setConnectTimeout(0);
 						HttpHeaders headers = request.getHeaders();
-						headers.set("USER", getTokenTarjeta());
+						headers.set("USER", tokenTarjeta());
 						String fileLength = "0";
 						try {
 							fileLength = Long.toString(req_content.getLength());
@@ -263,7 +250,7 @@ public class TarjetaHelper {
 						request.setReadTimeout(0);
 						request.setConnectTimeout(0);
 						HttpHeaders headers = request.getHeaders();
-						headers.set("USER", getTokenTarjeta());
+						headers.set("USER", tokenTarjeta());
 					}
 				});
 

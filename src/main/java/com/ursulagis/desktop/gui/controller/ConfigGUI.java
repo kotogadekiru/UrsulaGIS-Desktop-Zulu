@@ -170,6 +170,15 @@ public class ConfigGUI extends AbstractGUIController{
 				+Messages.getString("JFXMain.info4"); //
 	}
 
+	/** Display-only; does not write a placeholder into USER via getPropertyOrDefault. */
+	private static String deviceUserLabel() {
+		String user = JFXMain.config.getProperty("USER");
+		if (user == null || user.isBlank()) {
+			return "NOT SET";
+		}
+		return user.trim();
+	}
+
 	public void addMenuesToMenuBar(MenuBar menuBar) {
 		/*Menu Importar*/
 		final Menu menuImportar = new Menu(Messages.getString("JFXMain.importar")); 
@@ -488,7 +497,7 @@ public class ConfigGUI extends AbstractGUIController{
 		//acercaDe.setHeaderText(this.TITLE_VERSION+"\n"+this.BUILD_INFO+"\nVisitar www.ursulagis.com");
 		//acercaDe.contentTextProperty().set();
 		String content =   "<b>"+JFXMain.TITLE_VERSION+"</b><br>" // //$NON-NLS-2$
-				+"<b>Dispositivo: "+JFXMain.config.getPropertyOrDefault("USER", "NOT SET")+"</b><br>"
+				+"<b>Dispositivo: "+deviceUserLabel()+"</b><br>"
 				+ ConfigGUI.getBuildInfo()
 				+ "<br><b>" +Messages.getString("JFXMain.visitarUrsulaGIS.com")+"</b>"; // //$NON-NLS-2$ //$NON-NLS-3$
 
