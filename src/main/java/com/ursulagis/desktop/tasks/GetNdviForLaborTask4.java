@@ -25,16 +25,8 @@ import java.util.zip.ZipEntry;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.api.client.util.ArrayMap;
@@ -112,6 +104,13 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	private static DecimalFormat bdf = new DecimalFormat("#,###.00");
 	private List<Ndvi> ndviToIgnore;
 
+	/** In-flight HTTP call; cancelled when the user hits the cancel button. */
+	private volatile java.util.concurrent.CompletableFuture<?> currentHttpCall;
+	private final java.net.http.HttpClient httpClient = java.net.http.HttpClient.newBuilder()
+			.connectTimeout(java.time.Duration.ofSeconds(30))
+			.followRedirects(java.net.http.HttpClient.Redirect.NORMAL)
+			.build();
+
 	public GetNdviForLaborTask4(Poligono contorno, List<Ndvi> _observableList ) {
 		
 		this.contorno=contorno;
@@ -119,10 +118,29 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 		observableList=_observableList;
 		updateTaskName();
 	}
+
+	@Override
+	public boolean cancel(boolean mayInterruptIfRunning) {
+		boolean cancelled = super.cancel(mayInterruptIfRunning);
+		abortCurrentHttp();
+		return cancelled;
+	}
+
+	private void abortCurrentHttp() {
+		java.util.concurrent.CompletableFuture<?> call = currentHttpCall;
+		if(call != null) {
+			call.cancel(true);
+		}
+	}
+
 	public List<Ndvi> call() {	
 		try {
 			return	getNdviTiffFiles(contorno);
 		}catch(Exception e) {
+			if(isCancelled()) {
+				logger.fine("NDVI download cancelled for "+contorno);
+				return Collections.emptyList();
+			}
 			logger.warning("error al descargar el ndvi de "+contorno);
 			e.printStackTrace();
 			return null;
@@ -134,7 +152,10 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	 * @param Poligono
 	 * @return List<LocalDate> con las fechas de las imagenes disponibles
 	 */
-	public List<LocalDate> getSentinellAssets(Poligono pol){			
+	public List<LocalDate> getSentinellAssets(Poligono pol){
+		if(isCancelled()) {
+			return new ArrayList<LocalDate>();
+		}
 		String polygons =pol.getPoligonoToString();
 
 		DateTimeFormatter format1 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -153,11 +174,11 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 
 		final HttpContent req_content = new JsonHttpContent(new JacksonFactory(), req_data);
 
-		HttpResponse response = makePostRequest(url,req_content);//response pueded ser null
-		if(response==null)return  new ArrayList<LocalDate>();
+		GenericJson content = makePostRequest(url,req_content);//content pueded ser null
+		if(isCancelled() || content==null) {
+			return new ArrayList<LocalDate>();
+		}
 		try {
-			GenericJson content = response.parseAs(GenericJson.class);
-			response.disconnect();
 			return parseAssetsData(content);
 			//asset obtenido ={"data": {"properties": {"thumb": "https://mw1.google.com/ges/dd/images/s2_thumb.png", "title": "Sentinel-2: MultiSpectral Instrument (MSI), Level-1C", "date_range": [1435017600000.0, 1487116800000.0], "system:visualization_0_max": 3000, "system:visualization_0_name": "RGB", "period": 0, "sample": "https://mw1.google.com/ges/dd/images/s2_sample.png", "system:visualization_0_min": 0, "description": "<p>SENTINEL-2 is a wide-swath, high-resolution, multi-spectral imaging mission supporting Copernicus Land Monitoring studies, including the monitoring of vegetation, soil and water cover, as well as observation of inland waterways and coastal areas.</p>  <p>The SENTINEL-2 data contain 13 UINT16 spectral bands representing TOA reflectance scaled by 10000: <table> <th>Band</th> <th>Use</th> <th>Wavelength</th> <th>Resolution</th> <tr> <td>B1</td> <td>Aerosols</td> <td>443nm</td> <td>60m</td> </tr> <tr> <td>B2</td> <td>Blue</td> <td>490nm</td> <td>10m</td> </tr> <tr> <td>B3</td> <td>Green</td> <td>560nm</td> <td>10m</td> </tr> <tr> <td>B4</td> <td>Red</td> <td>665nm</td> <td>10m</td> </tr> <tr> <td>B5</td> <td>Red Edge 1</td> <td>705nm</td> <td>20m</td> </tr> <tr> <td>B6</td> <td>Red Edge 2</td> <td>740nm</td> <td>20m</td> </tr> <tr> <td>B7</td> <td>Red Edge 3</td> <td>783nm </td> <td>20m</td> </tr> <tr> <td>B8</td> <td>NIR</td> <td>842nm</td> <td>10m</td> </tr> <tr> <td>B8a</td> <td>Red Edge 4</td> <td>865nm</td> <td>20m</td> </tr> <tr> <td>B9</td> <td>Water vapor</td> <td>940nm</td> <td>60m</td> </tr> <tr> <td>B10</td> <td>Cirrus</td> <td>1375nm</td> <td>60m</td> </tr> <tr> <td>B11</td> <td>SWIR 1</td> <td>1610nm</td> <td>20m</td> </tr> <tr> <td>B12</td> <td>SWIR 2</td> <td>2190nm</td> <td>20m</td> </tr> </table></p>  <p>See <a href='https://sentinel.esa.int/documents/247904/685211/Sentinel-2_User_Handbook'>Sentinel 2 User Handbook</a> for details. In addition, the following bands are present:  <ul> <li>QA10: currently always empty</li> <li>QA20: currently always empty</li> <li>QA60: bit mask band with cloud mask information. Bit 10 is set if the corresponding 60m pixel has been marked as OPAQUE. Bit 11 is set if the corresponding 60m pixel has been marked as CIRRUS. <a href='https://sentinel.esa.int/web/sentinel/technical-guides/sentinel-2-msi/level-1c/land-water-cloud-masks'> See the full explanation of how cloud masks are computed.</a></li> </ul> </p>  <p>Each Sentinel 2 product (zip archive) contains multiple granules. Each granule becomes a separate Earth Engine asset. EE asset ids for Sentinel 2 assets look like this: COPERNICUS/S2/20151128T002653_20151128T102149_T56MNN. Here the first numeric part represents the sensing date and time, the second numeric part represents the product generation date and time, and the final 6-character string is a unique granule identifier indicating its UTM grid reference (see <a href='https://en.wikipedia.org/wiki/Military_grid_reference_system'>MGRS</a>).  <p>Several Sentinel-specific metadata fields are taken from the original metadata, including: <ul> <li>CLOUDY_PIXEL_PERCENTAGE: granule-specific cloudy pixel percentage.</li> <li>CLOUD_COVERAGE_ASSESSMENT: cloudy pixel percentage for the whole archive that contains this granule.</li> </ul>  Also, each S2 Earth Engine asset has a reference to the archive name for the product that the asset's granule was taken from: <ul> <li>PRODUCT_ID; the full id of the original Sentinel 2 product.</li> </ul>  <p>The use of Sentinel data is governed by the <a href='https://scihub.copernicus.eu/twiki/pub/SciHubWebPortal/TermsConditions/Sentinel_Data_Terms_and_Conditions.pdf'>Copernicus Sentinel Data Terms and Conditions</a>.</p> ", "provider_url": "https://sentinel.esa.int/web/sentinel/user-guides/sentinel-2-msi", "tags": ["eu", "esa", "copernicus", "sentinel", "msi", "radiance"], "provider": "European Union/ESA/Copernicus", "system:visualization_0_bands": "B04,B03,B02"}, "id": "COPERNICUS/S2", "features": [{"bands": [{"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B1", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B2", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B3", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B4", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B5", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B6", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B7", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B8", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B8A", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B9", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B10", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B11", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B12", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"id": "QA10", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [10980, 10980], "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}}, {"id": "QA20", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [5490, 5490], "data_type": {"max": 4294967295, "precision": "int", "min": 0, "type": "PixelType"}}, {"id": "QA60", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [1830, 1830], "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}}], "id": "COPERNICUS/S2/20170127T140051_20170127T140834_T20HNH", "version": 1485761178555000, "properties": {"system:footprint": {"coordinates": [[-61.819239281830036, -33.43332561633586], [-61.81925703184291, -33.4333229726925], [-62.7746120563906, -33.43873908682031], [-62.77465299938557, -33.438769352168926], [-62.77470493139525, -33.43878368029093], [-62.7747155148453, -33.438804371468905], [-62.82444952313311, -33.583921379464265], [-62.8578943898261, -33.692198834352375], [-62.89917044363287, -33.8264463517792], [-62.99772043096514, -34.15009214479483], [-63.000325754689314, -34.166066307453725], [-63.000326773383755, -34.42914148092107], [-63.000282437423245, -34.42918294702473], [-63.000242412121544, -34.429231470325604], [-61.80552256701574, -34.423398198210464], [-61.80547283084268, -34.42336114547148], [-61.805417864017265, -34.423329518661504], [-61.805414664132634, -34.42331469839915], [-61.8123697515832, -33.92838012999751], [-61.81915701214183, -33.43341201759283], [-61.81920139487949, -33.43337097074325], [-61.819239281830036, -33.43332561633586]], "type": "LinearRing"}, "PRODUCT_ID": "S2A_MSIL1C_20170127T140051_N0204_R067_T20HNH_20170127T140834", "FORMAT_CORRECTNESS_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B8": 7.72369869995664, "GENERAL_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B10": 101.441555665013, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B11": 101.487425281538, "REFLECTANCE_CONVERSION_CORRECTION": 1.0320757775284, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B9": 101.599178300475, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B4": 101.400753687056, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B5": 101.458357038042, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B6": 101.480437533335, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B7": 101.52117418076, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B1": 101.598688890412, "SENSING_ORBIT_DIRECTION": "DESCENDING", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B3": 101.36258430796, "SPACECRAFT_NAME": "Sentinel-2A", "SOLAR_IRRADIANCE_B9": 813.04, "GRI_FILENAME": "S2A_OPER_AUX_GRI065_PDMC_20130621T120000_S20130101T000000", "ECMWF_DATA_REF": "S2__OPER_AUX_ECMWFD_PDMC_20170127T000000_V20170127T120000_20170128T000000", "SOLAR_IRRADIANCE_B3": 1822.61, "SOLAR_IRRADIANCE_B2": 1941.63, "SOLAR_IRRADIANCE_B1": 1913.57, "RADIOMETRIC_QUALITY_FLAG": "PASSED", "SOLAR_IRRADIANCE_B7": 1163.19, "SOLAR_IRRADIANCE_B6": 1288.32, "SOLAR_IRRADIANCE_B5": 1425.56, "SOLAR_IRRADIANCE_B4": 1512.79, "DATATAKE_TYPE": "INS-NOBS", "IERS_BULLETIN_FILENAME": "S2__OPER_AUX_UT1UTC_PDMC_20170126T000000_V20170127T000000_20180126T000000", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B2": 101.321174817635, "MEAN_SOLAR_AZIMUTH_ANGLE": 70.0220193260797, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B8A": 101.516340540985, "SENSING_ORBIT_NUMBER": 67.0, "CLOUDY_PIXEL_PERCENTAGE": 0.0, "SOLAR_IRRADIANCE_B8A": 955.19, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B12": 101.566848891123, "GRANULE_ID": "L1C_T20HNH_A008358_20170127T140834", "MEAN_INCIDENCE_ZENITH_ANGLE_B11": 7.81300137594528, "MEAN_INCIDENCE_ZENITH_ANGLE_B10": 7.74970340853725, "MEAN_INCIDENCE_ZENITH_ANGLE_B12": 7.87339825732469, "system:time_end": 1485526114471, "CLOUD_COVERAGE_ASSESSMENT": 0.0, "SENSOR_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B8A": 7.88983721750514, "MEAN_INCIDENCE_ZENITH_ANGLE_B6": 7.82238134216798, "PRODUCT_URI": "S2A_MSIL1C_20170127T140051_N0204_R067_T20HNH_20170127T140834.SAFE", "SOLAR_IRRADIANCE_B12": 85.25, "SOLAR_IRRADIANCE_B11": 245.59, "SOLAR_IRRADIANCE_B10": 367.15, "MGRS_TILE": "20HNH", "system:asset_size": 1170449747, "MEAN_INCIDENCE_ZENITH_ANGLE_B5": 7.79660845295558, "MEAN_INCIDENCE_ZENITH_ANGLE_B4": 7.77761510886907, "MEAN_INCIDENCE_ZENITH_ANGLE_B7": 7.85483966043568, "GEOMETRIC_QUALITY_FLAG": "FAILED", "MEAN_INCIDENCE_ZENITH_ANGLE_B1": 7.92359025137159, "MEAN_INCIDENCE_ZENITH_ANGLE_B3": 7.74262301650035, "MEAN_INCIDENCE_ZENITH_ANGLE_B2": 7.71545546679167, "system:index": "20170127T140051_20170127T140834_T20HNH", "DATATAKE_IDENTIFIER": "GS2A_20170127T140051_008358_N02.04", "MEAN_INCIDENCE_ZENITH_ANGLE_B9": 7.96070843029955, "DATASTRIP_ID": "S2A_OPER_MSI_L1C_DS_SGS__20170127T185456_S20170127T140834_N02.04", "SOLAR_IRRADIANCE_B8": 1036.39, "GENERATION_TIME": 1485526114000, "MEAN_SOLAR_ZENITH_ANGLE": 32.9714392274947, "PRODUCTION_DEM_TYPE": "S2__OPER_DEM_GLOBEF_PDMC_19800101T000000_S19800101T000000", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B8": 101.353346878156, "DEGRADED_MSI_DATA_PERCENTAGE": 0.0, "system:time_start": 1485526114471, "PROCESSING_BASELINE": "02.04"}, "type": "Image"}, {"bands": [{"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B1", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B2", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B3", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B4", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B5", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B6", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B7", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B8", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B8A", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B9", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B10", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B11", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B12", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"id": "QA10", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [10980, 10980], "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}}, {"id": "QA20", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [5490, 5490], "data_type": {"max": 4294967295, "precision": "int", "min": 0, "type": "PixelType"}}, {"id": "QA60", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [1830, 1830], "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}}], "id": "COPERNICUS/S2/20170206T140051_20170206T140632_T20HNH", "version": 1486706209342000, "properties": {"system:footprint": {"coordinates": [[-61.81923928182774, -33.43332561633631], [-61.81925703184165, -33.43332297269265], [-62.77558030361335, -33.43874084271251], [-62.77561810019611, -33.43876878168642], [-62.77566736896839, -33.4387780040758], [-62.77568034311826, -33.438797724802875], [-62.77825030667524, -33.44421783185332], [-62.80648036921582, -33.52328271663303], [-62.98211104948312, -34.09056328781995], [-62.99511728777705, -34.13926899208452], [-63.000325743232615, -34.16308811150741], [-63.000326773383755, -34.429141480921075], [-63.000282437423245, -34.42918294702473], [-63.00024241212153, -34.429231470325604], [-61.80552256701574, -34.423398198210464], [-61.80547283084268, -34.42336114547148], [-61.805417864017265, -34.423329518661504], [-61.805414664132634, -34.42331469839915], [-61.8123697515832, -33.92838012999751], [-61.81915701214183, -33.43341201759283], [-61.81920139487894, -33.433370970743766], [-61.81923928182774, -33.43332561633631]], "type": "LinearRing"}, "PRODUCT_ID": "S2A_MSIL1C_20170206T140051_N0204_R067_T20HNH_20170206T140632", "FORMAT_CORRECTNESS_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B8": 7.72087418841092, "GENERAL_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B10": 101.417775155007, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B11": 101.488376304212, "REFLECTANCE_CONVERSION_CORRECTION": 1.02948514449663, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B9": 101.593664605364, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B4": 101.38735125322, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B5": 101.411184503444, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B6": 101.431716209234, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B7": 101.437042822351, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B1": 101.539413807944, "SENSING_ORBIT_DIRECTION": "DESCENDING", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B3": 101.332561694526, "SPACECRAFT_NAME": "Sentinel-2A", "SOLAR_IRRADIANCE_B9": 813.04, "GRI_FILENAME": "S2A_OPER_AUX_GRI065_PDMC_20130621T120000_S20130101T000000", "ECMWF_DATA_REF": "S2__OPER_AUX_ECMWFD_PDMC_20170206T000000_V20170206T120000_20170207T000000", "SOLAR_IRRADIANCE_B3": 1822.61, "SOLAR_IRRADIANCE_B2": 1941.63, "SOLAR_IRRADIANCE_B1": 1913.57, "RADIOMETRIC_QUALITY_FLAG": "PASSED", "SOLAR_IRRADIANCE_B7": 1163.19, "SOLAR_IRRADIANCE_B6": 1288.32, "SOLAR_IRRADIANCE_B5": 1425.56, "SOLAR_IRRADIANCE_B4": 1512.79, "DATATAKE_TYPE": "INS-NOBS", "IERS_BULLETIN_FILENAME": "S2__OPER_AUX_UT1UTC_PDMC_20170202T000000_V20170203T000000_20180202T000000", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B2": 101.290247482918, "MEAN_SOLAR_AZIMUTH_ANGLE": 66.2098468436741, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B8A": 101.458755074051, "SENSING_ORBIT_NUMBER": 67.0, "CLOUDY_PIXEL_PERCENTAGE": 2.5373, "SOLAR_IRRADIANCE_B8A": 955.19, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B12": 101.540713188865, "GRANULE_ID": "L1C_T20HNH_A008501_20170206T140632", "MEAN_INCIDENCE_ZENITH_ANGLE_B11": 7.79556715616444, "MEAN_INCIDENCE_ZENITH_ANGLE_B10": 7.74753418873838, "MEAN_INCIDENCE_ZENITH_ANGLE_B12": 7.86677157145221, "system:time_end": 1486389992802, "CLOUD_COVERAGE_ASSESSMENT": 2.5373, "SENSOR_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B8A": 7.87987176428214, "MEAN_INCIDENCE_ZENITH_ANGLE_B6": 7.82373704697061, "PRODUCT_URI": "S2A_MSIL1C_20170206T140051_N0204_R067_T20HNH_20170206T140632.SAFE", "SOLAR_IRRADIANCE_B12": 85.25, "SOLAR_IRRADIANCE_B11": 245.59, "SOLAR_IRRADIANCE_B10": 367.15, "MGRS_TILE": "20HNH", "system:asset_size": 1213908597, "MEAN_INCIDENCE_ZENITH_ANGLE_B5": 7.79795327088808, "MEAN_INCIDENCE_ZENITH_ANGLE_B4": 7.77079911743578, "MEAN_INCIDENCE_ZENITH_ANGLE_B7": 7.84877227015588, "GEOMETRIC_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B1": 7.91366869340992, "MEAN_INCIDENCE_ZENITH_ANGLE_B3": 7.73590158219813, "MEAN_INCIDENCE_ZENITH_ANGLE_B2": 7.70871523495296, "system:index": "20170206T140051_20170206T140632_T20HNH", "DATATAKE_IDENTIFIER": "GS2A_20170206T140051_008501_N02.04", "MEAN_INCIDENCE_ZENITH_ANGLE_B9": 7.95064209431493, "DATASTRIP_ID": "S2A_OPER_MSI_L1C_DS_SGS__20170206T203517_S20170206T140632_N02.04", "SOLAR_IRRADIANCE_B8": 1036.39, "GENERATION_TIME": 1486389992000, "MEAN_SOLAR_ZENITH_ANGLE": 34.9190601366047, "PRODUCTION_DEM_TYPE": "S2__OPER_DEM_GLOBEF_PDMC_19800101T000000_S19800101T000000", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B8": 101.310060902374, "DEGRADED_MSI_DATA_PERCENTAGE": 0.0, "system:time_start": 1486389992802, "PROCESSING_BASELINE": "02.04"}, "type": "Image"}, {"bands": [{"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B1", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B2", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B3", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B4", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B5", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B6", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B7", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B8", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "dimensions": [10980, 10980], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B8A", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B9", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B10", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "dimensions": [1830, 1830], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B11", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"properties": {"system:nodata_value": 0.0}, "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}, "id": "B12", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "dimensions": [5490, 5490], "crs": "EPSG:32720"}, {"id": "QA10", "crs_transform": [10.0, 0.0, 499980.0, 0.0, -10.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [10980, 10980], "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}}, {"id": "QA20", "crs_transform": [20.0, 0.0, 499980.0, 0.0, -20.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [5490, 5490], "data_type": {"max": 4294967295, "precision": "int", "min": 0, "type": "PixelType"}}, {"id": "QA60", "crs_transform": [60.0, 0.0, 499980.0, 0.0, -60.0, 6300040.0], "crs": "EPSG:32720", "dimensions": [1830, 1830], "data_type": {"max": 65535, "precision": "int", "min": 0, "type": "PixelType"}}], "id": "COPERNICUS/S2/20170216T140051_20170216T140238_T20HNH", "version": 1487646635752000, "properties": {"system:footprint": {"coordinates": [[-63.00028243742321, -34.42918294702477], [-63.000242412121544, -34.429231470325604], [-61.80552256701574, -34.423398198210464], [-61.80547283084268, -34.42336114547148], [-61.80541448214799, -34.42332757280011], [-61.8123697515832, -33.92838012999751], [-61.81915701214183, -33.43341201759283], [-61.81920139487929, -33.43337097074343], [-61.81924161261129, -33.433322826158644], [-62.774950791025965, -33.438739702254736], [-62.774983185362125, -33.43874933657661], [-62.77562798712367, -33.43902109622738], [-62.77564097731928, -33.43904820645398], [-62.77567389415508, -33.43905810431031], [-62.7756838158894, -33.43907902257399], [-62.78560985861644, -33.47129689582426], [-62.99902051875921, -34.15901563315487], [-62.99999808688343, -34.16226624991174], [-63.00032574635743, -34.16390045635071], [-63.000326773383755, -34.429141480921075], [-63.00028243742321, -34.42918294702477]], "type": "LinearRing"}, "PRODUCT_ID": "S2A_MSIL1C_20170216T140051_N0204_R067_T20HNH_20170216T140238", "FORMAT_CORRECTNESS_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B8": 7.72191935006344, "GENERAL_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B10": 101.419348636653, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B11": 101.489648631237, "REFLECTANCE_CONVERSION_CORRECTION": 1.02601887961432, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B9": 101.594288578126, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B4": 101.377103557168, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B5": 101.412544469152, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B6": 101.432939695596, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B7": 101.467039398032, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B1": 101.540180966808, "SENSING_ORBIT_DIRECTION": "DESCENDING", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B3": 101.334278322561, "SPACECRAFT_NAME": "Sentinel-2A", "SOLAR_IRRADIANCE_B9": 813.04, "GRI_FILENAME": "S2A_OPER_AUX_GRI065_PDMC_20130621T120000_S20130101T000000", "ECMWF_DATA_REF": "S2__OPER_AUX_ECMWFD_PDMC_20170216T000000_V20170216T090000_20170216T210000", "SOLAR_IRRADIANCE_B3": 1822.61, "SOLAR_IRRADIANCE_B2": 1941.63, "SOLAR_IRRADIANCE_B1": 1913.57, "RADIOMETRIC_QUALITY_FLAG": "PASSED", "SOLAR_IRRADIANCE_B7": 1163.19, "SOLAR_IRRADIANCE_B6": 1288.32, "SOLAR_IRRADIANCE_B5": 1425.56, "SOLAR_IRRADIANCE_B4": 1512.79, "DATATAKE_TYPE": "INS-NOBS", "IERS_BULLETIN_FILENAME": "S2__OPER_AUX_UT1UTC_PDMC_20170209T000000_V20170210T000000_20180209T000000", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B2": 101.292179741435, "MEAN_SOLAR_AZIMUTH_ANGLE": 61.8693047313385, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B8A": 101.459692977312, "SENSING_ORBIT_NUMBER": 67.0, "CLOUDY_PIXEL_PERCENTAGE": 46.001, "SOLAR_IRRADIANCE_B8A": 955.19, "MEAN_INCIDENCE_AZIMUTH_ANGLE_B12": 101.522984693803, "GRANULE_ID": "L1C_T20HNH_A008644_20170216T140238", "MEAN_INCIDENCE_ZENITH_ANGLE_B11": 7.79661591458585, "MEAN_INCIDENCE_ZENITH_ANGLE_B10": 7.74858088008228, "MEAN_INCIDENCE_ZENITH_ANGLE_B12": 7.87202797543515, "system:time_end": 1487253758304, "CLOUD_COVERAGE_ASSESSMENT": 46.001, "SENSOR_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B8A": 7.88091971370358, "MEAN_INCIDENCE_ZENITH_ANGLE_B6": 7.82478554723881, "PRODUCT_URI": "S2A_MSIL1C_20170216T140051_N0204_R067_T20HNH_20170216T140238.SAFE", "SOLAR_IRRADIANCE_B12": 85.25, "SOLAR_IRRADIANCE_B11": 245.59, "SOLAR_IRRADIANCE_B10": 367.15, "MGRS_TILE": "20HNH", "system:asset_size": 1175517360, "MEAN_INCIDENCE_ZENITH_ANGLE_B5": 7.79900116247969, "MEAN_INCIDENCE_ZENITH_ANGLE_B4": 7.77607041217818, "MEAN_INCIDENCE_ZENITH_ANGLE_B7": 7.85318622478758, "GEOMETRIC_QUALITY_FLAG": "PASSED", "MEAN_INCIDENCE_ZENITH_ANGLE_B1": 7.91471610436124, "MEAN_INCIDENCE_ZENITH_ANGLE_B3": 7.7369473590697, "MEAN_INCIDENCE_ZENITH_ANGLE_B2": 7.70975907970575, "system:index": "20170216T140051_20170216T140238_T20HNH", "DATATAKE_IDENTIFIER": "GS2A_20170216T140051_008644_N02.04", "MEAN_INCIDENCE_ZENITH_ANGLE_B9": 7.95168886480531, "DATASTRIP_ID": "S2A_OPER_MSI_L1C_DS_SGS__20170216T185746_S20170216T140238_N02.04", "SOLAR_IRRADIANCE_B8": 1036.39, "GENERATION_TIME": 1487253758000, "MEAN_SOLAR_ZENITH_ANGLE": 37.0241680190277, "PRODUCTION_DEM_TYPE": "S2__OPER_DEM_GLOBEF_PDMC_19800101T000000_S19800101T000000", "MEAN_INCIDENCE_AZIMUTH_ANGLE_B8": 101.311911153513, "DEGRADED_MSI_DATA_PERCENTAGE": 0.0, "system:time_start": 1487253758304, "PROCESSING_BASELINE": "02.04"}, "type": "Image"}], "bands": [], "version": 1487648348026000, "type": "ImageCollection"}}
 		} catch (Exception e) {
@@ -168,12 +189,15 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 
 	private List<LocalDate> parseAssetsData(GenericJson content){//data.get("features")
 		List<LocalDate> assets = new ArrayList<LocalDate>();
-		if(content == null)return assets;
+		if(content == null || isCancelled())return assets;
 		Object data = content.get(DATA);
 
 		if(data instanceof List){
 			int i=0;
 			for(ArrayMap<String,Object> feature:(List<ArrayMap<String,Object>>)data ){
+				if(isCancelled()) {
+					return assets;
+				}
 				i++;
 				updateProgress(i, ((List<?>)data).size());
 				if(feature instanceof Map){
@@ -204,17 +228,21 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	}
 
 	@SuppressWarnings("unchecked")
-	private static List<Ndvi> parseNDVIResponse(HttpResponse response,Poligono contornoP,LocalDate date) throws IOException {
+	private List<Ndvi> parseNDVIResponse(GenericJson content,Poligono contornoP,LocalDate date) throws IOException {
 		List<Ndvi> ndviList = new ArrayList<Ndvi>();
-		GenericJson content = response.parseAs(GenericJson.class);
-		if(content == null)return ndviList;
+		if(isCancelled() || content == null) {
+			return ndviList;
+		}
 		logger.fine("ndvi content "+ content);//XXX ndvi content {"data":[]}
 		Object features = content.get(DATA);
 
 		if(features == null)return ndviList;
 
 		if(features instanceof List){
-			for(ArrayMap<String,String> feature:(List<ArrayMap<String,String>>)features){			
+			for(ArrayMap<String,String> feature:(List<ArrayMap<String,String>>)features){
+				if(isCancelled()) {
+					return ndviList;
+				}
 				BigDecimal porcNubes=new BigDecimal(0);
 				BigDecimal meanNDVI=new BigDecimal(0);
 			//	BigDecimal rFAA=new BigDecimal(0);
@@ -246,8 +274,11 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 				if(path2!=""&&porcNubes.doubleValue()<90){
 					logger.fine("path2 "+path2);
 					Object[] nameBytes = downloadGoogleTifFile(path2);//XXX long running process
-					logger.fine("downloaded file "+nameBytes[0]+" size "+((byte[])nameBytes[1]).length);
+					if(isCancelled()) {
+						return ndviList;
+					}
 					if(nameBytes!=null) {
+						logger.fine("downloaded file "+nameBytes[0]+" size "+((byte[])nameBytes[1]).length);
 						String fileName = (String) nameBytes[0];
 						fileName = extractNameFromFileName(fileName);
 						//en este punto fileName tiene la fecha en formato 2017-03-28 es decir dd-MM-yyyy
@@ -327,6 +358,9 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 
 	private List<Ndvi> getNdviTiffFiles(Poligono poligono){
 		updateProgress(0, 3);
+		if(isCancelled()) {
+			return new ArrayList<Ndvi>();
+		}
 		//List<File> tiffFiles = new ArrayList<File>();
 		//Poligono poligono = null;
 		//String poligonoAsString=poligono.getPoligonoToString();
@@ -334,6 +368,9 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 		Poligono contornoP = poligono;
 		//String polygons = poligonoAsString;
 		List<LocalDate> uniqueDates = getSentinellAssets(poligono);//assents tiene la forma ["COPERNICUS/S2/20161221T141042_20161221T142209_T20HLG","COPERNICUS/S2/20161221T141042_20161221T142209_T20HLG"]
+		if(isCancelled() || uniqueDates == null) {
+			return new ArrayList<Ndvi>();
+		}
 		updateProgress(0, uniqueDates.size());
 
 		logger.fine("procesando los dates unicos "+uniqueDates);
@@ -379,6 +416,9 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 					}catch(Exception e) {
 						e.printStackTrace();
 					}
+					if(isCancelled()) {
+						return;
+					}
 					if(loaded==null || loaded.size()==0) {//if the file is not in db
 						
 						String ndviType = JFXMain.config.getPropertyOrDefault(NDVI_DOWNLOAD_TYPE_CONFIG_KEY, TOA);
@@ -407,11 +447,16 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 					polygons=[[[[-64.69101905822754,-34.860017354204885],[-64.69058990478516,-34.86705989785682],[-64.67016220092773,-34.86515847050267],[-64.67265129089355,-34.86198932721536]]]]
 						 */
 						logger.fine("calling url: "+url);
-						HttpResponse response = makePostRequest(url,req_content);
+						GenericJson ndviContent = makePostRequest(url,req_content);
+						if(isCancelled() || ndviContent == null) {
+							return;
+						}
 
 						try {
-							List<Ndvi> tiffResponse = parseNDVIResponse(response,contornoP,assetDate);
-							response.disconnect();
+							List<Ndvi> tiffResponse = parseNDVIResponse(ndviContent,contornoP,assetDate);
+							if(isCancelled()) {
+								return;
+							}
 							if(tiffResponse.size()>0) {
 								observableList.addAll(tiffResponse);//agrego a la lista de observables para que se vayan mostrando
 								tiffFiles.addAll(tiffResponse);//agrego a la coleccion final
@@ -427,7 +472,9 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 							}
 
 						} catch (IOException e) {
-							e.printStackTrace();
+							if(!isCancelled()) {
+								e.printStackTrace();
+							}
 
 						} 
 					}
@@ -454,44 +501,53 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	 * @param path
 	 * @return
 	 */
-	private static Object[] downloadGoogleTifFile(String path){
+	private Object[] downloadGoogleTifFile(String path){
 		int tries = 0;
 		while(tries<5){
+			if(isCancelled()) {
+				return null;
+			}
 			try{
 				Map<ZipEntry, byte[]> filePaths=null;
-				GenericUrl url = new GenericUrl(path);
-				HttpResponse response = makeGetRequest(url);
-				if(response == null){
+				InputStream responseStream = makeGetRequest(path);
+				if(isCancelled()) {
+					if(responseStream != null) {
+						try { responseStream.close(); } catch(Exception ignore) {}
+					}
+					return null;
+				}
+				if(responseStream == null){
 					logger.warning("no se pudo descargar el archivo de google... reintentando");
+					tries++;
 					continue;//retry
 				}
-				try {
-					InputStream is = response.getContent();
+				try (InputStream is = responseStream) {
 					logger.fine("readinf content from is");
 					filePaths = UnzipUtility.readFrom(is);//(is, downloadDir.toPath());
 					logger.fine("filepaths is "+filePaths.size());
 					for( ZipEntry e: filePaths.keySet()) {
 						logger.fine("reading zip entry "+e.getName());
 						if(e.getName().endsWith(".tif")) {
-							//Path outputFile=Files.createTempFile(e.getName(), "");
-							//Files.write( outputFile,filePaths.get(e));
 							return new Object[] {e.getName(),filePaths.get(e)};
-							
 						}
 					}
 				} catch (IOException e) {
-					e.printStackTrace();
+					if(!isCancelled()) {
+						e.printStackTrace();
+					}
 				}
-				//List<File> tifFiles = filePaths.keySet().stream().map((s)->new File(s)).filter((f)->s.getName().endsWith(".tif")).collect(Collectors.toList());
-				//return tifFiles.get(0);
 			}catch(Exception e){
+				if(isCancelled()) {
+					return null;
+				}
 				logger.warning("no se pudo descargar el archivo de google... reintentando con tries="+tries);
 				e.printStackTrace();
 			}
 			try {
 				Thread.sleep(tries*1000);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				Thread.currentThread().interrupt();
+				return null;
 			}
 			tries++;
 		}
@@ -501,78 +557,111 @@ public class GetNdviForLaborTask4 extends ProgresibleTask<List<Ndvi>>{
 	}
 
 	/**
-	 * metodo que ejecuta un request
-	 * @param url
-	 * @return HttResponse
+	 * POST JSON to the GEE helper API. Returns parsed JSON, or null if cancelled/failed.
 	 */
-	private HttpResponse makePostRequest(GenericUrl url,HttpContent req_content){
-		HttpResponse response = null;
-		HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-
-		JsonFactory JSON_FACTORY = new JacksonFactory();
-		HttpRequestFactory requestFactory =
-				HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
-					@Override
-					public void initialize(HttpRequest request) {
-						request.setParser(new JsonObjectParser(JSON_FACTORY));
-						request.setReadTimeout(0);
-						request.setConnectTimeout(0);
-					}
-				});
+	private GenericJson makePostRequest(GenericUrl url,HttpContent req_content){
+		if(isCancelled()) {
+			return null;
+		}
 		try {
-			HttpRequest request = requestFactory.buildPostRequest(url, req_content);//(url);
-			String usr = UpdateTask.getUserNumber();
-			request.getHeaders().put("USER", usr);
-			response= request.execute();
-
+			java.io.ByteArrayOutputStream bodyOut = new java.io.ByteArrayOutputStream();
+			req_content.writeTo(bodyOut);
+			java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+					.uri(java.net.URI.create(url.build()))
+					.timeout(java.time.Duration.ofHours(2))
+					.header("Content-Type", "application/json")
+					.header("USER", UpdateTask.getUserNumber())
+					.POST(java.net.http.HttpRequest.BodyPublishers.ofByteArray(bodyOut.toByteArray()))
+					.build();
+			String body = awaitCancellable(
+					httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString()),
+					java.net.http.HttpResponse::body);
+			if(body == null || isCancelled()) {
+				return null;
+			}
+			return new JsonObjectParser(new JacksonFactory())
+					.parseAndClose(new java.io.StringReader(body), GenericJson.class);
 		} catch (Exception e) {
-			e.printStackTrace();
-			return null;// si no se pudo hacer el request devuelvo null. puede ser por falta de conexion u otra cosa
-		}	
-		return response;
+			if(!isCancelled()) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 	}
 
 	/**
-	 * metodo que ejecuta un request
-	 * @param url
-	 * @return HttResponse
+	 * GET binary content (e.g. GeoTIFF zip). Returns an open stream, or null if cancelled/failed.
 	 */
-	private static HttpResponse makeGetRequest(GenericUrl url){
-		HttpResponse response = null;
-		
+	private InputStream makeGetRequest(String url){
+		if(isCancelled()) {
+			return null;
+		}
+
 		// Configure SSL/TLS settings to handle handshake issues
 		System.setProperty("https.protocols", "TLSv1.2,TLSv1.3");
 		System.setProperty("jdk.tls.client.protocols", "TLSv1.2,TLSv1.3");
 		System.setProperty("javax.net.ssl.trustStore", System.getProperty("java.home") + "/lib/security/cacerts");
 		System.setProperty("javax.net.ssl.trustStorePassword", "changeit");
-		
-		HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-		JsonFactory JSON_FACTORY = new JacksonFactory();
-		HttpRequestFactory requestFactory =
-				HTTP_TRANSPORT.createRequestFactory(new HttpRequestInitializer() {
-					@Override
-					public void initialize(HttpRequest request) {
-						request.setParser(new JsonObjectParser(JSON_FACTORY));
-						request.setReadTimeout(30000);
-						request.setConnectTimeout(30000);
-						
-						// Add headers to help with SSL handshake
-						HttpHeaders headers = request.getHeaders();
-						headers.set("User-Agent", "UrsulaGIS-Desktop/1.0");
-						headers.set("Accept", "*/*");
-					}
-				});
 
 		try {
-			HttpRequest request = requestFactory.buildGetRequest(url);
-			response= request.execute();
-		} catch (Exception e) {			
+			java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+					.uri(java.net.URI.create(url))
+					.timeout(java.time.Duration.ofMinutes(5))
+					.header("User-Agent", "UrsulaGIS-Desktop/1.0")
+					.header("Accept", "*/*")
+					.GET()
+					.build();
+			return awaitCancellable(
+					httpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofInputStream()),
+					java.net.http.HttpResponse::body);
+		} catch (Exception e) {
+			if(isCancelled()) {
+				return null;
+			}
 			logger.warning("Fallo el getUrl "+url);
 			e.printStackTrace();
-
 			return null;
-		}	
-		return response;
+		}
+	}
+
+	/**
+	 * Waits for an async HTTP call, aborting promptly when the task is cancelled.
+	 */
+	private <T, R> R awaitCancellable(
+			java.util.concurrent.CompletableFuture<T> future,
+			java.util.function.Function<T, R> mapper) throws Exception {
+		currentHttpCall = future;
+		try {
+			while(!future.isDone()) {
+				if(isCancelled()) {
+					future.cancel(true);
+					return null;
+				}
+				try {
+					return mapper.apply(future.get(250, java.util.concurrent.TimeUnit.MILLISECONDS));
+				} catch(java.util.concurrent.TimeoutException ignored) {
+					// keep polling until done or cancelled
+				} catch(java.util.concurrent.CancellationException cancelled) {
+					return null;
+				} catch(java.util.concurrent.ExecutionException ex) {
+					if(isCancelled()) {
+						return null;
+					}
+					Throwable cause = ex.getCause();
+					if(cause instanceof Exception) {
+						throw (Exception) cause;
+					}
+					throw ex;
+				}
+			}
+			if(isCancelled()) {
+				future.cancel(true);
+				return null;
+			}
+			return mapper.apply(future.get());
+		} finally {
+			currentHttpCall = null;
+		}
 	}
 
 	// public void installProgressBar(Pane progressBox) {

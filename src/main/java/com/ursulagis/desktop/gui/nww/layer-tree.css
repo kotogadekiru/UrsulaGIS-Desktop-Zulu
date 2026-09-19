@@ -4,9 +4,17 @@
     -fx-min-width: 18;
     -fx-pref-width: 18;
     -fx-max-width: 18;
-    -fx-padding: 4 6 4 8;
+    -fx-padding: 0 6 0 8;
 }
 
 .tree-cell {
     -fx-indent: 20;
+    -fx-padding: 0 2 0 2;
+    -fx-alignment: CENTER_LEFT;
+}
+
+/* Compact text-only leaves: 1px gap via bottom padding */
+.tree-cell.leaf-layer-cell {
+    -fx-padding: 0 2 1 2;
+    -fx-min-height: 0;
 }

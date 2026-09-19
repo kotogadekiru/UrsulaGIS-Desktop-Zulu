@@ -40,6 +40,7 @@ import javafx.beans.value.WeakChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.CheckBoxTreeItem;
@@ -58,6 +59,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
@@ -68,7 +70,9 @@ public class LayerPanel extends VBox {
 	private static final Logger logger = Logger.getLogger(LayerPanel.class.getName());
 
 
-	private static final int TREE_ITEM_ICON_WIDTH = 50;
+	private static final int TREE_ITEM_ICON_WIDTH = 45; // 10% smaller than original 50
+	/** Harvest icon is wider/flatter; scale up slightly so it matches visual weight. */
+	private static final int HARVEST_ICON_WIDTH = 52;
 
 	protected ScrollPane scrollPane=null;	 
 
@@ -878,6 +882,7 @@ public class LayerPanel extends VBox {
 	}
 
 	private void setGraphic(CheckBoxTreeItem<Layer> item,String iconUrl) {
+		int iconSize = "cose.png".equals(iconUrl) ? HARVEST_ICON_WIDTH : TREE_ITEM_ICON_WIDTH;
 		ImageView mv = new ImageView();
 		// Use absolute path from classpath root to ensure resources are found in packaged applications
 		String resourcePath = "/com/ursulagis/desktop/gui/nww/" + iconUrl;
@@ -888,11 +893,18 @@ public class LayerPanel extends VBox {
 		}
 		if (iconStream != null) {
 			mv.setImage(new Image(iconStream));
-			mv.setFitWidth(TREE_ITEM_ICON_WIDTH);
+			mv.setFitWidth(iconSize);
+			mv.setFitHeight(iconSize);
 			mv.setPreserveRatio(true);
 			mv.setSmooth(true);
 			mv.setCache(true);
-			item.setGraphic(mv);
+			// Fixed slot keeps icons centered with checkbox/label and aligned across rows
+			StackPane graphicSlot = new StackPane(mv);
+			graphicSlot.setAlignment(Pos.CENTER);
+			graphicSlot.setMinSize(iconSize, iconSize);
+			graphicSlot.setPrefSize(iconSize, iconSize);
+			graphicSlot.setMaxSize(iconSize, iconSize);
+			item.setGraphic(graphicSlot);
 		} else {
 			logger.warning("Warning: Could not load icon: " + iconUrl);
 		}
@@ -913,11 +925,19 @@ public class LayerPanel extends VBox {
 		// (JDK-8288665 / JDK-8340344) cuando hay muchas hojas bajo una rama expandida.
 		tree.setStyle("-fx-background-color:transparent;");
 		applyTreeIndentStyles(tree);
-		//tree.setShowRoot(false);
+		// Hide "Layers" root row/arrow; children stay visible as top-level items
+		tree.setShowRoot(false);
+		rootItem.setExpanded(true);
+		rootItem.expandedProperty().addListener((o, wasExpanded, expanded) -> {
+			if (!expanded) {
+				rootItem.setExpanded(true);
+			}
+		});
 		//tree.setCellFactory(CheckBoxTreeCell.<String>forTreeView());   
 		
 		tree.setCellFactory((treeView) ->{
 			CheckBoxTreeCell<Layer> cell = (CheckBoxTreeCell<Layer>) CheckBoxTreeCell.<Layer>forTreeView().call(treeView);
+			cell.setAlignment(Pos.CENTER_LEFT);
 			cell.setStyle("-fx-faint-focus-color: -fx-control-inner-background;");
 			//-fx-focus-color: -fx-control-inner-background ; -fx-faint-focus-color: -fx-control-inner-background ;-fx-background-color:transparent;
 
@@ -936,6 +956,14 @@ public class LayerPanel extends VBox {
 					return null;
 				}        	    	
 			} );
+
+			listenersAdapter.addChangeListener(cell.treeItemProperty(), (o, oldItem, item) -> {
+				cell.getStyleClass().remove("leaf-layer-cell");
+				// Text-only leaves (no category icon): keep rows tight with 1px gap
+				if (item != null && item.isLeaf() && item.getGraphic() == null) {
+					cell.getStyleClass().add("leaf-layer-cell");
+				}
+			});
 		
 			//cell.itemProperty().addListener(getItemPropertyListener(cell));
 			
@@ -965,8 +993,9 @@ public class LayerPanel extends VBox {
 		// Fallback si el CSS aún no está en el classpath (p. ej. run sin process-resources)
 		String inline = "data:text/css,"
 				+ ".tree-cell > .tree-disclosure-node {"
-				+ "-fx-min-width:18;-fx-pref-width:18;-fx-max-width:18;-fx-padding:4 6 4 8;}"
-				+ ".tree-cell{-fx-indent:20;}";
+				+ "-fx-min-width:18;-fx-pref-width:18;-fx-max-width:18;-fx-padding:0 6 0 8;}"
+				+ ".tree-cell{-fx-indent:20;-fx-padding:0 2 0 2;-fx-alignment:CENTER_LEFT;}"
+				+ ".tree-cell.leaf-layer-cell{-fx-padding:0 2 1 2;-fx-min-height:0;}";
 		if (!treeView.getStylesheets().contains(inline)) {
 			treeView.getStylesheets().add(inline);
 		}

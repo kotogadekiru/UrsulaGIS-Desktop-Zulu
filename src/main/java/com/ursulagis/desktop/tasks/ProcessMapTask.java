@@ -697,12 +697,19 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		//System.out.println("bounds = "+bounds);
 		double res=  Math.sqrt(bounds.getArea()/(milis));//antes dividia por 10000 cuando eran segundos
 		double	resolution =res;// Math.sqrt(bounds.getArea()/40000)>1?;//como el tiempo por item es 0.1 limito el tiempo de rendering a 2seg
-		double	ancho = resolution / ProyectionConstants.metersToLong();
+		// Same meter-space as construirGrilla: cell size in meters, X/Y via long/lat factors
+		final double metersToLong = ProyectionConstants.metersToLong();
+		final double metersToLat = ProyectionConstants.metersToLat();
+		double	ancho = resolution / metersToLong;
 		//	System.out.println("ancho "+ancho);
 		double minX = bounds.getMinX();
 		double minY = bounds.getMinY();
 		double maxX = bounds.getMaxX();
 		double maxY = bounds.getMaxY();
+		final double minX_m = minX / metersToLong;
+		final double maxX_m = maxX / metersToLong;
+		final double minY_m = minY / metersToLat;
+		final double maxY_m = maxY / metersToLat;
 		//System.out.println("bounds: "+bounds);
 		//	System.out.println("creando analyticSurface con segs="+segs);
 
@@ -712,8 +719,8 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		//System.out.println("maxElev,minElev= "+maxElev+", "+minElev);
 
 		int offset = 3;//para que quede un lugar a cada lado mas el desplazamiento
-		int width=Math.max((int) ((maxX-minX)/resolution)+offset,1);
-		int height=Math.max((int) ((maxY-minY)/resolution)+offset,1);
+		int width=Math.max((int) ((maxX_m-minX_m)/ancho)+offset,1);
+		int height=Math.max((int) ((maxY_m-minY_m)/ancho)+offset,1);
 		int maxIndex =  width*height;
 
 		//System.out.println("width="+width+" height="+height+" maxIndex="+maxIndex);
@@ -732,10 +739,12 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			public void accept(Polygon p) {
 				Point center = p.getCentroid();
 				Coordinate coord = center.getCoordinate();
-				//calculo el indice en el que tiene que ir el nuevo dato
-				int col= (int)((coord.x-minX) / resolution)+1;
-				int fila = (int)((-coord.y+maxY) / resolution)+1;//da negativo cuando y esta fuera de min max
-				int index = (col+fila*width);//index me da negativo
+				// Index in the same meter-space grid that construirGrilla builds
+				double cx_m = coord.x / metersToLong;
+				double cy_m = coord.y / metersToLat;
+				int col= (int)((cx_m-minX_m) / ancho)+1;
+				int fila = (int)((maxY_m-cy_m) / ancho)+1;
+				int index = (col+fila*width);
 
 				if(index<0 ||index>=maxIndex) {
 					logger.warning("fila="+fila+" col="+col+" index="+index);
