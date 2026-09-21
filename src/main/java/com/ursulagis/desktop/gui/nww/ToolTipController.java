@@ -12,26 +12,39 @@ import com.ursulagis.desktop.dao.Poligono;
 import gov.nasa.worldwind.*;
 import gov.nasa.worldwind.avlist.*;
 import gov.nasa.worldwind.event.*;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.layers.*;
+import gov.nasa.worldwind.pick.PickedObject;
+import gov.nasa.worldwind.pick.PickedObjectList;
+import gov.nasa.worldwind.render.*;
+import gov.nasa.worldwind.util.*;
 import gov.nasa.worldwindx.examples.ApplicationTemplate;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.gui.LaborItemGUIController;
 import com.ursulagis.desktop.gui.PoligonLayerFactory;
 import com.ursulagis.desktop.gui.PoligonoItemGUIController;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
-import gov.nasa.worldwind.layers.*;
-import gov.nasa.worldwind.render.*;
-import gov.nasa.worldwind.util.*;
 
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.logging.Logger;
+
+import javax.swing.SwingUtilities;
+
 /**
  * Controls display of tool tips on picked objects. Any shape implementing {@link AVList} can participate. Shapes
  * provide tool tip text in their AVList for either or both of hover and rollover events. The keys associated with the
  * text are specified to the constructor.
+ * <p>
+ * For AnalyticSurface labors (where the surface pick is not feature-accurate), resolves the underlying
+ * {@link LaborItem} from the cursor geographic position. Also listens to mouse motion so tooltips still work
+ * when the view is high and no extruded polygons are pickable (WorldWind may not fire rollover in that case).
  *
  * @author tag
  * @version $Id: ToolTipController.java 1171 2013-02-11 21:45:02Z dcollins $
  */
-public class ToolTipController implements SelectListener, Disposable
+public class ToolTipController implements SelectListener, Disposable, MouseListener, MouseMotionListener
 {
 	private static final Logger logger = Logger.getLogger(ToolTipController.class.getName());
 
@@ -61,6 +74,10 @@ public class ToolTipController implements SelectListener, Disposable
         this.rolloverKey = rolloverKey;
         this.main=_main;
         this.wwd.addSelectListener(this);
+        if (this.wwd.getInputHandler() != null) {
+        	this.wwd.getInputHandler().addMouseListener(this);
+        	this.wwd.getInputHandler().addMouseMotionListener(this);
+        }
     }
 
     /**
@@ -72,11 +89,19 @@ public class ToolTipController implements SelectListener, Disposable
         this.wwd = wwd;
         this.rolloverKey = AVKey.DISPLAY_NAME;
 
-        this.wwd.addSelectListener(this);        
+        this.wwd.addSelectListener(this);
+        if (this.wwd.getInputHandler() != null) {
+        	this.wwd.getInputHandler().addMouseListener(this);
+        	this.wwd.getInputHandler().addMouseMotionListener(this);
+        }
     }
 
     public void dispose(){
         this.wwd.removeSelectListener(this);
+        if (this.wwd.getInputHandler() != null) {
+        	this.wwd.getInputHandler().removeMouseListener(this);
+        	this.wwd.getInputHandler().removeMouseMotionListener(this);
+        }
     }
 
     protected String getHoverText(SelectEvent event)  {
@@ -91,62 +116,33 @@ public class ToolTipController implements SelectListener, Disposable
     		ret = ((AVList) obj).getStringValue(this.rolloverKey);
     	}
     	return ret;
-//        return event.getTopObject() != null && event.getTopObject() instanceof AVList ?
-//            ((AVList) event.getTopObject()).getStringValue(this.rolloverKey) : null;
     }
 
     public void selected(SelectEvent event) {
-    	//System.out.println("tooltip selec listener event "+event.getEventAction());
         try {
-            if (event.isRollover() && this.rolloverKey != null) {
-            	
-            } else if (event.isHover() ) {//&& this.hoverKey != null) {
-            	// System.out.println("event.isHover");
+            // Rollover fires while moving; hover fires after a dwell. Both must show tooltips.
+            if (event.isRollover() || event.isHover()) {
             	this.handleRollover(event);
             }
-                
-           if(event.isRightClick())    {//este evento no se lanza
-        	   //System.out.println("right click!");
+
+           // Right-click for labor items is handled only in mouseClicked (below).
+           // Handling it here too opened a second ContextMenu that stayed stuck.
+           if(event.isRightClick()) {
         	   this.handleRigthClick(event);
            }
             
         } catch (Exception e) {
-            // Wrap the handler in a try/catch to keep exceptions from bubbling up
             Logging.logger().warning(e.getMessage() != null ? e.getMessage() : e.toString());
         }
 
     }
 
-//    private void handleRigthClickOld(SelectEvent event) {
-//    	this.lastRightClickObject = event.getTopObject();
-//    	if(this.lastRightClickObject != null && this.lastRightClickObject instanceof AVList) {
-//    		LaborItem item = ((LaborItem)  ((AVList) this.lastRightClickObject).getValue(ProcessMapTask.LABOR_ITEM_AVKey) );	
-//    		this.showToolTip(event, "Borrar item "+item.getId()+"?"); 
-//    		this.wwd.redraw();    		
-//    	}
-//	}
-
 	protected void handleRigthClick(SelectEvent event)  {
-//        if (this.lastRightClickObject != null) {
-//            if (this.lastRightClickObject == event.getTopObject() && !WWUtil.isEmpty(getRolloverText(event)))
-//                return;
-//
-//            this.hideToolTip();
-//            this.lastRightClickObject = null;
-//            this.wwd.redraw();
-//        }
+		// LaborItem menus are opened from mouseClicked only — do not duplicate here.
 
         if (event.getTopObject() != null && event.getTopObject() instanceof AVList) {
             this.lastRightClickObject = event.getTopObject();
-            
-            // Check if it's a LaborItem
-            LaborItem item = ((LaborItem)  ((AVList) this.lastRightClickObject).getValue(ProcessMapTask.LABOR_ITEM_AVKey) );	
-            if(item != null) {
-                LaborItemGUIController controller = new LaborItemGUIController(main);
-                controller.showDialog(item);
-                return;
-            }
-            
+
             // Check if it's a SurfacePolygon (polygon)
             if (this.lastRightClickObject instanceof SurfacePolygon) {
                 SurfacePolygon surfacePolygon = (SurfacePolygon) this.lastRightClickObject;
@@ -154,11 +150,8 @@ public class ToolTipController implements SelectListener, Disposable
                 // Find the layer that contains this SurfacePolygon
                 RenderableLayer polygonLayer = findLayerForSurfacePolygon(surfacePolygon);
                 if (polygonLayer != null) {
-                    // Get the Poligono from the layer
                     Object layerObject = polygonLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
                     if (layerObject instanceof Poligono) {
-                       // Poligono poli = (Poligono) layerObject;
-                        // Show dialog with edit button
                         if (main != null) {
                             PoligonoItemGUIController controller = new PoligonoItemGUIController(main);
                             controller.showDialog(polygonLayer);
@@ -211,35 +204,143 @@ public class ToolTipController implements SelectListener, Disposable
 	 * @param event
 	 */
 	protected void handleRollover(SelectEvent event)  {
-        if (this.lastRolloverObject != null) {
-            if (this.lastRolloverObject == event.getTopObject() && !WWUtil.isEmpty(getRolloverText(event)))
-                return;
+		LaborItem laborItem = resolveLaborItem(event);
+		String rolloverText = null;
+		Object rolloverObject = laborItem != null ? laborItem : event.getTopObject();
 
-            this.hideToolTip();
-            this.lastRolloverObject = null;
-            //this.wwd.redraw();
-        }
-        Object rolloverObject =event.getTopObject();
-        String rolloverText = getRolloverText(event);
-        if(rolloverObject instanceof ReusableExtrudedPolygon) {
-        	
-        	ReusableExtrudedPolygon renderablePolygon = (ReusableExtrudedPolygon)rolloverObject;
-        	LaborItem dao = (LaborItem) renderablePolygon.getValue(ProcessMapTask.LABOR_ITEM_AVKey);
-        	rolloverText = ProcessMapTask.createTooltipForLaborItem(dao.getGeometry(),dao);        	
-        } else if(rolloverObject instanceof gov.nasa.worldwind.render.SurfacePolygon) {
-        	// Handle SurfacePolygon shapes for tooltips
-        	gov.nasa.worldwind.render.SurfacePolygon surfacePolygon = (gov.nasa.worldwind.render.SurfacePolygon)rolloverObject;
-        	rolloverText = createTooltipForSurfacePolygon(surfacePolygon);
-        }    
-     
-       
-        if (rolloverText != null)
-        {
-            this.lastRolloverObject = rolloverObject;
-            this.showToolTip(event, rolloverText.replace("\\n", "\n"));
-            //this.wwd.redraw();
-        }
-        this.wwd.redraw();
+		if (laborItem != null) {
+			rolloverText = ProcessMapTask.createTooltipForLaborItem(laborItem.getGeometry(), laborItem);
+		} else if (rolloverObject instanceof gov.nasa.worldwind.render.SurfacePolygon) {
+			rolloverText = createTooltipForSurfacePolygon(
+					(gov.nasa.worldwind.render.SurfacePolygon) rolloverObject);
+		} else if (rolloverObject instanceof ReusableExtrudedPolygon) {
+			LaborItem dao = (LaborItem) ((ReusableExtrudedPolygon) rolloverObject)
+					.getValue(ProcessMapTask.LABOR_ITEM_AVKey);
+			if (dao != null) {
+				rolloverText = ProcessMapTask.createTooltipForLaborItem(dao.getGeometry(), dao);
+				rolloverObject = dao;
+			}
+		}
+
+		if (WWUtil.isEmpty(rolloverText)) {
+			if (this.lastRolloverObject != null) {
+				this.hideToolTip();
+				this.lastRolloverObject = null;
+				this.wwd.redraw();
+			}
+			return;
+		}
+
+		if (this.lastRolloverObject != null && this.lastRolloverObject == rolloverObject) {
+			if (annotation != null && event.getPickPoint() != null) {
+				annotation.setScreenPoint(event.getPickPoint());
+				this.wwd.redraw();
+			}
+			return;
+		}
+
+		this.hideToolTip();
+		this.lastRolloverObject = rolloverObject;
+		this.showToolTip(event, rolloverText.replace("\\n", "\n"));
+		this.wwd.redraw();
+	}
+
+    /**
+     * Resolve the LaborItem under the cursor from the pick object, or by spatial
+     * query when AnalyticSurface/terrain is on top of the labor.
+     */
+    private LaborItem resolveLaborItem(SelectEvent event) {
+    	Object top = event != null ? event.getTopObject() : null;
+    	if (top instanceof LaborItem) {
+    		return (LaborItem) top;
+    	}
+    	if (top instanceof AVList) {
+    		Object v = ((AVList) top).getValue(ProcessMapTask.LABOR_ITEM_AVKey);
+    		if (v instanceof LaborItem) {
+    			return (LaborItem) v;
+    		}
+    	}
+    	// Scan full pick list (LaborItem may be under terrain)
+    	if (event != null && event.getObjects() != null) {
+    		for (PickedObject po : event.getObjects()) {
+    			if (po == null) {
+    				continue;
+    			}
+    			Object o = po.getObject();
+    			if (o instanceof LaborItem) {
+    				return (LaborItem) o;
+    			}
+    			if (o instanceof AVList) {
+    				Object v = ((AVList) o).getValue(ProcessMapTask.LABOR_ITEM_AVKey);
+    				if (v instanceof LaborItem) {
+    					return (LaborItem) v;
+    				}
+    			}
+    		}
+    	}
+    	return findLaborItemAtPosition(positionFromEvent(event));
+    }
+
+    private Position positionFromEvent(SelectEvent event) {
+    	Position cur = this.wwd.getCurrentPosition();
+    	if (cur != null) {
+    		return cur;
+    	}
+    	if (event != null && event.getPickPoint() != null && this.wwd.getView() != null) {
+    		return this.wwd.getView().computePositionFromScreenPoint(
+    				event.getPickPoint().x, event.getPickPoint().y);
+    	}
+    	return null;
+    }
+
+    private Position positionFromMouse(MouseEvent e) {
+    	Position cur = this.wwd.getCurrentPosition();
+    	if (cur != null) {
+    		return cur;
+    	}
+    	if (e != null && this.wwd.getView() != null) {
+    		return this.wwd.getView().computePositionFromScreenPoint(e.getX(), e.getY());
+    	}
+    	return null;
+    }
+
+    private LaborItem findLaborItemAtPosition(Position pos) {
+    	if (pos == null || this.wwd == null) {
+    		return null;
+    	}
+    	for (Labor<?> labor : LaborItemGUIController.getLaboresCargadas(this.wwd)) {
+    		if (labor.getLayer() == null || !labor.getLayer().isEnabled()) {
+    			continue;
+    		}
+    		LaborItem item = LaborLayer.findLaborItemAt(labor, pos);
+    		if (item != null) {
+    			return item;
+    		}
+    	}
+    	return null;
+    }
+
+    private LaborItem resolveLaborItemFromPickList() {
+    	PickedObjectList pol = this.wwd.getObjectsAtCurrentPosition();
+    	if (pol == null) {
+    		return null;
+    	}
+    	for (PickedObject po : pol) {
+    		if (po == null) {
+    			continue;
+    		}
+    		Object o = po.getObject();
+    		if (o instanceof LaborItem) {
+    			return (LaborItem) o;
+    		}
+    		if (o instanceof AVList) {
+    			Object v = ((AVList) o).getValue(ProcessMapTask.LABOR_ITEM_AVKey);
+    			if (v instanceof LaborItem) {
+    				return (LaborItem) v;
+    			}
+    		}
+    	}
+    	return null;
     }
 
     protected void handleHover(SelectEvent event) {
@@ -262,6 +363,9 @@ public class ToolTipController implements SelectListener, Disposable
     }
 
     protected void showToolTip(SelectEvent event, String text) {
+        if (WWUtil.isEmpty(text)) {
+    		return;
+    	}
        
         if (layer == null) {
             layer = new AnnotationLayer();
@@ -271,33 +375,45 @@ public class ToolTipController implements SelectListener, Disposable
         	layer.setEnabled(true);
         }
 
-        //layer.removeAllAnnotations();
-        
         if (annotation != null) {
-            annotation.setText(text);           
+            annotation.setText(text);
         }  else  {
             annotation = new ToolTipAnnotation(text);
             logger.fine("creando nuevo tooltip");
             layer.addAnnotation(annotation);
         }
-        annotation.setScreenPoint(event.getPickPoint());
+        if (event != null && event.getPickPoint() != null) {
+        	annotation.setScreenPoint(event.getPickPoint());
+        }
+    }
+
+    protected void showToolTipAtScreenPoint(java.awt.Point screenPoint, String text) {
+    	if (WWUtil.isEmpty(text)) {
+    		return;
+    	}
+        if (layer == null) {
+            layer = new AnnotationLayer();
+            layer.setPickEnabled(false);
+            this.addLayer(layer);
+        } else {
+        	layer.setEnabled(true);
+        }
+        if (annotation != null) {
+            annotation.setText(text);
+        } else {
+            annotation = new ToolTipAnnotation(text);
+            layer.addAnnotation(annotation);
+        }
+        if (screenPoint != null) {
+        	annotation.setScreenPoint(screenPoint);
+        }
+        this.wwd.redraw();
     }
 
     protected void hideToolTip() {
-        if (this.layer != null)
-        {
+        if (this.layer != null) {
         	layer.setEnabled(false);
-//            this.layer.removeAllAnnotations();
-//            this.removeLayer(this.layer);
-//            this.layer.dispose();
-//            this.layer = null;
         }
-
-//        if (this.annotation != null)
-//        {
-//            this.annotation.dispose();
-//            this.annotation = null;
-//        }
     }
 
     protected void addLayer(Layer layer)
@@ -347,4 +463,111 @@ public class ToolTipController implements SelectListener, Disposable
         
         return sb.length() > 0 ? sb.toString() : "Surface Polygon";
     }
+
+	// --- MouseListener: WorldWind often does not fire SelectEvent right-click ---
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		if (!SwingUtilities.isRightMouseButton(e)) {
+			return;
+		}
+		try {
+			LaborItem item = resolveLaborItemFromPickList();
+			if (item == null) {
+				item = findLaborItemAtPosition(positionFromMouse(e));
+			}
+			if (item != null) {
+				this.lastRightClickObject = item;
+				LaborItemGUIController controller = new LaborItemGUIController(main);
+				controller.showDialog(item);
+			}
+		} catch (Exception ex) {
+			Logging.logger().warning(ex.getMessage() != null ? ex.getMessage() : ex.toString());
+		}
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) { /* unused */ }
+
+	@Override
+	public void mouseReleased(MouseEvent e) { /* unused */ }
+
+	@Override
+	public void mouseEntered(MouseEvent e) { /* unused */ }
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		this.hideToolTip();
+		this.lastRolloverObject = null;
+		if (this.wwd != null) {
+			this.wwd.redraw();
+		}
+	}
+
+	// --- MouseMotionListener: capture hover when AnalyticSurface is shown at high altitude
+	// (no extruded pickables → WorldWind may not fire SelectEvent rollover/hover) ---
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		updateLaborTooltipFromScreenPoint(e.getPoint());
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		updateLaborTooltipFromScreenPoint(e.getPoint());
+	}
+
+	/**
+	 * Position-based tooltip update independent of WorldWind pick/SelectEvent.
+	 * Needed when eye elevation &gt; ~3km and extruded polygons were never built.
+	 */
+	private void updateLaborTooltipFromScreenPoint(java.awt.Point screenPoint) {
+		if (screenPoint == null || this.wwd == null) {
+			return;
+		}
+		try {
+			LaborItem item = resolveLaborItemFromPickList();
+			if (item == null) {
+				item = findLaborItemAtPosition(positionFromScreenPoint(screenPoint));
+			}
+
+			if (item == null) {
+				if (this.lastRolloverObject != null || this.layer != null || this.annotation != null) {
+					this.hideToolTip();
+					this.lastRolloverObject = null;
+					this.wwd.redraw();
+				}
+				return;
+			}
+
+			String text = ProcessMapTask.createTooltipForLaborItem(item.getGeometry(), item);
+			if (WWUtil.isEmpty(text)) {
+				return;
+			}
+
+			if (this.lastRolloverObject == item) {
+				if (this.annotation != null) {
+					this.annotation.setScreenPoint(screenPoint);
+					this.wwd.redraw();
+				}
+				return;
+			}
+
+			this.lastRolloverObject = item;
+			this.showToolTipAtScreenPoint(screenPoint, text.replace("\\n", "\n"));
+		} catch (Exception ex) {
+			Logging.logger().warning(ex.getMessage() != null ? ex.getMessage() : ex.toString());
+		}
+	}
+
+	private Position positionFromScreenPoint(java.awt.Point screenPoint) {
+		Position cur = this.wwd.getCurrentPosition();
+		if (cur != null) {
+			return cur;
+		}
+		if (screenPoint != null && this.wwd.getView() != null) {
+			return this.wwd.getView().computePositionFromScreenPoint(screenPoint.x, screenPoint.y);
+		}
+		return null;
+	}
 }
