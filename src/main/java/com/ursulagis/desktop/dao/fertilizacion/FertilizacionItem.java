@@ -23,6 +23,13 @@ public class FertilizacionItem extends LaborItem {
 		super();
 	}
 
+	public FertilizacionItem(FertilizacionItem f) {
+		super(f);
+		setDosistHa(f.getDosistHa());
+		setPrecioInsumo(f.getPrecioInsumo());
+		setCostoLaborHa(f.getCostoLaborHa());
+		setImporteHa(f.getImporteHa());
+	}
 
 	public void setDosistHa(Double cantFertHa) {
 		this.dosisHa = cantFertHa;
