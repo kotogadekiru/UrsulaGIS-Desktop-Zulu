@@ -56,6 +56,17 @@ public class Configuracion{
 
 	//private static final String GENERAR_MAPA_RENTABILIDAD_FROM_SHP = "generarMapaRentabilidadFromShp";
 	public static final String LAST_FILE = "LAST_FILE";
+
+	/** Maximo de zonas/items al exportar una prescripcion (reabsorver si se supera). */
+	public static final String PRESCRIPTION_MAX_ITEMS_KEY = "PRESCRIPTION_MAX_ITEMS";
+	/** Maximo de partes (zonas) por geometria al exportar prescripcion. */
+	public static final String PRESCRIPTION_MAX_PARTS_KEY = "PRESCRIPTION_MAX_PARTS";
+	/** Tamaño maximo del shapefile de prescripcion en KB; si se supera se simplifican vertices. */
+	public static final String PRESCRIPTION_MAX_KB_KEY = "PRESCRIPTION_MAX_KB";
+
+	public static final int PRESCRIPTION_MAX_ITEMS_DEFAULT = 100;
+	public static final int PRESCRIPTION_MAX_PARTS_DEFAULT = 50;
+	public static final long PRESCRIPTION_MAX_KB_DEFAULT = 512;
 	
 	//private Property<Boolean> generarMapaRentabilidadFromShpProperty = new SimpleBooleanProperty();
 
@@ -81,6 +92,7 @@ public class Configuracion{
 			e.printStackTrace();
 		}
 		loadProperties();
+		ensurePrescriptionDefaults();
 	
 //		generarMapaRentabilidadFromShpProperty.setValue(
 //				"true".equalsIgnoreCase(configProp
@@ -124,6 +136,26 @@ public class Configuracion{
 				logger.fine("failed to load default configuration");
 				e.printStackTrace();
 			}
+		}
+	}
+
+	/** Asegura que existan las claves de limites de prescripcion (y las persiste si faltaban). */
+	private void ensurePrescriptionDefaults() {
+		boolean changed = false;
+		if (!containsKey(PRESCRIPTION_MAX_ITEMS_KEY)) {
+			setProperty(PRESCRIPTION_MAX_ITEMS_KEY, String.valueOf(PRESCRIPTION_MAX_ITEMS_DEFAULT));
+			changed = true;
+		}
+		if (!containsKey(PRESCRIPTION_MAX_PARTS_KEY)) {
+			setProperty(PRESCRIPTION_MAX_PARTS_KEY, String.valueOf(PRESCRIPTION_MAX_PARTS_DEFAULT));
+			changed = true;
+		}
+		if (!containsKey(PRESCRIPTION_MAX_KB_KEY)) {
+			setProperty(PRESCRIPTION_MAX_KB_KEY, String.valueOf(PRESCRIPTION_MAX_KB_DEFAULT));
+			changed = true;
+		}
+		if (changed) {
+			save();
 		}
 	}
 
@@ -191,6 +223,72 @@ public class Configuracion{
 		//loadProperties();//load before set.
 		configProp.setProperty(key, value);//FIXME null pointer exception si key no existe? lastFile en exportar chart
 
+	}
+
+	/**
+	 * Maximo de items/zonas al exportar prescripcion (default
+	 * {@link #PRESCRIPTION_MAX_ITEMS_DEFAULT}).
+	 */
+	public int getPrescriptionMaxItems() {
+		return parsePositiveInt(
+				getPropertyOrDefault(PRESCRIPTION_MAX_ITEMS_KEY, String.valueOf(PRESCRIPTION_MAX_ITEMS_DEFAULT)),
+				PRESCRIPTION_MAX_ITEMS_DEFAULT);
+	}
+
+	/**
+	 * Maximo de partes por geometria al exportar (default
+	 * {@link #PRESCRIPTION_MAX_PARTS_DEFAULT}).
+	 */
+	public int getPrescriptionMaxParts() {
+		return parsePositiveInt(
+				getPropertyOrDefault(PRESCRIPTION_MAX_PARTS_KEY, String.valueOf(PRESCRIPTION_MAX_PARTS_DEFAULT)),
+				PRESCRIPTION_MAX_PARTS_DEFAULT);
+	}
+
+	/**
+	 * Tamaño maximo del shapefile de prescripcion en KB (default
+	 * {@link #PRESCRIPTION_MAX_KB_DEFAULT}).
+	 */
+	public long getPrescriptionMaxKb() {
+		return parsePositiveLong(
+				getPropertyOrDefault(PRESCRIPTION_MAX_KB_KEY, String.valueOf(PRESCRIPTION_MAX_KB_DEFAULT)),
+				PRESCRIPTION_MAX_KB_DEFAULT);
+	}
+
+	/** Atajo estatico: lee de {@link #activeConfig()} o usa el default. */
+	public static int prescriptionMaxItems() {
+		Configuracion c = activeConfig();
+		return c != null ? c.getPrescriptionMaxItems() : PRESCRIPTION_MAX_ITEMS_DEFAULT;
+	}
+
+	/** Atajo estatico: lee de {@link #activeConfig()} o usa el default. */
+	public static int prescriptionMaxParts() {
+		Configuracion c = activeConfig();
+		return c != null ? c.getPrescriptionMaxParts() : PRESCRIPTION_MAX_PARTS_DEFAULT;
+	}
+
+	/** Atajo estatico: lee de {@link #activeConfig()} o usa el default. */
+	public static long prescriptionMaxKb() {
+		Configuracion c = activeConfig();
+		return c != null ? c.getPrescriptionMaxKb() : PRESCRIPTION_MAX_KB_DEFAULT;
+	}
+
+	private static int parsePositiveInt(String raw, int fallback) {
+		try {
+			int value = Integer.parseInt(raw.trim());
+			return value > 0 ? value : fallback;
+		} catch (Exception e) {
+			return fallback;
+		}
+	}
+
+	private static long parsePositiveLong(String raw, long fallback) {
+		try {
+			long value = Long.parseLong(raw.trim());
+			return value > 0 ? value : fallback;
+		} catch (Exception e) {
+			return fallback;
+		}
 	}
 
 	public void save() {

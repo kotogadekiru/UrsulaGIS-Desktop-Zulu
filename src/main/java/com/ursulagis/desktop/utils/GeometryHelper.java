@@ -28,6 +28,7 @@ import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.locationtech.jts.operation.polygonize.Polygonizer;
 import org.locationtech.jts.precision.EnhancedPrecisionOp;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
+import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 import org.locationtech.jts.util.GeometricShapeFactory;
 
 import com.ursulagis.desktop.dao.Labor;
@@ -650,6 +651,23 @@ public class GeometryHelper {
 
 		GeometryFactory fact = ProyectionConstants.getGeometryFactory();
 		Polygon poly = fact.createPolygon(coordinates);
+		return poly;
+	}
+
+	/** WorldWind sector → JTS polygon (lon/lat). */
+	public static Polygon constructPolygon(Sector s) {
+		if (s == null) {
+			return null;
+		}
+		List<Coordinate> coordinates = new ArrayList<>();
+		LatLon[] corners = s.getCorners();
+		for(LatLon c : corners) {		
+			coordinates.add(new Coordinate(c.getLongitude().getDegrees(), c.getLatitude().getDegrees()));
+		};
+		coordinates.add(coordinates.get(0));
+
+		GeometryFactory fact = ProyectionConstants.getGeometryFactory();
+		Polygon poly = fact.createPolygon(coordinates.toArray(new Coordinate[coordinates.size()]));
 		return poly;
 	}
 
@@ -1690,9 +1708,29 @@ public class GeometryHelper {
 
 	/**
 	 * Limite de partes por geometria al exportar prescripciones a monitores de campo.
-	 * Algunos equipos rechazan shapefiles cuyas geometrias tienen mas de 50 subpartes.
+	 * Valor por defecto; el valor efectivo se lee de {@link com.ursulagis.desktop.dao.config.Configuracion#PRESCRIPTION_MAX_PARTS_KEY}.
 	 */
-	public static final int MAX_PRESCRIPTION_GEOMETRY_PARTS = 50;
+	public static final int MAX_PRESCRIPTION_GEOMETRY_PARTS =
+			com.ursulagis.desktop.dao.config.Configuracion.PRESCRIPTION_MAX_PARTS_DEFAULT;
+
+	/**
+	 * Tamaño maximo tipico de shapefile de prescripcion en monitores de campo (KB).
+	 * Valor por defecto; el valor efectivo se lee de {@link com.ursulagis.desktop.dao.config.Configuracion#PRESCRIPTION_MAX_KB_KEY}.
+	 */
+	public static final long MAX_PRESCRIPTION_EXPORT_KB =
+			com.ursulagis.desktop.dao.config.Configuracion.PRESCRIPTION_MAX_KB_DEFAULT;
+
+	/**
+	 * Cantidad maxima de reintentos de simplificacion al exportar si el archivo
+	 * supera {@link #MAX_PRESCRIPTION_EXPORT_KB}.
+	 */
+	public static final int MAX_PRESCRIPTION_SIMPLIFY_ATTEMPTS = 5;
+
+	/**
+	 * Tolerancia inicial (metros) para Douglas-Peucker / TopologyPreserving al
+	 * reducir vertices de una prescripcion demasiado pesada. Se duplica en cada reintento.
+	 */
+	public static final double PRESCRIPTION_SIMPLIFY_TOLERANCE_METERS = 0.5;
 
 	/**
 	 * Limite de anillos interiores (huecos) por poligono al exportar prescripciones.
@@ -1844,6 +1882,27 @@ public class GeometryHelper {
 	}
 
 	/**
+	 * Limite efectivo de partes por geometria (config {@code PRESCRIPTION_MAX_PARTS}).
+	 */
+	public static int getMaxPrescriptionGeometryParts() {
+		return com.ursulagis.desktop.dao.config.Configuracion.prescriptionMaxParts();
+	}
+
+	/**
+	 * Limite efectivo de tamaño de shapefile en KB (config {@code PRESCRIPTION_MAX_KB}).
+	 */
+	public static long getMaxPrescriptionExportKb() {
+		return com.ursulagis.desktop.dao.config.Configuracion.prescriptionMaxKb();
+	}
+
+	/**
+	 * Maximo de items/zonas al exportar (config {@code PRESCRIPTION_MAX_ITEMS}).
+	 */
+	public static int getMaxPrescriptionItems() {
+		return com.ursulagis.desktop.dao.config.Configuracion.prescriptionMaxItems();
+	}
+
+	/**
 	 * Variante para listas ya aplanadas: acota huecos en cada poligono.
 	 */
 	public static List<Polygon> limitFlatPolygonsInteriorRings(List<Polygon> polygons, int maxInteriorRings) {
@@ -1866,7 +1925,7 @@ public class GeometryHelper {
 	 * Prepara una geometria para exportar prescripciones en tres pasos:
 	 * <ol>
 	 *   <li>fusionar partes cercanas con buffer para achicar el shapefile</li>
-	 *   <li>si aun supera {@link #MAX_PRESCRIPTION_GEOMETRY_PARTS}, descartar las mas chicas</li>
+	 *   <li>si aun supera el limite de partes ({@code PRESCRIPTION_MAX_PARTS}), descartar las mas chicas</li>
 	 *   <li>si algun poligono supera {@link #MAX_PRESCRIPTION_INTERIOR_RINGS}, descartar huecos chicos</li>
 	 * </ol>
 	 *
@@ -1875,7 +1934,7 @@ public class GeometryHelper {
 	 */
 	public static Geometry limitPrescriptionGeometryParts(Geometry geometry) {
 		Geometry merged = mergeNearbyPrescriptionGeometryParts(geometry);
-		Geometry partsLimited = limitGeometryParts(merged, MAX_PRESCRIPTION_GEOMETRY_PARTS);
+		Geometry partsLimited = limitGeometryParts(merged, getMaxPrescriptionGeometryParts());
 		return limitPrescriptionInteriorRings(partsLimited);
 	}
 
@@ -1911,14 +1970,78 @@ public class GeometryHelper {
 
 	/**
 	 * Atajo de exportacion: aplica {@link #limitFlatPolygons(List, int)} con el
-	 * limite estandar de prescripciones ({@link #MAX_PRESCRIPTION_GEOMETRY_PARTS}).
+	 * limite de partes configurado ({@code PRESCRIPTION_MAX_PARTS}).
 	 *
 	 * @param polygons lista de poligonos; puede ser {@code null}
 	 * @return lista acotada al limite de exportacion de prescripciones
 	 */
 	public static List<Polygon> limitPrescriptionFlatPolygons(List<Polygon> polygons) {
 		return limitFlatPolygonsInteriorRings(
-				limitFlatPolygons(polygons, MAX_PRESCRIPTION_GEOMETRY_PARTS),
+				limitFlatPolygons(polygons, getMaxPrescriptionGeometryParts()),
 				MAX_PRESCRIPTION_INTERIOR_RINGS);
+	}
+
+	/**
+	 * Reduce vertices de una geometria para achicar shapefiles de prescripcion.
+	 * Usa {@link TopologyPreservingSimplifier} para conservar topologia de poligonos.
+	 *
+	 * @param geometry geometria de entrada; puede ser {@code null}
+	 * @param toleranceMeters tolerancia de simplificacion en metros
+	 * @return geometria simplificada, o la original si no hubo cambio util
+	 */
+	public static Geometry simplifyForPrescriptionExport(Geometry geometry, double toleranceMeters) {
+		if (geometry == null || geometry.isEmpty() || toleranceMeters <= 0) {
+			return geometry;
+		}
+		double tolerance = ProyectionConstants.metersToLongLat(toleranceMeters);
+		try {
+			Geometry simplified = TopologyPreservingSimplifier.simplify(geometry, tolerance);
+			if (simplified == null || simplified.isEmpty()) {
+				return geometry;
+			}
+			return simplified;
+		} catch (RuntimeException e) {
+			try {
+				return DouglasPeuckerSimplifier.simplify(geometry, tolerance);
+			} catch (RuntimeException e2) {
+				return geometry;
+			}
+		}
+	}
+
+	/**
+	 * Aplica {@link #simplifyForPrescriptionExport(Geometry, double)} a cada item.
+	 *
+	 * @param items items a simplificar; puede ser {@code null}
+	 * @param toleranceMeters tolerancia en metros
+	 * @return {@code true} si al menos un item cambio de geometria
+	 */
+	public static boolean simplifyLaborItemsForPrescriptionExport(List<? extends LaborItem> items,
+			double toleranceMeters) {
+		if (items == null || items.isEmpty() || toleranceMeters <= 0) {
+			return false;
+		}
+		boolean changed = false;
+		for (LaborItem item : items) {
+			Geometry original = item.getGeometry();
+			Geometry simplified = simplifyForPrescriptionExport(original, toleranceMeters);
+			if (simplified != null && simplified != original) {
+				item.setGeometry(simplified);
+				changed = true;
+			}
+		}
+		return changed;
+	}
+
+	/**
+	 * Tolerancia (metros) para el intento {@code attempt} (1-based) de simplificacion
+	 * de exportacion: empieza en {@link #PRESCRIPTION_SIMPLIFY_TOLERANCE_METERS}
+	 * y se duplica en cada reintento.
+	 */
+	public static double prescriptionSimplifyToleranceMeters(int attempt) {
+		if (attempt < 1) {
+			return 0;
+		}
+		return PRESCRIPTION_SIMPLIFY_TOLERANCE_METERS * Math.pow(2, attempt - 1);
 	}
 }

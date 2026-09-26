@@ -50,7 +50,6 @@ import java.util.logging.Logger;
 public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File> {
 	private static final Logger logger = Logger.getLogger(ExportarPrescripcionFertilizacionTask.class.getName());
 
-	private static final int MAX_ITEMS = 100;
 	private FertilizacionLabor laborToExport = null;
 	private File shapeFile = null;
 	public boolean guardarConfig = true;
@@ -83,8 +82,9 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			int zonas = items.size();
 			logger.fine("pase de " + initialItemsSize + " a " + zonas + " items por flatPolygons");
 
-			if (zonas >= MAX_ITEMS) {
-				reabsorverZonasChicas(items);
+			int maxItems = GeometryHelper.getMaxPrescriptionItems();
+			if (zonas >= maxItems) {
+				reabsorverZonasChicas(items, maxItems);
 			}
 
 			for (LaborItem item : items) {
@@ -98,32 +98,87 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 				}
 			}
 
-			DefaultFeatureCollection exportFeatureCollection = new DefaultFeatureCollection("PrescType", type);
-			SimpleFeatureBuilder fb = new SimpleFeatureBuilder(type);
-			super.updateTitle("exportando");
-			updateProgress(0, items.size());
-			int processed = 0;
-			for (LaborItem i : items) {
-				checkCancelled();
-				FertilizacionItem fi = (FertilizacionItem) i;
-				Geometry itemGeometry = fi.getGeometry();
-				List<Polygon> flatPolygons = GeometryHelper.limitPrescriptionFlatPolygons(
-						PolygonValidator.geometryToFlatPolygons(itemGeometry));
-				if (flatPolygons.size() > 1) {
-					logger.fine("el item " + i.getId() + " tiene " + flatPolygons.size() + " poligonos");
-				}
-
-				Double dosisHa = Math.rint(fi.getDosistHa());
-				for (Polygon p : flatPolygons) {
-					// Schema compatible con monitores: Rate/linea = dosis, costado=0, semilla=0
-					SimpleFeature exportFeature = fb.buildFeature(null, new Object[] { p, dosisHa, 0L, 0L });
-					exportFeatureCollection.add(exportFeature);
-				}
-				processed++;
-				updateProgress(processed, items.size());
+			long maxKb = GeometryHelper.getMaxPrescriptionExportKb();
+			long kilobytes = writePrescriptionShapefile(type, items, 0);
+			for (int attempt = 1;
+					kilobytes > maxKb
+							&& attempt <= GeometryHelper.MAX_PRESCRIPTION_SIMPLIFY_ATTEMPTS;
+					attempt++) {
+				double toleranceM = GeometryHelper.prescriptionSimplifyToleranceMeters(attempt);
+				logger.info(String.format(
+						"prescripcion fertilizacion %,dKB > %dKB; simplificando vertices (tolerancia %.2fm, intento %d)",
+						kilobytes, maxKb, toleranceM, attempt));
+				super.updateTitle("simplificando geometrias");
+				GeometryHelper.simplifyLaborItemsForPrescriptionExport(items, toleranceM);
+				kilobytes = writePrescriptionShapefile(type, items, attempt);
 			}
 
-			ShapefileDataStore newDataStore = FileHelper.createShapefileDataStore(shapeFile, type);
+			if (kilobytes > maxKb) {
+				final long kb = kilobytes;
+				final long limitKb = maxKb;
+				Platform.runLater(() -> {
+					Alert a = new Alert(Alert.AlertType.ERROR);
+					a.setContentText(String.format(
+							"El archivo generado pesa %,dKB,  en algunos monitores %,dKB es lo maximo",
+							kb, limitKb));
+					a.showAndWait();
+				});
+			}
+			logger.fine(String.format("%,d kilobytes", kilobytes));
+
+			if (guardarConfig) {
+				Configuracion config = Configuracion.getInstance();
+				config.loadProperties();
+				config.setProperty(Configuracion.LAST_FILE, shapeFile.getAbsolutePath());
+				config.save();
+			}
+
+			updateProgress(100, 100);
+			return shapeFile;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * Construye features, escribe el shapefile y devuelve el tamaño en KB.
+	 * Si {@code attempt} &gt; 0, elimina el shapefile previo para reescribirlo
+	 * con geometrias simplificadas.
+	 */
+	private long writePrescriptionShapefile(SimpleFeatureType type, List<LaborItem> items, int attempt)
+			throws InterruptedException {
+		if (attempt > 0) {
+			deleteShapefileSidecars(shapeFile);
+		}
+
+		DefaultFeatureCollection exportFeatureCollection = new DefaultFeatureCollection("PrescType", type);
+		SimpleFeatureBuilder fb = new SimpleFeatureBuilder(type);
+		super.updateTitle("exportando");
+		updateProgress(0, items.size());
+		int processed = 0;
+		for (LaborItem i : items) {
+			checkCancelled();
+			FertilizacionItem fi = (FertilizacionItem) i;
+			Geometry itemGeometry = fi.getGeometry();
+			List<Polygon> flatPolygons = GeometryHelper.limitPrescriptionFlatPolygons(
+					PolygonValidator.geometryToFlatPolygons(itemGeometry));
+			if (flatPolygons.size() > 1) {
+				logger.fine("el item " + i.getId() + " tiene " + flatPolygons.size() + " poligonos");
+			}
+
+			Double dosisHa = Math.rint(fi.getDosistHa());
+			for (Polygon p : flatPolygons) {
+				// Schema compatible con monitores: Rate/linea = dosis, costado=0, semilla=0
+				SimpleFeature exportFeature = fb.buildFeature(null, new Object[] { p, dosisHa, 0L, 0L });
+				exportFeatureCollection.add(exportFeature);
+			}
+			processed++;
+			updateProgress(processed, items.size());
+		}
+
+		ShapefileDataStore newDataStore = FileHelper.createShapefileDataStore(shapeFile, type);
+		try {
 			SimpleFeatureSource featureSource = null;
 			try {
 				String typeName = newDataStore.getTypeNames()[0];
@@ -155,36 +210,33 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 					e1.printStackTrace();
 				}
 			}
-
-			try {
-				long bytes = Files.size(shapeFile.toPath());
-				long kilobytes = bytes / 1024;
-				if (kilobytes > 500) {
-					Platform.runLater(() -> {
-						Alert a = new Alert(Alert.AlertType.ERROR);
-						a.setContentText(String.format(
-								"El archivo generado pesa %,dKB,  en algunos monitores 512KB es lo maximo",
-								kilobytes));
-						a.showAndWait();
-					});
-				}
-				logger.fine(String.format("%,d kilobytes", bytes / 1024));
-			} catch (Exception e) {
-				e.printStackTrace();
+		} finally {
+			if (newDataStore != null) {
+				newDataStore.dispose();
 			}
+		}
 
-			if (guardarConfig) {
-				Configuracion config = Configuracion.getInstance();
-				config.loadProperties();
-				config.setProperty(Configuracion.LAST_FILE, shapeFile.getAbsolutePath());
-				config.save();
-			}
-
-			updateProgress(100, 100);
-			return shapeFile;
-		} catch (Exception e) {
+		try {
+			return Files.size(shapeFile.toPath()) / 1024;
+		} catch (IOException e) {
 			e.printStackTrace();
-			return null;
+			return 0;
+		}
+	}
+
+	private static void deleteShapefileSidecars(File shp) {
+		if (shp == null) {
+			return;
+		}
+		String absolute = shp.getAbsolutePath();
+		String base = absolute.toLowerCase().endsWith(".shp")
+				? absolute.substring(0, absolute.length() - 4)
+				: absolute;
+		for (String ext : new String[] { ".shp", ".shx", ".dbf", ".prj", ".fixx", ".qix", ".cpg", ".sbn", ".sbx" }) {
+			File sidecar = new File(base + ext);
+			if (sidecar.exists() && !sidecar.delete()) {
+				logger.fine("no se pudo borrar " + sidecar.getAbsolutePath());
+			}
 		}
 	}
 
@@ -221,8 +273,11 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 		}
 	}
 
-	public void reabsorverZonasChicas(List<LaborItem> items) throws InterruptedException {
-		logger.fine("tiene mas de 100 zonas, reabsorviendo...");
+	public void reabsorverZonasChicas(List<LaborItem> items, int maxItems) throws InterruptedException {
+		if (maxItems < 2) {
+			return;
+		}
+		logger.fine("tiene mas de " + maxItems + " zonas, reabsorviendo...");
 		Double areaPromedio = null;
 		Double desvioPromedio = null;
 		OptionalDouble areaPromedioOP = items.parallelStream()
@@ -266,16 +321,16 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			}
 		}
 
-		if (items.size() >= MAX_ITEMS) {
+		if (items.size() >= maxItems) {
 			items.sort((i1, i2) -> -1 * Double.compare(i1.getGeometry().getArea(), i2.getGeometry().getArea()));
-			List<LaborItem> itemsAgrandar = items.subList(0, MAX_ITEMS - 1);
+			List<LaborItem> itemsAgrandar = items.subList(0, maxItems - 1);
 			Quadtree tree = new Quadtree();
 			for (LaborItem ar : itemsAgrandar) {
 				Geometry gAr = ar.getGeometry();
 				tree.insert(gAr.getEnvelopeInternal(), ar);
 			}
 
-			List<LaborItem> itemsAReducir = new ArrayList<>(items.subList(MAX_ITEMS - 1, items.size()));
+			List<LaborItem> itemsAReducir = new ArrayList<>(items.subList(maxItems - 1, items.size()));
 			int aReducirCount = itemsAReducir.size();
 			logger.fine("reduciendo " + aReducirCount);
 			int n = 0;
@@ -326,7 +381,7 @@ public class ExportarPrescripcionFertilizacionTask extends ProgresibleTask<File>
 			List<LaborItem> kept = (List<LaborItem>) tree.queryAll();
 			items.addAll(kept);
 		} else {
-			logger.fine("vuelvo sin absorver geometrias chicas porque no hay mas de 100 flat geoms");
+			logger.fine("vuelvo sin absorver geometrias chicas porque no hay mas de " + maxItems + " flat geoms");
 		}
 	}
 }
