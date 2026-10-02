@@ -196,10 +196,10 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 					//System.out.println("no inserto la feature "+ci+" "+empty+" "+valid+" "+big );
 
 
-// ProcessHarvestMapTask.2=no inserto el feature 
-// ProcessHarvestMapTask.3=\ porque tiene una geometria empty=
-// ProcessHarvestMapTask.4=\ valid =
-// ProcessHarvestMapTask.5=\ big=
+// ProcessHarvestMapTask.featureNotInserted=no inserto el feature 
+// ProcessHarvestMapTask.emptyGeometry=\ porque tiene una geometria empty=
+// ProcessHarvestMapTask.valid=\ valid =
+// ProcessHarvestMapTask.big=\ big=
 // ProcessHarvestMapTask.6=\ puntos eliminados por punto duplicado
 
 					logger.fine("no inserto el feature "
@@ -306,7 +306,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 
 		// ahora que tenemos las colecciones con las categorias solo hace falta juntar las geometrias y sacar los promedios	
 		List<CosechaItem> itemsCategoria = new ArrayList<CosechaItem>();//es la lista de los items que representan a cada categoria y que devuelvo
-		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.9"),labor.getType());		 //$NON-NLS-1$
+		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.internal"),labor.getType());		 //$NON-NLS-1$
 		// pasar esto a parallel streams
 		// por cada categoria 
 		for(int catIndex=0; catIndex < itemsByCat.size(); catIndex++){
@@ -821,7 +821,7 @@ public class ProcessHarvestMapTask extends ProcessMapTask<CosechaItem,CosechaLab
 	 * @return una lista de poligonos que representa una grilla con un 100% de superposiocion
 	 */
 	//	private List<Polygon> construirGrilla(BoundingBox bounds,double ancho) {
-	//		System.out.println(Messages.getString("ProcessHarvestMapTask.39")); //$NON-NLS-1$
+	//		System.out.println(Messages.getString("ProcessHarvestMapTask.buildingGrid")); //$NON-NLS-1$
 	//		List<Polygon> polygons = new ArrayList<Polygon>();
 	//		//convierte los bounds de longlat a metros
 	//

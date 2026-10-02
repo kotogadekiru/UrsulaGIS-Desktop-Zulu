@@ -107,20 +107,20 @@ public class OpenMargenMapTask extends ProcessMapTask<MargenItem,Margen> {
 		NumberFormat df = Messages.getNumberFormat();
 
 		String tooltipText = new String(
-						  Messages.getString("OpenMargenMapTask.1") + df.format(renta.getRentabilidadHa()) + Messages.getString("OpenMargenMapTask.2")  //$NON-NLS-1$ //$NON-NLS-2$
-						+ Messages.getString("OpenMargenMapTask.3") + df.format(renta.getMargenPorHa()) + Messages.getString("OpenMargenMapTask.4")  //$NON-NLS-1$ //$NON-NLS-2$
-						+ Messages.getString("OpenMargenMapTask.5")	+ df.format(renta.getCostoPorHa()) + Messages.getString("OpenMargenMapTask.6") //$NON-NLS-1$ //$NON-NLS-2$
-						+ Messages.getString("OpenMargenMapTask.7")	+ df.format(renta.getImporteFertHa()) + Messages.getString("OpenMargenMapTask.8")  //$NON-NLS-1$ //$NON-NLS-2$
-						+ Messages.getString("OpenMargenMapTask.9")	+ df.format(renta.getImportePulvHa()) + Messages.getString("OpenMargenMapTask.10") //$NON-NLS-1$ //$NON-NLS-2$
-						+ Messages.getString("OpenMargenMapTask.11")+ df.format(renta.getImporteSiembraHa()) + Messages.getString("OpenMargenMapTask.12") //$NON-NLS-1$ //$NON-NLS-2$
-						+ Messages.getString("OpenMargenMapTask.13")+ df.format(renta.getCostoFijoPorHa()) + Messages.getString("OpenMargenMapTask.14") //$NON-NLS-1$ //$NON-NLS-2$
-						+ Messages.getString("OpenMargenMapTask.15")+ df.format(renta.getImporteCosechaHa()) + Messages.getString("OpenMargenMapTask.16")  //$NON-NLS-1$ //$NON-NLS-2$
+						  Messages.getString("OpenMargenMapTask.profitability") + df.format(renta.getRentabilidadHa()) + Messages.getString("OpenMargenMapTask.percent")  //$NON-NLS-1$ //$NON-NLS-2$
+						+ Messages.getString("OpenMargenMapTask.margin") + df.format(renta.getMargenPorHa()) + Messages.getString("OpenMargenMapTask.usdHa")  //$NON-NLS-1$ //$NON-NLS-2$
+						+ Messages.getString("OpenMargenMapTask.cost")	+ df.format(renta.getCostoPorHa()) + Messages.getString("OpenMargenMapTask.usdHaBlank") //$NON-NLS-1$ //$NON-NLS-2$
+						+ Messages.getString("OpenMargenMapTask.fertilization")	+ df.format(renta.getImporteFertHa()) + Messages.getString("OpenMargenMapTask.usdHa")  //$NON-NLS-1$ //$NON-NLS-2$
+						+ Messages.getString("OpenMargenMapTask.pulverization")	+ df.format(renta.getImportePulvHa()) + Messages.getString("OpenMargenMapTask.usdHa") //$NON-NLS-1$ //$NON-NLS-2$
+						+ Messages.getString("OpenMargenMapTask.seeding")+ df.format(renta.getImporteSiembraHa()) + Messages.getString("OpenMargenMapTask.usdHa") //$NON-NLS-1$ //$NON-NLS-2$
+						+ Messages.getString("OpenMargenMapTask.fixed")+ df.format(renta.getCostoFijoPorHa()) + Messages.getString("OpenMargenMapTask.usdHa") //$NON-NLS-1$ //$NON-NLS-2$
+						+ Messages.getString("OpenMargenMapTask.harvest")+ df.format(renta.getImporteCosechaHa()) + Messages.getString("OpenMargenMapTask.usdHa")  //$NON-NLS-1$ //$NON-NLS-2$
 				);
 
 		if(area<1){
-			tooltipText=tooltipText.concat( Messages.getString("OpenMargenMapTask.17")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("OpenMargenMapTask.18")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat( Messages.getString("OpenMargenMapTask.sfc")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("OpenMargenMapTask.m2")); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
-			tooltipText=tooltipText.concat(Messages.getString("OpenMargenMapTask.19")+df.format(area ) + Messages.getString("OpenMargenMapTask.20")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat(Messages.getString("OpenMargenMapTask.sfc")+df.format(area ) + Messages.getString("OpenMargenMapTask.has")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return tooltipText;
 	}

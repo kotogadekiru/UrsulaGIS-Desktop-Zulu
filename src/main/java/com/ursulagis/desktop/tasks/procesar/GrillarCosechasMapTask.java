@@ -79,7 +79,7 @@ public class GrillarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLa
 		cConfig.correccionOutlayersProperty().set(false);	
 		cConfig.supMinimaProperty().set(0);
 		
-		labor.setNombre(Messages.getString("GrillarCosechasMapTask.0"));//este es el nombre que se muestra en el progressbar //$NON-NLS-1$
+		labor.setNombre(Messages.getString("GrillarCosechasMapTask.gridHarvests"));//este es el nombre que se muestra en el progressbar //$NON-NLS-1$
 	}
 	
 	public void setAncho(double _ancho) {
@@ -112,9 +112,9 @@ public class GrillarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLa
 				cultivo=c.getCultivo();//.getValue();
 			}
 			if (nombre == null) {
-				nombre = labor.getNombre() + Messages.getString("GrillarCosechasMapTask.1") + c.getNombre(); //$NON-NLS-1$
+				nombre = labor.getNombre() + Messages.getString("GrillarCosechasMapTask.space") + c.getNombre(); //$NON-NLS-1$
 			} else {
-				nombre += Messages.getString("GrillarCosechasMapTask.2") + c.getNombre(); //$NON-NLS-1$
+				nombre += Messages.getString("GrillarCosechasMapTask.dashSeparator") + c.getNombre(); //$NON-NLS-1$
 			}
 
 			ReferencedEnvelope b = c.outCollection.getBounds();
@@ -226,7 +226,7 @@ public class GrillarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLa
 
 //FIXME esto hace que la grilla no tenga memoria
 		if(labor.inCollection == null){
-			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarCosechasMapTask.9"),labor.getType()); //$NON-NLS-1$
+			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarCosechasMapTask.internal"),labor.getType()); //$NON-NLS-1$
 		}
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
@@ -372,7 +372,7 @@ public class GrillarCosechasMapTask extends ProcessMapTask<CosechaItem,CosechaLa
 	 * @return una lista de poligonos que representa una grilla con un 100% de superposiocion
 	 */
 	public static List<Polygon> construirGrilla(BoundingBox bounds,double ancho) {
-		//System.out.println(Messages.getString("GrillarCosechasMapTask.16")); //$NON-NLS-1$
+		//System.out.println(Messages.getString("GrillarCosechasMapTask.space6")); //$NON-NLS-1$
 		List<Polygon> polygons = new ArrayList<Polygon>();
 		Position esq = bounds.getUpperCorner();
 		//System.out.println("esq.getOrdinate(1) "+esq.getOrdinate(1));//esq.getOrdinate(0) -61.9547387

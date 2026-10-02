@@ -102,9 +102,9 @@ public class MultiLayerHistoChart extends VBox {
 		}
 		
 		final NumberAxis xAxis = new NumberAxis();
-		xAxis.setLabel(Messages.getString("CosechaHistoChart.10")); //$NON-NLS-1$ // Amount per Ha
+		xAxis.setLabel(Messages.getString("CosechaHistoChart.averageHa")); //$NON-NLS-1$ // Amount per Ha
 		final NumberAxis yAxis = new NumberAxis();
-		yAxis.setLabel(Messages.getString("CosechaHistoChart.11")); //$NON-NLS-1$ // Surface
+		yAxis.setLabel(Messages.getString("CosechaHistoChart.surface")); //$NON-NLS-1$ // Surface
 		
 		final LineChart<Number, Number> chart = new LineChart<Number, Number>(xAxis, yAxis);
 		chart.setTitle(Messages.getString("MultiLayerHistoChart.Title")); //$NON-NLS-1$
@@ -127,7 +127,7 @@ public class MultiLayerHistoChart extends VBox {
 		// Add bottom panel with export button
 		BorderPane bottom = new BorderPane();
 		VBox right = new VBox();
-		Button exportButton = new Button(Messages.getString("CosechaHistoChart.16")); //$NON-NLS-1$
+		Button exportButton = new Button(Messages.getString("CosechaHistoChart.export")); //$NON-NLS-1$
 		exportButton.setOnAction(a -> doExportarExcel());
 		right.getChildren().add(exportButton);
 		bottom.setRight(right);
@@ -228,8 +228,8 @@ public class MultiLayerHistoChart extends VBox {
 						Tooltip tooltip = new Tooltip(
 								finalLabor.getNombre() + "\n" +
 								(finalCategoryName.isEmpty() ? "" : finalCategoryName + "\n") +
-								Messages.getString("CosechaHistoChart.10") + ": " + df.format(rinde) + "\n" +
-								Messages.getString("CosechaHistoChart.21") + ": " + df.format(sup) + "\n" +
+								Messages.getString("CosechaHistoChart.averageHa") + ": " + df.format(rinde) + "\n" +
+								Messages.getString("CosechaHistoChart.has") + ": " + df.format(sup) + "\n" +
 								df.format(porcentaje) + "% " + Messages.getString("MultiLayerHistoChart.OfTotal")); //$NON-NLS-1$
 						tooltip.autoHideProperty().set(false);
 						Tooltip.install(newNode, tooltip);

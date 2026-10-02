@@ -392,10 +392,10 @@ public class HarvestConfigDialogController  extends Dialog<CosechaLabor>{
 
 		//TODO cambiar cbMetrosPorUnidad a ComboBox para que pueda ser editable
 		Map<String,Double> unidades = new HashMap<String,Double>();
-		unidades.put(Messages.getString("HarvestConfigDialogController.12"),1d); //-NLS-1$
-		unidades.put(Messages.getString("HarvestConfigDialogController.13"),0.0254); //-NLS-1$
-		unidades.put(Messages.getString("HarvestConfigDialogController.14"),0.01d); //-NLS-1$
-		unidades.put(Messages.getString("HarvestConfigDialogController.15"),0.001d); //-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.meter"),1d); //-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.inch"),0.0254); //-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.centimeters"),0.01d); //-NLS-1$
+		unidades.put(Messages.getString("HarvestConfigDialogController.millimeters"),0.001d); //-NLS-1$
 
 
 		this.cbMetrosPorUnidad.setItems(FXCollections.observableArrayList(unidades.keySet()));

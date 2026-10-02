@@ -576,7 +576,7 @@ public class Clasificador {
 		}
 
 
-		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.9"),labor.getType());
+		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.internal"),labor.getType());
 
 		SimpleFeatureIterator it = labor.outCollection.features();
 		try {

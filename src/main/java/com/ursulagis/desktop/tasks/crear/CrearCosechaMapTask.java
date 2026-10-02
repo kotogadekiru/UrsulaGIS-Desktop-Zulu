@@ -88,30 +88,30 @@ public class CrearCosechaMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 		NumberFormat df = Messages.getNumberFormat();
 		StringBuilder sb = new StringBuilder();
 		//rinde
-		sb.append(Messages.getString("ProcessHarvestMapTask.23")); 
+		sb.append(Messages.getString("ProcessHarvestMapTask.yield")); 
 		sb.append(df.format(cosechaItem.getAmount())); 
-		sb.append(Messages.getString("ProcessHarvestMapTask.24"));
+		sb.append(Messages.getString("ProcessHarvestMapTask.tnHa"));
 		//ancho
-		sb.append(Messages.getString("ProcessHarvestMapTask.27")
+		sb.append(Messages.getString("ProcessHarvestMapTask.width")
 				+df.format(cosechaItem.getAncho() ) 
 				+"\n"); 
 		//rumbo
-		sb.append(Messages.getString("ProcessHarvestMapTask.29")
+		sb.append(Messages.getString("ProcessHarvestMapTask.direction")
 				+df.format(cosechaItem.getRumbo() ) 
 				+"\n"); 
 		//id
-		sb.append(Messages.getString("ProcessHarvestMapTask.31")
+		sb.append(Messages.getString("ProcessHarvestMapTask.feature")
 				+cosechaItem.getId() 
 				+"\n"); 
 		//elevacion
-		sb.append(Messages.getString("ProcessHarvestMapTask.25")
+		sb.append(Messages.getString("ProcessHarvestMapTask.height")
 				+df.format(cosechaItem.getElevacion() ) 
 				+"\n"
 				);
 		
-		sb.append(Messages.getString("OpenMargenMapTask.15")
+		sb.append(Messages.getString("OpenMargenMapTask.harvest")
 				+df.format(cosechaItem.getImporteHa() ) 
-				+ Messages.getString("OpenMargenMapTask.16"));
+				+ Messages.getString("OpenMargenMapTask.usdHa"));
 		
 //		sb.append("Observaciones: "
 //				+cosechaItem.getObservaciones()
@@ -119,9 +119,9 @@ public class CrearCosechaMapTask extends ProcessMapTask<CosechaItem,CosechaLabor
 		
 		//superficie
 		if(area<1){
-			sb.append( Messages.getString("ProcessHarvestMapTask.33")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessHarvestMapTask.34")); 
+			sb.append( Messages.getString("ProcessHarvestMapTask.sfc")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessHarvestMapTask.m2")); 
 		} else {
-			sb.append(Messages.getString("ProcessHarvestMapTask.35")+df.format(area ) + Messages.getString("ProcessHarvestMapTask.36")); 
+			sb.append(Messages.getString("ProcessHarvestMapTask.sfc")+df.format(area ) + Messages.getString("ProcessHarvestMapTask.has")); 
 		}
 		return sb.toString();
 	}

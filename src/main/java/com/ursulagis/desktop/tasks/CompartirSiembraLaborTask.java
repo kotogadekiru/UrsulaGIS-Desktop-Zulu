@@ -6,9 +6,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -125,11 +127,8 @@ public class CompartirSiembraLaborTask extends Task<String> {
 		}
 		this.ordenSiembra.setOrdenShpZipUrl(ordenUrl);
 		if (this.laborImageFile != null && this.laborImageFile.exists()) {
-			String imagenUrl = TarjetaHelper.uploadFileToDir(this.laborImageFile, "/labores");
-			if (imagenUrl == null) {
-				throw new IOException("No se pudo subir la imagen de la labor a la tarjeta");
-			}
-			this.ordenSiembra.setImagenUrl(imagenUrl);
+			byte[] imageBytes = Files.readAllBytes(this.laborImageFile.toPath());
+			this.ordenSiembra.setImagenBase64(Base64.getEncoder().encodeToString(imageBytes));
 		}
 		this.updateProgress(1, 10);
 		try {

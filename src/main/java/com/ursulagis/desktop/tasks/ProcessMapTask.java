@@ -225,6 +225,13 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				//					positions.add(pos);
 				//				}
 				Coordinate[] coordinates = forPolygon.getExteriorRing().getCoordinates();
+				// WorldWind ExtrudedPolygon.getCapEdgeIndices(n) allocates 6*(n-1);
+				// n < 2 yields capacity < 0. Outer ring must also pass isOuterBoundaryValid (size > 2).
+				if (coordinates == null || coordinates.length < 3) {
+					logger.fine("skipping extruded polygon with degenerate exterior ring size="
+							+ (coordinates == null ? -1 : coordinates.length));
+					return null;
+				}
 
 				double scale=1; 
 				if(labor.maxElev>0){
@@ -253,19 +260,17 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				}
 				ReusableExtrudedPolygon reusable = (ReusableExtrudedPolygon)renderablePolygon;
 				reusable.clearBoundarys();
+				
 				@SuppressWarnings("unchecked")
 				List<Position> boundary = (List<Position>) reusable.getBoundary();
-				//List<Position> exteriorPositions = 
-				coordinatesToPositions(coordinates,boundary);
-
-
-				//renderablePolygon.setOuterBoundary(exteriorPositions);
-				//	forPolygon= (Polygon) makeGood(forPolygon);
-				//XXX si no pongo esto se superponene los poligonos.
-				//XXX pero si lo pongo y el poligono tiene algun error no se muestra correctamente 
+				
+				coordinatesToPositions(coordinates,boundary);//sets the boundary of the reusable polygon
 
 				for(int interiorN=0;interiorN<forPolygon.getNumInteriorRing();interiorN++){
-					Coordinate[] interiorCoordinates = forPolygon.getInteriorRingN(interiorN).getCoordinates();					
+					Coordinate[] interiorCoordinates = forPolygon.getInteriorRingN(interiorN).getCoordinates();
+					if (interiorCoordinates == null || interiorCoordinates.length < 3) {
+						continue;
+					}
 					if(labor.maxElev>0){
 						scale = 5*(labor.minElev/labor.maxElev);
 					}
@@ -291,22 +296,6 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				renderablePolygon.setValue(AVKey.DISPLAY_NAME, tooltipText);// el tooltip se muestra con el nww.ToolTipAnnotation
 				renderablePolygon.setValue(LABOR_ITEM_AVKey, dao);// el tooltip se muestra con el nww.ToolTipAnnotation
 				renderablePolygon.setEnableBatchRendering(true);//XXX saco esto para ver si causa el problema del rendering
-				//	labor.getLayer().addRenderable(renderablePolygon);
-
-
-
-
-				//				/**old*/
-				//				List<Position> exteriorPositions = coordinatesToPositions(forPolygon.getExteriorRing().getCoordinates());
-				//				renderablePolygon.setOuterBoundary(exteriorPositions);
-				//
-				//				for(int interiorN=0;interiorN<forPolygon.getNumInteriorRing();interiorN++){
-				//					List<Position> interiorPositions = coordinatesToPositions(forPolygon.getInteriorRingN(interiorN).getCoordinates());
-				//					renderablePolygon.addInnerBoundary(interiorPositions);
-				//				}
-
-
-
 			} else {
 				logger.warning("tratando de crear un extruded poligon sin un poligono");
 			}
@@ -861,7 +850,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		double minY = bounds.getMinY();
 		double maxX = bounds.getMaxX();
 		double maxY = bounds.getMaxY();
-		double widthDeg = Math.max(maxX - minX, 1e-9);
+		double widthDeg = Math.max(maxX - minX, 1e-9);//ensures not zero
 		double heightDeg = Math.max(maxY - minY, 1e-9);
 
 		long budget = Math.max((long) milis * SURFACE_IMAGE_PIXEL_SCALE, SURFACE_IMAGE_MIN_PIXELS);
@@ -1005,81 +994,81 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 	 * @param ancho en metros
 	 * @return una lista de poligonos que representa una grilla con un 100% de superposiocion
 	 */
-	public static void construirGrilla(BoundingBox bounds,double ancho,Consumer<Polygon> lambda) {
-		//System.out.println("construyendo grilla");
-		//List<Polygon> polygons = new ArrayList<Polygon>();
-		//convierte los bounds de longlat a metros
-		Double minX = bounds.getMinX()/ProyectionConstants.metersToLong();
-		Double minY = bounds.getMinY()/ProyectionConstants.metersToLat();
-		Double maxX = bounds.getMaxX()/ProyectionConstants.metersToLong();
-		Double maxY = bounds.getMaxY()/ProyectionConstants.metersToLat();
-		Double x0=minX,x1=minX;
-		Double y0=minY,y1=minY;
+	// public static void construirGrillaOld(BoundingBox bounds,double ancho,Consumer<Polygon> lambda) {
+	// 	//System.out.println("construyendo grilla");
+	// 	//List<Polygon> polygons = new ArrayList<Polygon>();
+	// 	//convierte los bounds de longlat a metros
+	// 	Double minX = bounds.getMinX()/ProyectionConstants.metersToLong();
+	// 	Double minY = bounds.getMinY()/ProyectionConstants.metersToLat();
+	// 	Double maxX = bounds.getMaxX()/ProyectionConstants.metersToLong();
+	// 	Double maxY = bounds.getMaxY()/ProyectionConstants.metersToLat();
+	// 	Double x0=minX,x1=minX;
+	// 	Double y0=minY,y1=minY;
 
 
-		GeometryFactory fact = new GeometryFactory();
-		Coordinate A = new Coordinate(); 
-		Coordinate B = new Coordinate(); 
-		Coordinate C = new Coordinate();
-		Coordinate D = new Coordinate();
-		//Coordinate[] coordinates = new Coordinate[5];
-		Coordinate[] coordinates = { A, B, C, D, A };
-		for(int x=0;(x0)<maxX;x++){
-			x0=minX+x*ancho;
-			//Double
-			x1=minX+(x+1)*ancho;
-			for(int y=0;(minY+y*ancho)<maxY;y++){
-				//Double 
-				y0=minY+y*ancho;
-				//Double 
-				y1=minY+(y+1)*ancho;
+	// 	GeometryFactory fact = new GeometryFactory();
+	// 	Coordinate A = new Coordinate(); 
+	// 	Coordinate B = new Coordinate(); 
+	// 	Coordinate C = new Coordinate();
+	// 	Coordinate D = new Coordinate();
+	// 	//Coordinate[] coordinates = new Coordinate[5];
+	// 	Coordinate[] coordinates = { A, B, C, D, A };
+	// 	for(int x=0;(x0)<maxX;x++){
+	// 		x0=minX+x*ancho;
+	// 		//Double
+	// 		x1=minX+(x+1)*ancho;
+	// 		for(int y=0;(minY+y*ancho)<maxY;y++){
+	// 			//Double 
+	// 			y0=minY+y*ancho;
+	// 			//Double 
+	// 			y1=minY+(y+1)*ancho;
 
-				//Coordinate D = new Coordinate(x0*ProyectionConstants.metersToLong(), y0*ProyectionConstants.metersToLat()); 
-				D.x=x0*ProyectionConstants.metersToLong(); D.y=y0*ProyectionConstants.metersToLat();
-				//Coordinate C = new Coordinate(x1*ProyectionConstants.metersToLong(), y0*ProyectionConstants.metersToLat());
-				C.x=x1*ProyectionConstants.metersToLong(); C.y=y0*ProyectionConstants.metersToLat();
-				//Coordinate B = new Coordinate(x1*ProyectionConstants.metersToLong(), y1*ProyectionConstants.metersToLat());
-				B.x=x1*ProyectionConstants.metersToLong(); B.y= y1*ProyectionConstants.metersToLat();
-				//Coordinate A =  new Coordinate(x0*ProyectionConstants.metersToLong(), y1*ProyectionConstants.metersToLat());
-				A.x=x0*ProyectionConstants.metersToLong(); A.y=y1*ProyectionConstants.metersToLat();
+	// 			//Coordinate D = new Coordinate(x0*ProyectionConstants.metersToLong(), y0*ProyectionConstants.metersToLat()); 
+	// 			D.x=x0*ProyectionConstants.metersToLong(); D.y=y0*ProyectionConstants.metersToLat();
+	// 			//Coordinate C = new Coordinate(x1*ProyectionConstants.metersToLong(), y0*ProyectionConstants.metersToLat());
+	// 			C.x=x1*ProyectionConstants.metersToLong(); C.y=y0*ProyectionConstants.metersToLat();
+	// 			//Coordinate B = new Coordinate(x1*ProyectionConstants.metersToLong(), y1*ProyectionConstants.metersToLat());
+	// 			B.x=x1*ProyectionConstants.metersToLong(); B.y= y1*ProyectionConstants.metersToLat();
+	// 			//Coordinate A =  new Coordinate(x0*ProyectionConstants.metersToLong(), y1*ProyectionConstants.metersToLat());
+	// 			A.x=x0*ProyectionConstants.metersToLong(); A.y=y1*ProyectionConstants.metersToLat();
 
-				//System.out.println(A.y+" "+B.y+" "+C.y+" "+D.y);
+	// 			//System.out.println(A.y+" "+B.y+" "+C.y+" "+D.y);
 
-				/**
-				 * D-- ancho de carro--C ^ ^ | | avance ^^^^^^^^ avance | | A-- ancho de
-				 * carro--B
-				 * 
-				 */
-				//Coordinate[] coordinates = { A, B, C, D, A };// Tiene que ser cerrado.
-				//				coordinates[0]=A;
-				//				coordinates[1]=B;
-				//				coordinates[2]=C;
-				//				coordinates[3]=D;
-				//				coordinates[4]=A;
+	// 			/**
+	// 			 * D-- ancho de carro--C ^ ^ | | avance ^^^^^^^^ avance | | A-- ancho de
+	// 			 * carro--B
+	// 			 * 
+	// 			 */
+	// 			//Coordinate[] coordinates = { A, B, C, D, A };// Tiene que ser cerrado.
+	// 			//				coordinates[0]=A;
+	// 			//				coordinates[1]=B;
+	// 			//				coordinates[2]=C;
+	// 			//				coordinates[3]=D;
+	// 			//				coordinates[4]=A;
 
-				// Empezar y terminar en
-				// el mismo punto.
-				// sentido antihorario
+	// 			// Empezar y terminar en
+	// 			// el mismo punto.
+	// 			// sentido antihorario
 
-				//			GeometryFactory fact = X.getFactory();
+	// 			//			GeometryFactory fact = X.getFactory();
 
 
 
-				//				DirectPosition upper = positionFactory.createDirectPosition(new double[]{-180,-90});
-				//				DirectPosition lower = positionFactory.createDirectPosition(new double[]{180,90});
-				//	Envelope envelope = geometryFactory.createEnvelope( upper, lower );
+	// 			//				DirectPosition upper = positionFactory.createDirectPosition(new double[]{-180,-90});
+	// 			//				DirectPosition lower = positionFactory.createDirectPosition(new double[]{180,90});
+	// 			//	Envelope envelope = geometryFactory.createEnvelope( upper, lower );
 
-				//LinearRing shell = fact.createLinearRing(coordinates);
-				//LinearRing[] holes = null;
-				Polygon poly =	fact.createPolygon(coordinates);// new Polygon(shell, holes, fact);
-				//executorPool.execute(()->lambda.accept(poly));
-				lambda.accept(poly);
+	// 			//LinearRing shell = fact.createLinearRing(coordinates);
+	// 			//LinearRing[] holes = null;
+	// 			Polygon poly =	fact.createPolygon(coordinates);// new Polygon(shell, holes, fact);
+	// 			//executorPool.execute(()->lambda.accept(poly));
+	// 			lambda.accept(poly);
 
-				//polygons.add(poly);
-			}
-		}
+	// 			//polygons.add(poly);
+	// 		}
+	// 	}
 
-	}
+	// }
 
 	private void coordinatesToPositions(Coordinate[] coordinates,List<Position> positions ){
 		//ArrayList<Position> positions = new ArrayList<Position>();     
@@ -1381,68 +1370,46 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 	protected void runLater(Collection<FC> itemsToShow) {	
 		//labor.setContorno(null);
 		updateStatsLabor(itemsToShow);
-		RenderableLayer extrudedPolygonsLayer = createExtrudedPolygonsLayer(itemsToShow);//XXX ojo! si son muchos esto me puede tomar toda la memoria.	
 
-		//Configuracion config = Configuracion.getInstance();
-		int lowRes= TARGET_LOW_RES_TIME;//Integer.parseInt(config.getPropertyOrDefault(FAST_LAYER_PROCESS_TIME, Integer.toString(TARGET_LOW_RES_TIME)));
-		//lowRes = 1000000;
-		long start = System.currentTimeMillis();
-		//		System.out.println("creando analyticSurface lowRes");
-		RenderableLayer analyticSurfaceLayer = USE_SURFACE_IMAGE
-				? createSurfaceImageFromQuery(lowRes)
-				: createAnalyticSurfaceFromQuery(lowRes);//21ms
-		long end = System.currentTimeMillis();
-		long actualTime= end-start;
-		//		System.out.println("lowRes Rendering Time = "+actualTime);
-
-		if(actualTime > 0) {
-			lowRes=new Long(TARGET_LOW_RES_TIME*TARGET_LOW_RES_TIME/actualTime).intValue();
-		}
-
-		analyticSurfaceLayer.setPickEnabled(false);//ya es false de fabrica
-
+		// Install extruded shell first (lastBuiltSector=null → next preRender rebuilds all
+		// ExtrudedPolygons for each item, including MultiPolygon parts). Do this before
+		// SurfaceImage so a slow raster does not leave the old multi-part extruded layer
+		// on screen.
+		RenderableLayer extrudedPolygonsLayer = createExtrudedPolygonsLayer(itemsToShow);
 		labor.getLayer().removeAllRenderables();
-		labor.getLayer().setAnalyticSurfaceLayer(analyticSurfaceLayer);
 		labor.getLayer().setExtrudedPolygonsLayer(extrudedPolygonsLayer);
 		labor.getLayer().setElementsCount(itemsToShow.size());
-
-		//System.out.println("low res rendering milis: "+lowRes);
-
-		//int medRes=5*lowRes;
-		//	System.out.println("mid res rendering milis: "+medRes);
-		int highRes = USE_SURFACE_IMAGE
-				? Math.min(Math.max(10 * lowRes, 8_000), 100_000)
-				: Math.min(10 * lowRes, 30_000);
-		logger.fine("lowRes= "+lowRes);
-		logger.fine("highRes= "+highRes);
 		installPlaceMark();
-		//
 
-		if( highRes > TARGET_LOW_RES_TIME*2 && highRes < 200_000) {//solo si es menor a un minuto-ish
-			CompletableFuture.runAsync(() -> {
-				logger.fine("corriendo analyticSurfaceLayerHD");
-				RenderableLayer analyticSurfaceLayerHD = USE_SURFACE_IMAGE
-						? createSurfaceImageFromQuery(highRes)
-						: createAnalyticSurfaceFromQuery(highRes);//30
-				analyticSurfaceLayerHD.setPickEnabled(false);//ya es false de fabrica
-				labor.getLayer().setAnalyticSurfaceLayer(analyticSurfaceLayerHD);
-				logger.fine("termine analyticSurfaceLayerHD");
-			}).handle((r,e) -> {
-				if (e != null) e.printStackTrace();		
-				return null;
-			});
-		}// else {
-		//			System.out.println("no corro analyticSurfaceLayerHD");
-		//		}
+		int lowRes = TARGET_LOW_RES_TIME;
+		RenderableLayer analyticSurfaceLayer = USE_SURFACE_IMAGE
+				? createSurfaceImageFromQuery(lowRes)
+				: createAnalyticSurfaceFromQuery(lowRes);
+		analyticSurfaceLayer.setPickEnabled(false);
+		labor.getLayer().setAnalyticSurfaceLayer(analyticSurfaceLayer);
 	}
 
-//	public void extractContorno() {
-//		GeometryHelper.extractContorno(labor);
-//	}
+	/**
+	 * Light refresh matching the viewport extruded path: update stats, replace
+	 * {@code itemsToShow} on the live extruded layer, and clear {@code lastBuiltSector}
+	 * so the next {@code preRender} calls {@code rebuildForVisibleSector}.
+	 * Does not rebuild SurfaceImage (that is the expensive hang in a full {@link #runLater}).
+	 */
+	protected void refreshExtrudedForVisibleSector(Collection<FC> itemsToShow) {
+		updateStatsLabor(itemsToShow);
+		if (labor.getLayer() == null) {
+			return;
+		}
+		if (labor.getLayer().getExtrudedPolygonsLayer() != null) {
+			labor.getLayer().refreshExtrudedItemsAndRebuild(itemsToShow);
+		} else {
+			// First time / layer missing: install an empty extruded shell; SurfaceImage left as-is.
+			labor.getLayer().setExtrudedPolygonsLayer(createExtrudedPolygonsLayer(itemsToShow));
+			labor.getLayer().setElementsCount(itemsToShow != null ? itemsToShow.size() : 0);
+		}
+	}
 
-
-
-	private RenderableLayer createExtrudedPolygonsLayer(Collection<FC> itemsToShow) {	
+	private RenderableLayer createExtrudedPolygonsLayer(Collection<FC> _itemsToShow) {	
 
 		double min = labor.minAmount;//Double.MAX_VALUE;
 		double max = labor.maxAmount;//-Double.MAX_VALUE;
@@ -1481,21 +1448,74 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 		//labor.getLayer().addRenderable(analiticLegendrenderable);
 		RenderableLayer layer = new RenderableLayer(){
 			private static final long SECTOR_DEBOUNCE_MS = 150;
-
+			private Collection<FC> itemsToShow = new ArrayList<>(
+					_itemsToShow != null ? _itemsToShow : java.util.Collections.emptyList());
 			private Sector lastBuiltSector = null;
 			private Sector pendingSector = null;
 			private long pendingSectorSinceMs = 0;
-			private Envelope env = null;
+			private Geometry filterGeometry = null;
 			private List<Renderable> renderablesPool = new ArrayList<Renderable>();
-			/** After a rebuild, time one draw to adapt the feature cap for the next rebuild only. */
+			/**
+			 * After a rebuild, time rebuild+draw (with GPU sync) once to adapt the feature
+			 * cap for the next rebuild only.
+			 */
 			private boolean measureNextDrawForCap = false;
+			/** Wall-clock start of the rebuild being measured (0 when not measuring). */
+			private long measureCapFromMs = 0;
+
+			{
+				setValue(LaborLayer.KEY_EXTRUDED_ITEM_REMOVED,
+						(Consumer<LaborItem>) this::removeItemAndInvalidateBuiltSector);
+				setValue(LaborLayer.KEY_EXTRUDED_ITEMS_REFRESH,
+						(Consumer<Collection<? extends LaborItem>>) this::setItemsAndInvalidateBuiltSector);
+			}
+
+			/** Clear sector state so the next {@code preRender} runs {@link #rebuildForVisibleSector}. */
+			private void invalidateBuiltSector() {
+				lastBuiltSector = null;
+				pendingSector = null;
+				pendingSectorSinceMs = 0;
+				measureNextDrawForCap = false;
+				measureCapFromMs = 0;
+				poolCurrentRenderables();
+			}
+
+			/**
+			 * Drop a deleted item and clear {@code lastBuiltSector} so the next
+			 * {@code preRender} runs {@link #rebuildForVisibleSector}.
+			 */
+			private void removeItemAndInvalidateBuiltSector(LaborItem item) {
+				if (item != null && itemsToShow != null) {
+					Double id = item.getId();
+					itemsToShow.removeIf(fc -> fc == item
+							|| (id != null && fc.getId() != null && id.equals(fc.getId())));
+				}
+				invalidateBuiltSector();
+			}
+
+			/**
+			 * Replace the feature set used by {@link #rebuildForVisibleSector} and
+			 * force a rebuild on the next {@code preRender}.
+			 */
+			@SuppressWarnings("unchecked")
+			private void setItemsAndInvalidateBuiltSector(Collection<? extends LaborItem> items) {
+				itemsToShow.clear();
+				if (items != null) {
+					for (LaborItem item : items) {
+						if (item != null) {
+							itemsToShow.add((FC) item);
+						}
+					}
+				}
+				invalidateBuiltSector();
+			}
 
 			private ExtrudedPolygon getFreeRenderable() {
-				gov.nasa.worldwind.render.ExtrudedPolygon renderablePolygon = null;
+				//gov.nasa.worldwind.render.ExtrudedPolygon renderablePolygon = null;
 				if (renderablesPool == null) {
 					renderablesPool = new ArrayList<Renderable>();
 				}
-				while (this.renderablesPool.size() > 0) {
+				while ( this.renderablesPool.size() > 0) {//disable pooling
 					Renderable pooled = renderablesPool.remove(0);
 					if (pooled instanceof ExtrudedPolygon) {
 						return (ExtrudedPolygon) pooled;
@@ -1513,113 +1533,206 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			}
 
 			/**
-			 * Tight geographic footprint of what is actually on screen (sampled +
-			 * clamped around look-at), clipped to this labor's bounds.
-			 * Avoids {@link DrawContext#getVisibleSector()}, which balloons toward the horizon.
+			 * Geometry used to query extruded features for the current view.
+			 * Uses oriented FOV polygons only — never lat/lon AABB sectors, which introduce
+			 * north–south / east–west edges under a rotated heading.
 			 */
-			private Sector querySectorForView(DrawContext dc, Sector visibleSector) {
-				Sector sampled = sampleSectorFromViewport(dc);
-				Sector candidate = sampled != null ? sampled : visibleSector;
-				candidate = clampSectorToNearField(dc, candidate);
-				if (candidate == null) {
+			private Geometry querySectorForView(DrawContext dc, Sector visibleSector) {
+				Geometry near = nearFieldSector(dc);// oriented FOV around look-at
+				Geometry sampled = sampleSectorFromViewport(dc);// viewport-corner FOV polygon
+
+				Geometry candidate;
+				if (sampled == null) {
+					candidate = near;
+				} else if (near == null) {
+					candidate = sampled;
+				} else {
+					// Cap horizon ballooning, but never shrink below the near-field floor
+					Geometry clipped = safeIntersection(sampled, near);
+					if (clipped == null || clipped.isEmpty()
+							|| clipped.getArea() < near.getArea() * 0.5) {
+						candidate = near;
+					} else {
+						candidate = clipped;
+					}
+				}
+				if (candidate == null || candidate.isEmpty()) {
 					return null;
 				}
-				Sector clipped = candidate.intersection(sector);
-				if (clipped == null || clipped.equals(Sector.EMPTY_SECTOR)) {
+				// Do not intersect with labor/visible Sector AABBs — that adds N–S/E–W edges.
+				// Feature set is already limited to itemsToShow for this labor.
+				return candidate;
+			}
+
+			private Geometry safeIntersection(Geometry a, Geometry b) {
+				if (a == null || b == null) {
 					return null;
 				}
-				return clipped;
+				try {
+					return a.intersection(b);
+				} catch (Exception e) {
+					try {
+						return a.buffer(0).intersection(b.buffer(0));
+					} catch (Exception e2) {
+						return null;
+					}
+				}
+			}
+
+			/** this metod returns the area of a sector in degrees squared. 
+			 * its used to calculate the area of the sector that is used to query the features that are visible in the viewport.
+			 * we need the area to calculate the half span of the near field in meters.
+			*/
+			private static double sectorAreaDeg2(Sector s) {
+				return Math.abs(s.getDeltaLatDegrees() * s.getDeltaLonDegrees());
 			}
 
 			/**
-			 * Cap the query so far-horizon screen samples (or WW visibleSector) cannot
-			 * pull in a huge envelope. Span ≈ eye elevation × FOV, with a hard tilt cap.
+			 * Near-field half-span (meters) around look-at. Circular in ground meters so
+			 * any heading is covered once converted to a lat/lon AABB.
+			 * this metod returns a double that is the half span of the near field in meters.
+			 * the near field is a circular area around the look-at position that is based on the FOV / aspect / pitch / heading.
+			 * the near field is used to query the features that are visible in the viewport.
 			 */
-			private Sector clampSectorToNearField(DrawContext dc, Sector candidate) {
+			private double nearFieldHalfSpanMeters(gov.nasa.worldwind.View view, java.awt.Rectangle vp) {
+				double elevM = Math.max(50.0, view.getCurrentEyePosition().elevation);
+				double fovRad = view.getFieldOfView().radians;
+				double aspect = vp.getWidth() / Math.max(1.0, vp.getHeight());
+			
+				// Cover the wider FOV axis, then screen corners.
+				double halfSpanM = elevM * Math.tan(fovRad / 2.0);
+				halfSpanM *= Math.max(aspect, 1.0 / aspect);
+				halfSpanM *= Math.sqrt(2.0);
+			
+				// Pitch: 0 = horizon, 90 = nadir. Tilt stretches ground distances —
+				// grow the floor so the query does not collapse when the camera tips.
 				try {
-					gov.nasa.worldwind.View view = dc.getView();
-					java.awt.Rectangle vp = view.getViewport();
-					if (vp == null || vp.width <= 0 || vp.height <= 0) {
-						return candidate;
-					}
-					Position lookAt = view.computePositionFromScreenPoint(
-							vp.getCenterX(), vp.getCenterY());
-					if (lookAt == null) {
-						lookAt = view.getCurrentEyePosition();
-					}
-					if (lookAt == null) {
-						return candidate;
-					}
-
-					double elevM = Math.max(50.0, view.getCurrentEyePosition().elevation);
-					double fovRad = view.getFieldOfView().radians;
-					// Near-field half-span for a downward view, padded for aspect ratio.
-					double halfSpanM = elevM * Math.tan(fovRad / 2.0) * 2.5;
-					// Hard cap: even with tilt, do not query beyond ~3× eye elevation.
-					halfSpanM = Math.min(halfSpanM, elevM * 3.0);
-					halfSpanM = Math.max(halfSpanM, 150.0);
-
-					double lat0 = lookAt.getLatitude().degrees;
-					double lon0 = lookAt.getLongitude().degrees;
-					double metersPerDegLat = 111_320.0;
-					double metersPerDegLon = metersPerDegLat * Math.cos(Math.toRadians(lat0));
-					if (metersPerDegLon < 1_000.0) {
-						metersPerDegLon = 1_000.0;
-					}
-					double dLat = halfSpanM / metersPerDegLat;
-					double dLon = halfSpanM / metersPerDegLon;
-					Sector near = Sector.fromDegrees(lat0 - dLat, lat0 + dLat, lon0 - dLon, lon0 + dLon);
-					if (candidate == null) {
-						return near;
-					}
-					Sector clipped = candidate.intersection(near);
-					return (clipped == null || clipped.equals(Sector.EMPTY_SECTOR)) ? near : clipped;
-				} catch (Exception e) {
-					return candidate;
+					double pitchDeg = view.getPitch().degrees;
+					double fromNadirRad = Math.toRadians(Math.max(1.0, 90.0 - pitchDeg));
+					halfSpanM /= Math.max(0.15, Math.cos(fromNadirRad));
+				} catch (Exception ignored) {
+					halfSpanM *= 2.0;
 				}
+			
+				halfSpanM = Math.max(halfSpanM, 150.0);
+				// Generous hard cap: tilted far-edge still needs several× eye elevation.
+				halfSpanM = Math.min(halfSpanM, elevM * 20.0);
+				return halfSpanM;
 			}
 
-			private Sector sampleSectorFromViewport(DrawContext dc) {
+			private Position lookAtPosition(gov.nasa.worldwind.View view, java.awt.Rectangle vp) {
+				Position lookAt = view.computePositionFromScreenPoint(
+						vp.getCenterX(), vp.getCenterY());
+				if (lookAt == null) {
+					lookAt = view.getCurrentEyePosition();
+				}
+				return lookAt;
+			}
+
+			/**
+			 * Look-at-centered FOV rectangle as a JTS polygon, oriented by view heading
+			 * (preserves FOV rotation — not a lat/lon AABB).
+			 */
+			private Geometry nearFieldSector(DrawContext dc) {
 				try {
 					gov.nasa.worldwind.View view = dc.getView();
 					java.awt.Rectangle vp = view.getViewport();
 					if (vp == null || vp.width <= 0 || vp.height <= 0) {
 						return null;
 					}
-					// Inset so edge / horizon samples do not dominate the envelope.
-					final double inset = 0.12;
+					Position lookAt = lookAtPosition(view, vp);
+					if (lookAt == null) {
+						return null;
+					}
+
+					double elevM = Math.max(50.0, view.getCurrentEyePosition().elevation);
+					double fovRad = view.getFieldOfView().radians;
+					double aspect = vp.getWidth() / Math.max(1.0, vp.getHeight());
+					double halfH = elevM * Math.tan(fovRad / 2.0);
+					double halfW = halfH * aspect;
+					try {
+						double pitchDeg = view.getPitch().degrees;
+						double fromNadirRad = Math.toRadians(Math.max(1.0, 90.0 - pitchDeg));
+						double stretch = 1.0 / Math.max(0.15, Math.cos(fromNadirRad));
+						halfH *= stretch;
+						halfW *= stretch;
+					} catch (Exception ignored) {
+						halfH *= 2.0;
+						halfW *= 2.0;
+					}
+					halfH = Math.max(150.0, Math.min(halfH, elevM * 20.0));
+					halfW = Math.max(150.0, Math.min(halfW, elevM * 20.0));
+
+					double lat0 = lookAt.getLatitude().degrees;
+					double lon0 = lookAt.getLongitude().degrees;
+					double mPerDegLat = 111_320.0;
+					double mPerDegLon = mPerDegLat * Math.cos(Math.toRadians(lat0));
+					if (mPerDegLon < 1_000.0) {
+						mPerDegLon = 1_000.0;
+					}
+
+					double headingRad = 0.0;
+					try {
+						headingRad = view.getHeading().radians;
+					} catch (Exception ignored) {
+						// keep 0
+					}
+					double cosH = Math.cos(headingRad);
+					double sinH = Math.sin(headingRad);
+					// Local corners: (±halfW right, ±halfH forward). Heading 0 = north, CW+.
+					double[][] local = {
+							{ -halfW, -halfH }, { halfW, -halfH },
+							{ halfW, halfH }, { -halfW, halfH }
+					};
+					Coordinate[] coords = new Coordinate[5];
+					for (int i = 0; i < 4; i++) {
+						double right = local[i][0];
+						double fwd = local[i][1];
+						double east = right * cosH + fwd * sinH;
+						double north = -right * sinH + fwd * cosH;
+						coords[i] = new Coordinate(
+								lon0 + east / mPerDegLon,
+								lat0 + north / mPerDegLat);
+					}
+					coords[4] = coords[0];
+					return ProyectionConstants.getGeometryFactory().createPolygon(coords);
+				} catch (Exception e) {
+					return null;
+				}
+			}
+
+			/**
+			 * Viewport FOV as a JTS polygon from the four screen corners (respects heading/pitch).
+			 * Null hits on any corner → null (caller falls back to near-field / visible sector).
+			 */
+			private Geometry sampleSectorFromViewport(DrawContext dc) {
+				try {
+					gov.nasa.worldwind.View view = dc.getView();
+					java.awt.Rectangle vp = view.getViewport();
+					if (vp == null || vp.width <= 0 || vp.height <= 0) {
+						return null;
+					}
+
+					// Light inset — keep almost the full viewport so rotated corners stay covered.
+					final double inset = 0.02;
 					double x0 = vp.getX() + vp.getWidth() * inset;
 					double y0 = vp.getY() + vp.getHeight() * inset;
 					double w = vp.getWidth() * (1.0 - 2.0 * inset);
 					double h = vp.getHeight() * (1.0 - 2.0 * inset);
 
-					double minLat = 90;
-					double maxLat = -90;
-					double minLon = 180;
-					double maxLon = -180;
-					boolean any = false;
-					final int steps = 4;
-					for (int ix = 0; ix <= steps; ix++) {
-						for (int iy = 0; iy <= steps; iy++) {
-							double sx = x0 + w * ix / (double) steps;
-							double sy = y0 + h * iy / (double) steps;
-							Position pos = view.computePositionFromScreenPoint(sx, sy);
-							if (pos == null) {
-								continue;
-							}
-							any = true;
-							double lat = pos.getLatitude().degrees;
-							double lon = pos.getLongitude().degrees;
-							minLat = Math.min(minLat, lat);
-							maxLat = Math.max(maxLat, lat);
-							minLon = Math.min(minLon, lon);
-							maxLon = Math.max(maxLon, lon);
+					double[] xs = { x0, x0 + w, x0 + w, x0 };
+					double[] ys = { y0, y0, y0 + h, y0 + h };
+					Coordinate[] coords = new Coordinate[5];
+					for (int i = 0; i < 4; i++) {
+						Position pos = view.computePositionFromScreenPoint(xs[i], ys[i]);
+						if (pos == null) {
+							return null;
 						}
+						coords[i] = new Coordinate(
+								pos.getLongitude().degrees, pos.getLatitude().degrees);
 					}
-					if (!any || maxLat < minLat || maxLon < minLon) {
-						return null;
-					}
-					return Sector.fromDegrees(minLat, maxLat, minLon, maxLon);
+					coords[4] = coords[0];
+					return ProyectionConstants.getGeometryFactory().createPolygon(coords);
 				} catch (Exception e) {
 					return null;
 				}
@@ -1633,6 +1746,7 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 				poolCurrentRenderables();
 				lastBuiltSector = null;
 				measureNextDrawForCap = false;
+				measureCapFromMs = 0;
 				// Restart debounce after the user finishes interacting.
 				pendingSectorSinceMs = System.currentTimeMillis();
 			}
@@ -1643,38 +1757,43 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 					return;
 				}
 
+				measureCapFromMs = System.currentTimeMillis();
 				poolCurrentRenderables();
-
-				Sector querySector = querySectorForView(dc, visibleSector);
 				lastBuiltSector = visibleSector;
-				if (querySector == null) {
-					return;
-				}
 
-				List<FC> features = queryFeaturesShrinkingToCap(querySector);
+				Collection<FC> features;
+				if (itemsToShow != null && itemsToShow.size() > LaborLayer.getMaxExtrudedElements()) {
+					Geometry queryGeometry = querySectorForView(dc, visibleSector);
+					if (queryGeometry == null || queryGeometry.isEmpty()) {
+						measureCapFromMs = 0;
+						return;
+					}
+					features = queryFeaturesShrinkingToCap(queryGeometry);
+				} else {
+					features = itemsToShow;
+				}
 				if (features == null || features.isEmpty()) {
+					measureCapFromMs = 0;
 					return;
 				}
 
 				char[] abc = "ABCDEFGHIJKLM".toCharArray();
 				int size = labor.getClasificador().getNumClasses() - 1;
 
-				int built = 0;
+				// Sequential only: ReusableExtrudedPolygon pools / boundary lists / RenderableLayer
+				// are not thread-safe. parallelStream + abortExtrudedWork races corrupt ArrayList
+				// sizes and crash WW getCapEdgeIndices with capacity < 0.
 				for (FC c : features) {
 					// Periodically yield to pending mouse drag / wheel while tessellating.
-					if ((++built & 63) == 0 && LaborLayer.isViewInteractionActive(dc)) {
+					if (LaborLayer.isViewInteractionActive(dc)) {
 						abortExtrudedWork();
-						return;
+						break;
 					}
 					Geometry g = c.getGeometry();
 					if (g == null || g.isEmpty()) {
 						continue;
 					}
-					// Skip features that only touch the envelope via index noise / antimeridian edge cases
-					Envelope ge = g.getEnvelopeInternal();
-					if (!env.intersects(ge)) {
-						continue;
-					}
+
 					if (g instanceof Point) {
 						Point center = (Point) g;
 						try {
@@ -1707,104 +1826,91 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 					}
 				}
 
-				// Time the next draw only to update the cap for a future rebuild — do not rebuild now.
+				// Time rebuild+draw to update the cap for a future rebuild — do not rebuild now.
 				measureNextDrawForCap = true;
 			}
 
 			/**
-			 * Query features in {@code querySector}. If over {@link LaborLayer#getMaxExtrudedElements()},
-			 * shrink the sector toward its center and re-query until under the cap (most-centered features).
+			 * If {@code itemsToShow} exceeds {@link LaborLayer#getMaxExtrudedElements()},
+			 * shrink the FOV polygon until the intersecting feature count is under the cap.
+			 * Stops as soon as {@code size <= max}; does not expand back toward the cap.
 			 */
-			private List<FC> queryFeaturesShrinkingToCap(Sector querySector) {
-				final int max = LaborLayer.getMaxExtrudedElements();
-				final double shrinkFactor = 0.90;
-				final int maxIters = 30;
-				final double minHalfSpanDeg = 1e-5; // ~1 m
-
-				Sector current = querySector;
-				List<FC> features = null;
-				for (int iter = 0; iter < maxIters; iter++) {
-					initEnvFromSector(current);
-					features = labor.cachedOutStoreQuery(env);
-					if (features == null || features.isEmpty()) {
-						return features;
-					}
-					if (features.size() <= max) {
-						if (iter > 0) {
-							logger.fine("shrunk extruded viewport to fit cap; features="
-									+ features.size() + " max=" + max + " iters=" + iter);
-						}
-						return features;
-					}
-
-					double halfLat = current.getDeltaLatDegrees() / 2.0;
-					double halfLon = current.getDeltaLonDegrees() / 2.0;
-					if (halfLat * shrinkFactor < minHalfSpanDeg && halfLon * shrinkFactor < minHalfSpanDeg) {
-						logger.fine("viewport already minimal; features still over cap="
-								+ features.size() + " max=" + max);
+			private Collection<FC> queryFeaturesShrinkingToCap(Geometry queryGeometry) {
+				final double max = LaborLayer.getMaxExtrudedElements();
+				logger.fine("max extruded elements: " + max);
+				Collection<FC> features = itemsToShow;
+				if (features == null || features.size() <= max) {
+					return features;
+				}
+				logger.fine("features size: " + features.size());
+				filterGeometry = queryGeometry;
+				Collection<FC> filteredFeatures = features;
+				// Count ~ area ~ scale^2 for roughly uniform density.
+				double delta = Math.sqrt(max / (double) features.size());
+				for (int i = 0; i < 10 && filteredFeatures.size() > max; i++) {
+					logger.fine("reducing sector by " + delta + " for candidates " + filteredFeatures.size()
+							+ " max " + max + " iteration " + i);
+					filterGeometry = scaleSector(filterGeometry, delta);
+					double initTime = System.currentTimeMillis();
+					filteredFeatures = filterFeaturesForSector(features, filterGeometry);
+					double endTime = System.currentTimeMillis();
+					logger.fine("query time: " + (endTime - initTime));
+					if (filteredFeatures.isEmpty()) {
+						logger.fine("sector shrink emptied query; aborting further shrink");
 						break;
 					}
-					current = shrinkSectorTowardCenter(current, shrinkFactor);
-					if (current == null || current.equals(Sector.EMPTY_SECTOR)) {
-						break;
+					if (filteredFeatures.size() > max) {
+						delta = Math.sqrt(max / (double) filteredFeatures.size());
 					}
 				}
+				logger.fine("capped extruded features; queried=" + filteredFeatures.size() + " max=" + max);
+				return filteredFeatures;
+			}
 
-				// Last resort: still over cap at minimal sector — take centered subset by geometry centroid.
-				if (features != null && features.size() > max) {
-					features = takeMostCentered(features, current, max);
+			private Collection<FC> filterFeaturesForSector(Collection<FC> features, Geometry sectorGeometry) {
+				List<FC> filteredFeatures = features.parallelStream().filter(f -> {
+					Geometry g = f.getGeometry();
+					return g != null && !g.isEmpty() && sectorGeometry.intersects(g);
+				}).collect(Collectors.toList());
+				return filteredFeatures;
+			}
+
+			/** Homothety toward centroid — preserves shape and orientation. */
+			private Geometry scaleSector(Geometry g, double factor) {
+				if (g == null || g.isEmpty()) {
+					logger.severe("sector geometry is null");
+					return g;
 				}
-				return features;
+				if (!(g instanceof Polygon)) {
+					g = g.convexHull();
+				}
+				Coordinate c = g.getCentroid().getCoordinate();
+				Coordinate[] src = g.getCoordinates();
+				Coordinate[] dst = new Coordinate[src.length];
+				for (int i = 0; i < src.length; i++) {
+					dst[i] = new Coordinate(
+							c.x + (src[i].x - c.x) * factor,
+							c.y + (src[i].y - c.y) * factor);
+				}
+				if (dst.length > 0) {
+					dst[dst.length - 1] = new Coordinate(dst[0]);
+				}
+				return ProyectionConstants.getGeometryFactory().createPolygon(dst);
 			}
 
-			private void initEnvFromSector(Sector s) {
-				double maxX = s.getMaxLongitude().degrees;
-				double minX = s.getMinLongitude().degrees;
-				double maxY = s.getMaxLatitude().degrees;
-				double minY = s.getMinLatitude().degrees;
-				if (env == null) {
-					env = new Envelope(minX, maxX, minY, maxY);
-				} else {
-					env.init(minX, maxX, minY, maxY);
+			/** Block until queued GL work for this draw completes (otherwise renderMs undercounts). */
+			private void finishMeasuredDraw(DrawContext dc) {
+				try {
+					if (dc != null && dc.getGL() != null) {
+						dc.getGL().glFinish();
+					}
+				} catch (Exception e) {
+					logger.fine("glFinish during extruded timing failed: " + e.getMessage());
 				}
 			}
 
-			private Sector shrinkSectorTowardCenter(Sector s, double factor) {
-				double cLat = (s.getMinLatitude().degrees + s.getMaxLatitude().degrees) / 2.0;
-				double cLon = (s.getMinLongitude().degrees + s.getMaxLongitude().degrees) / 2.0;
-				double halfLat = s.getDeltaLatDegrees() / 2.0 * factor;
-				double halfLon = s.getDeltaLonDegrees() / 2.0 * factor;
-				if (halfLat <= 0 || halfLon <= 0) {
-					return null;
-				}
-				return Sector.fromDegrees(cLat - halfLat, cLat + halfLat, cLon - halfLon, cLon + halfLon);
-			}
-
-			/** Prefer features whose envelope center is closest to the sector center. */
-			private List<FC> takeMostCentered(List<FC> features, Sector s, int max) {
-				double cLat = (s.getMinLatitude().degrees + s.getMaxLatitude().degrees) / 2.0;
-				double cLon = (s.getMinLongitude().degrees + s.getMaxLongitude().degrees) / 2.0;
-				List<FC> sorted = new ArrayList<>(features);
-				sorted.sort((a, b) -> {
-					Envelope ea = a.getGeometry() != null ? a.getGeometry().getEnvelopeInternal() : null;
-					Envelope eb = b.getGeometry() != null ? b.getGeometry().getEnvelopeInternal() : null;
-					double da = dist2ToCenter(ea, cLon, cLat);
-					double db = dist2ToCenter(eb, cLon, cLat);
-					return Double.compare(da, db);
-				});
-				return sorted.subList(0, max);
-			}
-
-			private double dist2ToCenter(Envelope e, double cLon, double cLat) {
-				if (e == null) {
-					return Double.MAX_VALUE;
-				}
-				double dx = e.getMinX() + e.getWidth() / 2.0 - cLon;
-				double dy = e.getMinY() + e.getHeight() / 2.0 - cLat;
-				return dx * dx + dy * dy;
-			}
-
-			public void render(DrawContext dc) {// no se ejecuta hasta que se muestra el layer
+			@Override
+			public void preRender(DrawContext dc) {
 				Extent extent = Sector.computeBoundingBox(dc.getGlobe(), dc.getVerticalExaggeration(), sector);
 				if (!extent.intersects(dc.getView().getFrustumInModelCoordinates())) {
 					return;
@@ -1839,29 +1945,60 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 						}
 					}
 				}
+				super.preRender(dc);
+			}
 
+			public void render(DrawContext dc) {// no se ejecuta hasta que se muestra el layer
+				Extent extent = Sector.computeBoundingBox(dc.getGlobe(), dc.getVerticalExaggeration(), sector);
+				if (!extent.intersects(dc.getView().getFrustumInModelCoordinates())) {
+					return;
+				}
+				if (WWMath.computeSizeInWindowCoordinates(dc, extent) < 300) {
+					return;
+				}
+
+				// User started (or is about to start) dragging — abort any extruded work immediately.
+				if (LaborLayer.isViewInteractionActive(dc)) {
+					if (lastBuiltSector != null || !renderables.isEmpty()) {
+						abortExtrudedWork();
+					}
+					return;
+				}
+
+				Sector visibleSector = dc.getVisibleSector();
 				// Only draw geometry built for the current visible sector
 				if (visibleSector != null && lastBuiltSector != null && lastBuiltSector.equals(visibleSector)) {
 					int drawn = 0;
 					if (measureNextDrawForCap) {
-						long t0 = System.currentTimeMillis();
+						// Include rebuild (started in rebuildForVisibleSector) + CPU submit + GPU drain.
+						long t0 = measureCapFromMs > 0 ? measureCapFromMs : System.currentTimeMillis();
 						for (Renderable r : renderables) {
 							if ((++drawn & 63) == 0 && LaborLayer.isViewInteractionActive(dc)) {
 								abortExtrudedWork();
 								return;
 							}
-							r.render(dc);
+							try {
+								r.render(dc);
+							} catch (RuntimeException e) {
+								logger.fine("skipping bad extruded renderable: " + e.getMessage());
+							}
 						}
-						// Update target for the next rebuild only — keep current geometry as-is.
-						LaborLayer.adjustMaxExtrudedElements(System.currentTimeMillis() - t0);
+						finishMeasuredDraw(dc);
+						LaborLayer.adjustMaxExtrudedElements(
+								System.currentTimeMillis() - t0, renderables.size());
 						measureNextDrawForCap = false;
+						measureCapFromMs = 0;
 					} else {
 						for (Renderable r : renderables) {
 							if ((++drawn & 63) == 0 && LaborLayer.isViewInteractionActive(dc)) {
 								abortExtrudedWork();
 								return;
 							}
-							r.render(dc);
+							try {
+								r.render(dc);
+							} catch (RuntimeException e) {
+								logger.fine("skipping bad extruded renderable: " + e.getMessage());
+							}
 						}
 					}
 				}
@@ -1874,10 +2011,11 @@ public abstract class ProcessMapTask<FC extends LaborItem,E extends Labor<FC>> e
 			@Override
 			public void dispose() {
 				logger.fine("disposing of extrudedPoligonsLayer");
-				env = null;
+				filterGeometry = null;
 				lastBuiltSector = null;
 				pendingSector = null;
 				measureNextDrawForCap = false;
+				measureCapFromMs = 0;
 				renderables.stream().forEach(r -> {
 					if (r instanceof ReusableExtrudedPolygon) {
 						((ReusableExtrudedPolygon) r).clearBoundarys();

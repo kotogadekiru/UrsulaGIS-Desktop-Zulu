@@ -308,9 +308,10 @@ public class RecorridaGUIController extends AbstractGUIController {
 		try {
 			Number nroRec = nf.parse(config.getPropertyOrDefault("Recorrida.NumeroKey", "0"));
 			recorrida.setNumero(nroRec.longValue()+1);
-		} catch (ParseException e) {			
+		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+		nf.setMaximumFractionDigits(2);
 		CompartirRecorridaTask task = new CompartirRecorridaTask(recorrida);
 		//System.out.println("procesando los datos entre "+ndviDpDLG.initialDate+" y "+ ndviDpDLG.finalDate);//hasta aca ok!
 		task.installProgressBar(progressBox);

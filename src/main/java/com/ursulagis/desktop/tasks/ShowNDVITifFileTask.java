@@ -931,7 +931,7 @@ public class ShowNDVITifFileTask extends Task<Layer>{
 	//
 	//			};
 	//
-	//			DecimalFormat df = new DecimalFormat(Messages.getString("GenerarMuestreoDirigidoTask.5")); //$NON-NLS-1$
+	//			DecimalFormat df = new DecimalFormat(Messages.getString("GenerarMuestreoDirigidoTask.decimalPattern")); //$NON-NLS-1$
 	//			//XXX quito la informacion de nublado porque me rompe el ordenamiento y evoluvion de ndvi
 	//			layer.setName(fileName);//+" "+df.format(porcNubes*100)+"% "+Messages.getString("ShowNDVITifFileTask.nublado"));
 	//			layer.setPickEnabled(false);

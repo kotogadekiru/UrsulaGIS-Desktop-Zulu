@@ -56,7 +56,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		sConfig.resumirGeometriasProperty().setValue(false);
 		sConfig.supMinimaProperty().set(0);
 		
-		labor.setNombre(Messages.getString("GrillarSiembrasMapTask.0"));//este es el nombre que se muestra en el progressbar
+		labor.setNombre(Messages.getString("GrillarSiembrasMapTask.gridSeedings"));//este es el nombre que se muestra en el progressbar
 	}
 	
 	public void setAncho(double _ancho) {
@@ -85,9 +85,9 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 			labor.setFertCostado(s.getFertCostado());
 			
 			if (nombre == null) {
-				nombre = labor.getNombre() + Messages.getString("GrillarSiembrasMapTask.1") + s.getNombre();
+				nombre = labor.getNombre() + Messages.getString("GrillarSiembrasMapTask.space") + s.getNombre();
 			} else {
-				nombre += Messages.getString("GrillarSiembrasMapTask.2") + s.getNombre();
+				nombre += Messages.getString("GrillarSiembrasMapTask.dashSeparator") + s.getNombre();
 			}
 
 			ReferencedEnvelope b = s.outCollection.getBounds();
@@ -153,7 +153,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		logger.fine("cree una union de"+byPolygon.size()+" elementos");
 
 		if(labor.inCollection == null){
-			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarSiembrasMapTask.9"),labor.getType());
+			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarSiembrasMapTask.internal"),labor.getType());
 		}
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
@@ -162,6 +162,7 @@ public class GrillarSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLa
 		}
 
 		labor.constructClasificador();
+		labor.markInternalDosisAsKgHa();
 
 		runLater(byPolygon.values());
 		updateProgress(0, featureCount);

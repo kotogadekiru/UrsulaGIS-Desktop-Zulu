@@ -212,7 +212,7 @@ public class ExportarPrescripcionPulverizacionTask extends ProgresibleTask<File>
 		updateProgress(1, 100);
 		// ahora que tenemos las colecciones con las categorias solo hace falta juntar las geometrias y sacar los promedios	
 		List<LaborItem> itemsCategoria = new ArrayList<LaborItem>();//es la lista de los items que representan a cada categoria y que devuelvo
-		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.9"),labor.getType());		 //$NON-NLS-1$
+		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.internal"),labor.getType());		 //$NON-NLS-1$
 		//TODO pasar esto a parallel streams
 		//XXX por cada categoria 
 		for(int i=0;i<labor.clasificador.getNumClasses();i++){

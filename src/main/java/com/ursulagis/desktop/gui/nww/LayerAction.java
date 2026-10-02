@@ -10,6 +10,10 @@ public class LayerAction implements Function<Layer, String>, Comparable<LayerAct
 	public Function<Layer, String> predicate;
 	/** Si no es null, se usa al ejecutar la acción sobre varios ítems seleccionados. */
 	public Function<List<Layer>, String> batchPredicate;
+	/**
+	 * Minimum loaded-or-selected layers under the class root required for this
+	 * action to appear in the root context menu (e.g. {@code 2} for Add Harvests).
+	 */
 	public int minElementsRequired = 0;
 
 	public LayerAction(Function<Layer, String> _predicate){

@@ -98,7 +98,7 @@ public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 				SiembraItem ci = labor.constructFeatureContainerStandar(f,true);
 				//TODO multiplicar ci.rinde por el coeficiente de conversion
 			
-				ci.setDosisML(ci.getDosisML()*10);//XXX verificar que ande para otras unidades
+				// dosisML ya viene en semillas/m lineal desde constructFeatureContainerStandar
 				//SimpleFeature nf=ci.getFeature(labor.getFeatureBuilder());
 				labor.insertFeature(ci);
 				//boolean ret = labor.outCollection.add(nf);
@@ -126,6 +126,7 @@ public class UnirSiembrasMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 //			
 //		} else{
 			labor.constructClasificador();
+			labor.markInternalDosisAsKgHa();
 //		}
 
 

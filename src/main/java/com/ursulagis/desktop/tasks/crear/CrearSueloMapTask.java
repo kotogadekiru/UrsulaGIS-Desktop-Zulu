@@ -144,7 +144,7 @@ public class CrearSueloMapTask extends ProcessMapTask<SueloItem,Suelo> {
 		Map<SueloParametro, Nutriente> spd = Nutriente.getNutrientesDefault();
 		Nutriente fosforo =spd.get(SueloParametro.Fosforo);		
 		sb.append(getLabelForNutriente(fosforo)+df.format(si.getPpmP())+"ppm\n");
-		//sb.append(" " + Messages.getString("OpenSoilMapTask.2") + " 0-20cm \n "); //ppm
+		//sb.append(" " + Messages.getString("OpenSoilMapTask.ppmP") + " 0-20cm \n "); //ppm
 
 		//Nitrogeno	//FIXME verificar si es N-NO3 o NO3			
 		sb.append(getLabelForNutriente(spd.get(SueloParametro.Nitrogeno))+df.format(si.getPpmNO3())+"ppm\n");
@@ -198,7 +198,7 @@ public class CrearSueloMapTask extends ProcessMapTask<SueloItem,Suelo> {
 		//getPorcCC()
 		
 		//ELEVACION
-		sb.append(Messages.getString("ProcessHarvestMapTask.25")
+		sb.append(Messages.getString("ProcessHarvestMapTask.height")
 				+df.format(si.getElevacion() ) 
 				+ "m\n"); 
 		
@@ -232,8 +232,8 @@ public class CrearSueloMapTask extends ProcessMapTask<SueloItem,Suelo> {
 //		String tooltipText = buildTooltipText(si,area);
 //
 //		//		String tooltipText = new String(
-//		//				Messages.getString("CrearSueloMapTask.fosforo")+": " +df.format(si.getPpmP()) +Messages.getString("OpenSoilMapTask.2")
-//		//				+Messages.getString("CrearSueloMapTask.nitrogeno")+": "+ df.format(si.getPpmN()) +Messages.getString("OpenSoilMapTask.2")
+//		//				Messages.getString("CrearSueloMapTask.fosforo")+": " +df.format(si.getPpmP()) +Messages.getString("OpenSoilMapTask.ppmP")
+//		//				+Messages.getString("CrearSueloMapTask.nitrogeno")+": "+ df.format(si.getPpmN()) +Messages.getString("OpenSoilMapTask.ppmP")
 //		//				);
 //
 //		//		if(area<1){

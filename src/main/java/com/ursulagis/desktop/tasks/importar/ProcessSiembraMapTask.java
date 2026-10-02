@@ -229,6 +229,7 @@ public class ProcessSiembraMapTask extends ProcessMapTask<SiembraItem,SiembraLab
 		reader.close();
 
 		labor.constructClasificador();
+		labor.markInternalDosisAsKgHa();
 		runLater(this.getItemsList());
 		updateProgress(0, featureCount);
 	}

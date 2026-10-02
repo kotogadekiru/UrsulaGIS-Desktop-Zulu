@@ -55,6 +55,7 @@ import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -965,10 +966,14 @@ public class LayerPanel extends VBox {
 				}
 			});
 		
-			//cell.itemProperty().addListener(getItemPropertyListener(cell));
-			
-			listenersAdapter.addChangeListener(cell.itemProperty(),constructLayerObjectPropertyListener(cell));
-			//cell.itemProperty().addListener(constructLayerObjectPropertyListener(cell));
+			listenersAdapter.addChangeListener(cell.itemProperty(), constructLayerObjectPropertyListener(cell));
+			// Re-evaluate minElementsRequired against current loaded/selected counts on each open
+			cell.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, e -> {
+				Layer layer = cell.getItem();
+				if (layer != null) {
+					updateCellContextMenu(cell, layer);
+				}
+			});
 			
 			return cell;
 		}
@@ -1001,70 +1006,102 @@ public class LayerPanel extends VBox {
 		}
 	}
 
-	private ChangeListener<Layer> constructLayerObjectPropertyListener( CheckBoxTreeCell<Layer> cell) {	 
-		ChangeListener<Layer> listener = new ChangeListener<Layer>() {
-			@Override
-			public void changed(ObservableValue<? extends Layer> o, Layer old, Layer nuLayer) {
-				//crea menu items para los layers de base
-				if(nuLayer==null) {
-					clearCellContextMenu(cell);
-					return;
+	private ChangeListener<Layer> constructLayerObjectPropertyListener(CheckBoxTreeCell<Layer> cell) {
+		return (o, old, nuLayer) -> updateCellContextMenu(cell, nuLayer);
+	}
+
+	/**
+	 * Builds or refreshes the context menu for {@code nuLayer}, applying
+	 * {@link LayerAction#minElementsRequired} against loaded/selected counts
+	 * under class root nodes.
+	 */
+	private void updateCellContextMenu(CheckBoxTreeCell<Layer> cell, Layer nuLayer) {
+		if (nuLayer == null) {
+			clearCellContextMenu(cell);
+			return;
+		}
+
+		Object layerObject = nuLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+		Object layerObjectClass = nuLayer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
+
+		// Nodo raíz "Capas" (u otras capas WW): sin acciones. Hay que limpiar el
+		// menú porque las celdas del TreeView se reutilizan y pueden conservar
+		// el ContextMenu de una rama anterior (p. ej. "Importar").
+		if (layerObject == null && layerObjectClass == null) {
+			clearCellContextMenu(cell);
+			return;
+		}
+
+		if (layerObject == null && layerObjectClass instanceof Class) {
+			Class<?> valueClass = (Class<?>) layerObjectClass;
+			CheckBoxTreeItem<Layer> classRoot = rootItems.get(valueClass);
+			if (classRoot == null) {
+				clearCellContextMenu(cell);
+				return;
+			}
+			List<TreeItem<Layer>> children = classRoot.getChildren();
+			List<LayerAction> layersP = new ArrayList<>();
+			List<LayerAction> layerActionsForClass = layerActions.get(valueClass);
+			if (layerActionsForClass != null) {
+				layersP.addAll(layerActionsForClass.stream()
+						.filter(p -> meetsMinElements(p, children))
+						.collect(Collectors.toList()));
+			}
+			int loadedOrSelected = countLoadedOrSelected(children);
+			if (loadedOrSelected > 0 && actions != null) {
+				List<LayerAction> accionesGenericas = actions.get(Object.class);
+				if (accionesGenericas != null) {
+					accionesGenericas.forEach(a ->
+							layersP.add(constructAllSelectedPredicate(a, children)));
 				}
-
-				Object layerObject = nuLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-				Object layerObjectClass = nuLayer.getValue(Labor.LABOR_LAYER_CLASS_IDENTIFICATOR);
-
-				// Nodo raíz "Capas" (u otras capas WW): sin acciones. Hay que limpiar el
-				// menú porque las celdas del TreeView se reutilizan y pueden conservar
-				// el ContextMenu de una rama anterior (p. ej. "Importar").
-				if(layerObject==null && layerObjectClass==null) {
-					clearCellContextMenu(cell);
-					return;
+			}
+			constructMenuItem(nuLayer, cell, layersP);
+		} else if (layerObject != null && actions != null) {
+			Class<?> valueClass = layerObject.getClass();
+			List<LayerAction> layersP = new ArrayList<>();
+			for (Class<?> key : actions.keySet()) {
+				if (key != null && key.isAssignableFrom(valueClass)) {
+					layersP.addAll(actions.get(key));
 				}
+			}
+			constructMenuItem(nuLayer, cell, layersP);
+		}
+	}
 
-				if(layerObject == null && layerObjectClass!=null){//es un root node
-					if(layerObjectClass instanceof Class) {//estoy cargando las acciones genericas
-						Class<? extends Object> valueClass = (Class<?>) layerObjectClass;
-						List<LayerAction> layersP = new ArrayList<LayerAction>();
+	/**
+	 * Whether {@code action} may appear given current loaded/selected children.
+	 * Uses {@link LayerAction#minElementsRequired}: show when enough layers are
+	 * loaded <em>or</em> enough are enabled (selected).
+	 */
+	private static boolean meetsMinElements(LayerAction action, List<TreeItem<Layer>> children) {
+		int min = action.minElementsRequired;
+		if (min <= 0) {
+			return true;
+		}
+		int loaded = 0;
+		int selected = 0;
+		for (TreeItem<Layer> item : children) {
+			Layer layer = item.getValue();
+			if (layer == null) {
+				continue;
+			}
+			loaded++;
+			if (layer.isEnabled()) {
+				selected++;
+			}
+		}
+		return loaded >= min || selected >= min;
+	}
 
-						//System.out.println("creando el menu para la clase "+valueClass);//falla con dao.Poligono
-						int size = rootItems.get(valueClass).getChildren().size();
-						//System.out.println("size "+valueClass+" es "+size);//falla con dao.Poligono
-						List<LayerAction> layerActionsForClass = layerActions.get(valueClass);
-						if(layerActionsForClass!=null) {
-							List<LayerAction> filtered =  layerActionsForClass.stream().filter(p->
-							p.minElementsRequired<=size).collect(Collectors.toList());
-
-							layersP.addAll(filtered);
-						}
-						if(size > 0) {
-							List<LayerAction> accionesGenericas = actions.get(Object.class);
-							accionesGenericas.forEach(a->
-							layersP.add(
-									constructAllSelectedPredicate(a, rootItems.get(valueClass).getChildren())
-									));	
-						}
-
-						constructMenuItem(nuLayer, cell, layersP);
-					}
-				} else if(layerObject != null) { //es un cell hoja
-					Class<? extends Object> valueClass = layerObject.getClass();
-					List<LayerAction> layersP = new ArrayList<LayerAction>();
-					for(Class<?> key : actions.keySet()){
-						if(key.isAssignableFrom(valueClass)
-								|| (key==null && valueClass==null)){	
-							layersP.addAll(actions.get(key));
-
-						}					
-					}
-					//ContextMenu menu = getContextMenu(cell);
-					constructMenuItem(nuLayer, cell, layersP);
-				}				
-			}			
-		};
-//		WeakChangeListener<Layer> weakListener = new WeakChangeListener<Layer>(listener);
-//		listeners.add(listener);
-	 return listener;
+	/** Loaded children count (selected ⊆ loaded); used for generic multi-actions. */
+	private static int countLoadedOrSelected(List<TreeItem<Layer>> children) {
+		int loaded = 0;
+		for (TreeItem<Layer> item : children) {
+			if (item.getValue() != null) {
+				loaded++;
+			}
+		}
+		return loaded;
 	}
 	
 //	private ChangeListener<Layer> getItemPropertyListener(CheckBoxTreeCell<Layer> cell) {
@@ -1157,7 +1194,7 @@ public class LayerPanel extends VBox {
 		LayerAction sourceAction = act instanceof LayerAction la ? la : null;
 		Function<Layer, String> removeSelected = (layer) -> {
 			if (layer == null) {
-				return act.apply(null) + Messages.getString("LayerPanel.23");
+				return act.apply(null) + Messages.getString("LayerPanel.selected");
 			}
 			List<Layer> selected = new ArrayList<>();
 			for (TreeItem<Layer> item : children) {

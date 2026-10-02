@@ -73,14 +73,10 @@ public class LaborItemGUIController extends AbstractGUIController{
 			Labor<?> l = findOwner(item,wwd);
 			if(l==null)return;
 					logger.fine("el item pertenece a la labor "+l.getNombre());
-					//el item pertenece a la labor Margarita Tr 2425  Cosecha
 					SimpleFeature f = item.getFeature(l.getFeatureBuilder());
 					l.changeFeature(f, null);
 					RedrawMapTask.redraw((Labor<LaborItem>) l);
-				//	l.inCollection=null;//para que no se vuelva a procesar desde cero
 					wwd.redraw();
-					//FIXME Funciona para la primera vez pero despues se cuelga
-					//levanta bien cuando haces clone
 	
 		}catch(Exception e ) {
 			e.printStackTrace();
@@ -190,7 +186,7 @@ public class LaborItemGUIController extends AbstractGUIController{
 			SmartTableView<LaborItem> table = new SmartTableView<LaborItem>(dataLotes);
 			table.setEditable(true);
 			//Button toExcel = new Button("To Excel");
-//			Button exportButton = new Button(Messages.getString("CosechaHistoChart.16")); //"Exportar"
+//			Button exportButton = new Button(Messages.getString("CosechaHistoChart.export")); //"Exportar"
 //			exportButton.setOnAction(a->{
 //				table.toExcel();
 //			});
@@ -215,6 +211,7 @@ public class LaborItemGUIController extends AbstractGUIController{
 			l.changeFeature(old, item);
 			//l.inCollection=null;//para que no se vuelva a procesar desde cero
 			RedrawMapTask.redraw((Labor<LaborItem>) l);
+			wwd.redraw();
 		});
 		
 	}

@@ -324,7 +324,7 @@ public class PoligonLayerFactory {
 //				dc.setGroupingUsed(true);
 //				double	value = measureTool.getArea()/ProyectionConstants.METROS2_POR_HA;
 //				if(value != valueProperty.doubleValue() && value > 0){
-//					String formated = dc.format(value)+Messages.getString("PoligonLayerFactory.4"); //$NON-NLS-1$
+//					String formated = dc.format(value)+Messages.getString("PoligonLayerFactory.ha"); //$NON-NLS-1$
 //					t.textProperty().set(formated);
 //
 //

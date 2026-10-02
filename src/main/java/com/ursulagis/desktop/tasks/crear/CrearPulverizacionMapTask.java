@@ -68,18 +68,18 @@ public class CrearPulverizacionMapTask extends ProcessMapTask<PulverizacionItem,
 		NumberFormat nf = Messages.getNumberFormat();
 
 		//DecimalFormat df = new DecimalFormat("0.00");//$NON-NLS-2$
-		String tooltipText = new String(Messages.getString("ProcessPulvMapTask.1") //$NON-NLS-1$
+		String tooltipText = new String(Messages.getString("ProcessPulvMapTask.agrochemicalCost") //$NON-NLS-1$
 				+Messages.getString("PulvConfigDialog.dosisLabel")+": "+nf.format(pulv.getDosis())+"\n"
-				+ nf.format(pulv.getPrecioInsumo()*pulv.getDosis()) + Messages.getString("ProcessPulvMapTask.2") //$NON-NLS-1$
-				+ Messages.getString("ProcessPulvMapTask.3") + nf.format(pulv.getImporteHa()) //$NON-NLS-1$
-				+ Messages.getString("ProcessPulvMapTask.4")  //$NON-NLS-1$
+				+ nf.format(pulv.getPrecioInsumo()*pulv.getDosis()) + Messages.getString("ProcessPulvMapTask.usdHa") //$NON-NLS-1$
+				+ Messages.getString("ProcessPulvMapTask.pulverization") + nf.format(pulv.getImporteHa()) //$NON-NLS-1$
+				+ Messages.getString("ProcessPulvMapTask.usdHa")  //$NON-NLS-1$
 				// +"feature: " + featureNumber
 				);
 
 		if(area<1){
-			tooltipText=tooltipText.concat( Messages.getString("ProcessPulvMapTask.5")+nf.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessPulvMapTask.6")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat( Messages.getString("ProcessPulvMapTask.sfc")+nf.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessPulvMapTask.m2")); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
-			tooltipText=tooltipText.concat(Messages.getString("ProcessPulvMapTask.7")+nf.format(area ) + Messages.getString("ProcessPulvMapTask.8")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat(Messages.getString("ProcessPulvMapTask.sfc")+nf.format(area ) + Messages.getString("ProcessPulvMapTask.has")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return tooltipText;
 	}

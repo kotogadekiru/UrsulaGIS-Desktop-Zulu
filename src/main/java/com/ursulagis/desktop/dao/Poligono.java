@@ -257,7 +257,7 @@ public class Poligono implements Comparable<Poligono>{
 		this.nombre=n;
 		if(this.layer!=null){
 			NumberFormat dc = Messages.getNumberFormat();
-			String formated = dc.format(this.area)+Messages.getString("PoligonLayerFactory.4"); //$NON-NLS-1$
+			String formated = dc.format(this.area)+Messages.getString("PoligonLayerFactory.ha"); //$NON-NLS-1$
 
 			layer.setName(nombre+" "+formated);
 		}
@@ -266,7 +266,7 @@ public class Poligono implements Comparable<Poligono>{
 	public void setLayer(Layer l){
 		this.layer=l;
 		NumberFormat dc = Messages.getNumberFormat();
-		layer.setName(nombre+" "+dc.format(area)+Messages.getString("PoligonLayerFactory.4"));
+		layer.setName(nombre+" "+dc.format(area)+Messages.getString("PoligonLayerFactory.ha"));
 	}
 
 	@Transient
@@ -348,7 +348,7 @@ public class Poligono implements Comparable<Poligono>{
 		this.area =a;
 		if(this.layer!=null){
 			NumberFormat dc = Messages.getNumberFormat();
-			layer.setName(nombre+" "+dc.format(area)+Messages.getString("PoligonLayerFactory.4"));
+			layer.setName(nombre+" "+dc.format(area)+Messages.getString("PoligonLayerFactory.ha"));
 		}
 	}
 

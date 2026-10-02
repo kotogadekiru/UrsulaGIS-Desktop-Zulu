@@ -59,7 +59,7 @@ public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo>
 		this.cantidadMinimaDeMuestrasPoligonoAMuestrear=cantMaxPoly;
 
 
-		labor.setNombre(Messages.getString("GenerarMuestreoDirigidoTask.0"));//este es el nombre que se muestra en el progressbar //$NON-NLS-1$
+		labor.setNombre(Messages.getString("GenerarMuestreoDirigidoTask.directedSampling"));//este es el nombre que se muestra en el progressbar //$NON-NLS-1$
 	}
 
 	/**
@@ -75,9 +75,9 @@ public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo>
 		//List<SueloItem> features = Collections.synchronizedList(new ArrayList<SueloItem>());
 		for(Labor<? extends LaborItem> c:aMuestrear){			
 			if(nombre == null){
-				nombre=labor.getNombre()+Messages.getString("GenerarMuestreoDirigidoTask.1")+c.getNombre();	 //$NON-NLS-1$
+				nombre=labor.getNombre()+Messages.getString("GenerarMuestreoDirigidoTask.space")+c.getNombre();	 //$NON-NLS-1$
 			}else {
-				nombre+=Messages.getString("GenerarMuestreoDirigidoTask.2")+c.getNombre(); //$NON-NLS-1$
+				nombre+=Messages.getString("GenerarMuestreoDirigidoTask.dashSeparator")+c.getNombre(); //$NON-NLS-1$
 			}
 			labor.setClasificador(c.getClasificador().clone());
 			FeatureReader<SimpleFeatureType, SimpleFeature> reader =c.outCollection.reader();
@@ -139,7 +139,7 @@ public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo>
 						//System.out.println("minDist="+minDist);
 						
 						if(geometry.contains(poly) && minDist>ancho) {
-						//	System.out.println(Messages.getString("GenerarMuestreoDirigidoTask.3")+random); //$NON-NLS-1$
+						//	System.out.println(Messages.getString("GenerarMuestreoDirigidoTask.generatingRandomPoint")+random); //$NON-NLS-1$
 							SueloItem muestra = new SueloItem();
 							muestra.setCategoria(categoria);
 							muestra.setPpmP(categoria.doubleValue());
@@ -257,23 +257,23 @@ public class GenerarMuestreoDirigidoTask extends ProcessMapTask<SueloItem,Suelo>
 //		//double area2 = cosechaFeature.getAncho()*cosechaFeature.getDistancia();
 //		NumberFormat df = Messages.getNumberFormat();//new DecimalFormat("0.00");//$NON-NLS-2$
 //
-//		String tooltipText = new String(Messages.getString("GenerarMuestreoDirigidoTask.6")+ df.format(sueloItem.getPpmP()) +Messages.getString("GenerarMuestreoDirigidoTask.7")); //$NON-NLS-1$ //$NON-NLS-2$
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.8")+ df.format(sueloItem.getPpmNO3()) + Messages.getString("GenerarMuestreoDirigidoTask.9")); //$NON-NLS-1$ //$NON-NLS-2$
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.10")+ df.format(sueloItem.getPpmS()) + Messages.getString("GenerarMuestreoDirigidoTask.11")); //$NON-NLS-1$ //$NON-NLS-2$
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.12")+ df.format(sueloItem.getPpmK()) + Messages.getString("GenerarMuestreoDirigidoTask.13")); //$NON-NLS-1$ //$NON-NLS-2$
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.14")+ df.format(sueloItem.getPorcMO()) + Messages.getString("GenerarMuestreoDirigidoTask.15")); //$NON-NLS-1$ //$NON-NLS-2$
+//		String tooltipText = new String(Messages.getString("GenerarMuestreoDirigidoTask.phosphorous")+ df.format(sueloItem.getPpmP()) +Messages.getString("GenerarMuestreoDirigidoTask.ppm")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.nitrogen")+ df.format(sueloItem.getPpmNO3()) + Messages.getString("GenerarMuestreoDirigidoTask.ppm")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.sulphur")+ df.format(sueloItem.getPpmS()) + Messages.getString("GenerarMuestreoDirigidoTask.ppm")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.potassium")+ df.format(sueloItem.getPpmK()) + Messages.getString("GenerarMuestreoDirigidoTask.ppm")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.organicMatter")+ df.format(sueloItem.getPorcMO()) + Messages.getString("GenerarMuestreoDirigidoTask.ppm")); //$NON-NLS-1$ //$NON-NLS-2$
 //
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.16")+df.format(sueloItem.getElevacion() ) + Messages.getString("GenerarMuestreoDirigidoTask.17")); //$NON-NLS-1$ //$NON-NLS-2$
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.18")+df.format(sueloItem.getCategoria() ) + Messages.getString("GenerarMuestreoDirigidoTask.19")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.height")+df.format(sueloItem.getElevacion() ) + Messages.getString("GenerarMuestreoDirigidoTask.newline")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.combinedSample")+df.format(sueloItem.getCategoria() ) + Messages.getString("GenerarMuestreoDirigidoTask.newline")); //$NON-NLS-1$ //$NON-NLS-2$
 //
 //
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.20")+sueloItem.getId() + Messages.getString("GenerarMuestreoDirigidoTask.21")); //$NON-NLS-1$ //$NON-NLS-2$
-//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.22")+sueloItem.getGeometry().getCoordinate() + Messages.getString("GenerarMuestreoDirigidoTask.23")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.id")+sueloItem.getId() + Messages.getString("GenerarMuestreoDirigidoTask.newline")); //$NON-NLS-1$ //$NON-NLS-2$
+//		tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.coordinates")+sueloItem.getGeometry().getCoordinate() + Messages.getString("GenerarMuestreoDirigidoTask.newline")); //$NON-NLS-1$ //$NON-NLS-2$
 //		if(area<1){
-//			tooltipText=tooltipText.concat( Messages.getString("GenerarMuestreoDirigidoTask.24")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("GenerarMuestreoDirigidoTask.25")); //$NON-NLS-1$ //$NON-NLS-2$
+//			tooltipText=tooltipText.concat( Messages.getString("GenerarMuestreoDirigidoTask.sfc")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("GenerarMuestreoDirigidoTask.m2")); //$NON-NLS-1$ //$NON-NLS-2$
 //			//	tooltipText=tooltipText.concat( "SupOrig: "+df.format(area2 ) + "m2\n");
 //		} else {
-//			tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.26")+df.format(area ) + Messages.getString("GenerarMuestreoDirigidoTask.27")); //$NON-NLS-1$ //$NON-NLS-2$
+//			tooltipText=tooltipText.concat(Messages.getString("GenerarMuestreoDirigidoTask.sfc")+df.format(area ) + Messages.getString("GenerarMuestreoDirigidoTask.has")); //$NON-NLS-1$ //$NON-NLS-2$
 //		}
 //		//super.getRenderPolygonFromGeom(poly, cosechaItem,tooltipText);
 //		return super.getExtrudedPolygonFromGeom(poly, sueloItem,tooltipText,renderablePolygon);

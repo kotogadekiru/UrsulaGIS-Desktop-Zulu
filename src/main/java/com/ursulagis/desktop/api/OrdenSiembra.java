@@ -38,8 +38,9 @@ public class OrdenSiembra extends AbstractBaseEntity {
 	
 	public String url=new String();
 	private String ordenShpZipUrl =null;
-	/** Relative path of the labor map preview image on the file server (e.g. /labores/foo.png). */
-	private String imagenUrl = null;
+	/** Base64-encoded PNG preview of the labor map (payload only; not persisted). */
+	@javax.persistence.Transient
+	private String imagenBase64 = null;
 	
 	private String nombreIngeniero="default";
 	private String numeroOrden="default";

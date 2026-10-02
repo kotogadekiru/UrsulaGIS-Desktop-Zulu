@@ -72,6 +72,7 @@ public class CrearSiembraMapTask extends ProcessMapTask<SiembraItem,SiembraLabor
 			labor.insertFeature(si);
 		}
 		labor.constructClasificador();
+		labor.markInternalDosisAsKgHa();
 
 		runLater(this.getItemsList());
 		updateProgress(0, featureCount);

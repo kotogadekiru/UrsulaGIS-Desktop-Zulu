@@ -20,7 +20,10 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -31,45 +34,76 @@ import org.locationtech.jts.geom.Point;
 import com.ursulagis.desktop.dao.Labor;
 import com.ursulagis.desktop.dao.LaborItem;
 import com.ursulagis.desktop.utils.ProyectionConstants;
+
+/**
+ * This class is used to render the labor layer in the map.
+ * LaborLayer is a subclass of RenderableLayer and it is used to render the labor layer in the map.
+ * it has two sublayers: analyticSurfaceLayer and extrudedPolygonsLayer.
+ * analyticSurfaceLayer is used to render the analytic surface of the labor layer.
+ * extrudedPolygonsLayer is used to render the extruded polygons of the labor layer.
+ * analyticSurfaceLayer is a SurfaceImageLayer and it is used to render the analytic surface of the labor layer.
+ * extrudedPolygonsLayer is a RenderableLayer and it is used to render the extruded polygons of the labor layer.
+ */
 public class LaborLayer extends RenderableLayer {
 	private static final Logger logger = Logger.getLogger(LaborLayer.class.getName());
+
+	/**
+	 * AVKey on the extruded polygons layer: {@code Consumer<LaborItem>} that removes the
+	 * item from the feature set and clears {@code lastBuiltSector} so the next
+	 * {@code preRender} calls {@code rebuildForVisibleSector}.
+	 */
+	public static final String KEY_EXTRUDED_ITEM_REMOVED = "ursula.extruded.itemRemoved";
+
+	/**
+	 * AVKey on the extruded polygons layer: {@code Consumer<Collection<? extends LaborItem>>}
+	 * that replaces {@code itemsToShow} and clears {@code lastBuiltSector} so the next
+	 * {@code preRender} calls {@code rebuildForVisibleSector}.
+	 */
+	public static final String KEY_EXTRUDED_ITEMS_REFRESH = "ursula.extruded.itemsRefresh";
 
 	private RenderableLayer analyticSurfaceLayer=null;
 	private RenderableLayer extrudedPolygonsLayer=null;
 	private int elementsCount=0;
 	private boolean showOnlyExtudedPolygons=false;
 	private int screenPixelsSectorMinSize=3000;//2000 queda bueno
-	/** Default extruded feature budget; adapts from rebuild time. */
+	/** Default extruded feature budget until a timed draw provides polygonRenderTime. */
 	public static final int DEFAULT_MAX_EXTRUDED_ELEMENTS = 100000;
 	public static final int MIN_MAX_EXTRUDED_ELEMENTS = 2000;
 	public static final int MAX_MAX_EXTRUDED_ELEMENTS = 5000000;
-	/** Target rebuild budget (ms); over → shrink cap, under → grow cap. */
+	/** Target rebuild+draw budget (ms) used to size the next feature cap. */
 	public static final long EXTRUDED_REBUILD_TARGET_MS = 2000;
-	/** Adaptive max extruded features per rebuild (viewport shrinks until under this). */
+	/** Adaptive max extruded features: {@code TARGET_MS / lastAvgMsPerPolygon}. */
 	private static volatile int maxExtrudedElements = DEFAULT_MAX_EXTRUDED_ELEMENTS;
+	/** Last measured average rebuild+draw cost per polygon (ms). */
+	private static volatile double polygonRenderTimeMs = 0;
 
 	public static int getMaxExtrudedElements() {
 		return maxExtrudedElements;
 	}
 
+	public static double getPolygonRenderTimeMs() {
+		return polygonRenderTimeMs;
+	}
+
 	/**
-	 * Update the feature-cap target from a measured draw duration.
+	 * From a timed rebuild+draw, compute average ms/polygon and set the next feature cap to
+	 * how many polygons fit in {@link #EXTRUDED_REBUILD_TARGET_MS}.
 	 * Does not trigger a rebuild — the new cap applies on the next sector rebuild only.
-	 * Over target → reduce; under target → increase (clamped).
 	 */
-	public static void adjustMaxExtrudedElements(long renderMs) {
+	public static void adjustMaxExtrudedElements(long renderMs, int featuresDrawn) {
+		if (renderMs <= 0 || featuresDrawn <= 0) {
+			return;
+		}
+		double avgMs = (double) renderMs / (double) featuresDrawn;
+		polygonRenderTimeMs = avgMs;
 		int current = maxExtrudedElements;
-		int next;
-		if (renderMs > EXTRUDED_REBUILD_TARGET_MS) {
-			next = Math.max(MIN_MAX_EXTRUDED_ELEMENTS, (int) (current * 0.90));
-		} else {
-			next = Math.min(MAX_MAX_EXTRUDED_ELEMENTS, (int) (current * 1.10));
-		}
-		if (next != current) {
-			maxExtrudedElements = next;
-			logger.fine("maxExtrudedElements " + current + " → " + next
-					+ " (renderMs=" + renderMs + ", applies next rebuild)");
-		}
+		int next = (int) Math.floor(EXTRUDED_REBUILD_TARGET_MS / avgMs);
+		next = Math.max(MIN_MAX_EXTRUDED_ELEMENTS, Math.min(MAX_MAX_EXTRUDED_ELEMENTS, next));
+		maxExtrudedElements = next;
+		logger.fine("polygonRenderTimeMs=" + String.format("%.4f", avgMs)
+				+ " maxExtrudedElements " + current + " → " + next
+				+ " (renderMs=" + renderMs + ", featuresDrawn=" + featuresDrawn
+				+ ", applies next rebuild)");
 	}
 
 	/**
@@ -394,6 +428,25 @@ public class LaborLayer extends RenderableLayer {
 	}
 
 	/**
+	 * Returns the {@link BufferedImage} backing this labor's {@link SurfaceImage}, if present.
+	 * Null when the analytic surface was not built as a SurfaceImage (or has no image yet).
+	 */
+	public BufferedImage getSurfaceBufferedImage() {
+		if (analyticSurfaceLayer == null) {
+			return null;
+		}
+		for (Renderable r : analyticSurfaceLayer.getRenderables()) {
+			if (r instanceof SurfaceImage) {
+				Object source = ((SurfaceImage) r).getImageSource();
+				if (source instanceof BufferedImage) {
+					return (BufferedImage) source;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * @param analyticSurfaceLayer the analyticSurfaceLayer to set
 	 */
 	public void setAnalyticSurfaceLayer(RenderableLayer analyticSurfaceLayer) {
@@ -428,6 +481,38 @@ public class LaborLayer extends RenderableLayer {
 		this.extrudedPolygonsLayer = extrudedPolygonsLayer;
 		this.elementsCount=extrudedPolygonsLayer.getNumRenderables();
 		this.extrudedRendered=false;
+	}
+
+	/**
+	 * After deleting one item: remove it from the extruded feature set and force
+	 * {@code rebuildForVisibleSector} on the next frame.
+	 */
+	@SuppressWarnings("unchecked")
+	public void removeExtrudedItemAndRebuild(LaborItem item) {
+		if (extrudedPolygonsLayer == null || item == null) {
+			return;
+		}
+		Object handler = extrudedPolygonsLayer.getValue(KEY_EXTRUDED_ITEM_REMOVED);
+		if (handler instanceof Consumer) {
+			((Consumer<LaborItem>) handler).accept(item);
+		}
+		this.elementsCount = Math.max(0, this.elementsCount - 1);
+	}
+
+	/**
+	 * Replace the extruded feature set and force {@code rebuildForVisibleSector}
+	 * on the next frame — light alternative to recreating SurfaceImage + extruded layer.
+	 */
+	@SuppressWarnings("unchecked")
+	public void refreshExtrudedItemsAndRebuild(Collection<? extends LaborItem> items) {
+		if (extrudedPolygonsLayer == null) {
+			return;
+		}
+		Object handler = extrudedPolygonsLayer.getValue(KEY_EXTRUDED_ITEMS_REFRESH);
+		if (handler instanceof Consumer) {
+			((Consumer<Collection<? extends LaborItem>>) handler).accept(items);
+		}
+		this.elementsCount = items != null ? items.size() : 0;
 	}
 
 	/**

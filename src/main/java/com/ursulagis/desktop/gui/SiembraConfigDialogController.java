@@ -371,6 +371,18 @@ public class SiembraConfigDialogController  extends Dialog<SiembraLabor>{
 			labor.getConfiguracion().dosisUnitProperty().set(unidades.get(nv));
 		});
 
+		// Al cambiar la columna de dosis, sincronizar unidad si es un campo Ursula conocido
+		this.comboDosis.valueProperty().addListener((ov, oldCol, newCol) -> {
+			SiembraConfig.Unidad inferred = SiembraLabor.unidadFromDosisColumn(newCol);
+			if (inferred != null) {
+				unidades.forEach((key, value) -> {
+					if (value.equals(inferred)) {
+						comboDosisUnit.getSelectionModel().select(key);
+					}
+				});
+			}
+		});
+
 		SiembraConfig.Unidad configured = labor.getConfiguracion().dosisUnitProperty().get();
 		unidades.forEach((key,value)->{
 			if(value.equals(configured)){

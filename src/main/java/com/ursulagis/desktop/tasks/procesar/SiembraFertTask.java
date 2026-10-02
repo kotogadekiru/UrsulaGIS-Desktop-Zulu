@@ -33,7 +33,6 @@ import com.ursulagis.desktop.dao.fertilizacion.FertilizacionItem;
 import com.ursulagis.desktop.dao.fertilizacion.FertilizacionLabor;
 import com.ursulagis.desktop.dao.siembra.SiembraItem;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
-import com.ursulagis.desktop.dao.siembra.SiembraConfig.Unidad;
 import gov.nasa.worldwind.render.ExtrudedPolygon;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.gui.nww.LaborLayer;
@@ -62,7 +61,7 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 		this.siembra=_siembra;
 		this.fertilizacion=_fertilizacion;
 		this.esFertLinea=_esFertLinea;		
-		labor.getConfiguracion().dosisUnitProperty().set(Unidad.kgHa);
+		labor.markInternalDosisAsKgHa();
 		labor.setSemilla(siembra.getSemilla());//Cultivo(cultivo);
 		if(_esFertLinea) {
 			labor.setFertLinea(_fertilizacion.getFertilizante());
@@ -236,15 +235,16 @@ public class SiembraFertTask extends ProcessMapTask<SiembraItem,SiembraLabor> {
 			si.setDosisHa(value.getDosisHa());
 
 			Double seedsM2=si.getDosisHa()/(pesoSKg*ProyectionConstants.METROS2_POR_HA);
-			double sML=seedsM2*labor.getEntreSurco();//esto es 0.42
-			si.setDosisML(sML*10);//multipolicar por 10 porque al insertarla se divide por 10
+			double sML=seedsM2*labor.getEntreSurco();
+			// dosisML es semillas por metro lineal (no por 10 m); no multiplicar por 10
+			si.setDosisML(sML);
 
 			si.setDosisFertLinea(value.getDosisFertLinea());
 			si.setDosisFertCostado(value.getDosisFertCostado());
 			labor.setPropiedadesLabor(si);			
 
 			//System.out.println("termine de crear una siembra resumida : "+ci.toString());
-			labor.insertFeature(si); //aca se divide por 10
+			labor.insertFeature(si);
 			itemsToShow.add(si);		
 		}
 

@@ -201,9 +201,10 @@ public class OrdenPulverizacionPaneController extends Dialog<OrdenPulverizacion>
 		try {
 			Number nroOrden = nf.parse(config.getPropertyOrDefault(ORDEN_PULV_NRO, "0"));
 			this.tfNroOrden.setText(nf.format(nroOrden.doubleValue()+1));
-		} catch (ParseException e) {			
+		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+		nf.setMaximumFractionDigits(2);
 		
 		this.tfIng.setText(config.getPropertyOrDefault(ORDEN_PULV_ING, ""));
 		this.tfProductor.setText(config.getPropertyOrDefault(ORDEN_PULV_PRODUCTOR, ""));

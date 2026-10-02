@@ -678,74 +678,33 @@ public class GenericLaborGUIController extends AbstractGUIController {
 	}
 
 	/**
-	 * Centers the map on {@code labor}, captures a PNG of the map panel, and invokes
-	 * {@code onCaptured} with the temp file (or {@code null} if capture failed).
-	 * Other labor layers are temporarily hidden for a clean preview, then restored.
-	 * Safe to call from any thread; work runs on the JavaFX application thread.
+	 * Writes the labor's surface-image raster to a temp PNG and invokes {@code onCaptured}
+	 * with that file (or {@code null} if unavailable). Safe to call from any thread.
 	 */
 	public void captureLaborMapImage(Labor<?> labor, Consumer<File> onCaptured) {
-		Runnable work = () -> {
-			if (labor == null || labor.getLayer() == null) {
-				onCaptured.accept(null);
-				return;
-			}
-			LayerList layers = this.getWwd().getModel().getLayers();
-			List<Layer> previouslyEnabledLabors = new ArrayList<>();
-			layers.stream().filter(l -> {
-				Object o = l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-				return l.isEnabled() && o != null;
-			}).forEach(l -> {
-				previouslyEnabledLabors.add(l);
-				l.setEnabled(false);
-			});
-
-			labor.getLayer().setEnabled(true);
-			main.viewGoToFit(labor);
-			getWwd().redraw();
-			main.wwjPanel.repaint();
-
-			Platform.runLater(() -> {
-				try {
-					Thread.sleep(1500);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-				Platform.runLater(() -> {
-					File imageFile = null;
-					try {
-						SnapshotParameters params = new SnapshotParameters();
-						params.setFill(Color.TRANSPARENT);
-						javafx.scene.Node mapNode = main.getMapSnapshotNode();
-						if (mapNode == null) {
-							mapNode = main.getSplitPane();
-						}
-						WritableImage mapWritable = mapNode.snapshot(params, null);
-						if (mapWritable != null) {
-							BufferedImage mapBuf = SwingFXUtils.fromFXImage(mapWritable, null);
-							String safeName = labor.getNombre() == null ? "labor"
-									: labor.getNombre().replaceAll("[^a-zA-Z0-9._-]", "_");
-							if (safeName.length() > 40) {
-								safeName = safeName.substring(0, 40);
-							}
-							imageFile = new File(System.getProperty("java.io.tmpdir"),
-									"labor_" + safeName + "_" + System.currentTimeMillis() + ".png");
-							ImageIO.write(mapBuf, "png", imageFile);
-						}
-					} catch (Exception e) {
-						logger.warning("No se pudo capturar imagen de labor: " + e.getMessage());
-						e.printStackTrace();
-					} finally {
-						previouslyEnabledLabors.forEach(l -> l.setEnabled(true));
-					}
-					onCaptured.accept(imageFile);
-				});
-			});
-		};
-		if (Platform.isFxApplicationThread()) {
-			work.run();
-		} else {
-			Platform.runLater(work);
+		if (labor == null || !(labor.getLayer() instanceof LaborLayer)) {
+			onCaptured.accept(null);
+			return;
 		}
+		File imageFile = null;
+		try {
+			BufferedImage surfaceBuf = ((LaborLayer) labor.getLayer()).getSurfaceBufferedImage();
+			if (surfaceBuf != null) {
+				String safeName = labor.getNombre() == null ? "labor"
+						: labor.getNombre().replaceAll("[^a-zA-Z0-9._-]", "_");
+				if (safeName.length() > 40) {
+					safeName = safeName.substring(0, 40);
+				}
+				imageFile = new File(System.getProperty("java.io.tmpdir"),
+						"labor_" + safeName + "_" + System.currentTimeMillis() + ".png");
+				ImageIO.write(surfaceBuf, "png", imageFile);
+			}
+		} catch (Exception e) {
+			logger.warning("No se pudo capturar imagen de labor: " + e.getMessage());
+			e.printStackTrace();
+			imageFile = null;
+		}
+		onCaptured.accept(imageFile);
 	}
 
 	/** Entry point for chat / scripting. */
@@ -755,91 +714,100 @@ public class GenericLaborGUIController extends AbstractGUIController {
 
 	/**
 	 * Centra la vista en la labor, captura el mapa y el histograma, y genera un PDF.
+	 * Otras capas de labor/NDVI se ocultan temporalmente y luego se restaura su estado enabled
+	 * (mapa y árbol) al finalizar la captura.
 	 */
 	private void doGenerarReportePDF(Labor<?> labor) {
 
 		LayerList layers = this.getWwd().getModel().getLayers();
-		layers.stream().filter(l->{
-			Object o = l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
-			return l.isEnabled() && o!=null;
-		}).forEach(l->l.setEnabled(false));
+		// Guardar enabled de cada labor/NDVI para restaurar mapa y árbol al finalizar
+		Map<Layer, Boolean> previousLaborEnabled = new LinkedHashMap<>();
+		layers.stream().filter(l -> l.getValue(Labor.LABOR_LAYER_IDENTIFICATOR) != null)
+				.forEach(l -> previousLaborEnabled.put(l, l.isEnabled()));
 
-
-		// Desactivar todas las capas de labores y NDVI (por valor en LABOR_LAYER_IDENTIFICATOR) para que no se superpongan
-		//Layer targetLayer = labor.getLayer();
+		// Desactivar todas las capas de labores y NDVI para que no se superpongan
+		previousLaborEnabled.keySet().forEach(l -> l.setEnabled(false));
 		labor.getLayer().setEnabled(true);
-		// Activar solo la labor del reporte y ajustar la vista para que quepa en pantalla
-		//targetLayer.setEnabled(true);
 		main.viewGoToFit(labor);
 		getWwd().redraw();
 		main.wwjPanel.repaint();
 
 		Platform.runLater(() -> {
 			// Dar tiempo al redibujado del mapa antes de capturar
-			try{Thread.sleep(2000);}catch(InterruptedException e){e.printStackTrace();}
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
 			Platform.runLater(() -> {
-				SnapshotParameters params = new SnapshotParameters();
-				params.setFill(Color.TRANSPARENT);
-				javafx.scene.Node mapNode = main.getMapSnapshotNode();
-				if (mapNode == null) {
-					mapNode = main.getSplitPane();
-				}
-				WritableImage mapWritable = mapNode.snapshot(params, null);
-				if (mapWritable == null) {
-					return;
-				}
-				BufferedImage mapBuf = SwingFXUtils.fromFXImage(mapWritable, null);
+				try {
+					SnapshotParameters params = new SnapshotParameters();
+					params.setFill(Color.TRANSPARENT);
+					javafx.scene.Node mapNode = main.getMapSnapshotNode();
+					if (mapNode == null) {
+						mapNode = main.getSplitPane();
+					}
+					WritableImage mapWritable = mapNode.snapshot(params, null);
+					if (mapWritable == null) {
+						return;
+					}
+					BufferedImage mapBuf = SwingFXUtils.fromFXImage(mapWritable, null);
 
-				CosechaHistoChart histoChart = new CosechaHistoChart(labor);
-				new Scene(histoChart, 800, 450); // scene needed for proper layout
-				histoChart.applyCss();
-				histoChart.layout();
-				WritableImage histoWritable = histoChart.snapshot(params, null);
-				BufferedImage histoBuf = histoWritable != null ? SwingFXUtils.fromFXImage(histoWritable, null) : null;
-				java.util.List<Object[]> histogramTableData = histoChart.getHistogramTableData();
+					CosechaHistoChart histoChart = new CosechaHistoChart(labor);
+					new Scene(histoChart, 800, 450); // scene needed for proper layout
+					histoChart.applyCss();
+					histoChart.layout();
+					WritableImage histoWritable = histoChart.snapshot(params, null);
+					BufferedImage histoBuf = histoWritable != null ? SwingFXUtils.fromFXImage(histoWritable, null) : null;
+					java.util.List<Object[]> histogramTableData = histoChart.getHistogramTableData();
 
-				// Generar en carpeta temporal; el usuario puede guardarlo desde el visor si le sirve
-				String safeName = labor.getNombre().replaceAll("[^a-zA-Z0-9._-]", "_");
-				if (safeName.length() > 50) {
-					safeName = safeName.substring(0, 50);
-				}
-				File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-				File outputFile = new File(tmpDir, "reporte_" + safeName + "_" + System.currentTimeMillis() + ".pdf");
-				File finalOutput = outputFile;
-				BufferedImage finalMapBuf = mapBuf;
-				BufferedImage finalHistoBuf = histoBuf;
-				String laborName = labor.getNombre();
+					// Generar en carpeta temporal; el usuario puede guardarlo desde el visor si le sirve
+					String safeName = labor.getNombre().replaceAll("[^a-zA-Z0-9._-]", "_");
+					if (safeName.length() > 50) {
+						safeName = safeName.substring(0, 50);
+					}
+					File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+					File outputFile = new File(tmpDir, "reporte_" + safeName + "_" + System.currentTimeMillis() + ".pdf");
+					File finalOutput = outputFile;
+					BufferedImage finalMapBuf = mapBuf;
+					BufferedImage finalHistoBuf = histoBuf;
+					String laborName = labor.getNombre();
 
-				GenerarReportePDFTask pdfTask = new GenerarReportePDFTask(
-						finalOutput, finalMapBuf, finalHistoBuf, laborName, histogramTableData);
-				pdfTask.installProgressBar(progressBox);
-				pdfTask.setOnSucceeded(handler -> {
-					pdfTask.uninstallProgressBar();
-					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_PDF_REPORTED);
-					playSound();
-					File result = pdfTask.getValue();
-					if (result != null && result.exists()) {
-						try {
-							Desktop.getDesktop().open(result);
-						} catch (IOException e) {
+					GenerarReportePDFTask pdfTask = new GenerarReportePDFTask(
+							finalOutput, finalMapBuf, finalHistoBuf, laborName, histogramTableData);
+					pdfTask.installProgressBar(progressBox);
+					pdfTask.setOnSucceeded(handler -> {
+						pdfTask.uninstallProgressBar();
+						OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_GENERIC_LABOR_PDF_REPORTED);
+						playSound();
+						File result = pdfTask.getValue();
+						if (result != null && result.exists()) {
+							try {
+								Desktop.getDesktop().open(result);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
+					pdfTask.setOnFailed(handler -> {
+						pdfTask.uninstallProgressBar();
+						Throwable e = pdfTask.getException();
+						if (e != null) {
 							e.printStackTrace();
 						}
-					}
-				});
-				pdfTask.setOnFailed(handler -> {
-					pdfTask.uninstallProgressBar();
-					Throwable e = pdfTask.getException();
-					if (e != null) {
-						e.printStackTrace();
-					}
-					javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-					alert.setHeaderText(Messages.getString("GenericLaborGUIController.reportePDFError"));
-					alert.setContentText(e != null ? e.getMessage() : "");
-					alert.initOwner(JFXMain.stage);
-					alert.show();
-				});
-				executorPool.execute(pdfTask);
-				layers.forEach(l->l.setEnabled(true));
+						javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+						alert.setHeaderText(Messages.getString("GenericLaborGUIController.reportePDFError"));
+						alert.setContentText(e != null ? e.getMessage() : "");
+						alert.initOwner(JFXMain.stage);
+						alert.show();
+					});
+					executorPool.execute(pdfTask);
+				} finally {
+					// Restaurar enabled previo (no activar todas) y sincronizar el árbol
+					previousLaborEnabled.forEach((l, enabled) -> l.setEnabled(enabled));
+					getLayerPanel().update(getWwd());
+					getWwd().redraw();
+				}
 			});
 		});
 	}

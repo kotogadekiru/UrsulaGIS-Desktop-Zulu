@@ -64,17 +64,17 @@ public class CrearFertilizacionMapTask extends ProcessMapTask<FertilizacionItem,
 
 	public static String buildTooltipText(FertilizacionItem fertFeature, double area) {
 		String tooltipText = new String(
-				Messages.getString("ProcessFertMapTask.2") + PropertyHelper.formatDouble(fertFeature.getDosistHa()) 
-				+ Messages.getString("ProcessFertMapTask.3") + Messages.getString("ProcessFertMapTask.4") 
-				+ PropertyHelper.formatDouble(fertFeature.getImporteHa()) + Messages.getString("ProcessFertMapTask.5") 
+				Messages.getString("ProcessFertMapTask.density") + PropertyHelper.formatDouble(fertFeature.getDosistHa()) 
+				+ Messages.getString("ProcessFertMapTask.kgHa") + Messages.getString("ProcessFertMapTask.cost") 
+				+ PropertyHelper.formatDouble(fertFeature.getImporteHa()) + Messages.getString("ProcessFertMapTask.usdHa") 
 				);
 		if(area<1){
-			tooltipText=tooltipText.concat( Messages.getString("ProcessFertMapTask.6")
-					+PropertyHelper.formatDouble(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessFertMapTask.7")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat( Messages.getString("ProcessFertMapTask.sfc")
+					+PropertyHelper.formatDouble(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessFertMapTask.m2")); //$NON-NLS-1$ //$NON-NLS-2$
 			//	tooltipText=tooltipText.concat( "SupOrig: "+df.format(area2 ) + "m2\n");
 		} else {
-			tooltipText=tooltipText.concat(Messages.getString("ProcessFertMapTask.8")
-					+PropertyHelper.formatDouble(area ) + Messages.getString("ProcessFertMapTask.9")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat(Messages.getString("ProcessFertMapTask.sfc")
+					+PropertyHelper.formatDouble(area ) + Messages.getString("ProcessFertMapTask.has")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return tooltipText;
 	}

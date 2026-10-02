@@ -57,9 +57,9 @@ public class CosechaHistoChart extends VBox {
 	public CosechaHistoChart(Labor<?> labor) {
 		super();
 		final CategoryAxis xAxis = new CategoryAxis();
-		xAxis.setLabel(Messages.getString("CosechaHistoChart.10")); //$NON-NLS-1$
+		xAxis.setLabel(Messages.getString("CosechaHistoChart.averageHa")); //$NON-NLS-1$
 		final NumberAxis yAxis = new NumberAxis();
-		yAxis.setLabel(Messages.getString("CosechaHistoChart.11")); //$NON-NLS-1$
+		yAxis.setLabel(Messages.getString("CosechaHistoChart.surface")); //$NON-NLS-1$
 		final BarChart<String, Number> chart = new BarChart<String, Number>(xAxis, yAxis);
 		chart.setTitle(labor.getNombre());
 		//				{
@@ -129,13 +129,13 @@ public class CosechaHistoChart extends VBox {
 		BorderPane bottom = new BorderPane();
 		VBox left = new VBox();
 		left.getChildren().addAll(
-				new Label(Messages.getString("CosechaHistoChart.13")+" "+df.format(superficieTotal)), //$NON-NLS-1$
-				new Label(Messages.getString("CosechaHistoChart.14")+" "+df.format(produccionTotal)), //$NON-NLS-1$
-				new Label(Messages.getString("CosechaHistoChart.15")+" "+df.format(produccionTotal/superficieTotal)) //$NON-NLS-1$
+				new Label(Messages.getString("CosechaHistoChart.totalSurface")+" "+df.format(superficieTotal)), //$NON-NLS-1$
+				new Label(Messages.getString("CosechaHistoChart.quantity")+" "+df.format(produccionTotal)), //$NON-NLS-1$
+				new Label(Messages.getString("CosechaHistoChart.quantityHa")+" "+df.format(produccionTotal/superficieTotal)) //$NON-NLS-1$
 				//,new Label("Entropia: "+df.format(entropia))
 				);
 		VBox right = new VBox();
-		Button exportButton = new Button(Messages.getString("CosechaHistoChart.16")); //$NON-NLS-1$
+		Button exportButton = new Button(Messages.getString("CosechaHistoChart.export")); //$NON-NLS-1$
 		exportButton.setOnAction(a->{doExportarExcell();});
 		right.getChildren().add(exportButton);
 		bottom.setCenter(left);
@@ -155,7 +155,7 @@ public class CosechaHistoChart extends VBox {
 	 */
 	public List<Object[]> getHistogramTableData() {
 		List<Object[]> rows = new ArrayList<>();
-		rows.add(new Object[] { Messages.getString("CosechaHistoChart.12"), Messages.getString("CosechaHistoChart.11"), Messages.getString("CosechaHistoChart.10") }); // same as Excel export
+		rows.add(new Object[] { Messages.getString("CosechaHistoChart.range"), Messages.getString("CosechaHistoChart.surface"), Messages.getString("CosechaHistoChart.averageHa") }); // same as Excel export
 		if (series == null) {
 			return rows;
 		}
@@ -254,15 +254,15 @@ public class CosechaHistoChart extends VBox {
 						double sup = cData.getYValue().doubleValue();//superficie
 						double prod = (Double)cData.getExtraValue();
 						Tooltip tooltip = new Tooltip(
-								Messages.getString("CosechaHistoChart.10") +" "+df.format(prod/sup)
+								Messages.getString("CosechaHistoChart.averageHa") +" "+df.format(prod/sup)
 								//25has
-								+"\n"+Messages.getString("CosechaHistoChart.21")+" "+df.format(sup)
+								+"\n"+Messages.getString("CosechaHistoChart.has")+" "+df.format(sup)
 								//66% lote
 								+" "+df.format(sup/superficieTotal*100)+"%"); //$NON-NLS-1$ //$NON-NLS-2$
 						tooltip.autoHideProperty().set(false);
 						Tooltip.install(newNode,tooltip );		
 						
-						//Tooltip.install(newNode, new Tooltip(df.format(cData.getYValue())+Messages.getString("CosechaHistoChart.21"))); //$NON-NLS-1$
+						//Tooltip.install(newNode, new Tooltip(df.format(cData.getYValue())+Messages.getString("CosechaHistoChart.has"))); //$NON-NLS-1$
 					}
 				}
 			});

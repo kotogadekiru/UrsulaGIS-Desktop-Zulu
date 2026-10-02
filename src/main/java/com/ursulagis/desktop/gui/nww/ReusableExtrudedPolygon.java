@@ -12,6 +12,8 @@ import gov.nasa.worldwind.render.ExtrudedPolygon;
  * {@link #onBoundariesFilled()} after outer (and any inner) rings are set —
  * otherwise WorldWind keeps stale {@code totalFaceCount}/vertex buffers and
  * throws {@code newLimit > capacity} when the next feature has more vertices.
+ * <p>
+ * Not thread-safe: only fill/reset from one thread (the WW render thread).
  */
 public class ReusableExtrudedPolygon extends ExtrudedPolygon {
 

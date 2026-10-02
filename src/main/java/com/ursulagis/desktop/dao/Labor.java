@@ -734,6 +734,9 @@ public abstract class Labor<E extends LaborItem>  {
 
 
 	public void insertFeature(E laborItem) {
+		if (laborItem.getLabor() == null) {
+			laborItem.setLabor(this);
+		}
 		if(-1.0 == laborItem.getId()) {
 			laborItem.setId(this.getNextID());
 			logger.fine("actualizando el item con id "+laborItem.getId());			
@@ -965,6 +968,7 @@ public abstract class Labor<E extends LaborItem>  {
 	 * @param newIDS
 	 */
 	public void constructFeatureContainer(LaborItem ci, SimpleFeature harvestFeature) {
+		ci.labor = this;
 		String idString = LaborItem.getID(harvestFeature);
 		Double featureId = LaborItem.getDoubleFromObj(idString);
 		if (featureId != null && featureId != 0.0) {

@@ -1440,7 +1440,7 @@ public class SmartTableView<T> extends TableView<T> {
 			SmartTableView<LaborItem> table = new SmartTableView<LaborItem>(dataLotes);
 			table.setEditable(false);
 			//Button toExcel = new Button("To Excel");
-			Button exportButton = new Button(Messages.getString("CosechaHistoChart.16")); //"Exportar"
+			Button exportButton = new Button(Messages.getString("CosechaHistoChart.export")); //"Exportar"
 			exportButton.setOnAction(a->{
 				table.toExcel();
 			});

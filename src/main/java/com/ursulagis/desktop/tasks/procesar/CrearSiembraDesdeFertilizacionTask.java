@@ -173,6 +173,7 @@ import java.util.logging.Logger;
 		
 		
 			labor.constructClasificador();
+			labor.markInternalDosisAsKgHa();
 		//	runLater(itemsToShow);
 			runLater(this.getItemsList());
 			updateProgress(0, featureCount);	

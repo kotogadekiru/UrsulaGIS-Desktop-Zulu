@@ -242,7 +242,7 @@ public class NDVIChart extends VBox {
 		VBox.setVgrow(chartPane, Priority.ALWAYS);
 		VBox.setVgrow(vbox, Priority.ALWAYS);
 		VBox right = new VBox();
-		Button exportButton = new Button(Messages.getString("CosechaHistoChart.16")); //$NON-NLS-1$
+		Button exportButton = new Button(Messages.getString("CosechaHistoChart.export")); //$NON-NLS-1$
 		exportButton.setOnAction(a->{doExportarExcel();});
 		right.getChildren().add(exportButton);
 		BorderPane bottom = new BorderPane();

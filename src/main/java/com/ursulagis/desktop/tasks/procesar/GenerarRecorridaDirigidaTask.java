@@ -102,7 +102,7 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 
 
 		this.recorrida = new Recorrida();
-		this.recorrida.setNombre(Messages.getString("GenerarMuestreoDirigidoTask.0"));//este es el nombre que se muestra en el progressbar //$NON-NLS-1$
+		this.recorrida.setNombre(Messages.getString("GenerarMuestreoDirigidoTask.directedSampling"));//este es el nombre que se muestra en el progressbar //$NON-NLS-1$
 		 // Seteando la fecha al dia que se crea
 		DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 		String fecha = dateFormat.format(new Date());
@@ -123,9 +123,9 @@ public class GenerarRecorridaDirigidaTask extends Task<RenderableLayer> {
 
 		for(Labor<? extends LaborItem> c:aMuestrear){			
 			if(nombreRecorrida == null){				
-				nombreRecorrida=this.recorrida.getNombre()+Messages.getString("GenerarMuestreoDirigidoTask.1")+c.getNombre();	 //$NON-NLS-1$
+				nombreRecorrida=this.recorrida.getNombre()+Messages.getString("GenerarMuestreoDirigidoTask.space")+c.getNombre();	 //$NON-NLS-1$
 			}else {
-				nombreRecorrida+=Messages.getString("GenerarMuestreoDirigidoTask.2")+c.getNombre(); //$NON-NLS-1$
+				nombreRecorrida+=Messages.getString("GenerarMuestreoDirigidoTask.dashSeparator")+c.getNombre(); //$NON-NLS-1$
 			}
 
 			int featureCount = c.outCollection.size();

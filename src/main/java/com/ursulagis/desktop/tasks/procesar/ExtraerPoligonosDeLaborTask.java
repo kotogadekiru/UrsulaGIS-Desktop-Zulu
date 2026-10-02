@@ -41,7 +41,7 @@ import java.util.logging.Logger;
 public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 	private static final Logger logger = Logger.getLogger(ExtraerPoligonosDeLaborTask.class.getName());
 
-	private static final String TASK_CLOSE_ICON = Messages.getString("ExtraerPoligonosDeLaborTask.0"); //$NON-NLS-1$
+	private static final String TASK_CLOSE_ICON = Messages.getString("ExtraerPoligonosDeLaborTask.closeIcon"); //$NON-NLS-1$
 
 	private ProgressBar progressBarTask;
 	private Pane progressPane;
@@ -376,7 +376,7 @@ public class ExtraerPoligonosDeLaborTask extends Task<List<Poligono>> {
 		updateProgress(1, 100);
 		// ahora que tenemos las colecciones con las categorias solo hace falta juntar las geometrias y sacar los promedios	
 		List<LaborItem> itemsCategoria = new ArrayList<LaborItem>();//es la lista de los items que representan a cada categoria y que devuelvo
-		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.9"),labor.getType());		 //$NON-NLS-1$
+		DefaultFeatureCollection newOutcollection =  new DefaultFeatureCollection(Messages.getString("ProcessHarvestMapTask.internal"),labor.getType());		 //$NON-NLS-1$
 		//TODO pasar esto a parallel streams
 		//XXX por cada categoria 
 		for(int i=0;i<labor.clasificador.getNumClasses();i++){

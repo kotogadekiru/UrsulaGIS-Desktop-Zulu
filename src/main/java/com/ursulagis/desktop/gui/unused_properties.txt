@@ -33,22 +33,18 @@ FertilizacionConfigDialog.guardarComoLabel=Guardar como default
 FertilizacionConfigDialog.nombreLabel=Nombre
 FertilizacionConfigDialog.opcionesLabel=Opciones
 FertilizacionConfigDialog.precioFertilizanteLabel=Precio Fertilizante
-GenerarMuestreoDirigidoTask.4=items to show antes del runlater
-GrillarCosechasMapTask.20=0.00
-GrillarCosechasMapTask.21=Rinde:
-GrillarCosechasMapTask.22=\ Tn/Ha\n
-GrillarCosechasMapTask.23=Elevación:
-GrillarCosechasMapTask.24=\n
-GrillarCosechasMapTask.25=Ancho:
-GrillarCosechasMapTask.26=\n
-GrillarCosechasMapTask.27=Rumbo:
-GrillarCosechasMapTask.28=\n
-GrillarCosechasMapTask.29=feature:
-GrillarCosechasMapTask.30=\n
-GrillarCosechasMapTask.31=Sup:
-GrillarCosechasMapTask.32=m²\n
-GrillarCosechasMapTask.33=Sup:
-GrillarCosechasMapTask.34=Has\n
+GenerarMuestreoDirigidoTask.itemsBeforeRunlater=items to show antes del runlater
+GrillarCosechasMapTask.decimalPattern=0.00
+GrillarCosechasMapTask.yield=Rinde:
+GrillarCosechasMapTask.tnHa=\ Tn/Ha\n
+GrillarCosechasMapTask.height=Elevación:
+GrillarCosechasMapTask.newline=\n
+GrillarCosechasMapTask.width=Ancho:
+GrillarCosechasMapTask.direction=Rumbo:
+GrillarCosechasMapTask.feature=feature:
+GrillarCosechasMapTask.sfc=Sup:
+GrillarCosechasMapTask.m2=m²\n
+GrillarCosechasMapTask.has=Has\n
 HarvestConfigDialogController.anchoChk=Ancho
 HarvestConfigDialogController.anchoDefaultLabel=Ancho Default
 HarvestConfigDialogController.anchoFiltroLabel=Ancho Filtro (m)
@@ -140,14 +136,13 @@ MargenConfigDialog.fleteLabel=Flete por Tn
 MargenConfigDialog.guardarComoLabel=Guardar como default
 MargenConfigDialog.nombreLabel=Nombre
 MargenConfigDialog.opcionesLabel=Opciones
-OpenMargenMapTask.0=0.00
-OpenSoilMapTask.1=Fosforo:
-OpenSoilMapTask.3=Nitrogeno:
-OpenSoilMapTask.4=Ppm NO3
-OpenSoilMapTask.5=Sup:
-OpenSoilMapTask.6=m²\n
-OpenSoilMapTask.7=Sup:
-OpenSoilMapTask.8=Has\n
+OpenMargenMapTask.decimalPattern=0.00
+OpenSoilMapTask.phosphorous=Fosforo:
+OpenSoilMapTask.nitrogen=Nitrogeno:
+OpenSoilMapTask.ppmNO3=Ppm NO3
+OpenSoilMapTask.sfc=Sup:
+OpenSoilMapTask.m2=m²\n
+OpenSoilMapTask.has=Has\n
 OrdenFert.Ing=Ing.
 OrdenFert.contratista=Contratista
 OrdenFert.cultivo=Cultivo
@@ -174,28 +169,25 @@ OrdenSiem.observaciones=Observaciones
 OrdenSiem.productor=Productor
 OrdenSiem.title2=Validar configuración
 Plaga.UnidadUmbralDanio=Unidad Umbral de Daño
-ProcessFertMapTask.1=\#.00
-ProcessHarvestMapTask.11=la query devolvio cero elementos
-ProcessHarvestMapTask.12=error en corregirOutliersParalell
-ProcessHarvestMapTask.13=internal
-ProcessHarvestMapTask.14=fallo el addAll(filteredFeatures)
-ProcessHarvestMapTask.15=se perdieron elementos al hacer el filtro de outlayers. init=
-ProcessHarvestMapTask.16=\ end=
-ProcessHarvestMapTask.17=internal
-ProcessHarvestMapTask.18=no se pudo reinsertar la cosecha en corregirOutlayers
-ProcessHarvestMapTask.2=no inserto el feature
-ProcessHarvestMapTask.22=\#.00
-ProcessHarvestMapTask.26=
-ProcessHarvestMapTask.28=
-ProcessHarvestMapTask.3= porque tiene una geometria empty=
-ProcessHarvestMapTask.30=
-ProcessHarvestMapTask.32=
-ProcessHarvestMapTask.37=numpoints menor a 3
-ProcessHarvestMapTask.38=difGeom es POINT
-ProcessHarvestMapTask.4= valid =
-ProcessHarvestMapTask.5= big=
-ProcessPulvMapTask.0=\#.00
-ProcessSiembraMapTask.5=Fert:
+ProcessFertMapTask.decimalPattern=\#.00
+ProcessHarvestMapTask.queryReturnedZero=la query devolvio cero elementos
+ProcessHarvestMapTask.outliersParallelError=error en corregirOutliersParalell
+ProcessHarvestMapTask.internal=internal
+ProcessHarvestMapTask.addAllFilteredFailed=fallo el addAll(filteredFeatures)
+ProcessHarvestMapTask.outliersLostInit=se perdieron elementos al hacer el filtro de outlayers. init=
+ProcessHarvestMapTask.outliersLostEnd=\ end=
+ProcessHarvestMapTask.reinsertFailed=no se pudo reinsertar la cosecha en corregirOutlayers
+ProcessHarvestMapTask.featureNotInserted=no inserto el feature
+ProcessHarvestMapTask.decimalPattern=\#.00
+ProcessHarvestMapTask.empty=
+ProcessHarvestMapTask.newline=
+ProcessHarvestMapTask.emptyGeometry= porque tiene una geometria empty=
+ProcessHarvestMapTask.numPointsLessThan3=numpoints menor a 3
+ProcessHarvestMapTask.difGeomIsPoint=difGeom es POINT
+ProcessHarvestMapTask.valid= valid =
+ProcessHarvestMapTask.big= big=
+ProcessPulvMapTask.decimalPattern=\#.00
+ProcessSiembraMapTask.fert=Fert:
 PulvConfigDialog.clasesClasificardorLabel=Clases Clasificador
 PulvConfigDialog.clasificadorLabel=Clasificador
 PulvConfigDialog.columnasLabel=Columnas

@@ -82,6 +82,8 @@ public class SiembraLabor extends Labor<SiembraItem> {
 	
 	private Double entreSurco = null;// Double.valueOf(0.42);
 	private Double plantasPorMetro = Double.valueOf(300);
+	/** Unidad de dosis de la labor (nombre de {@link SiembraConfig.Unidad}), persistida en DB. */
+	private String dosisUnidad = null;
 	
 	
 	public SiembraLabor() {
@@ -110,8 +112,10 @@ public class SiembraLabor extends Labor<SiembraItem> {
 		setFertLinea(s.getFertLinea());
 		setFertCostado(s.getFertCostado());
 		setClasificador(s.getClasificador().clone());
-		
-
+		setDosisUnidad(s.getDosisUnidad());
+		if (s.getDosisUnidad() != null) {
+			applyPersistedDosisUnidad();
+		}
 	}
 
 	private void initConfig() {
@@ -123,9 +127,101 @@ public class SiembraLabor extends Labor<SiembraItem> {
 		colDosisSemilla = PropertyHelper.initStringProperty(SiembraLabor.COLUMNA_KG_SEMILLA, properties, availableColums);
 		colAmount= new SimpleStringProperty(SiembraLabor.COLUMNA_KG_SEMILLA);//Siempre tiene que ser el valor al que se mapea segun el item para el outcollection
 
+		// Preferir unidad ya persistida en la labor; si no hay, inferir de columna Ursula.
+		if (dosisUnidad != null && !dosisUnidad.isBlank()) {
+			applyPersistedDosisUnidad();
+		} else {
+			applyDosisUnitFromColumn(colDosisSemilla.get());
+		}
+		colDosisSemilla.addListener((obs, oldCol, newCol) -> applyDosisUnitFromColumn(newCol));
+		getConfiguracion().dosisUnitProperty().addListener((obs, oldU, newU) -> {
+			if (newU != null) {
+				dosisUnidad = newU.name();
+			}
+		});
+
 		String semillaKEY = properties.getPropertyOrDefault(SiembraLabor.SEMILLA_DEFAULT,Semilla.SEMILLA_DE_MAIZ);
 		Semilla sDefault =DAH.getSemilla(semillaKEY);
 		this.setSemilla(sDefault);
+	}
+
+	/**
+	 * Si la columna de dosis es un campo estándar de Ursula, fija la unidad
+	 * correspondiente. Para columnas genéricas (Rate, etc.) no cambia la unidad.
+	 */
+	public void applyDosisUnitFromColumn(String column) {
+		SiembraConfig.Unidad inferred = unidadFromDosisColumn(column);
+		if (inferred != null) {
+			getConfiguracion().dosisUnitProperty().set(inferred);
+			this.dosisUnidad = inferred.name();
+		}
+	}
+
+	/**
+	 * Aplica {@link #dosisUnidad} (campo persistido) a la property de configuración.
+	 */
+	public void applyPersistedDosisUnidad() {
+		if (dosisUnidad == null || dosisUnidad.isBlank()) {
+			return;
+		}
+		try {
+			SiembraConfig.Unidad unit = SiembraConfig.Unidad.valueOf(dosisUnidad);
+			getConfiguracion().dosisUnitProperty().set(unit);
+		} catch (IllegalArgumentException e) {
+			// valor legado o inválido: no tocar la config
+		}
+	}
+
+	/**
+	 * Tras escribir items en kg/Ha (unidad interna), deja la labor lista para
+	 * persistir/recargar sin re-convertir la dosis.
+	 */
+	public void markInternalDosisAsKgHa() {
+		getConfiguracion().dosisUnitProperty().set(SiembraConfig.Unidad.kgHa);
+		this.dosisUnidad = SiembraConfig.Unidad.kgHa.name();
+	}
+
+	/**
+	 * @return unidad implícita de la columna, o null si no es una columna Ursula conocida
+	 */
+	public static SiembraConfig.Unidad unidadFromDosisColumn(String column) {
+		if (column == null) {
+			return null;
+		}
+		if (COLUMNA_KG_SEMILLA.equals(column)) {
+			return SiembraConfig.Unidad.kgHa;
+		}
+		if (COLUMNA_MILES_SEM_HA.equals(column)) {
+			return SiembraConfig.Unidad.milPlaHa;
+		}
+		if (COLUMNA_SEM_10METROS.equals(column)) {
+			return SiembraConfig.Unidad.pla10MtLineal;
+		}
+		if (COLUMNA_SEM_ML.equals(column)) {
+			return SiembraConfig.Unidad.pla1MtLineal;
+		}
+		return null;
+	}
+
+	@Override
+	protected void onBeforePersist() {
+		SiembraConfig.Unidad unit = getConfiguracion().dosisUnitProperty().get();
+		if (unit != null) {
+			dosisUnidad = unit.name();
+		}
+	}
+
+	@Override
+	protected void onAfterLoad() {
+		// Si el ctor saltó init (bootstrap/tx), completar propiedades transient
+		if (colDosisSemilla == null) {
+			initConfig();
+		}
+		if (dosisUnidad != null && !dosisUnidad.isBlank()) {
+			applyPersistedDosisUnidad();
+		} else if (colDosisSemilla != null) {
+			applyDosisUnitFromColumn(colDosisSemilla.get());
+		}
 	}
 
 	@Override
@@ -175,6 +271,7 @@ public class SiembraLabor extends Labor<SiembraItem> {
 	}
 	
 	public void setPropiedadesLabor(SiembraItem si){
+		si.setLabor(this);
 		si.setPrecioInsumo(this.getPrecioInsumo());
 		si.setCostoLaborHa(this.getPrecioLabor());	
 	}

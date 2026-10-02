@@ -110,6 +110,7 @@ public class ConvertirASiembraTask extends ProcessMapTask<SiembraItem,SiembraLab
 		//			labor.insertFeature(si);
 		//		}
 		labor.constructClasificador();
+		labor.markInternalDosisAsKgHa();
 
 		runLater(this.getItemsList());
 		updateProgress(0, featureCount);
@@ -123,63 +124,45 @@ public class ConvertirASiembraTask extends ProcessMapTask<SiembraItem,SiembraLab
 	}
 	
 	public static String buildTooltipText(SiembraItem siembraFeature, double area) {
-		NumberFormat df = Messages.getNumberFormat();
-
-		//densidad seeds/metro lineal
-		String tooltipText = new String(Messages.getString("ProcessSiembraMapTask.1")+ df.format(siembraFeature.getDosisML()) + Messages.getString("ProcessSiembraMapTask.2")); //$NON-NLS-1$ //$NON-NLS-2$
-
-		//kg semillas por ha
-		tooltipText=tooltipText.concat(Messages.getString("ProcessSiembraMapTask.3") + df.format(siembraFeature.getDosisHa()) + Messages.getString("ProcessSiembraMapTask.4")); //$NON-NLS-1$ //$NON-NLS-2$
-		//fert l y c		
-		tooltipText=tooltipText.concat( Messages.getString("JFXMain.FertL") +": "+ df.format(siembraFeature.getDosisFertLinea()) + Messages.getString("ProcessSiembraMapTask.6")		); //$NON-NLS-1$ //$NON-NLS-2$
-		tooltipText=tooltipText.concat( Messages.getString("JFXMain.FertC") +": "+ df.format(siembraFeature.getDosisFertCostado()) + Messages.getString("ProcessSiembraMapTask.6")		); //$NON-NLS-1$ //$NON-NLS-2$
-		//fert costo
-		tooltipText=tooltipText.concat( Messages.getString("ProcessSiembraMapTask.7") + df.format(siembraFeature.getImporteHa()) + Messages.getString("ProcessSiembraMapTask.8")		); //$NON-NLS-1$ //$NON-NLS-2$
-
-		if(area<1){
-			tooltipText=tooltipText.concat( Messages.getString("ProcessSiembraMapTask.9")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessSiembraMapTask.10")); //$NON-NLS-1$ //$NON-NLS-2$
-		} else {
-			tooltipText=tooltipText.concat(Messages.getString("ProcessSiembraMapTask.11")+df.format(area ) + Messages.getString("ProcessSiembraMapTask.12")); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		return tooltipText;
+		return buildTooltipText(siembraFeature, area, (SiembraLabor) siembraFeature.getLabor());
 	}
 
 	public static String buildTooltipText(SiembraItem siembraFeature, double area, SiembraLabor labor) {
 		NumberFormat df = Messages.getNumberFormat();
 
 		//densidad seeds/metro lineal
-		String tooltipText = new String(Messages.getString("ProcessSiembraMapTask.1")+ df.format(siembraFeature.getDosisML()) + Messages.getString("ProcessSiembraMapTask.2")); //$NON-NLS-1$ //$NON-NLS-2$
+		String tooltipText = new String(Messages.getString("ProcessSiembraMapTask.density")+ df.format(siembraFeature.getDosisML()) + Messages.getString("ProcessSiembraMapTask.seedmL")); //$NON-NLS-1$ //$NON-NLS-2$
 
-		if(labor.getEntreSurco()>0) {
-			logger.fine("Entre surco es "+labor.getEntreSurco());
-			Double seedsSup= siembraFeature.getDosisML()/labor.getEntreSurco();
-			if(seedsSup<100) {//plantas por m2
-				int digits =df.getMaximumFractionDigits();
-				df.setMaximumFractionDigits(2);
-				tooltipText=tooltipText.concat(
-					df.format(seedsSup*ProyectionConstants.METROS2_POR_HA) 
-						+ " s/"+ Messages.getString("ProcessSiembraMapTask.12")); // "Has\n"
-				df.setMaximumFractionDigits(digits);
-
-			}else {
-				tooltipText=tooltipText.concat(df.format(seedsSup) 
-						+ " s/"+Messages.getString("ProcessSiembraMapTask.10")); // "s/m2"
-			}
-		}else {
-			logger.fine("Enrtesurco es cero o menos "+labor.getEntreSurco());
+		Double seedsM2 = null;
+		Double entreSurco = labor != null ? labor.getEntreSurco() : null;
+		if (entreSurco != null && entreSurco > 0) {
+			seedsM2 = siembraFeature.getDosisML() / entreSurco;
+		} else if (labor != null && labor.getSemilla() != null
+				&& labor.getSemilla().getPesoDeMil() != null
+				&& labor.getSemilla().getPesoDeMil() > 0
+				&& siembraFeature.getDosisHa() != null) {
+			double kgM2 = siembraFeature.getDosisHa() / ProyectionConstants.METROS2_POR_HA;
+			seedsM2 = (1000.0 * 1000.0 * kgM2) / labor.getSemilla().getPesoDeMil();
+		} else {
+			logger.fine("No se pudo calcular Sem/m²; entreSurco=" + entreSurco);
+		}
+		if (seedsM2 != null) {
+			tooltipText = tooltipText.concat(
+					df.format(seedsM2) + " "
+							+ Messages.getString("SiembraConfigDialogController.plaMetroCuadrado") + "\n");
 		}
 		//kg semillas por ha
-		tooltipText=tooltipText.concat(Messages.getString("ProcessSiembraMapTask.3") + df.format(siembraFeature.getDosisHa()) + Messages.getString("ProcessSiembraMapTask.4")); //$NON-NLS-1$ //$NON-NLS-2$
+		tooltipText=tooltipText.concat(Messages.getString("ProcessSiembraMapTask.kg") + df.format(siembraFeature.getDosisHa()) + Messages.getString("ProcessSiembraMapTask.kgHa")); //$NON-NLS-1$ //$NON-NLS-2$
 		//fert l y c		
-		tooltipText=tooltipText.concat( Messages.getString("JFXMain.FertL") +": "+ df.format(siembraFeature.getDosisFertLinea()) + Messages.getString("ProcessSiembraMapTask.6")		); //$NON-NLS-1$ //$NON-NLS-2$
-		tooltipText=tooltipText.concat( Messages.getString("JFXMain.FertC") +": "+ df.format(siembraFeature.getDosisFertCostado()) + Messages.getString("ProcessSiembraMapTask.6")		); //$NON-NLS-1$ //$NON-NLS-2$
+		tooltipText=tooltipText.concat( Messages.getString("JFXMain.FertL") +": "+ df.format(siembraFeature.getDosisFertLinea()) + Messages.getString("ProcessSiembraMapTask.fertKgHa")		); //$NON-NLS-1$ //$NON-NLS-2$
+		tooltipText=tooltipText.concat( Messages.getString("JFXMain.FertC") +": "+ df.format(siembraFeature.getDosisFertCostado()) + Messages.getString("ProcessSiembraMapTask.fertKgHa")		); //$NON-NLS-1$ //$NON-NLS-2$
 		//fert costo
-		tooltipText=tooltipText.concat( Messages.getString("ProcessSiembraMapTask.7") + df.format(siembraFeature.getImporteHa()) + Messages.getString("ProcessSiembraMapTask.8")		); //$NON-NLS-1$ //$NON-NLS-2$
+		tooltipText=tooltipText.concat( Messages.getString("ProcessSiembraMapTask.cost") + df.format(siembraFeature.getImporteHa()) + Messages.getString("ProcessSiembraMapTask.costHa")		); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if(area<1){
-			tooltipText=tooltipText.concat( Messages.getString("ProcessSiembraMapTask.9")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessSiembraMapTask.10")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat( Messages.getString("ProcessSiembraMapTask.sfc")+df.format(area * ProyectionConstants.METROS2_POR_HA) + Messages.getString("ProcessSiembraMapTask.m2")); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
-			tooltipText=tooltipText.concat(Messages.getString("ProcessSiembraMapTask.11")+df.format(area ) + Messages.getString("ProcessSiembraMapTask.12")); //$NON-NLS-1$ //$NON-NLS-2$
+			tooltipText=tooltipText.concat(Messages.getString("ProcessSiembraMapTask.sfc")+df.format(area ) + Messages.getString("ProcessSiembraMapTask.has")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return tooltipText;
 	}

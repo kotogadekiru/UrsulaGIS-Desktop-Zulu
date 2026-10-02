@@ -100,9 +100,9 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 //				cultivo=c.getCultivo();//.getValue();
 //			}
 			if (nombre == null) {
-				nombre = labor.getNombre() + Messages.getString("GrillarCosechasMapTask.1") + c.getNombre(); //$NON-NLS-1$
+				nombre = labor.getNombre() + Messages.getString("GrillarCosechasMapTask.space") + c.getNombre(); //$NON-NLS-1$
 			} else {
-				nombre += Messages.getString("GrillarCosechasMapTask.2") + c.getNombre(); //$NON-NLS-1$
+				nombre += Messages.getString("GrillarCosechasMapTask.dashSeparator") + c.getNombre(); //$NON-NLS-1$
 			}
 
 			ReferencedEnvelope b = c.outCollection.getBounds();
@@ -175,7 +175,7 @@ public class SumarMargenesMapTask extends ProcessMapTask<MargenItem,Margen> {
 
 //FIXME esto hace que la grilla no tenga memoria
 		if(labor.inCollection == null){
-			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarCosechasMapTask.9"),labor.getType()); //$NON-NLS-1$
+			labor.inCollection = new DefaultFeatureCollection(Messages.getString("GrillarCosechasMapTask.internal"),labor.getType()); //$NON-NLS-1$
 		}
 		labor.inCollection.addAll(features);
 		boolean ret= labor.outCollection.addAll(features);
