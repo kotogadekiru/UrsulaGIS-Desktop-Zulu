@@ -204,7 +204,11 @@ public class SmartTableView<T> extends TableView<T> {
 				
 				if ( MouseButton.PRIMARY.equals(event.getButton()) && event.getClickCount() == 2) {
 					if(onDoubleClick!=null){
-						data.add(onDoubleClick.get());
+						T created = onDoubleClick.get();
+						if(created != null){
+							data.add(created);
+							refresh();
+						}
 					}		            
 				} 
 				else if(MouseButton.SECONDARY.equals(event.getButton()) && event.getClickCount() == 1){
@@ -237,8 +241,11 @@ public class SmartTableView<T> extends TableView<T> {
 							try{								
 								this.eliminarAction.accept((List<T>) rowData);							
 								data.removeAll(rowData);
-								if(data.size()==0){
-									data.add(onDoubleClick.get());
+								if(data.size()==0 && onDoubleClick!=null){
+									T created = onDoubleClick.get();
+									if(created != null){
+										data.add(created);
+									}
 								}
 								refresh();
 							}catch(Exception e){

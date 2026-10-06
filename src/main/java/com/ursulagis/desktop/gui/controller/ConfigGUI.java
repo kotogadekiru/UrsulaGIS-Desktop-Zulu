@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -61,6 +62,7 @@ import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
 import com.ursulagis.desktop.dao.siembra.SiembraLabor;
 import gov.nasa.worldwind.geom.Position;
 import com.ursulagis.desktop.gui.CorrelacionarCapas;
+import com.ursulagis.desktop.gui.ConfigFormDialogs;
 import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.tasks.GoogleTranslatorHelper;
 import com.ursulagis.desktop.gui.MargenConfigDialogController;
@@ -653,14 +655,12 @@ public class ConfigGUI extends AbstractGUIController{
 							)
 					);
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Cultivo(Messages.getString("ConfigGUI.nuevoCultivo"))); //
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptCultivo)); //
 
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
-			//tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.cultivos")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, dataLotes, tablaStage, ConfigFormDialogs::promptCultivo), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_CULTIVOS_OPENED);
 			tablaStage.show();	 
 		});
@@ -690,7 +690,7 @@ public class ConfigGUI extends AbstractGUIController{
 					);//,dataLotes);
 			table.setEditable(true);
 			table.getSelectionModel().setSelectionMode(	SelectionMode.MULTIPLE	);
-			table.setOnDoubleClick(()->new Fertilizante(Messages.getString("ConfigGUI.nuevoFertilizante"))); //
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptFertilizante)); //
 			table.setEliminarAction(
 					list->{
 						Platform.runLater(()->{		
@@ -706,11 +706,10 @@ public class ConfigGUI extends AbstractGUIController{
 						});
 					}
 					);
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.fertilizantes")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, dataLotes, tablaStage, ConfigFormDialogs::promptFertilizante), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_FERTILIZANTES_OPENED);
 			tablaStage.show();	 
 		});
@@ -750,17 +749,16 @@ public class ConfigGUI extends AbstractGUIController{
 			});
 
 
-			table.setOnDoubleClick(()->new Agroquimico(Messages.getString("ConfigGUI.nuevo"))); //
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptAgroquimico)); //
 
 			table.addSecondaryClickConsumer(Messages.getString("SmartTableView.Activar"),(r)-> {
 				doToggleAgroquimico(r);
 			});
 
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.agroquimicos")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, dataLotes, tablaStage, ConfigFormDialogs::promptAgroquimico), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_AGROQUIMICOS_OPENED);
 			tablaStage.show();	 
 		});
@@ -800,12 +798,11 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Nombre","Inicio","Fin")
 					);//,data);
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Campania(Messages.getString("ConfigGUI.nuevaCampania"))); //
-			Scene scene = new Scene(table, 800, 600);
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptCampania)); //
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.campanias")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, data, tablaStage, ConfigFormDialogs::promptCampania), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_CAMPANIA_OPENED);
 			tablaStage.show();	 
 
@@ -1669,13 +1666,12 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Id"),     //rejected
 					Arrays.asList("Nombre","Contorno","Empresa","SuperficieTotal","SuperficieAgricola","SuperficieGanadera","SuperficieDesperdicio"));//order
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Establecimiento(Messages.getString("ConfigGUI.nuevoEstablecimiento"))); //
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptEstablecimiento)); //
 
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.establecimientos")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, data, tablaStage, ConfigFormDialogs::promptEstablecimiento), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_ESTABLECIMIENTO_OPENED);
 			tablaStage.show();	 
 
@@ -1696,13 +1692,12 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Id"),                 //rejected
 					Arrays.asList("Nombre","Contorno"));//order
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Lote(Messages.getString("ConfigGUI.nuevoLote"))); //
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptLote)); //
 
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.lotes")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, data, tablaStage, ConfigFormDialogs::promptLote), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_LOTE_OPENED);
 			tablaStage.show();	 
 
@@ -1722,13 +1717,13 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Id"),                 //rejected
 					Arrays.asList("Lote","Campania","Cultivo","Contorno","Superficie"));//order
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Asignacion()); //
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptAsignacion)); //
 
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configAsignacionMI")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, data, tablaStage, ConfigFormDialogs::promptAsignacion,
+					() -> unlockAsignacionAchievementIfComplete(data)), 800, 600));
 			tablaStage.setOnHiding(e -> unlockAsignacionAchievementIfComplete(data));
 			tablaStage.show();
 			unlockAsignacionAchievementIfComplete(data);
@@ -1760,13 +1755,12 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Id"),     //rejected
 					Arrays.asList("Nombre"));//order
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Empresa(Messages.getString("ConfigGUI.nuevaEmpresa"))); //
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptEmpresa)); //
 
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.empresas")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, data, tablaStage, ConfigFormDialogs::promptEmpresa), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_EMPRESA_OPENED);
 			tablaStage.show();	 
 
@@ -1788,12 +1782,12 @@ public class ConfigGUI extends AbstractGUIController{
 					Arrays.asList("Nombre","Cultivo","PesoDeMill","PG"));//order
 
 			table.setEditable(true);
-			table.setOnDoubleClick(()->new Semilla(Messages.getString("ConfigGUI.nuevaSemilla"),DAH.getAllCultivos().get(0))); //
-			Scene scene = new Scene(table, 800, 600);
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptSemilla)); //
+
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("ConfigGUI.semillas"));
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, dataLotes, tablaStage, ConfigFormDialogs::promptSemilla), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_SEMILLAS_OPENED);
 			tablaStage.show();	 
 		});
@@ -1838,19 +1832,61 @@ public class ConfigGUI extends AbstractGUIController{
 				}
 			});
 			
-			// Add double-click handler for empty space to create new plaga
-			table.setOnDoubleClick(()->new Plaga(Messages.getString("Plaga.nueva")));
+			// Double-click opens the new-plaga form
+			table.setOnDoubleClick(newFromForm(table, ConfigFormDialogs::promptPlaga));
 			
-			Scene scene = new Scene(table, 800, 600);
 			Stage tablaStage = new Stage();
 			tablaStage.getIcons().addAll(JFXMain.stage.getIcons());
 			tablaStage.setTitle(Messages.getString("JFXMain.configPlagaMI")); //
-			tablaStage.setScene(scene);
+			tablaStage.setScene(new Scene(withNewButton(table, data, tablaStage, ConfigFormDialogs::promptPlaga), 800, 600));
 			OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_CONFIG_PLAGA_OPENED);
 			tablaStage.show();	 
 		});	
 	}
 	
+
+	/**
+	 * Supplier for SmartTableView double-click / empty-list refill: opens a form and saves on OK.
+	 * Returns null if the user cancels (SmartTableView skips adding null).
+	 */
+	private static <T> Supplier<T> newFromForm(SmartTableView<?> table, Function<Window, Optional<T>> prompt) {
+		return () -> {
+			Window owner = table.getScene() != null ? table.getScene().getWindow() : JFXMain.stage;
+			Optional<T> created = prompt.apply(owner);
+			if (created.isEmpty()) {
+				return null;
+			}
+			T item = created.get();
+			DAH.save(item);
+			return item;
+		};
+	}
+
+	/**
+	 * Adds a bottom "New" button that opens a form and inserts the result into the table.
+	 */
+	private static <T> VBox withNewButton(SmartTableView<T> table, ObservableList<T> data, Window owner,
+			Function<Window, Optional<T>> prompt) {
+		return withNewButton(table, data, owner, prompt, null);
+	}
+
+	private static <T> VBox withNewButton(SmartTableView<T> table, ObservableList<T> data, Window owner,
+			Function<Window, Optional<T>> prompt, Runnable afterAdd) {
+		Button newButton = new Button(Messages.getString("ConfigGUI.nuevo"));
+		newButton.setOnAction(a -> prompt.apply(owner).ifPresent(item -> {
+			DAH.save(item);
+			data.add(item);
+			table.refresh();
+			if (afterAdd != null) {
+				afterAdd.run();
+			}
+		}));
+		BorderPane bottom = new BorderPane();
+		bottom.setLeft(newButton);
+		bottom.setPadding(new Insets(5));
+		VBox.setVgrow(table, Priority.ALWAYS);
+		return new VBox(table, bottom);
+	}
 
 	/**
 	 * Funcion util para vincular un metodo con un item en un menu
