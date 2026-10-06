@@ -520,10 +520,65 @@ public class ToolTipController implements SelectListener, Disposable, MouseListe
 				this.lastRightClickObject = item;
 				LaborItemGUIController controller = new LaborItemGUIController(main);
 				controller.showDialog(item);
+				return;
+			}
+			if (main != null && shouldShowMapCreateMenu()) {
+				main.poligonoGUIController.showMapCreateContextMenu();
 			}
 		} catch (Exception ex) {
 			Logging.logger().warning(ex.getMessage() != null ? ex.getMessage() : ex.toString());
 		}
+	}
+
+	/**
+	 * True when right-click is on empty map (not a polygon / control point / active measure).
+	 */
+	private boolean shouldShowMapCreateMenu() {
+		if (isAnyMeasureToolCreating()) {
+			return false;
+		}
+		PickedObjectList picked = this.wwd.getObjectsAtCurrentPosition();
+		if (picked == null) {
+			return true;
+		}
+		for (PickedObject po : picked) {
+			if (po == null) {
+				continue;
+			}
+			Object o = po.getObject();
+			if (o instanceof SurfacePolygon) {
+				RenderableLayer polygonLayer = findLayerForSurfacePolygon((SurfacePolygon) o);
+				if (polygonLayer != null) {
+					Object layerObject = polygonLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+					if (layerObject instanceof Poligono) {
+						return false;
+					}
+				}
+			}
+			if (o instanceof MeasureToolForShape.ControlPoint) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean isAnyMeasureToolCreating() {
+		if (this.wwd == null || this.wwd.getModel() == null) {
+			return false;
+		}
+		for (Layer layer : this.wwd.getModel().getLayers()) {
+			if (!(layer instanceof RenderableLayer)) {
+				continue;
+			}
+			Object measureToolObj = ((RenderableLayer) layer).getValue(PoligonLayerFactory.MEASURE_TOOL);
+			if (measureToolObj instanceof MeasureToolForShape mt && mt.isCreationMode()) {
+				return true;
+			}
+			if (measureToolObj instanceof MeasureTool mt && mt.isArmed()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

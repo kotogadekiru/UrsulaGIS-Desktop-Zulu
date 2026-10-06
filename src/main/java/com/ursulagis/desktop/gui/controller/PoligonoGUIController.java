@@ -22,11 +22,15 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Window;
+
+import java.awt.MouseInfo;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -1103,6 +1107,26 @@ public class PoligonoGUIController extends AbstractGUIController{
 		}
 	}
 
+
+	/**
+	 * Right-click on empty map: offer creating a new surface or distance.
+	 */
+	public void showMapCreateContextMenu() {
+		Platform.runLater(() -> {
+			try {
+				ContextMenu menu = new ContextMenu();
+				MenuItem superficieItem = new MenuItem(Messages.getString("JFXMain.superficie"));
+				superficieItem.setOnAction(e -> doCrearPoligono());
+				MenuItem distanciaItem = new MenuItem(Messages.getString("JFXMain.distancia"));
+				distanciaItem.setOnAction(e -> doMedirDistancia());
+				menu.getItems().addAll(superficieItem, distanciaItem);
+				java.awt.Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
+				menu.show(JFXMain.stage, mouseLocation.getX(), mouseLocation.getY());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		});
+	}
 
 	public void doCrearPoligono(){
 		Poligono poli = new Poligono();
