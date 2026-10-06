@@ -14,6 +14,8 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 
+import com.ursulagis.desktop.dao.Labor;
+import com.ursulagis.desktop.dao.Poligono;
 import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
@@ -720,7 +722,7 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
         updateTooltipProperties();
         StringBuilder sb = new StringBuilder();
         if (this.surfaceShape != null) {
-            String name = resolveLayerName();
+            String name = resolvePolygonName();
             if (name != null && !name.isEmpty()) {
                 sb.append("Name: ").append(name).append("\n");
             }
@@ -755,11 +757,24 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
     }
 
     /**
-     * Uses the application layer name so tooltips match the layer panel.
+     * Polygon name only (without area). Layer names append Ha for the tree, which would
+     * duplicate Area in the tooltip.
      */
-    private String resolveLayerName() {
+    private String resolvePolygonName() {
         if (this.applicationLayer != null) {
-            String name = this.applicationLayer.getName();
+            Object entity = this.applicationLayer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+            if (entity instanceof Poligono poli) {
+                String nombre = poli.getNombre();
+                if (nombre != null && !nombre.isEmpty()) {
+                    return nombre;
+                }
+            }
+        }
+        if (this.surfaceShape != null) {
+            String name = this.surfaceShape.getStringValue("NAME");
+            if (name == null || name.isEmpty()) {
+                name = this.surfaceShape.getStringValue(AVKey.DISPLAY_NAME);
+            }
             if (name != null && !name.isEmpty()) {
                 return name;
             }

@@ -428,6 +428,46 @@ public class ToolTipController implements SelectListener, Disposable, MouseListe
     }
     
     /**
+     * Resolves the polygon display name without the appended area from {@code Layer#getName()}.
+     */
+    private String resolvePolygonDisplayName(gov.nasa.worldwind.render.SurfacePolygon surfacePolygon) {
+        Object measureToolObj = surfacePolygon.getValue(MeasureToolForShape.SURFACE_SHAPE_GROUP);
+        if (measureToolObj instanceof MeasureToolForShape measureTool) {
+            RenderableLayer appLayer = measureTool.getApplicationLayer();
+            String fromEntity = nombreFromLayer(appLayer);
+            if (fromEntity != null) {
+                return fromEntity;
+            }
+        }
+
+        RenderableLayer layer = findLayerForSurfacePolygon(surfacePolygon);
+        String fromEntity = nombreFromLayer(layer);
+        if (fromEntity != null) {
+            return fromEntity;
+        }
+
+        String name = surfacePolygon.getStringValue("NAME");
+        if (name == null || name.isEmpty()) {
+            name = surfacePolygon.getStringValue(AVKey.DISPLAY_NAME);
+        }
+        return (name != null && !name.isEmpty()) ? name : null;
+    }
+
+    private static String nombreFromLayer(RenderableLayer layer) {
+        if (layer == null) {
+            return null;
+        }
+        Object entity = layer.getValue(Labor.LABOR_LAYER_IDENTIFICATOR);
+        if (entity instanceof Poligono poli) {
+            String nombre = poli.getNombre();
+            if (nombre != null && !nombre.isEmpty()) {
+                return nombre;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Create tooltip text for SurfacePolygon shapes
      * @param surfacePolygon the SurfacePolygon to create tooltip for
      * @return tooltip text
@@ -435,21 +475,8 @@ public class ToolTipController implements SelectListener, Disposable, MouseListe
     protected String createTooltipForSurfacePolygon(gov.nasa.worldwind.render.SurfacePolygon surfacePolygon) {
         StringBuilder sb = new StringBuilder();
         
-        // Prefer layer name so it matches the layer panel everywhere
-        String name = null;
-        Object measureToolObj = surfacePolygon.getValue(MeasureToolForShape.SURFACE_SHAPE_GROUP);
-        if (measureToolObj instanceof MeasureToolForShape) {
-            RenderableLayer appLayer = ((MeasureToolForShape) measureToolObj).getApplicationLayer();
-            if (appLayer != null) {
-                name = appLayer.getName();
-            }
-        }
-        if (name == null || name.isEmpty()) {
-            RenderableLayer layer = findLayerForSurfacePolygon(surfacePolygon);
-            if (layer != null) {
-                name = layer.getName();
-            }
-        }
+        // Use polygon nombre only; layer.getName() also appends area (e.g. "p1 6.26Ha")
+        String name = resolvePolygonDisplayName(surfacePolygon);
         if (name != null && !name.isEmpty()) {
             sb.append("Name: ").append(name).append("\n");
         }
