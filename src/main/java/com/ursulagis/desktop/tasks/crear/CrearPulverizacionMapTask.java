@@ -67,9 +67,9 @@ public class CrearPulverizacionMapTask extends ProcessMapTask<PulverizacionItem,
 	public static String buildTooltipText(PulverizacionItem pulv, double area) {
 		NumberFormat nf = Messages.getNumberFormat();
 
-		// Rate, agrochemical cost, then total pulverization cost (insumo + labor)
+		// Density, agrochemical cost, then total pulverization cost (insumo + labor)
 		String tooltipText = new String(
-				Messages.getString("PulvConfigDialog.dosisLabel") + ": " + nf.format(pulv.getDosis()) + "\n" //$NON-NLS-1$
+				Messages.getString("ProcessPulvMapTask.density") + nf.format(pulv.getDosis()) + "\n" //$NON-NLS-1$
 				+ Messages.getString("ProcessPulvMapTask.agrochemicalCost") //$NON-NLS-1$
 				+ nf.format(pulv.getPrecioInsumo() * pulv.getDosis())
 				+ Messages.getString("ProcessPulvMapTask.usdHa") //$NON-NLS-1$
