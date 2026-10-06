@@ -49,7 +49,15 @@ public final class UrsulaPersonality {
 
 	/** Localized string for {@code key}, or {@code fallback} when the bundle has no entry. */
 	private static String msg(String key, String fallback) {
-		String s = Messages.getString(key);
-		return (s != null && !s.equals(key)) ? s : fallback;
+		try {
+			String s = Messages.getString(key);
+			// Messages.getString wraps missing keys as "!key!"
+			if (s == null || s.isEmpty() || s.equals(key) || s.equals('!' + key + '!')) {
+				return fallback;
+			}
+			return s;
+		} catch (Throwable t) {
+			return fallback;
+		}
 	}
 }

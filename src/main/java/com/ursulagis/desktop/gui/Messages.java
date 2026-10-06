@@ -26,8 +26,8 @@ public class Messages {
 	private static final String LOCALE_KEY = "LOCALE_KEY";
 	private static final String BUNDLE_NAME ="messages";//
 	
-	//src/main/java/com/ursulagis/desktop/gui/messages_es.properties
-	private static Configuracion conf = JFXMain.config;
+	// Prefer the live UI config; fall back for headless/unit tests where JFXMain.config is still null.
+	private static Configuracion conf = Configuracion.activeConfig();
 	
 	private static List<Consumer<Locale>> localeChangeListeners=new ArrayList<>();
 	
@@ -42,7 +42,10 @@ public class Messages {
 //		} catch(Exception e ) {
 //			e.printStackTrace();
 //		}
-		String loc = conf.getPropertyOrDefault(LOCALE_KEY, LOCALE_NOT_SET);
+		String loc = LOCALE_NOT_SET;
+		if (conf != null) {
+			loc = conf.getPropertyOrDefault(LOCALE_KEY, LOCALE_NOT_SET);
+		}
 		
 		Locale defaultLoc = Locale.getDefault();
 		logger.fine("default language es \""+defaultLoc.getLanguage()+ "\" supported? "+supports(defaultLoc.getLanguage()));
@@ -75,9 +78,11 @@ public class Messages {
 		nf.setMaximumFractionDigits(2);
 		
 		Runnable whenReady = () -> {
-			conf.loadProperties();
-			conf.setProperty(LOCALE_KEY, locale.getLanguage());
-			conf.save();
+			if (conf != null) {
+				conf.loadProperties();
+				conf.setProperty(LOCALE_KEY, locale.getLanguage());
+				conf.save();
+			}
 			localeChangeListeners.stream().forEach(f->f.accept(locale));
 			logger.fine("guardando el nuevo locale "+locale.getLanguage());
 		};
