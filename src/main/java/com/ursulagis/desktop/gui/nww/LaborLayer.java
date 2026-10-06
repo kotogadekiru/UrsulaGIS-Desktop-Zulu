@@ -49,15 +49,13 @@ public class LaborLayer extends RenderableLayer {
 
 	/**
 	 * AVKey on the extruded polygons layer: {@code Consumer<LaborItem>} that removes the
-	 * item from the feature set and clears {@code lastBuiltSector} so the next
-	 * {@code preRender} calls {@code rebuildForVisibleSector}.
+	 * item from the feature set and marks the layer for a full rebuild.
 	 */
 	public static final String KEY_EXTRUDED_ITEM_REMOVED = "ursula.extruded.itemRemoved";
 
 	/**
 	 * AVKey on the extruded polygons layer: {@code Consumer<Collection<? extends LaborItem>>}
-	 * that replaces {@code itemsToShow} and clears {@code lastBuiltSector} so the next
-	 * {@code preRender} calls {@code rebuildForVisibleSector}.
+	 * that replaces {@code itemsToShow} and marks the layer for a full rebuild.
 	 */
 	public static final String KEY_EXTRUDED_ITEMS_REFRESH = "ursula.extruded.itemsRefresh";
 
@@ -66,45 +64,6 @@ public class LaborLayer extends RenderableLayer {
 	private int elementsCount=0;
 	private boolean showOnlyExtudedPolygons=false;
 	private int screenPixelsSectorMinSize=3000;//2000 queda bueno
-	/** Default extruded feature budget until a timed draw provides polygonRenderTime. */
-	public static final int DEFAULT_MAX_EXTRUDED_ELEMENTS = 100000;
-	public static final int MIN_MAX_EXTRUDED_ELEMENTS = 2000;
-	public static final int MAX_MAX_EXTRUDED_ELEMENTS = 5000000;
-	/** Target rebuild+draw budget (ms) used to size the next feature cap. */
-	public static final long EXTRUDED_REBUILD_TARGET_MS = 2000;
-	/** Adaptive max extruded features: {@code TARGET_MS / lastAvgMsPerPolygon}. */
-	private static volatile int maxExtrudedElements = DEFAULT_MAX_EXTRUDED_ELEMENTS;
-	/** Last measured average rebuild+draw cost per polygon (ms). */
-	private static volatile double polygonRenderTimeMs = 0;
-
-	public static int getMaxExtrudedElements() {
-		return maxExtrudedElements;
-	}
-
-	public static double getPolygonRenderTimeMs() {
-		return polygonRenderTimeMs;
-	}
-
-	/**
-	 * From a timed rebuild+draw, compute average ms/polygon and set the next feature cap to
-	 * how many polygons fit in {@link #EXTRUDED_REBUILD_TARGET_MS}.
-	 * Does not trigger a rebuild — the new cap applies on the next sector rebuild only.
-	 */
-	public static void adjustMaxExtrudedElements(long renderMs, int featuresDrawn) {
-		if (renderMs <= 0 || featuresDrawn <= 0) {
-			return;
-		}
-		double avgMs = (double) renderMs / (double) featuresDrawn;
-		polygonRenderTimeMs = avgMs;
-		int current = maxExtrudedElements;
-		int next = (int) Math.floor(EXTRUDED_REBUILD_TARGET_MS / avgMs);
-		next = Math.max(MIN_MAX_EXTRUDED_ELEMENTS, Math.min(MAX_MAX_EXTRUDED_ELEMENTS, next));
-		maxExtrudedElements = next;
-		logger.fine("polygonRenderTimeMs=" + String.format("%.4f", avgMs)
-				+ " maxExtrudedElements " + current + " → " + next
-				+ " (renderMs=" + renderMs + ", featuresDrawn=" + featuresDrawn
-				+ ", applies next rebuild)");
-	}
 
 	/**
 	 * True when the user is (or is about to start) panning/zooming the map.
@@ -484,8 +443,7 @@ public class LaborLayer extends RenderableLayer {
 	}
 
 	/**
-	 * After deleting one item: remove it from the extruded feature set and force
-	 * {@code rebuildForVisibleSector} on the next frame.
+	 * After deleting one item: remove it from the extruded feature set and rebuild all.
 	 */
 	@SuppressWarnings("unchecked")
 	public void removeExtrudedItemAndRebuild(LaborItem item) {
@@ -500,8 +458,7 @@ public class LaborLayer extends RenderableLayer {
 	}
 
 	/**
-	 * Replace the extruded feature set and force {@code rebuildForVisibleSector}
-	 * on the next frame — light alternative to recreating SurfaceImage + extruded layer.
+	 * Replace the extruded feature set and rebuild all polygons on the next frame.
 	 */
 	@SuppressWarnings("unchecked")
 	public void refreshExtrudedItemsAndRebuild(Collection<? extends LaborItem> items) {

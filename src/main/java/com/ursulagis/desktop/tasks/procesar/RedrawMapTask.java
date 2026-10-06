@@ -8,14 +8,10 @@ import com.ursulagis.desktop.gui.JFXMain;
 import com.ursulagis.desktop.tasks.ProcessMapTask;
 
 /**
- * Full redraw after edit/delete. One LaborItem can map to many ExtrudedPolygons
- * (e.g. MultiPolygon parts), and the spatial cache / SurfaceImage still reference
- * the old geometry — so we {@link Labor#clearCache()} and run a full
- * {@link #runLater} (new extruded shell + SurfaceImage).
- * <p>
- * {@code runLater} installs the extruded layer before rasterizing SurfaceImage so
- * {@code rebuildForVisibleSector} can drop every polygon for the deleted item
- * without waiting on the slow raster.
+ * Full redraw after edit/delete. Clears the spatial cache and runs
+ * {@link #runLater} (new extruded shell for all items + SurfaceImage).
+ * Extruded is installed before SurfaceImage so polygons can rebuild while the
+ * raster catches up.
  */
 public class RedrawMapTask extends ProcessMapTask<LaborItem, Labor<LaborItem>> {
 
