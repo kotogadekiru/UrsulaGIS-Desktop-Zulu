@@ -10,9 +10,11 @@ import gov.nasa.worldwind.util.*;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 
+import com.ursulagis.desktop.gui.Messages;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 
 import java.util.logging.Logger;
@@ -167,15 +169,24 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
         this.leaderAttributes.setOutlineOpacity(this.getLineColor().getAlpha() / 255d);
         this.leaderAttributes.setOutlineWidth(this.getLineWidth());
 
-        // Annotation attributes
+        // Annotation attributes — match ToolTipAnnotation so control-point and polygon hover look the same
         this.annotationAttributes = new AnnotationAttributes();
         this.annotationAttributes.setFrameShape(AVKey.SHAPE_RECTANGLE);
+        this.annotationAttributes.setTextColor(Color.BLACK);
         this.annotationAttributes.setBackgroundColor(new Color(1f, 1f, 1f, 0.8f));
-        this.annotationAttributes.setBorderColor(new Color(0.4f, 0.4f, 0.4f, 1f));
+        this.annotationAttributes.setBorderColor(new Color(0xababab));
         this.annotationAttributes.setBorderWidth(1);
-        this.annotationAttributes.setSize(new Dimension(200, 0));
+        this.annotationAttributes.setCornerRadius(5);
+        this.annotationAttributes.setTextAlign(AVKey.LEFT);
+        this.annotationAttributes.setInsets(new Insets(5, 5, 5, 5));
+        this.annotationAttributes.setSize(new Dimension(Integer.MAX_VALUE, 0));
+        this.annotationAttributes.setAdjustWidthToText(AVKey.SIZE_FIT_TEXT);
         this.annotationAttributes.setLeaderGapWidth(0);
-        this.annotationAttributes.setCornerRadius(2);
+        if (HiDPIHelper.isHiDPI()) {
+            this.annotationAttributes.setFont(Font.decode("Arial-PLAIN-48"));
+        } else {
+            this.annotationAttributes.setFont(Font.decode("Arial-PLAIN-18"));
+        }
     }
 
     /**
@@ -691,29 +702,74 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
 	}
 
     /**
-     * Update tooltip properties for the surface shape
+     * Formats area value for display: m² when less than 1 ha, otherwise ha.
+     */
+    protected String formatAreaValue(double areaM2) {
+        NumberFormat df = Messages.getNumberFormat();
+        double areaHa = areaM2 / ProyectionConstants.METROS2_POR_HA;
+        if (areaHa < 1) {
+            return df.format(areaM2) + " m²";
+        }
+        return df.format(areaHa) + " Has";
+    }
+
+    /**
+     * Builds tooltip text in the same format as polygon hover ({@code ToolTipController}).
+     */
+    public String buildTooltipText() {
+        updateTooltipProperties();
+        StringBuilder sb = new StringBuilder();
+        if (this.surfaceShape != null) {
+            String name = resolveLayerName();
+            if (name != null && !name.isEmpty()) {
+                sb.append("Name: ").append(name).append("\n");
+            }
+            String area = this.surfaceShape.getStringValue("AREA");
+            if (area != null && !area.isEmpty()) {
+                sb.append("Area: ").append(area).append("\n");
+            }
+            String perimeter = this.surfaceShape.getStringValue("PERIMETER");
+            if (perimeter != null && !perimeter.isEmpty()) {
+                sb.append("Perimeter: ").append(perimeter).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Update tooltip properties for the surface shape (used by polygon hover).
      */
     public void updateTooltipProperties() {
         if (this.surfaceShape != null) {
-            // Update area and perimeter information for tooltips
-            double area =this.getArea()/ ProyectionConstants.METROS2_POR_HA;
-            //double area = this.getArea();
+            NumberFormat df = Messages.getNumberFormat();
+            double areaM2 = this.getArea();
             double perimeter = this.getPerimeter();
-            String areaText = String.format("%.2f Has", area);
-            String perimeterText = String.format("%.2f m", perimeter);
-            
+            String areaText = formatAreaValue(areaM2);
+            String perimeterText = df.format(perimeter) + " m";
+
             for (SurfacePolygon shape : this.surfaceShapes) {
                 shape.setValue("AREA", areaText);
                 shape.setValue("PERIMETER", perimeterText);
             }
-            
-            // Update display name if not set
-  
         }
     }
 
     /**
+     * Uses the application layer name so tooltips match the layer panel.
+     */
+    private String resolveLayerName() {
+        if (this.applicationLayer != null) {
+            String name = this.applicationLayer.getName();
+            if (name != null && !name.isEmpty()) {
+                return name;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Update the annotation with measurement information and position.
+     * Uses the same text and visual style as polygon hover.
      */
     protected void updateAnnotation(Position position) {
         // Only remove the annotation if it exists
@@ -722,15 +778,12 @@ public class MeasureToolForShape extends AVListImpl implements Disposable {
         }
 
         if (this.surfaceShape != null ) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(this.surfaceShape.getValue("NAME")).append("\n");
-            sb.append(this.unitsFormat.area("Area", this.getArea())).append("\n");
-            sb.append(this.unitsFormat.length("Perimeter", this.getPerimeter()));
+            String tooltipText = buildTooltipText();
             if(annotation==null){
-                this.annotation = new ScreenAnnotation(sb.toString(), new Point(0, 0));
+                this.annotation = new ScreenAnnotation(tooltipText, new Point(0, 0));
                 this.annotation.setAttributes(this.annotationAttributes);
             }else{
-                this.annotation.setText(sb.toString());                
+                this.annotation.setText(tooltipText);                
             }            
             
             // Set position if provided

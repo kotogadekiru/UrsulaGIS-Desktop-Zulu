@@ -435,8 +435,21 @@ public class ToolTipController implements SelectListener, Disposable, MouseListe
     protected String createTooltipForSurfacePolygon(gov.nasa.worldwind.render.SurfacePolygon surfacePolygon) {
         StringBuilder sb = new StringBuilder();
         
-        // Get name if available
-        String name = surfacePolygon.getStringValue(AVKey.DISPLAY_NAME);
+        // Prefer layer name so it matches the layer panel everywhere
+        String name = null;
+        Object measureToolObj = surfacePolygon.getValue(MeasureToolForShape.SURFACE_SHAPE_GROUP);
+        if (measureToolObj instanceof MeasureToolForShape) {
+            RenderableLayer appLayer = ((MeasureToolForShape) measureToolObj).getApplicationLayer();
+            if (appLayer != null) {
+                name = appLayer.getName();
+            }
+        }
+        if (name == null || name.isEmpty()) {
+            RenderableLayer layer = findLayerForSurfacePolygon(surfacePolygon);
+            if (layer != null) {
+                name = layer.getName();
+            }
+        }
         if (name != null && !name.isEmpty()) {
             sb.append("Name: ").append(name).append("\n");
         }
