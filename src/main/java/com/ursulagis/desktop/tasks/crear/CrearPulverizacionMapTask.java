@@ -67,13 +67,15 @@ public class CrearPulverizacionMapTask extends ProcessMapTask<PulverizacionItem,
 	public static String buildTooltipText(PulverizacionItem pulv, double area) {
 		NumberFormat nf = Messages.getNumberFormat();
 
-		//DecimalFormat df = new DecimalFormat("0.00");//$NON-NLS-2$
-		String tooltipText = new String(Messages.getString("ProcessPulvMapTask.agrochemicalCost") //$NON-NLS-1$
-				+Messages.getString("PulvConfigDialog.dosisLabel")+": "+nf.format(pulv.getDosis())+"\n"
-				+ nf.format(pulv.getPrecioInsumo()*pulv.getDosis()) + Messages.getString("ProcessPulvMapTask.usdHa") //$NON-NLS-1$
-				+ Messages.getString("ProcessPulvMapTask.pulverization") + nf.format(pulv.getImporteHa()) //$NON-NLS-1$
-				+ Messages.getString("ProcessPulvMapTask.usdHa")  //$NON-NLS-1$
-				// +"feature: " + featureNumber
+		// Rate, agrochemical cost, then total pulverization cost (insumo + labor)
+		String tooltipText = new String(
+				Messages.getString("PulvConfigDialog.dosisLabel") + ": " + nf.format(pulv.getDosis()) + "\n" //$NON-NLS-1$
+				+ Messages.getString("ProcessPulvMapTask.agrochemicalCost") //$NON-NLS-1$
+				+ nf.format(pulv.getPrecioInsumo() * pulv.getDosis())
+				+ Messages.getString("ProcessPulvMapTask.usdHa") //$NON-NLS-1$
+				+ Messages.getString("ProcessPulvMapTask.pulverization") //$NON-NLS-1$
+				+ nf.format(pulv.getImporteHa())
+				+ Messages.getString("ProcessPulvMapTask.usdHa") //$NON-NLS-1$
 				);
 
 		if(area<1){
