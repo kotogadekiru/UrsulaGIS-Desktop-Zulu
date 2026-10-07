@@ -12,7 +12,6 @@ UrsulaGIS evolucionó a la línea **Zulu (1.0.x)**: misma herramienta de agricul
 ## Importación y exportación
 
 - Cosecha desde tarjeta **CNH Voyager 2 (.vy1)** (sin configuración manual en Windows).
-- Lectura de archivos **John Deere (.jdl)**.
 - Import/export nativo **TIM (.srm)** para prescripciones de siembra.
 - Polígonos **KML con huecos** y exportación a **KMZ** para Google Earth.
 - Importación de **suelos** desde el árbol de capas.
@@ -58,7 +57,7 @@ UrsulaGIS evolucionó a la línea **Zulu (1.0.x)**: misma herramienta de agricul
 **UrsulaGIS Zulu — Novedades desde 0.2.30**
 
 - Chat **Ursula IA**: pedí acciones en lenguaje natural (siembra, capas, labores).
-- Importá cosecha **Voyager 2 (.vy1)**, **John Deere (.jdl)** y siembra **TIM (.srm)**.
+- Importá cosecha **Voyager 2 (.vy1)** y siembra **TIM (.srm)**.
 - Exportá polígonos a **KMZ** y prescripciones con límites configurables.
 - Recomendaciones de fertilización **K y S** desde cosecha; **reporte PDF** de labor.
 - Click derecho en el mapa para **superficie/distancia**; mejor árbol de capas y NDVI cancelable.
