@@ -33,7 +33,7 @@ public class CaldoItem {
 	private String unidadDosis= new String();
 	private String unidadStock = new String();
 	
-	private Double dosisHa = 0.0;
+	private Double dosisHa = 0.0;// lts de producto por lt de caldo
 	private String observaciones =  null;
 	
 	public CaldoItem() {
@@ -49,6 +49,12 @@ public class CaldoItem {
 	}
 
 	public void setProducto(Agroquimico producto) {
+		if(producto == null) {
+			this.producto=null;
+			this.unidadDosis=null;
+			this.unidadStock=null;
+			return;
+		}
 		this.producto=producto;
 		this.unidadDosis=producto.getUnidadDosis();
 		this.unidadStock=producto.getUnidadStock();

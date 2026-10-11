@@ -11,6 +11,7 @@ import org.geotools.api.data.FileDataStore;
 
 import com.ursulagis.desktop.api.OrdenPulverizacion;
 import com.ursulagis.desktop.dao.Labor;
+import com.ursulagis.desktop.dao.pulverizacion.CaldoItem;
 import com.ursulagis.desktop.dao.pulverizacion.PulverizacionLabor;
 import gov.nasa.worldwind.WorldWindow;
 import com.ursulagis.desktop.gui.JFXMain;
@@ -128,12 +129,19 @@ public class PulverizacionGUIController {
 			task.installProgressBar(main.progressBox);
 			task.setOnSucceeded(handler -> {
 				String ret = (String)handler.getSource().getValue();
-
-				if(ret!=null) {
+				task.uninstallProgressBar();
+				if(ret!=null && !ret.isBlank() && ret.startsWith("http")) {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_SHARED);
+				} else {
+					Alert error = new Alert(Alert.AlertType.ERROR);
+					error.initOwner(JFXMain.stage);
+					error.setTitle("Error al compartir");
+					error.setHeaderText(null);
+					error.setContentText(ret != null && !ret.isBlank() ? ret
+							: "No se pudo compartir la orden: no se encontro el archivo de la labor en la tarjeta");
+					error.show();
 				}
-				task.uninstallProgressBar();
 			});
 			task.setOnFailed(handler -> {
 				task.uninstallProgressBar();
@@ -146,7 +154,7 @@ public class PulverizacionGUIController {
 				error.setContentText(msg);
 				error.show();
 			});
-			logger.fine("ejecutando Compartir Recorrida");
+			logger.fine("ejecutando Compartir Pulverizacion");
 			JFXMain.executorPool.submit(task);
 		});
 	}
@@ -193,7 +201,7 @@ public class PulverizacionGUIController {
 				main.playSound();
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_PULVERIZATION_EXPORTED);
 				ept.uninstallProgressBar();
-				doOpenPulvMap(Collections.singletonList(ret));
+				doOpenPulvMap(Collections.singletonList(ret), laborToExport);
 			});
 			JFXMain.executorPool.execute(ept);		
 		}
@@ -249,6 +257,13 @@ public class PulverizacionGUIController {
 		}
 		
 		public void doOpenPulvMap(List<File> files) {
+			doOpenPulvMap(files, null);
+		}
+
+		/**
+		 * @param sourceLabor when re-opening an export, pass the original labor so caldo/config are kept
+		 */
+		public void doOpenPulvMap(List<File> files, PulverizacionLabor sourceLabor) {
 			List<FileDataStore> stores = FileHelper.chooseShapeFileAndGetMultipleStores(files);
 			if (stores != null) {
 				//	harvestMap.getChildren().clear();
@@ -256,6 +271,17 @@ public class PulverizacionGUIController {
 					PulverizacionLabor labor = new PulverizacionLabor(store);
 					//	SiembraLabor labor = new SiembraLabor(store);
 					labor.setLayer(new LaborLayer());
+					if (sourceLabor != null) {
+						labor.getItems().clear();
+						for (CaldoItem i : sourceLabor.getItems()) {
+							CaldoItem ci = new CaldoItem(i);
+							ci.setLabor(labor);
+							labor.getItems().add(ci);
+						}
+						labor.setPrecioInsumo(sourceLabor.getPrecioInsumo());
+						labor.setPrecioLabor(sourceLabor.getPrecioLabor());
+						labor.setFecha(sourceLabor.getFecha());
+					}
 					Optional<PulverizacionLabor> cosechaConfigured= PulverizacionConfigDialogController.config(labor);
 					if(!cosechaConfigured.isPresent()){//
 						logger.fine("el dialogo termino con cancel asi que no continuo con la fertilización"); //$NON-NLS-1$
