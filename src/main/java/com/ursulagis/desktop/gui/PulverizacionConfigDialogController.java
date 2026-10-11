@@ -186,14 +186,14 @@ public class PulverizacionConfigDialogController  extends Dialog<PulverizacionLa
 				labor::setPrecioInsumo,
 				this.textPrecioInsumo.textProperty(),
 				config,
-				PulverizacionLabor.COSTO_LABOR_PULVERIZACION);
+				PulverizacionLabor.PRECIO_INSUMO_KEY);
 		
 		PropertyHelper.bindDoubleToTextProperty(
 				labor::getPrecioLabor,
 				labor::setPrecioLabor,
 				this.textCostoLaborHa.textProperty(),
 				config,
-				PulverizacionLabor.PRECIO_INSUMO_KEY);
+				PulverizacionLabor.COSTO_LABOR_PULVERIZACION);
 		
 		//DecimalFormat converter = PropertyHelper.getDoubleConverter();
 		StringConverter<Number> converter = PropertyHelper.buildStringConverter();//
