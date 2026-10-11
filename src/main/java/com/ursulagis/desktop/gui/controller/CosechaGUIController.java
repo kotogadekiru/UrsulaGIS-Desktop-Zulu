@@ -448,12 +448,19 @@ public class CosechaGUIController extends AbstractGUIController {
 			task.installProgressBar(main.progressBox);
 			task.setOnSucceeded(handler -> {
 				String ret = (String)handler.getSource().getValue();
-
-				if(ret!=null) {
+				task.uninstallProgressBar();
+				if(ret!=null && !ret.isBlank() && ret.startsWith("http")) {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_HARVEST_SHARED);
+				} else {
+					Alert error = new Alert(AlertType.ERROR);
+					error.initOwner(JFXMain.stage);
+					error.setTitle("Error al compartir");
+					error.setHeaderText(null);
+					error.setContentText(ret != null && !ret.isBlank() ? ret
+							: "No se pudo compartir la orden: no se encontro el archivo de la labor en la tarjeta");
+					error.show();
 				}
-				task.uninstallProgressBar();
 			});
 			task.setOnFailed(handler -> {
 				task.uninstallProgressBar();
@@ -466,7 +473,7 @@ public class CosechaGUIController extends AbstractGUIController {
 				error.setContentText(msg);
 				error.show();
 			});
-			logger.fine("ejecutando Compartir Fertilizacion");
+			logger.fine("ejecutando Compartir Cosecha");
 			JFXMain.executorPool.submit(task);
 		});
 	}

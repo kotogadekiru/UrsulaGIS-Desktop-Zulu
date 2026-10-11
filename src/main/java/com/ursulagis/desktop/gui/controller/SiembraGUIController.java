@@ -650,14 +650,19 @@ public class SiembraGUIController {
 			task.setOnSucceeded(handler -> {
 				logger.fine("task succeeded");
 				String ret = (String)handler.getSource().getValue();
-				logger.fine("showing qr for "+ret);
-				if(ret!=null && !ret.isEmpty() ) {
+				task.uninstallProgressBar();
+				if(ret!=null && !ret.isBlank() && ret.startsWith("http")) {
 					main.configGUIController.showQR(ret);
 					OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_SEEDING_SHARED);
 				} else {
-					logger.fine("ret es null asi que no hay url para mostrar qr");
+					Alert error = new Alert(Alert.AlertType.ERROR);
+					error.initOwner(JFXMain.stage);
+					error.setTitle("Error al compartir");
+					error.setHeaderText(null);
+					error.setContentText(ret != null && !ret.isBlank() ? ret
+							: "No se pudo compartir la orden: no se encontro el archivo de la labor en la tarjeta");
+					error.show();
 				}
-				task.uninstallProgressBar();
 			});
 
 			task.stateProperty().addListener((ob,ov,nv)->{

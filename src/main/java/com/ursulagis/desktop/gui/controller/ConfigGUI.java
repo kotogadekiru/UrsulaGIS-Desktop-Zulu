@@ -1915,7 +1915,25 @@ public class ConfigGUI extends AbstractGUIController{
 	}
 
 	public  void showQR(String ret) {
+		if (ret == null || ret.isBlank()) {
+			Alert error = new Alert(AlertType.ERROR);
+			error.initOwner(JFXMain.stage);
+			error.setTitle("Error al compartir");
+			error.setHeaderText(null);
+			error.setContentText("No se obtuvo una URL para mostrar el codigo QR");
+			error.show();
+			return;
+		}
 		BufferedImage qr = ConfigGUI.generateQR(ret);
+		if (qr == null) {
+			Alert error = new Alert(AlertType.ERROR);
+			error.initOwner(JFXMain.stage);
+			error.setTitle("Error al compartir");
+			error.setHeaderText(null);
+			error.setContentText("No se pudo generar el codigo QR");
+			error.show();
+			return;
+		}
 		Image image = SwingFXUtils.toFXImage(qr, null);
 
 		Alert a = new Alert(AlertType.INFORMATION);
@@ -1987,17 +2005,18 @@ public class ConfigGUI extends AbstractGUIController{
 	}
 
 	public static BufferedImage generateQR(String code) {
+		if (code == null || code.isBlank()) {
+			return null;
+		}
 		QRCodeWriter barcodeWriter = new QRCodeWriter();
 		BitMatrix bitMatrix;
 		try {
 			bitMatrix = barcodeWriter.encode(code, BarcodeFormat.QR_CODE, 200, 200);
 			return MatrixToImageWriter.toBufferedImage(bitMatrix);
-		} catch (WriterException e) {
+		} catch (WriterException | IllegalArgumentException e) {
 			e.printStackTrace();
 			return null;
 		}
-
-
 	}
 
 

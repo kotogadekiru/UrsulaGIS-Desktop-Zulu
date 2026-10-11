@@ -152,40 +152,25 @@ public class CompartirFertilizacionLaborTask extends Task<String> {
 					//DAH.save(dbFertilizacionLabor);//merge local recorrida
 					//	Long id = dbRecorrida.getId();
 					String dbUrl = dbFertilizacionLabor.getUrl();
+					if (dbUrl == null || dbUrl.isBlank()) {
+						throw new IOException(
+								"No se pudo compartir la orden: no se encontro el archivo de la labor en la tarjeta");
+					}
 					this.ordenFertilizacion.setUrl(dbUrl);
 					DAH.save(ordenFertilizacion);
-					//java.math.BigDecimal id = (java.math.BigDecimal) data.get("id");
-					//String prettyresponse = resContent.toPrettyString();
-					//System.out.println("prettyresponse "+prettyresponse);
-
-					/*
-			prettyresponse {
-		  "status" : "SUCCESS",
-		  "data" : {
-		    "id" : 4,
-		    "nombre" : "",
-		    "observacion" : "",
-		    "posicion" : "",
-		    "latitude" : 0.0,
-		    "longitude" : 0.0,
-		    "muestras" : [ ]
-		  }
-		}
-					 */
-					//String urlGoto = "https://www.ursulagis.com/api/recorridas/4/";
-					//TODO cambiar esta url por una url mobile que permita hacer la recorrida via web.
-					String urlGoto =dbUrl;// GET_RECORRIDAS_BY_ID_URL+id+"/";
 					this.updateProgress(10, 10);
-					return urlGoto;
+					return dbUrl;
 				}
-				return "status Success but data null";
+				throw new IOException("No se pudo compartir la orden: respuesta sin datos");
 			} else {//status is not Success
-				String message =standarResponse.getMessage();
-				return status+" "+message;
+				String message = standarResponse.getMessage();
+				throw new IOException((status != null ? status + " " : "") + (message != null ? message : "Error al compartir"));
 			}
-		}catch(Exception e) {
+		} catch (IOException e) {
+			throw e;
+		} catch (Exception e) {
 			e.printStackTrace();
-			return e.getMessage();
+			throw new IOException(e.getMessage() != null ? e.getMessage() : "Error al compartir la orden", e);
 		}
 
 	}
