@@ -8,13 +8,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.StringJoiner;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -32,8 +31,6 @@ import javafx.stage.Window;
 
 import java.awt.MouseInfo;
 
-import javax.xml.stream.XMLStreamException;
-
 import org.geotools.api.data.FileDataStore;
 import org.geotools.data.simple.SimpleFeatureIterator;
 import org.geotools.api.data.SimpleFeatureSource;
@@ -49,18 +46,9 @@ import org.locationtech.jts.geom.Polygon;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.geom.Position.PositionList;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
-import gov.nasa.worldwind.ogc.kml.KMLAbstractFeature;
-import gov.nasa.worldwind.ogc.kml.KMLBoundary;
-import gov.nasa.worldwind.ogc.kml.KMLDocument;
-import gov.nasa.worldwind.ogc.kml.KMLFolder;
-import gov.nasa.worldwind.ogc.kml.KMLLinearRing;
 import gov.nasa.worldwind.ogc.kml.KMLPlacemark;
-import gov.nasa.worldwind.ogc.kml.KMLPolygon;
-import gov.nasa.worldwind.ogc.kml.KMLRoot;
-import gov.nasa.worldwind.util.Logging;
 import gov.nasa.worldwind.util.measure.MeasureTool;
 
 import com.ursulagis.desktop.gui.FertilizacionConfigDialogController;
@@ -73,6 +61,7 @@ import com.ursulagis.desktop.gui.NDVIDatePickerDialog;
 import com.ursulagis.desktop.gui.PathLayerFactory;
 import com.ursulagis.desktop.gui.PoligonLayerFactory;
 import com.ursulagis.desktop.gui.PoligonoDialog;
+import com.ursulagis.desktop.gui.PoligonoImportacionInforme;
 import com.ursulagis.desktop.gui.PulverizacionConfigDialogController;
 import com.ursulagis.desktop.gui.SiembraConfigDialogController;
 import com.ursulagis.desktop.gui.SiembraConfigPrefill;
@@ -109,11 +98,13 @@ import com.ursulagis.desktop.tasks.procesar.SimplificarCaminoTask;
 import com.ursulagis.desktop.utils.DAH;
 import com.ursulagis.desktop.utils.FileHelper;
 import com.ursulagis.desktop.utils.GeometryHelper;
+import com.ursulagis.desktop.utils.KMLHelper;
 import com.ursulagis.desktop.utils.ProyectionConstants;
 //import com.ursulagis.desktop.gui.nww.MeasureTool;
 import com.ursulagis.desktop.gui.nww.MeasureToolForShape;
 
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 public class PoligonoGUIController extends AbstractGUIController{
 	private static final Logger logger = Logger.getLogger(PoligonoGUIController.class.getName());
@@ -1595,60 +1586,17 @@ public class PoligonoGUIController extends AbstractGUIController{
 	 * @param files viene con null 
 	 */
 	public void doImportarPoligonos(List<File> files) {
+		Map<String, String> importados = new LinkedHashMap<>();
+		Map<String, String> omitidos = new LinkedHashMap<>();
 		if(files == null) {
 			files = FileHelper.chooseFiles("kml,shp", "*.kml; *.shp");
 			if(files ==null)return;
 			List<File> klmFiles = files.stream().filter(f->f.getName().endsWith("kml")).collect(Collectors.toList());
 			for(File source :klmFiles) {
-
-				try {
-					KMLRoot kmlRoot = KMLRoot.create(source);
-					if (kmlRoot == null) {
-						String message = Logging.getMessage("generic.UnrecognizedSourceType", source.toString(),
-								source.toString());
-						throw new IllegalArgumentException(message);
-					}
-
-					try{
-						// Try with a namespace aware parser.
-						kmlRoot.parse();
-					}  catch (XMLStreamException e) {
-						// Try without namespace awareness.
-						kmlRoot = KMLRoot.create(source, false);
-						kmlRoot.parse();
-					}
-					//AVList fields = kmlRoot.getFields();
-					KMLDocument doc = (KMLDocument) kmlRoot.getField("Document");				   
-					List<KMLAbstractFeature> docFeatures = doc.getFeatures();
-					Queue<KMLAbstractFeature> featuresQueue=new ConcurrentLinkedQueue<>();
-					featuresQueue.addAll(docFeatures);
-					while(!featuresQueue.isEmpty()) {
-						KMLAbstractFeature feature = featuresQueue.poll();
-						if(feature instanceof KMLPlacemark) {
-							KMLPlacemark placemark = (KMLPlacemark)feature;
-							importPlacemarkPoligon(placemark);							
-						} else if(feature instanceof KMLFolder) {
-							KMLFolder folder=(KMLFolder)feature;
-							featuresQueue.addAll(folder.getFeatures());
-
-						}
-					}
-					//					for(  KMLAbstractFeature feature : docFeatures ) {
-					//						if(feature instanceof KMLPlacemark) {
-					//							KMLPlacemark placemark = (KMLPlacemark)feature;
-					//							importPlacemarkPoligon(placemark);							
-					//						} else if(feature instanceof KMLFolder) {
-					//							KMLFolder folder=(KMLFolder)feature;
-					//							//folder.getFeatures()
-					//
-					//						}
-					//					}		
-					this.getLayerPanel().update(this.getWwd());
-					
-				} catch (IOException | XMLStreamException e) {
-					e.printStackTrace();
+				for (KMLHelper.Lectura lectura : KMLHelper.leer(source)) {
+					registrarLecturaKml(lectura, importados, omitidos);
 				}
-
+				this.getLayerPanel().update(this.getWwd());
 			}
 		}
 
@@ -1656,89 +1604,86 @@ public class PoligonoGUIController extends AbstractGUIController{
 		executorPool.submit(()->{
 			if (stores != null) {for(FileDataStore store : stores){//abro cada store y lo dibujo en el harvestMap individualmente
 				logger.fine("cargando stores para importar poligonos"); //$NON-NLS-1$
+				String storeName = "shapefile";
 				try {
-					String storeName = store.getNames().get(0).getLocalPart().replace("%20", " ");
+					storeName = store.getNames().get(0).getLocalPart().replace("%20", " ");
 					//System.out.println(storeName);
 					SimpleFeatureSource	source = store.getFeatureSource();
 
 					SimpleFeatureIterator iterator = source.getFeatures().features();
 					int i=0;
 					while(iterator.hasNext()){
-						SimpleFeature feature = iterator.next();	
-
-						double has = ProyectionConstants.A_HAS(((Geometry)feature.getDefaultGeometry()).getArea());
-						//						if(has<0.02) {
-						//							System.out.println("descarto poligono por ser menor a 0.2has");
-						//							continue;//cada poli mayor a 10m2
-						//						}
-						Poligono poli = ExtraerPoligonosDeLaborTask.featureToPoligono(feature);
-						poli.setNombre(storeName+" ["+Integer.toString(i)+"]");
+						SimpleFeature feature = iterator.next();
+						String nombreFeature = storeName+" ["+Integer.toString(i)+"]";
 						i++;
 						try {
-							//intento tomar el nombre del atributo si tiene la columna Name
-							String name = (String) feature.getAttribute("Name");
-							if(name!=null) {
-								poli.setNombre(name);
+							Geometry geometria = (Geometry) feature.getDefaultGeometry();
+							if (geometria == null) {
+								PoligonoImportacionInforme.agregar(omitidos, storeName, nombreFeature + ": sin geometría");
+								continue;
 							}
-						}catch(Exception e) {
-							e.printStackTrace();
+							double has = ProyectionConstants.A_HAS(geometria.getArea());
+							Poligono poli = ExtraerPoligonosDeLaborTask.featureToPoligono(feature);
+							if (poli == null) {
+								PoligonoImportacionInforme.agregar(omitidos, storeName, nombreFeature + ": no se pudo convertir a polígono");
+								continue;
+							}
+							poli.setNombre(nombreFeature);
+							try {
+								//intento tomar el nombre del atributo si tiene la columna Name
+								String name = (String) feature.getAttribute("Name");
+								if(name!=null) {
+									poli.setNombre(name);
+								}
+							}catch(Exception e) {
+								logger.fine("el feature no tiene atributo Name");
+							}
 
+							poli.setArea(has);
+							mostrarPoligonoImportado(poli);
+							PoligonoImportacionInforme.agregar(importados, storeName, PoligonoImportacionInforme.detalle(poli));
+						} catch (Exception e) {
+							logger.log(Level.WARNING, "no se pudo importar " + nombreFeature, e);
+							PoligonoImportacionInforme.agregar(omitidos, storeName, nombreFeature + ": " + PoligonoImportacionInforme.mensaje(e));
 						}
-
-						MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
-						measureTool.setCreationMode(false);
-						poli.setArea(has);
-						insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 					}//fin del while sobre las features
 					this.getLayerPanel().update(this.getWwd());
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.log(Level.WARNING, "no se pudo leer el shapefile " + storeName, e);
+					PoligonoImportacionInforme.agregar(omitidos, storeName, "no se pudo leer el shapefile: " + PoligonoImportacionInforme.mensaje(e));
 				}
 			}//fin del for stores
 			if (stores != null && !stores.isEmpty()) {
 				OnboardingAchievements.getInstance().unlock(JFXMain.stage, OnboardingAchievements.FIRST_POLYGON_IMPORTED);
 			}
 			}//if stores != null
+			PoligonoImportacionInforme.mostrarInformeImportacionPoligonos(importados, omitidos);
 		});
 	}
 
 
 	public void importPlacemarkPoligon(KMLPlacemark placemark) {
-		try {
-			String name = placemark.getName();			
-			PositionList shell = null;//
-			List<PositionList> holes = null;	
-
-			if(placemark.getGeometry() instanceof KMLPolygon) {
-				holes = new ArrayList<PositionList>();	
-				KMLPolygon kmlPolygon = (KMLPolygon)placemark.getGeometry();		
-				
-				Iterable<? extends KMLLinearRing> innerBoundariesIterable = kmlPolygon.getInnerBoundaries();//.getField("innerBoundaryIs");
-				if(innerBoundariesIterable != null) {
-					 for(KMLLinearRing innerRing : innerBoundariesIterable) {					
-							holes.add(innerRing.getCoordinates());					
-					 }
-				}
+		for (KMLHelper.Lectura lectura : KMLHelper.leer(placemark)) {
+			if (lectura.getPoligono() != null) {
+				mostrarPoligonoImportado(lectura.getPoligono());
 			}
-			KMLBoundary boundary = (KMLBoundary)placemark.getGeometry().getField("outerBoundaryIs");		
-			if(boundary ==null)return;			
-			shell = boundary.getLinearRing().getCoordinates();
-
-		
-		
-			Poligono poli = GeometryHelper.constructPolygon(shell,holes);
-			poli.setNombre(name);		
-			double lonLatArea = poli.toGeometry().getArea();
-			Double has = ProyectionConstants.A_HAS(lonLatArea);
-
-			MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
-			
-			measureTool.setCreationMode(false);
-			poli.setArea(has);
-			insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
-		}catch(Exception e) {
-			e.printStackTrace();
 		}
+	}
+
+	private void registrarLecturaKml(KMLHelper.Lectura lectura, Map<String, String> importados,
+			Map<String, String> omitidos) {
+		if (lectura.getPoligono() != null) {
+			mostrarPoligonoImportado(lectura.getPoligono());
+			PoligonoImportacionInforme.agregar(importados, lectura.getArchivo(), PoligonoImportacionInforme.detalle(lectura.getPoligono()));
+			return;
+		}
+		PoligonoImportacionInforme.agregar(omitidos, lectura.getArchivo(), lectura.getMotivo());
+	}
+
+	private void mostrarPoligonoImportado(Poligono poli) {
+		MeasureToolForShape measureTool = PoligonLayerFactory.createPoligonMeasureToolForShape(poli, this.getWwd(), this.getLayerPanel());
+		measureTool.setCreationMode(false);
+		insertBeforeCompass(this.getWwd(), measureTool.getApplicationLayer());
 	}
 
 	/**
